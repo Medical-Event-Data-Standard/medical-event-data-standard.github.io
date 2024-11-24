@@ -20,7 +20,7 @@ const config: Config = {
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'Medical-Event-Data-Standard', // Usually your GitHub org/user name.
   projectName: 'medical-event-data-standard.github.io', // GitHub repo
-
+  deploymentBranch: 'gh-pages',
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
