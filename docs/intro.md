@@ -27,7 +27,7 @@ datasets and models already support MEDS out of the box!
 
 See [this list](/docs/MEDS_datasets_and_models) for a list of datasets and models that already support MEDS,
 and if you have a dataset that you'd like to convert to MEDS see [this
-tutorial](/docs/tutorial-basics/put_your_data_in_MEDS) to see how!
+tutorial](/docs/tutorial-basics/converting_to_MEDS) to see how!
 
 :::
 
@@ -60,7 +60,7 @@ started!
 
 ## Where to go from here?
   1. If you're new to MEDS and want to learn more about the nuts and bolts, check out the
-     [introductory tutorials](tutorial-basics) to get started!
+     [introductory tutorials](/docs/category/tutorial---build-a-model-with-meds) to get started!
   2. IF you're looking for a dataset to work with, a model to compare to, or tools to help your research,
      check out the [public research resources](/docs/MEDS_datasets_and_models) that support MEDS!
   3. If you're looking to help build a shared understanding of the science of health AI, check out the
