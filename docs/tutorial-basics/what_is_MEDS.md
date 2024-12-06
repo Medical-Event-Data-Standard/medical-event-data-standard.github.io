@@ -168,9 +168,27 @@ is documented
 ### Labeled cohorts over a MEDS dataset
 In addition to the data and metadata files, MEDS also provides a schema for defining labeled cohorts over a
 MEDS dataset. Label files do not have a required on-disk organization, though it is recommended to store them
-in a `labels/$COHORT_NAME/**.parquet` format within the MEDS-root directory.
+in a `labels/$COHORT_NAME/**.parquet` format within the MEDS-root directory. Labeled cohorts within MEDS
+consist of a set of sharded parquet files (the sharding need not be identical to the data shards). Each of
+these files is a table such that each row in the table corresponds to one "sample" in the cohort (a _sample_
+is a single unit of prediction, and there may be multiple samples corresponding to a single subject in the
+MEDS dataset). Each row in the table must contain the following columns:
+  1. `subject_id`: The subject ID of the subject for this sample, of type `int64`.
+  2. `prediction_time`: The upper bound (inclusive) of the time window of data which can be observed when this
+     prediction is made, of type `timestamp[us]`. E.g., your model may use data for all events that occur at
+     or before this time to make a prediction for this sample.
+  3. `boolean_value`: If this task is a binary classification task, this column contains the binary label for
+     the sample, of type `bool`, otherwise this column is `null`.
+  4. `integer_value`: If this task is an ordinal regression or a classification task with integral labels,
+     this column contains the numeric label for the sample, of type `int64`, otherwise this column is
+     `null`.
+  5. `float_value`: If this task is a regression task, this column contains the numeric label for the sample,
+     of type `float64`, otherwise this column is `null`.
+  6. `categorical_value`: If this task is a classification task with categorical labels, this column contains
+     the categorical label for the sample, of type `string`, otherwise this column is `null`.
 
-**TODO**
+The formal schema for the labeled cohort files can be imported from the `meds` package and is documented
+[here](https://github.com/Medical-Event-Data-Standard/meds/blob/main/src/meds/schema.py#L68)
 
 ## MEDS Dataset Conventions and Best Practices
 
@@ -191,11 +209,44 @@ building maximally compatible datasets. These include:
      and
      [`meds.death_code =
      "MEDS_DEATH"`](https://github.com/Medical-Event-Data-Standard/meds/blob/main/src/meds/schema.py#L30)
-  3. The three sentinel split names: **TODO**
+  3. The three sentinel split names:
+    [`meds.train_split = "train"`](https://github.com/Medical-Event-Data-Standard/meds/blob/main/src/meds/schema.py#L106)
+    [`meds.tuning_split = "tuning"`](https://github.com/Medical-Event-Data-Standard/meds/blob/main/src/meds/schema.py#L107)
+    [`meds.held_out_split = "held_out"`](https://github.com/Medical-Event-Data-Standard/meds/blob/main/src/meds/schema.py#L108)
 
 ## Future Roadmap and How to Contribute
-**TODO**
+While MEDS enables a lot of exciting research already, we have a number of exciting plans to make it even
+better. Key ongoing efforts include but are not limited to those listed below. If you'd like to contribute to
+MEDS, either through any of these efforts or other approaches, please feel free to reach out on our GitHub. We
+welcome any and all contributions!
 
+### Multi-modal data support
+MEDS is built for supporting longitudinal, structured EHR data, but it is clear that health AI covers more
+than just this kind of data. We are actively working to extend MEDS to support additional data modalities,
+including free-text, imaging, waveform, and other data types. There are already several tools that make use of
+some free-text data through a proposed `text_value` column, but official support is still in the works. Stay
+tuned or get involved on our GitHub to help with these efforts!
+
+### Visualization and data exploration tools
+In order to model data effectively, you first have to understand it, and few things help data understanding
+more than high-quality visualization and data exploration tools. The ecosystem for such tools in the EHR data
+landscape is very limited, and we are actively working to build out a set of tools that can help researchers
+better understand their data for the MEDS format.
+
+### Standardized support for complex data pre-processing steps
+While MEDS is designed to be simple and flexible, there are a number of complex data pre-processing steps that
+are common in health AI research but not yet supported out of the box through existing tools, such as
+vocabulary conversion, unit standardization, structured-data summarization to free-text, use of large language
+models (LLMs), or data QA testing. We are actively working to build support for these tools through both
+dedicated [MEDS-Transforms](https://meds-transforms.readthedocs.io/en/stable/) stages or standalone tools on a
+case-by-case basis. Feel free to reach out if these efforts would help your research or you'd like to
+contribute!
+
+### More extensive data validation and error checking
+Health data is known to be highly noisy and suffer from high rates of errors, be it physiologically impossible
+measurements, mis-labeled data, or low-information content observations. We are actively working to build out
+standardized tools that can help automatically clean MEDS datasets to a limited degree to help researchers
+make their data more meaningful and reliable in a transparent, reproducible way.
 
 ## Key Terminology and Concepts
   1. A _subject_ in a MEDS dataset is the primary entity being described by the sequences of care observations
@@ -242,3 +293,8 @@ building maximally compatible datasets. These include:
   5. A _shard_ in a MEDS dataset is a single file containing a subset of the data for the dataset. Shards are
      used to split the data into manageable chunks for processing and storage. All data for a given _subject_
      must be stored in the same shard.
+  6. A _sample_ in a labeled cohort is one unit of prediction. This may be at the subject level or, more
+     commonly at the subject-event level, where a prediction is made for a subset of key events in a subject's
+     record. For example, we may wish to make a prediction of in-hospital mortality at the 24 hour mark after
+     admission _for each admission of a subject_ in a dataset. In this case, each admission that meets the
+     inclusion/exclusion criteria would constitute a _sample_ in the cohort.
