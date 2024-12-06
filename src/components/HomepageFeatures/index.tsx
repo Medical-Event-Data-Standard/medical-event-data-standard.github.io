@@ -10,24 +10,24 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Schockingly Simple',
+    title: 'Shockingly Simple',
     Svg: require('@site/static/img/shockingly_simple.svg').default,
     PNG: null,
     description: (
       <>
-        MEDS is designed to be the simplest possible standard for health AI, making it easy to use with
-        diverse data sources and modelling needs.
+        MEDS (Medical Event Data Standard) is the simplest possible standard for health AI, making it easy to
+        use with diverse data sources and modelling needs.
       </>
     ),
   },
   {
-    title: 'Built for AI',
+    title: 'Health AI Ecosystem',
     Svg: require('@site/static/img/built_for_AI.svg').default,
     PNG: null,
     description: (
       <>
-        MEDS focuses on performance and flexibility for both data and modeling tasks via parallelism and
-        sparse data structures.
+        MEDS empowers a high-performance and flexible health AI ecosystem to streamline your research via
+        parallelism and sparse data structures.
       </>
     ),
   },

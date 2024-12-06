@@ -5,8 +5,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'MEDS (Medical Event Data Standard)',
-  tagline: 'Building a reproducible data and modelling ecosystem for health AI',
+  title: 'MEDS: a Health AI Ecosystem',
+  tagline: 'Enabling reproducible modelling and analytics for health AI',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here

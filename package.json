@@ -15,6 +15,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@datalayer/jupyter-docusaurus-plugin": "^0.1.1",
     "@docusaurus/core": "3.6.3",
     "@docusaurus/plugin-content-pages": "^3.6.3",
     "@docusaurus/preset-classic": "3.6.3",

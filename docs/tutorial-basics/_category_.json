@@ -1,8 +1,8 @@
 {
-  "label": "Tutorial - Basics",
+  "label": "Tutorial - Build a Model with MEDS",
   "position": 3,
   "link": {
     "type": "generated-index",
-    "description": "5 minutes to learn the most important MEDS concepts."
+    "description": "Building a model with MEDS"
   }
 }

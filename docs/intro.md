@@ -30,6 +30,10 @@ software ecosystems for our modeling needs much like those built for other field
 computer vision and `transformers` for natural language processing.
 
 ## What is MEDS and how can you use it?
+
+<!--![The MEDS Schema, Visually](/img/main_descriptor.png)-->
+<img src="/img/main_descriptor.png" alt="The MEDS Schema, Visually" width="80%"/>
+
 MEDS is incredibly simple, and to get started you only need to understand one key data structure: the MEDS
 data schema. MEDS data files take the form of [`parquet` files](https://parquet.apache.org/) containing only
 four mandatory columns (plus additional optional columns):
