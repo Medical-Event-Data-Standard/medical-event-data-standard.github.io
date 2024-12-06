@@ -6,58 +6,21 @@ sidebar_position: 1
 MEDS is a data standard for structured, longitudinal medical record data, built for reproducible, efficient
 Machine Learning (ML)/Artificial Intelligence (AI) research in healthcare. It is designed to be simple,
 flexible, and interoperable with existing tools and standards. MEDS is entirely open-source and
-community-driven, and we welcome contributions from all interested parties! In this document, we will cover
-the technical requirements and conventions of MEDS datasets. In particular, we will cover:
-  1. Key terminology and concepts
+community-driven, and we welcome contributions from all interested parties!
+
+The critical aspects of the MEDS standard can be seen visually, in the image below:
+
+<center>
+    <img src="/img/data_figure.svg" alt="The MEDS Schema, Visually" width="80%"/>
+</center>
+
+Here, we show both the required organization of MEDS files on disk, as well as the schema of the core data and
+metadata elements for MEDS datasets. In the rest of this document, we will explore these key concepts in more
+detail, in particular covering:
   2. Requirements for a MEDS compliant dataset
   3. MEDS dataset conventions and best practices
   4. Future roadmap and how to contribute
-
-## Key Terminology and Concepts
-  1. A _subject_ in a MEDS dataset is the primary entity being described by the sequences of care observations
-     in the underlying dataset. In most cases, _subjects_ will, naturally, be individuals, and the sequences
-     of care observations will cover all known observations about those individuals in a source health
-     datasets. However, in some cases, data may be organized so that we cannot describe all the data for an
-     individual reliably in a dataset, but instead can only describe subsequences of an individual's data,
-     such as in datasets that only link an individual's data observations together if they are within the same
-     hospital admission, regardless of how many admissions that individual has in the dataset (such as the
-     [eICU](https://eicu-crd.mit.edu/) dataset). In these cases, a _subject_ in the MEDS dataset may refer to
-     a hospital admission rather than an individual.
-  2. A _measurement_ in a MEDS dataset is a particular observation being made on a _subject_ either statically
-     or dynamically at a point in time. _Measurements_ are the fundamental unit of data in MEDS datasets, and
-     the core data schema is a longitudinal sequence of _measurements_ for each _subject_ in the dataset.
-     Measurements generally fall into one of three categories, which may require different handling:
-       - _static measurements_ are those that are recorded in the source dataset absent a specific timestamp
-         and are assumed to be observed and applicable across all observations in the patient record. Note
-         this is _not_ the same as things that are _conceptually_ assumed to be static; e.g., a patient's race
-         may be recorded at each visit in a health record, and thus would be treated as a _dynamic_
-         measurement _in that dataset specifically_. Likewise, some datasets may have static measurements that
-         we would _conceptually_ expect to plausibly change over time, such as a patient's gender or the
-         institution of care.
-       - _time-derived measurements_ are measurements that vary in time, but are directly programmatically
-         determinable from the timestamp of the observation and the subject's static or historic data. For
-         example, a patient's age at the time of a measurement is a time-derived measurement, as it can be
-         calculated from the patient's date of birth and the timestamp of the observation. Similarly, the time
-         of day that a set of labs is taken is a time-derived measurement. Time-derived measurements are often
-         not directly recorded in the raw data, but may be inferred or added during analysis.
-       - _dynamic measurements_ are those that are recorded in the source dataset with a specific timestamp
-         indicating when the observation was made. These measurements are assumed to be observed at a single
-         unique point in time and are not necessarily applicable across all observations in the patient
-         record. As these are recorded observations, they are generally assumed to not be programmatically
-         determinable in the manner of time-derived measurements.
-
-  3. An _event_ in a MEDS dataset is a set of measurements that are observed at a single unique point in time.
-     _Measurements_ within an _event_ are not necessarily independent of each other. Further, while _event_s
-     can be meaningfully ordered in time, _measurements_ within an event should not be assumed a priori to
-     come with any meaningful ordering. In some cases, _event_ will be used interchangeably with
-     _measurement_, but when the two terms are used distinctly, _event_ will refer to those measurements that
-     share a unique timepoint, and _measurement_ will refer to the individual observations within an _event_.
-  4. Within a measurement, a _code_ is the categorical descriptor of what is being observed in that
-     measurement. _Code_s are not required to follow any particular coding vocabulary, and should be assumed
-     to be institution specific unless otherwise specified.
-  5. A _shard_ in a MEDS dataset is a single file containing a subset of the data for the dataset. Shards are
-     used to split the data into manageable chunks for processing and storage. All data for a given _subject_
-     must be stored in the same shard.
+  5. And, finally, a glossary of some key terminology and concepts
 
 ## Requirements for a MEDS Compliant Dataset
 For a dataset to be compliant with the MEDS standard at a given version (versioning is given by the PyPi
@@ -232,3 +195,50 @@ building maximally compatible datasets. These include:
 
 ## Future Roadmap and How to Contribute
 **TODO**
+
+
+## Key Terminology and Concepts
+  1. A _subject_ in a MEDS dataset is the primary entity being described by the sequences of care observations
+     in the underlying dataset. In most cases, _subjects_ will, naturally, be individuals, and the sequences
+     of care observations will cover all known observations about those individuals in a source health
+     datasets. However, in some cases, data may be organized so that we cannot describe all the data for an
+     individual reliably in a dataset, but instead can only describe subsequences of an individual's data,
+     such as in datasets that only link an individual's data observations together if they are within the same
+     hospital admission, regardless of how many admissions that individual has in the dataset (such as the
+     [eICU](https://eicu-crd.mit.edu/) dataset). In these cases, a _subject_ in the MEDS dataset may refer to
+     a hospital admission rather than an individual.
+  2. A _measurement_ in a MEDS dataset is a particular observation being made on a _subject_ either statically
+     or dynamically at a point in time. _Measurements_ are the fundamental unit of data in MEDS datasets, and
+     the core data schema is a longitudinal sequence of _measurements_ for each _subject_ in the dataset.
+     Measurements generally fall into one of three categories, which may require different handling:
+       - _static measurements_ are those that are recorded in the source dataset absent a specific timestamp
+         and are assumed to be observed and applicable across all observations in the patient record. Note
+         this is _not_ the same as things that are _conceptually_ assumed to be static; e.g., a patient's race
+         may be recorded at each visit in a health record, and thus would be treated as a _dynamic_
+         measurement _in that dataset specifically_. Likewise, some datasets may have static measurements that
+         we would _conceptually_ expect to plausibly change over time, such as a patient's gender or the
+         institution of care.
+       - _time-derived measurements_ are measurements that vary in time, but are directly programmatically
+         determinable from the timestamp of the observation and the subject's static or historic data. For
+         example, a patient's age at the time of a measurement is a time-derived measurement, as it can be
+         calculated from the patient's date of birth and the timestamp of the observation. Similarly, the time
+         of day that a set of labs is taken is a time-derived measurement. Time-derived measurements are often
+         not directly recorded in the raw data, but may be inferred or added during analysis.
+       - _dynamic measurements_ are those that are recorded in the source dataset with a specific timestamp
+         indicating when the observation was made. These measurements are assumed to be observed at a single
+         unique point in time and are not necessarily applicable across all observations in the patient
+         record. As these are recorded observations, they are generally assumed to not be programmatically
+         determinable in the manner of time-derived measurements.
+
+  3. An _event_ in a MEDS dataset is a set of measurements that are observed at a single unique point in time.
+     _Measurements_ within an _event_ are not necessarily independent of each other. Further, while _event_s
+     can be meaningfully ordered in time, _measurements_ within an event should not be assumed a priori to
+     come with any meaningful ordering. In some cases, _event_ will be used interchangeably with
+     _measurement_, but when the two terms are used distinctly, _event_ will refer to those measurements that
+     share a unique timepoint, and _measurement_ will refer to the individual observations within an _event_.
+  4. Within a measurement, a _code_ is the categorical descriptor of what is being observed in that
+     measurement. _Code_s are not required to follow any particular coding vocabulary, and should be assumed
+     to be institution specific unless otherwise specified.
+  5. A _shard_ in a MEDS dataset is a single file containing a subset of the data for the dataset. Shards are
+     used to split the data into manageable chunks for processing and storage. All data for a given _subject_
+     must be stored in the same shard.

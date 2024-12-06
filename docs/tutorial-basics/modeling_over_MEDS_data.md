@@ -1,5 +1,5 @@
 ---
-sidebar_position: 3
+sidebar_position: 5
 ---
 
-# Running Machine Learning Models on MEDS Data
+# Modeling over MEDS data
