@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.6.3">
 <title data-rh="true">Converting to MEDS | MEDS: a Health AI Ecosystem</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://medical-event-data-standard.github.io/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://medical-event-data-standard.github.io/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://medical-event-data-standard.github.io/docs/tutorial-basics/converting_to_MEDS"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Converting to MEDS | MEDS: a Health AI Ecosystem"><meta data-rh="true" name="description" content="If you&#x27;re using a public dataset, it may already be available in the MEDS format! Check out"><meta data-rh="true" property="og:description" content="If you&#x27;re using a public dataset, it may already be available in the MEDS format! Check out"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://medical-event-data-standard.github.io/docs/tutorial-basics/converting_to_MEDS"><link data-rh="true" rel="alternate" href="https://medical-event-data-standard.github.io/docs/tutorial-basics/converting_to_MEDS" hreflang="en"><link data-rh="true" rel="alternate" href="https://medical-event-data-standard.github.io/docs/tutorial-basics/converting_to_MEDS" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.840b7df8.css">
-<script src="/assets/js/runtime~main.f71c21ad.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.616d56bd.js" defer="defer"></script>
 <script src="/assets/js/main.bb9a2188.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -17,7 +17,11 @@ simple tools and packages. In particular, if your dataset is in the OMOP format,
 ETL</a> to extract
 your data directly to the MEDS format.</p>
 <p>Otherwise, in the below tutorial, we will demonstrate how to convert the patient and procedure table in MIMIC-IV to MEDS using simple Python.</p>
-<p>Note that for complex ETLs, it might be worth looking into ETL support packages such as <a href="https://github.com/Medical-Event-Data-Standard/meds_etl/" target="_blank" rel="noopener noreferrer">meds_etl</a> or <a href="https://meds-transforms.readthedocs.io/en/stable/" target="_blank" rel="noopener noreferrer">MEDS-Transform</a>.</p>
+<p>Note that for complex ETLs, it might be worth looking into ETL support packages such as <a href="https://github.com/Medical-Event-Data-Standard/meds_etl/" target="_blank" rel="noopener noreferrer">meds_etl</a> or <a href="https://meds-transforms.readthedocs.io/en/stable/" target="_blank" rel="noopener noreferrer">MEDS-Transform</a>.
+In particular, for MEDS-Transforms derived ETLs, you can also leverage
+<a href="https://github.com/mmcdermott/ETL_MEDS_Template" target="_blank" rel="noopener noreferrer">this ETL template repository</a> to help build testable,
+pip-installable, one-command runnable ETLs for custom datasets, like
+<a href="https://github.com/mmcdermott/MIMIC_IV_MEDS" target="_blank" rel="noopener noreferrer">this example for MIMIC-IV</a>.</p>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="tutorial-set-up">Tutorial Set-up<a href="#tutorial-set-up" class="hash-link" aria-label="Direct link to Tutorial Set-up" title="Direct link to Tutorial Set-up">​</a></h2>
 <p><a href="https://colab.research.google.com/drive/1QNpCkDO6Z6NzdJ44-F7Hx5DSo7xT12G7" target="_blank" rel="noopener noreferrer">https://colab.research.google.com/drive/1QNpCkDO6Z6NzdJ44-F7Hx5DSo7xT12G7</a> contains a live version of this colab.</p>
 <p>We need to start by pip installing meds</p>
@@ -50,22 +54,20 @@ your data directly to the MEDS format.</p>
 import polars as pl</p>
 <p>patients = pl.read_csv(&#x27;download/mimic-iv-demo/2.2/hosp/patients.csv.gz&#x27;, infer_schema_length=0)</p>
 <p>birth_year = pl.col(&#x27;anchor_year&#x27;).cast(pl.Int32) - pl.col(&#x27;anchor_age&#x27;).cast(pl.Int32)</p>
-<p>birth_event = patients.select(subject_id=pl.col(&#x27;subject_id&#x27;).cast(pl.Int64), code=pl.lit(meds.birth_code), time=pl.datetime(birth_year, 1, 1))
-gender_event = patients.select(subject_id=pl.col(&#x27;subject_id&#x27;).cast(pl.Int64), code=&#x27;Gender/&#x27; + pl.col(&#x27;gender&#x27;), time=pl.datetime(birth_year, 1, 1))
-death_event = patients.select(subject_id=pl.col(&#x27;subject_id&#x27;).cast(pl.Int64), code=pl.lit(meds.death_code), time=pl.col(&#x27;dod&#x27;).str.to_datetime()).filter(pl.col(&#x27;time&#x27;).is_not_null())</p>
+<p>birth_event = patients.select(subject_id=pl.col(&#x27;subject_id&#x27;).cast(pl.Int64), code=pl.lit(meds.birth_code), time=pl.datetime(birth_year, 1, 1))</p>
+<p>gender_event = patients.select(subject_id=pl.col(&#x27;subject_id&#x27;).cast(pl.Int64), code=&#x27;Gender/&#x27; + pl.col(&#x27;gender&#x27;), time=pl.datetime(birth_year, 1, 1))</p>
+<p>death_event = patients.select(subject_id=pl.col(&#x27;subject_id&#x27;).cast(pl.Int64), code=pl.lit(meds.death_code), time=pl.col(&#x27;dod&#x27;).str.to_datetime()).filter(pl.col(&#x27;time&#x27;).is_not_null())</p>
 <p>all_events.extend([birth_event, gender_event, death_event])</p>
 </blockquote>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="procedures">Procedures<a href="#procedures" class="hash-link" aria-label="Direct link to Procedures" title="Direct link to Procedures">​</a></h3>
 <p>Next, we want to process the procedure table. As before, this is mainly renaming columns.</p>
 <blockquote>
 <p>procedures = pl.read_csv(&#x27;download/mimic-iv-demo/2.2/hosp/procedures_icd.csv.gz&#x27;, infer_schema_length=0)</p>
-<p>procedure_event = procedures.select(</p>
-<h1>We need code and time</h1>
-<p>subject_id=pl.col(&#x27;subject_id&#x27;).cast(pl.Int64),
+<p>procedure_event = procedures.select(
+subject_id=pl.col(&#x27;subject_id&#x27;).cast(pl.Int64),
 code=&#x27;ICD&#x27; + pl.col(&#x27;icd_version&#x27;) + &#x27;/&#x27; + pl.col(&#x27;icd_code&#x27;),
-time=pl.col(&#x27;chartdate&#x27;).str.to_datetime(),</p>
-<h1>We can also include other information</h1>
-<p>seq_num = pl.col(&#x27;seq_num&#x27;).cast(pl.Int64),
+time=pl.col(&#x27;chartdate&#x27;).str.to_datetime(),
+seq_num = pl.col(&#x27;seq_num&#x27;).cast(pl.Int64),
 hadm_id = pl.col(&#x27;hadm_id&#x27;).cast(pl.Int64),
 )</p>
 <p>all_events.append(procedure_event)</p>
