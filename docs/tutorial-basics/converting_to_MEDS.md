@@ -110,7 +110,7 @@ Finally, we save our data as parquet files in the necessary folder.
 
 > sorted_events_table.write_parquet('mimic-iv-demo-meds/data/all_data.parquet')
 
-### Complete
+## Done!
 
 The ETL for these two tables is now complete, with mimic-iv-demo-meds containing the resulting MEDS dataset.
 
