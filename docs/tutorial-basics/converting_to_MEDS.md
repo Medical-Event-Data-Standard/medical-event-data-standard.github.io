@@ -20,6 +20,10 @@ your data directly to the MEDS format.
 Otherwise, in the below tutorial, we will demonstrate how to convert the patient and procedure table in MIMIC-IV to MEDS using simple Python.
 
 Note that for complex ETLs, it might be worth looking into ETL support packages such as [meds_etl](https://github.com/Medical-Event-Data-Standard/meds_etl/) or [MEDS-Transform](https://meds-transforms.readthedocs.io/en/stable/).
+In particular, for MEDS-Transforms derived ETLs, you can also leverage
+[this ETL template repository](https://github.com/mmcdermott/ETL_MEDS_Template) to help build testable,
+pip-installable, one-command runnable ETLs for custom datasets, like
+[this example for MIMIC-IV](https://github.com/mmcdermott/MIMIC_IV_MEDS).
 
 
 ## Tutorial Set-up
