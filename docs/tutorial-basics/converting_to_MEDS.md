@@ -72,7 +72,9 @@ Note the use of meds.birth_code and meds.death_code to mark birth and death.
 > 
 > 
 > birth_event = patients.select(subject_id=pl.col('subject_id').cast(pl.Int64), code=pl.lit(meds.birth_code), time=pl.datetime(birth_year, 1, 1))
+> 
 > gender_event = patients.select(subject_id=pl.col('subject_id').cast(pl.Int64), code='Gender/' + pl.col('gender'), time=pl.datetime(birth_year, 1, 1))
+> 
 > death_event = patients.select(subject_id=pl.col('subject_id').cast(pl.Int64), code=pl.lit(meds.death_code), time=pl.col('dod').str.to_datetime()).filter(pl.col('time').is_not_null())
 > 
 > all_events.extend([birth_event, gender_event, death_event])
@@ -85,12 +87,9 @@ Next, we want to process the procedure table. As before, this is mainly renaming
 > procedures = pl.read_csv('download/mimic-iv-demo/2.2/hosp/procedures_icd.csv.gz', infer_schema_length=0)
 > 
 > procedure_event = procedures.select(
->                                    # We need code and time
 >                                    subject_id=pl.col('subject_id').cast(pl.Int64),
 >                                    code='ICD' + pl.col('icd_version') + '/' + pl.col('icd_code'),
 >                                    time=pl.col('chartdate').str.to_datetime(),
->
->                                    # We can also include other information
 >                                    seq_num = pl.col('seq_num').cast(pl.Int64),
 >                                    hadm_id = pl.col('hadm_id').cast(pl.Int64),
 >                                    )
