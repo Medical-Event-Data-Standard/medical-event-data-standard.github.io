@@ -16,291 +16,104 @@ simple tools and packages. In particular, if your dataset is in the OMOP format,
 ETL](https://github.com/Medical-Event-Data-Standard/meds_etl/tree/main?tab=readme-ov-file#omop) to extract
 your data directly to the MEDS format.
 
-Otherwise, in the below tutorial, we will demonstrate how you can use the
-[MEDS-Transforms](https://meds-transforms.readthedocs.io/en/stable/) package to extract (nearly) arbitrary
-input structured datasets into the MEDS format easily and efficiently.
+Otherwise, in the below tutorial, we will demonstrate how to convert the patient and procedure table in MIMIC-IV to MEDS using simple Python.
+
+Note that for complex ETLs, it might be worth looking into ETL support packages such as [meds_etl](https://github.com/Medical-Event-Data-Standard/meds_etl/) or [MEDS-Transform](https://meds-transforms.readthedocs.io/en/stable/).
+In particular, for MEDS-Transforms derived ETLs, you can also leverage
+[this ETL template repository](https://github.com/mmcdermott/ETL_MEDS_Template) to help build testable,
+pip-installable, one-command runnable ETLs for custom datasets, like
+[this example for MIMIC-IV](https://github.com/mmcdermott/MIMIC_IV_MEDS).
+
 
 ## Tutorial Set-up
 
+https://colab.research.google.com/drive/1QNpCkDO6Z6NzdJ44-F7Hx5DSo7xT12G7 contains a live version of this colab.
 
-```python
-import os
-from pathlib import Path
+We need to start by pip installing meds
 
-DEMO_DIR = Path(os.getenv("MEDS_DEMO_DIR", "./demo_output"))
-```
+> pip install meds==0.3.3
 
 ### Input Dataset
 
-### Installation
+For this tutorial, we are going to be using the publicly available MIMIC-IV demo dataset.
+
+> wget -q -r -N -c --no-host-directories --cut-dirs=1 -np -P download https://physionet.org/files/mimic-iv-demo/2.2/
+
+## Core Folder Structure
+
+The core folder structure of MEDS is a root folder with data and metadata subfolders.
+
+> !mkdir mimic-iv-demo-meds
+> 
+> !mkdir mimic-iv-demo-meds/data # Place to store data
+> !mkdir mimic-iv-demo-meds/metadata # Place to put metadata
+
+## Constructing Events
+
+The Medical Event Data Standard is based around converting a dataset into timestamped events.
+
+We start by creating a list to aggregate all events
+
+> all_events = []
+
+### Demographics
+
+First, we want to process the demographics in the patient table. This is mainly just renaming columns.
+
+Note the use of meds.birth_code and meds.death_code to mark birth and death.
+
+> import meds
+> import polars as pl
+> 
+> patients = pl.read_csv('download/mimic-iv-demo/2.2/hosp/patients.csv.gz', infer_schema_length=0)
+> 
+> birth_year = pl.col('anchor_year').cast(pl.Int32) - pl.col('anchor_age').cast(pl.Int32)
+> 
+> 
+> birth_event = patients.select(subject_id=pl.col('subject_id').cast(pl.Int64), code=pl.lit(meds.birth_code), time=pl.datetime(birth_year, 1, 1))
+> 
+> gender_event = patients.select(subject_id=pl.col('subject_id').cast(pl.Int64), code='Gender/' + pl.col('gender'), time=pl.datetime(birth_year, 1, 1))
+> 
+> death_event = patients.select(subject_id=pl.col('subject_id').cast(pl.Int64), code=pl.lit(meds.death_code), time=pl.col('dod').str.to_datetime()).filter(pl.col('time').is_not_null())
+> 
+> all_events.extend([birth_event, gender_event, death_event])
 
 
-```python
-MIMICIV_RAW_DIR = "https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map"
-MIMICIV_PRE_MEDS_DIR = DEMO_DIR / "pre_meds/"
-MIMICIV_PRE_MEDS_DIR.mkdir(parents=True, exist_ok=True)
+### Procedures
 
-OUTPUT_DIR = DEMO_DIR / "download/mimic-iv-demo/2.2"
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+Next, we want to process the procedure table. As before, this is mainly renaming columns.
 
-files = [
-    'd_labitems_to_loinc.csv',
-    'inputevents_to_rxnorm.csv',
-    'lab_itemid_to_loinc.csv',
-    'meas_chartevents_main.csv',
-    'meas_chartevents_value.csv',
-    'numerics-summary.csv',
-    'outputevents_to_loinc.csv',
-    'proc_datetimeevents.csv',
-    'proc_itemid.csv',
-    'waveforms-summary.csv'
-]
+> procedures = pl.read_csv('download/mimic-iv-demo/2.2/hosp/procedures_icd.csv.gz', infer_schema_length=0)
+> 
+> procedure_event = procedures.select(
+>                                    subject_id=pl.col('subject_id').cast(pl.Int64),
+>                                    code='ICD' + pl.col('icd_version') + '/' + pl.col('icd_code'),
+>                                    time=pl.col('chartdate').str.to_datetime(),
+>                                    seq_num = pl.col('seq_num').cast(pl.Int64),
+>                                    hadm_id = pl.col('hadm_id').cast(pl.Int64),
+>                                    )
+> 
+> all_events.append(procedure_event)
 
-for file in files:
-    !wget -O {OUTPUT_DIR}/{file} {MIMICIV_RAW_DIR}/{file}
-    !wget -O {MIMICIV_PRE_MEDS_DIR}/{file} {MIMICIV_RAW_DIR}/{file}
-```
+Note that we added some extra columns, seq_num and hadm_id, that are not part of the MEDS standard. MEDS supports arbitrary additional columns.
 
-    --2024-12-10 10:57:46--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/d_labitems_to_loinc.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.110.133, 185.199.111.133, 185.199.108.133, ...
-    connected. to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.110.133|:443... 
-    HTTP request sent, awaiting response... 200 OK
-    Length: 361048 (353K) [text/plain]
-    Saving to: ‘demo_output/download/mimic-iv-demo/2.2/d_labitems_to_loinc.csv’
-    
-    demo_output/downloa 100%[===================>] 352.59K  --.-KB/s    in 0.07s   
-    
-    2024-12-10 10:57:47 (4.90 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/d_labitems_to_loinc.csv’ saved [361048/361048]
-    
-    --2024-12-10 10:57:48--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/d_labitems_to_loinc.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.110.133, 185.199.111.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.109.133|:443... connected.
-    200 OKequest sent, awaiting response... 
-    Length: 361048 (353K) [text/plain]
-    Saving to: ‘demo_output/pre_meds/d_labitems_to_loinc.csv’
-    
-    demo_output/pre_med 100%[===================>] 352.59K  --.-KB/s    in 0.1s    
-    
-    2024-12-10 10:57:48 (3.21 MB/s) - ‘demo_output/pre_meds/d_labitems_to_loinc.csv’ saved [361048/361048]
-    
-    --2024-12-10 10:57:48--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/inputevents_to_rxnorm.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.108.133, 185.199.110.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
-    200 OKequest sent, awaiting response... 
-    Length: 79195 (77K) [text/plain]
-    Saving to: ‘demo_output/download/mimic-iv-demo/2.2/inputevents_to_rxnorm.csv’
-    
-    demo_output/downloa 100%[===================>]  77.34K  --.-KB/s    in 0.01s   
-    
-    2024-12-10 10:57:49 (6.90 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/inputevents_to_rxnorm.csv’ saved [79195/79195]
-    
-    --2024-12-10 10:57:49--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/inputevents_to_rxnorm.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.110.133, 185.199.111.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
-    HTTP request sent, awaiting response... 200 OK
-    Length: 79195 (77K) [text/plain]
-    Saving to: ‘demo_output/pre_meds/inputevents_to_rxnorm.csv’
-    
-    demo_output/pre_med 100%[===================>]  77.34K  --.-KB/s    in 0.01s   
-    
-    2024-12-10 10:57:49 (5.74 MB/s) - ‘demo_output/pre_meds/inputevents_to_rxnorm.csv’ saved [79195/79195]
-    
-    --2024-12-10 10:57:49--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/lab_itemid_to_loinc.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.111.133, 185.199.109.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
-    200 OKequest sent, awaiting response... 
-    Length: 79970 (78K) [text/plain]
-    Saving to: ‘demo_output/download/mimic-iv-demo/2.2/lab_itemid_to_loinc.csv’
-    
-    demo_output/downloa 100%[===================>]  78.10K  --.-KB/s    in 0.01s   
-    
-    2024-12-10 10:57:49 (5.89 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/lab_itemid_to_loinc.csv’ saved [79970/79970]
-    
-    --2024-12-10 10:57:50--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/lab_itemid_to_loinc.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.110.133, 185.199.109.133, 185.199.108.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.110.133|:443... connected.
-    HTTP request sent, awaiting response... 200 OK
-    Length: 79970 (78K) [text/plain]
-    Saving to: ‘demo_output/pre_meds/lab_itemid_to_loinc.csv’
-    
-    demo_output/pre_med 100%[===================>]  78.10K  --.-KB/s    in 0.01s   
-    
-    2024-12-10 10:57:50 (6.60 MB/s) - ‘demo_output/pre_meds/lab_itemid_to_loinc.csv’ saved [79970/79970]
-    
-    --2024-12-10 10:57:50--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/meas_chartevents_main.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.109.133, 185.199.110.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
-    HTTP request sent, awaiting response... 200 OK
-    Length: 34862 (34K) [text/plain]
-    Saving to: ‘demo_output/download/mimic-iv-demo/2.2/meas_chartevents_main.csv’
-    
-    demo_output/downloa 100%[===================>]  34.04K  --.-KB/s    in 0.001s  
-    
-    2024-12-10 10:57:50 (39.4 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/meas_chartevents_main.csv’ saved [34862/34862]
-    
-    --2024-12-10 10:57:50--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/meas_chartevents_main.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.108.133, 185.199.111.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.109.133|:443... connected.
-    HTTP request sent, awaiting response... 200 OK
-    Length: 34862 (34K) [text/plain]
-    Saving to: ‘demo_output/pre_meds/meas_chartevents_main.csv’
-    
-    demo_output/pre_med 100%[===================>]  34.04K  --.-KB/s    in 0.009s  
-    
-    2024-12-10 10:57:50 (3.76 MB/s) - ‘demo_output/pre_meds/meas_chartevents_main.csv’ saved [34862/34862]
-    
-    --2024-12-10 10:57:50--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/meas_chartevents_value.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.110.133, 185.199.109.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
-    200 OKequest sent, awaiting response... 
-    Length: 5902 (5.8K) [text/plain]
-    Saving to: ‘demo_output/download/mimic-iv-demo/2.2/meas_chartevents_value.csv’
-    
-    demo_output/downloa 100%[===================>]   5.76K  --.-KB/s    in 0s      
-    
-    2024-12-10 10:57:51 (110 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/meas_chartevents_value.csv’ saved [5902/5902]
-    
-    --2024-12-10 10:57:51--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/meas_chartevents_value.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.111.133, 185.199.109.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
-    HTTP request sent, awaiting response... 200 OK
-    Length: 5902 (5.8K) [text/plain]
-    Saving to: ‘demo_output/pre_meds/meas_chartevents_value.csv’
-    
-    demo_output/pre_med 100%[===================>]   5.76K  --.-KB/s    in 0s      
-    
-    2024-12-10 10:57:51 (58.7 MB/s) - ‘demo_output/pre_meds/meas_chartevents_value.csv’ saved [5902/5902]
-    
-    --2024-12-10 10:57:51--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/numerics-summary.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.110.133, 185.199.111.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.109.133|:443... connected.
-    200 OKequest sent, awaiting response... 
-    Length: 32353 (32K) [text/plain]
-    Saving to: ‘demo_output/download/mimic-iv-demo/2.2/numerics-summary.csv’
-    
-    demo_output/downloa 100%[===================>]  31.59K  --.-KB/s    in 0.006s  
-    
-    2024-12-10 10:57:51 (5.56 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/numerics-summary.csv’ saved [32353/32353]
-    
-    --2024-12-10 10:57:51--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/numerics-summary.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.110.133, 185.199.108.133, 185.199.109.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.110.133|:443... connected.
-    200 OKequest sent, awaiting response... 
-    Length: 32353 (32K) [text/plain]
-    Saving to: ‘demo_output/pre_meds/numerics-summary.csv’
-    
-    demo_output/pre_med 100%[===================>]  31.59K  --.-KB/s    in 0.003s  
-    
-    2024-12-10 10:57:52 (9.94 MB/s) - ‘demo_output/pre_meds/numerics-summary.csv’ saved [32353/32353]
-    
-    --2024-12-10 10:57:52--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/outputevents_to_loinc.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.109.133, 185.199.108.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
-    HTTP request sent, awaiting response... 200 OK
-    Length: 34008 (33K) [text/plain]
-    Saving to: ‘demo_output/download/mimic-iv-demo/2.2/outputevents_to_loinc.csv’
-    
-    demo_output/downloa 100%[===================>]  33.21K  --.-KB/s    in 0.001s  
-    
-    2024-12-10 10:57:52 (29.5 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/outputevents_to_loinc.csv’ saved [34008/34008]
-    
-    --2024-12-10 10:57:52--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/outputevents_to_loinc.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.110.133, 185.199.111.133, 185.199.108.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.110.133|:443... connected.
-    HTTP request sent, awaiting response... 200 OK
-    Length: 34008 (33K) [text/plain]
-    Saving to: ‘demo_output/pre_meds/outputevents_to_loinc.csv’
-    
-    demo_output/pre_med 100%[===================>]  33.21K  --.-KB/s    in 0.006s  
-    
-    2024-12-10 10:57:52 (5.07 MB/s) - ‘demo_output/pre_meds/outputevents_to_loinc.csv’ saved [34008/34008]
-    
-    --2024-12-10 10:57:52--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/proc_datetimeevents.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.111.133, 185.199.110.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.109.133|:443... connected.
-    HTTP request sent, awaiting response... 200 OK
-    Length: 25205 (25K) [text/plain]
-    Saving to: ‘demo_output/download/mimic-iv-demo/2.2/proc_datetimeevents.csv’
-    
-    demo_output/downloa 100%[===================>]  24.61K  --.-KB/s    in 0s      
-    
-    2024-12-10 10:57:53 (139 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/proc_datetimeevents.csv’ saved [25205/25205]
-    
-    --2024-12-10 10:57:53--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/proc_datetimeevents.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.108.133, 185.199.110.133, ...
-    connected. to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... 
-    HTTP request sent, awaiting response... 200 OK
-    Length: 25205 (25K) [text/plain]
-    Saving to: ‘demo_output/pre_meds/proc_datetimeevents.csv’
-    
-    demo_output/pre_med 100%[===================>]  24.61K  --.-KB/s    in 0.01s   
-    
-    2024-12-10 10:57:53 (1.90 MB/s) - ‘demo_output/pre_meds/proc_datetimeevents.csv’ saved [25205/25205]
-    
-    --2024-12-10 10:57:53--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/proc_itemid.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.111.133, 185.199.110.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
-    200 OKequest sent, awaiting response... 
-    Length: 21414 (21K) [text/plain]
-    Saving to: ‘demo_output/download/mimic-iv-demo/2.2/proc_itemid.csv’
-    
-    demo_output/downloa 100%[===================>]  20.91K  --.-KB/s    in 0.001s  
-    
-    2024-12-10 10:57:53 (32.1 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/proc_itemid.csv’ saved [21414/21414]
-    
-    --2024-12-10 10:57:54--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/proc_itemid.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.110.133, 185.199.111.133, ...
-    Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.109.133|:443... connected.
-    200 OKequest sent, awaiting response... 
-    Length: 21414 (21K) [text/plain]
-    Saving to: ‘demo_output/pre_meds/proc_itemid.csv’
-    
-    demo_output/pre_med 100%[===================>]  20.91K  --.-KB/s    in 0s      
-    
-    2024-12-10 10:57:54 (161 MB/s) - ‘demo_output/pre_meds/proc_itemid.csv’ saved [21414/21414]
-    
-    --2024-12-10 10:57:54--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/waveforms-summary.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.110.133, 185.199.108.133, 185.199.109.133, ...
-    connected. to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.110.133|:443... 
-    200 OKequest sent, awaiting response... 
-    Length: 5743 (5.6K) [text/plain]
-    Saving to: ‘demo_output/download/mimic-iv-demo/2.2/waveforms-summary.csv’
-    
-    demo_output/downloa 100%[===================>]   5.61K  --.-KB/s    in 0s      
-    
-    2024-12-10 10:57:54 (58.4 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/waveforms-summary.csv’ saved [5743/5743]
-    
-    --2024-12-10 10:57:54--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/waveforms-summary.csv
-    Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.108.133, 185.199.110.133, ...
-    connected. to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... 
-    HTTP request sent, awaiting response... 200 OK
-    Length: 5743 (5.6K) [text/plain]
-    Saving to: ‘demo_output/pre_meds/waveforms-summary.csv’
-    
-    demo_output/pre_med 100%[===================>]   5.61K  --.-KB/s    in 0s      
-    
-    2024-12-10 10:57:54 (41.7 MB/s) - ‘demo_output/pre_meds/waveforms-summary.csv’ saved [5743/5743]
-    
+## Sorting
 
+Finally, we have to sort the data by subject_id and time.
 
-## Extracting Data to MEDS
+A special note is this step is often difficult for large datasets, and we recommend [sort feature within meds_etl](https://github.com/Medical-Event-Data-Standard/meds_etl?tab=readme-ov-file#meds-unsorted) when performing large ETLs.
 
-### Writing the Event Configuration File
+> all_events_table = pl.concat(all_events, how='diagonal')
+> sorted_events_table = all_events_table.sort(pl.col('subject_id'), pl.col('time'))
 
-### Copying the Pipeline Configuration File
+## Save To Parquet
 
-### Running the Pipeline
+Finally, we save our data as parquet files in the necessary folder.
 
-## Advanced Topics
+> sorted_events_table.write_parquet('mimic-iv-demo-meds/data/all_data.parquet')
 
-### Parallelizing your Pipeline
+## Done!
 
-### Extracting Metadata
+The ETL for these two tables is now complete, with mimic-iv-demo-meds containing the resulting MEDS dataset.
 
-### Additional Post-processing
-
-
-
-```python
-
-```
+Note that this is only an ETL for two tables with MIMIC-IV. A full ETL for MIMIC-IV can be found in https://github.com/Medical-Event-Data-Standard/meds_etl/blob/main/src/meds_etl/mimic/__init__.py
