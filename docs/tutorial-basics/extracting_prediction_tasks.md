@@ -2,13 +2,17 @@
 sidebar_position: 4
 ---
 
+import JupyterViewer from "react-jupyter-notebook";
+import nb from "../../tutorial_notebooks/tutorial-basics/extracting_prediction_tasks.ipynb";
+
 # Extracting a Prediction Task Cohort from MEDS Data
 
-To easily extract prediction tasks from MEDS Data, you can use the
-[ACES](https://eventstreamaces.readthedocs.io/en/stable/) package. This package allows you to define simple
+To easily extract prediction tasks from MEDS Data, we will use the
+[ACES](https://eventstreamaces.readthedocs.io/en/latest/) package. This package allows you to define simple
 configuration files that specify the inclusion/exclusion criteria for tasks you want to extract and have them
-be automatically extractable from MEDS data via a command line interface.
+be automatically extractable from MEDS data via a command line interface. See the 
+[ACES documentation](https://eventstreamaces.readthedocs.io/en/stable/) for more information.
 
-See the [ACES documentation](https://eventstreamaces.readthedocs.io/en/stable/) or the dedicated ACES task
-extraction tutorial in [MEDS-DEV](https://github.com/mmcdermott/MEDS-DEV/blob/demo/demo/aces.ipynb) for more
-information on how to use the package.
+In this tutorial, we'll run an end-to-end extraction of a prediction task from the MIMIC-IV Demo dataset.
+
+<JupyterViewer rawIpynb={nb} />
