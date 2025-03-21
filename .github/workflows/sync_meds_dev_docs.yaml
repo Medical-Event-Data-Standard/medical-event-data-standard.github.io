@@ -1,0 +1,43 @@
+name: Sync Docs from Source Repo
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs daily at midnight UTC
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  sync-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Docusaurus Repo
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+
+      - name: Clone Source Code Repository
+        run: |
+          git clone --depth=1 https://github.com/Medical-Event-Data-Standard/MEDS-DEV.git MEDS-DEV
+
+      - name: Run Script to Copy & Rename README Files from MEDS-DEV
+        run: bash src/get_meds_dev_data.sh
+      
+      - name: Remove the cloned MEDS-DEV directory
+        run: |
+          rm -rf MEDS-DEV
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Sync README files from source repo" || echo "No changes to commit"
+          git push origin main
+
+      - name: Deploy Docusaurus
+        run: |
+          npm install
+          npm run build
+          npm run deploy
