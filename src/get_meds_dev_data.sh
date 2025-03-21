@@ -31,3 +31,9 @@ for dir in "${ALLOWED_DIRS[@]}"; do
         done
     fi
 done
+
+# TODO should probably ensure the whole directory structure is overwritten
+# depending on whether we would like to have some extra overview files.
+# However, not strictly overwriting the docs would mean that if we would like to 
+# delete some task/dataset/model from MEDS-DEV we would also have to delete it from
+# here manually.
