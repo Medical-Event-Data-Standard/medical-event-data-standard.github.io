@@ -33,6 +33,29 @@ const config: Config = {
     locales: ['en'],
   },
 
+  plugins: [
+    function myPlugin(context, options) {
+      return {
+        name: 'custom-webpack-config',
+        configureWebpack(config, isServer, utils) {
+          return {
+            module: {
+              rules: [
+                {
+                  test: /\.ipynb$/, // Match all .ipynb files
+                  type: 'json' // Treat as JSON in Webpack 5+
+                }
+              ]
+            },
+            resolve: {
+              extensions: ['.js', '.json', '.ipynb'] // Allow importing .ipynb
+            }
+          };
+        }
+      };
+    }
+  ],
+
   presets: [
     [
       'classic',
@@ -42,7 +65,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/tree/main/docs',
         },
         // blog: {
         //   showReadingTime: true,

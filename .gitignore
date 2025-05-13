@@ -20,3 +20,6 @@ yarn-debug.log*
 yarn-error.log*
 
 MEDS-DEV/*
+# Jupyter
+.ipynb_checkpoints
+demo_output
