@@ -105,6 +105,12 @@ const config: Config = {
           position: 'left',
           label: 'Tutorials',
         },
+        {
+          type: 'docSidebar',
+          sidebarId: 'medsDevSidebar',
+          position: 'left',
+          label: 'MEDS-DEV',
+        },
         //{to: '/blog', label: 'Blog', position: 'left'},
         {
           href: 'https://github.com/Medical-Event-Data-Standard',
