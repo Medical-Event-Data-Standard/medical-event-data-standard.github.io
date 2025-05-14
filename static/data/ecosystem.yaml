@@ -83,6 +83,18 @@ dataset_etls:
         demo_available: false
         pypi_name: "AUMCdb_MEDS"
         github_repo: "prockenschaub/AUMCdb_MEDS"
+      - name: "NWICU"
+        demo_available: false
+        pypi_name: "NWICU_MEDS"
+        github_repo: "rvandewater/NWICU_MEDS"
+      - name: "SICdb"
+        demo_available: false
+        pypi_name: "SICdb_MEDS"
+        github_repo: "rvandewater/SICdb_MEDS"
+      - name: "INSPIRE"
+        demo_available: false
+        pypi_name: "INSPIRE_MEDS"
+        github_repo: "rvandewater/INSPIRE_MEDS"
 
   other_standards:
     title: "Alternate Data Standards"
