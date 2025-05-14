@@ -97,6 +97,7 @@ const config: Config = {
       logo: {
         alt: 'MEDS Logo',
         src: 'img/logo.svg',
+        srcDark: 'img/logo-dark.svg',
       },
       items: [
         {
