@@ -1,6 +1,7 @@
 tools:
   title: "Tools"
   description: "Tools/packages for working with MEDS datasets across various AI tasks"
+  icon: "Build"
 
   core:
     title: "MEDS Core"
@@ -52,6 +53,7 @@ tools:
 dataset_etls:
   title: "Dataset ETLs"
   description: "Publicly available ETL pipelines for converting EHR datasets into the MEDS format."
+  icon: "Storage"
 
   templates_and_tools:
     title: "ETL Templates/Tools"
@@ -92,6 +94,7 @@ dataset_etls:
 models:
   title: "Published Models"
   description: "Publicly available, reproducible model training recipes you can use on your MEDS data."
+  icon: "ModelTraining"
 
   packages:
     - name: "CEHR-BERT"
