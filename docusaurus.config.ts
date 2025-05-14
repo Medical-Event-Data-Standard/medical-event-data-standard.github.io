@@ -101,9 +101,9 @@ const config: Config = {
       items: [
         {
           type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
+          sidebarId: 'mainSidebar',
           position: 'left',
-          label: 'Tutorials',
+          label: 'Get Started',
         },
         //{to: '/blog', label: 'Blog', position: 'left'},
         {
