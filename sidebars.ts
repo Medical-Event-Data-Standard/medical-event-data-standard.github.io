@@ -16,6 +16,7 @@ const sidebars: SidebarsConfig = {
   // By default, Docusaurus generates a sidebar from the docs folder structure
   mainSidebar: [
     'intro_pages/intro',
+    'intro_pages/what_is_MEDS',
     {
       type: 'category',
       label: 'Tutorials',
@@ -26,19 +27,6 @@ const sidebars: SidebarsConfig = {
     'intro_pages/ecosystem',
     'intro_pages/roadmap',
   ],
-
-  // But you can create a sidebar manually
-  /*
-  tutorialSidebar: [
-    'intro',
-    'hello',
-    {
-      type: 'category',
-      label: 'Tutorial',
-      items: ['tutorial-basics/create-a-document'],
-    },
-  ],
-   */
 };
 
 export default sidebars;
