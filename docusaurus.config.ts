@@ -92,18 +92,24 @@ const config: Config = {
   themeConfig: {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
+    colorMode: {
+      defaultMode: 'light',
+      respectPrefersColorScheme: false,
+      disableSwitch: true,
+    },
     navbar: {
       title: 'MEDS',
       logo: {
         alt: 'MEDS Logo',
         src: 'img/logo.svg',
+        srcDark: 'img/logo-dark.svg',
       },
       items: [
         {
           type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
+          sidebarId: 'mainSidebar',
           position: 'left',
-          label: 'Tutorials',
+          label: 'Get Started',
         },
         {
           type: 'docSidebar',

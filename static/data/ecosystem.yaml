@@ -1,0 +1,116 @@
+tools:
+  title: "Tools"
+  description: "Tools/packages for working with MEDS datasets across various AI tasks"
+  icon: "Build"
+
+  core:
+    title: "MEDS Core"
+    description: "Core components of the MEDS ecosystem, including the schema and fundamental utilities."
+    packages:
+      - name: "MEDS Schema"
+        pypi_name: "meds"
+        github_repo: "Medical-Event-Data-Standard/meds"
+
+  preprocessing:
+    title: "Preprocessing"
+    description: "Tools for preprocessing EHR data that is in the MEDS format or for building custom ETLs."
+    packages:
+      - name: "MEDS-Reader"
+        pypi_name: "meds-reader"
+        github_repo: "som-shahlab/meds_reader"
+        docs_url: "https://meds-reader.readthedocs.io"
+      - name: "MEDS Transforms"
+        pypi_name: "MEDS-Transforms"
+        github_repo: "mmcdermott/MEDS_transforms"
+        docs_url: "https://meds-transforms.readthedocs.io"
+
+  exploration:
+    title: "Exploration and Visualization"
+    description: "Tools for exploring, visualizing, and understanding MEDS datasets."
+    packages:
+      - name: "MEDS-Inspect"
+        pypi_name: "MEDS-Inspect"
+        github_repo: "rvandewater/MEDS-Inspect"
+
+  task_extraction:
+    title: "Task Extraction"
+    description: "Tools for extracting prediction task cohorts from MEDS datasets."
+    packages:
+      - name: "ACES"
+        paper_url: "https://openreview.net/forum?id=P4XmKjXTrM"
+        pypi_name: "es-aces"
+        github_repo: "justin13601/ACES"
+        docs_url: "https://eventstreamaces.readthedocs.io"
+
+  model_evaluation:
+    title: "Model Evaluation"
+    description: "Tools for evaluating models trained on MEDS datasets."
+    packages:
+      - name: "meds-evaluation"
+        pypi_name: "meds-evaluation"
+        github_repo: "kamilest/meds-evaluation"
+
+dataset_etls:
+  title: "Dataset ETLs"
+  description: "Publicly available ETL pipelines for converting EHR datasets into the MEDS format."
+  icon: "Storage"
+
+  templates_and_tools:
+    title: "ETL Templates/Tools"
+    description: "Template ETLs or tools to build your own custom ETLs."
+
+    packages:
+      - name: "ETL Template"
+        github_repo: "Medical-Event-Data-Standard/ETL_MEDS_Template"
+      - name: "MEDS-ETL"
+        github_repo: "Medical-Event-Data-Standard/meds_etl"
+        warn: "_Use for the MIMIC dataset is deprecated_!"
+      - name: "MEDS Extract"
+        pypi_name: "MEDS-extract"
+        github_repo: "mmcdermott/MEDS_extract"
+
+
+  publicly_available_datasets:
+    title: "Public Datasets"
+    description: "ETLs for datasets that are open for public use (subject to DUA and license agreements)."
+
+    packages:
+      - name: "MIMIC-IV"
+        demo_available: true
+        pypi_name: "MIMIC-IV-MEDS"
+        github_repo: "Medical-Event-Data-Standard/MIMIC_IV_MEDS"
+      - name: "AUMCdb"
+        demo_available: false
+        pypi_name: "AUMCdb_MEDS"
+        github_repo: "prockenschaub/AUMCdb_MEDS"
+      - name: "NWICU"
+        demo_available: false
+        pypi_name: "NWICU_MEDS"
+        github_repo: "rvandewater/NWICU_MEDS"
+      - name: "SICdb"
+        demo_available: false
+        pypi_name: "SICdb_MEDS"
+        github_repo: "rvandewater/SICdb_MEDS"
+      - name: "INSPIRE"
+        demo_available: false
+        pypi_name: "INSPIRE_MEDS"
+        github_repo: "rvandewater/INSPIRE_MEDS"
+
+  other_standards:
+    title: "Alternate Data Standards"
+    description: "ETLs for converting from other EHR data standards (e.g., OMOP)."
+    packages:
+      - name: "OMOP (via MEDS-ETL)"
+        github_repo: "Medical-Event-Data-Standard/meds_etl"
+
+models:
+  title: "Published Models"
+  description: "Publicly available, reproducible model training recipes you can use on your MEDS data."
+  icon: "ModelTraining"
+
+  packages:
+    - name: "CEHR-BERT"
+      paper_url: "https://proceedings.mlr.press/v158/pang21a.html"
+      github_repo: "cumc-dbmi/cehrbert"
+      pypi_name: "cehrbert"
+      MEDS_DEV_name: "cehrbert"
