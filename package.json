@@ -27,10 +27,12 @@
     "clsx": "^2.0.0",
     "gh-pages": "^6.2.0",
     "js-yaml": "^4.1.0",
+    "plotly.js": "^3.0.1",
     "prism-react-renderer": "^2.3.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "react-jupyter-notebook": "^0.4.0"
+    "react-jupyter-notebook": "^0.4.0",
+    "react-plotly.js": "^2.6.0"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "^3.7.0",
