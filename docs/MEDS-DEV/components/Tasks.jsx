@@ -16,16 +16,16 @@ import {
 import { ContentCopy } from '@mui/icons-material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-import { load_MEDS_DEV, DATASETS } from '@site/src/MEDS-DEV/load.js';
-import Dataset from './Dataset';
+import { load_MEDS_DEV, TASKS } from '@site/src/MEDS-DEV/load.js';
+import Task from './Task';
 import EntityPage from './EntityPage';
 
 
 export default function Datasets() {
   return (
     <EntityPage
-      target={DATASETS}
-      Entity={Dataset}
+      target={TASKS}
+      Entity={Task}
     />
   );
 }
