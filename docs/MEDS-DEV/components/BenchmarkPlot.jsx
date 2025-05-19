@@ -9,11 +9,11 @@ import {
   Select,
   Typography,
 } from '@mui/material';
+import { load_MEDS_DEV, RESULTS } from '@site/src/MEDS-DEV/load.js';
+import BrowserOnly from '@docusaurus/BrowserOnly';
 
-const RESULTS_URL =
-  'https://raw.githubusercontent.com/Medical-Event-Data-Standard/MEDS-DEV/_web/results/all_results.json';
 
-export default function BenchmarkPlot() {
+function BenchmarkInner() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dataset, setDataset] = useState('');
@@ -21,18 +21,9 @@ export default function BenchmarkPlot() {
   const [metricSet, setMetricSet] = useState('samples_equally_weighted');
 
   useEffect(() => {
-    axios
-      .get(RESULTS_URL)
-      .then((res) => {
-        const dict = res.data;
-        const parsed = Object.entries(dict).map(([id, result]) => ({ id, ...result }));
-        setResults(parsed);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('Failed to fetch benchmark results:', err);
-        setLoading(false);
-      });
+    load_MEDS_DEV(RESULTS)
+    .then((res => { setResults(res); }))
+    .finally(() => { setLoading(false); })
   }, []);
 
   if (loading) return <CircularProgress />;
@@ -109,3 +100,10 @@ export default function BenchmarkPlot() {
   );
 }
 
+export default function BenchmarkPlot() {
+  return (
+    <BrowserOnly fallback={<div>Loading client-side plot...</div>}>
+      {() => <BenchmarkInner />}
+    </BrowserOnly>
+  );
+}
