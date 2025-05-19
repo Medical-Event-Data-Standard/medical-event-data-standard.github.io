@@ -13,11 +13,12 @@ import { load_MEDS_DEV, RESULTS } from '@site/src/MEDS-DEV/load.js';
 import BrowserOnly from '@docusaurus/BrowserOnly';
 
 
-function BenchmarkInner() {
+function BenchmarkInner({ datasetFilter, modelFilter, taskFilter }) {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dataset, setDataset] = useState('');
-  const [task, setTask] = useState('');
+  const [dataset, setDataset] = useState(datasetFilter || '');
+  const [task, setTask] = useState(taskFilter || '');
+  const [model, setModel] = useState(modelFilter || '');
   const [metricSet, setMetricSet] = useState('samples_equally_weighted');
 
   useEffect(() => {
@@ -30,8 +31,12 @@ function BenchmarkInner() {
 
   const allDatasets = [...new Set(results.map((r) => r.dataset))].sort();
   const filteredByDataset = dataset ? results.filter((r) => r.dataset === dataset) : results;
+
   const allTasks = [...new Set(filteredByDataset.map((r) => r.task))].sort();
-  const filtered = task ? filteredByDataset.filter((r) => r.task === task) : filteredByDataset;
+  const filteredByTask = task ? filteredByDataset.filter((r) => r.task === task) : filteredByDataset;
+
+  const allModels = [...new Set(filteredByTask.map((r) => r.model))].sort();
+  const filtered = model ? filteredByTask.filter((r) => r.model === model) : filteredByTask;
 
   const plotData = filtered.map((r) => {
     const metrics = r.result?.[metricSet] || {};
@@ -74,6 +79,14 @@ function BenchmarkInner() {
           </Select>
         </FormControl>
 
+        <FormControl size="small" sx={{ minWidth: 300 }}>
+          <InputLabel>Model</InputLabel>
+          <Select value={model} label="Model" onChange={(e) => setModel(e.target.value)}>
+            <MenuItem value=""><em>All</em></MenuItem>
+            {allModels.map((m) => <MenuItem key={m} value={m}>{m}</MenuItem>)}
+          </Select>
+        </FormControl>
+
         <FormControl size="small" sx={{ minWidth: 250 }}>
           <InputLabel>Metric Set</InputLabel>
           <Select value={metricSet} label="Metric Set" onChange={(e) => setMetricSet(e.target.value)}>
@@ -100,10 +113,12 @@ function BenchmarkInner() {
   );
 }
 
-export default function BenchmarkPlot() {
+export default function BenchmarkPlot({ datasetFilter, modelFilter, taskFilter }) {
   return (
     <BrowserOnly fallback={<div>Loading client-side plot...</div>}>
-      {() => <BenchmarkInner />}
+      {() => (
+        <BenchmarkInner datasetFilter={datasetFilter} modelFilter={modelFilter} taskFilter={taskFilter} />
+      )}
     </BrowserOnly>
   );
 }
