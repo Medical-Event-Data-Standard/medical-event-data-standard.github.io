@@ -1,12 +1,12 @@
 export interface TreeNode {
-  children: Record<string, TreeNode | ParsedTree>;
+  children: Record<string, TreeNode>;
   [key: string]: unknown;
 }
 
 type FlatTree = Record<string, { children: string[] } & Record<string, unknown>>;
 type ParsedTree = Record<string, TreeNode>;
 
-function parseTreeNode(data: FlatTree, key: string, tree: ParsedTree, seen: Set<string>): ParsedTree {
+function parseTreeNode(data: FlatTree, key: string, tree: ParsedTree, seen: Set<string>): TreeNode {
   if (!(key in data)) {
     throw new Error(`Key ${key} not found in data`);
   }
@@ -26,9 +26,8 @@ function parseTreeNode(data: FlatTree, key: string, tree: ParsedTree, seen: Set<
     }
   }
 
-  tree[key] = node;
   seen.add(key);
-  return tree;
+  return node;
 }
 
 export function parseTree(data: FlatTree): ParsedTree {
@@ -37,7 +36,7 @@ export function parseTree(data: FlatTree): ParsedTree {
 
   for (const key of Object.keys(data)) {
     if (!seen.has(key)) {
-      parseTreeNode(data, key, tree, seen);
+      tree[key] = parseTreeNode(data, key, tree, seen);
     }
   }
 
