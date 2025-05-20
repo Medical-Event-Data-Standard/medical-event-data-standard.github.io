@@ -18,8 +18,6 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import BenchmarkPlot from './BenchmarkPlot';
 import Markdown from 'react-markdown';
 
-const BASE_URL = 'https://raw.githubusercontent.com/Medical-Event-Data-Standard/MEDS-DEV/_web/metadata/datasets';
-
 function InfoBlock({ readme, metadata, refs }) {
   const [copied, setCopied] = useState(false);
 

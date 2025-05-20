@@ -17,8 +17,7 @@ import { ContentCopy } from '@mui/icons-material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import BenchmarkPlot from './BenchmarkPlot';
 import Markdown from 'react-markdown';
-
-const BASE_URL = 'https://raw.githubusercontent.com/Medical-Event-Data-Standard/MEDS-DEV/_web/metadata/datasets';
+import GitHubAvatar from './GitHubAvatar';
 
 function InfoBlock({ readme, metadata, refs }) {
   const [copied, setCopied] = useState(false);
@@ -58,15 +57,7 @@ function InfoBlock({ readme, metadata, refs }) {
         <Box mb={3}>
           <Typography variant="h5" gutterBottom>Contacts</Typography>
           {contacts.map((c, i) => (
-            <Chip
-              key={i}
-              label={`${c.name} (${c.github})`}
-              sx={{ mr: 1, mb: 1 }}
-              component="a"
-              href={`https://github.com/${c.github}`}
-              target="_blank"
-              clickable
-            />
+            <GitHubAvatar key={i} name={c.name} github_username={c.github_username} />
           ))}
         </Box>
       )}
