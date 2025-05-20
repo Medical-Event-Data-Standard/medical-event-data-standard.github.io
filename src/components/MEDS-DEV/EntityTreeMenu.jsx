@@ -17,9 +17,8 @@ function RecursiveTreeItem({ name, entity }) {
   );
 }
 
-export default function EntityPage({ target, Entity }) {
+export default function EntityPage({ target }) {
   const [data, setData] = useState(null);
-  const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,7 +29,7 @@ export default function EntityPage({ target, Entity }) {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [target]);
 
   if (loading) return <CircularProgress />;
   if (!data) return <Typography>{`No ${target} entities found.`}</Typography>;

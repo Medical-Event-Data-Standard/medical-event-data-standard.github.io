@@ -1,16 +1,18 @@
+import unusedImports from 'eslint-plugin-unused-imports';
+import react from 'eslint-plugin-react';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import tsParser from '@typescript-eslint/parser';
 import { fixupConfigRules, fixupPluginRules } from '@eslint/compat';
 import jsxA11Y from 'eslint-plugin-jsx-a11y';
 import prettier from 'eslint-plugin-prettier';
+import importPlugin from 'eslint-plugin-import';
+import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import js from '@eslint/js';
 import { FlatCompat } from '@eslint/eslintrc';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import * as mdx from 'eslint-plugin-mdx';
-import unusedImports from 'eslint-plugin-unused-imports';
-import react from 'eslint-plugin-react';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -22,16 +24,7 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
-  globalIgnores(['node_modules/', 'build/', '.docusaurus/']),
-  {
-    ...mdx.flat,
-  },
-  {
-    ...mdx.flatCodeBlocks,
-    rules: {
-      ...mdx.flatCodeBlocks.rules,
-    },
-  },
+  globalIgnores(['node_modules/', 'build/', '.docusaurus/', '**/.ipynb_checkpoints/', '**/*.ipynb']),
   {
     languageOptions: {
       parser: tsParser,
@@ -60,7 +53,8 @@ export default defineConfig([
         'plugin:import/warnings',
         'plugin:import/typescript',
         'plugin:prettier/recommended',
-        'prettier'
+        'prettier',
+        'plugin:react-hooks/recommended'
       )
     ),
 
@@ -69,6 +63,8 @@ export default defineConfig([
       prettier: fixupPluginRules(prettier),
       'unused-imports': fixupPluginRules(unusedImports),
       react: fixupPluginRules(react),
+      import: fixupPluginRules(importPlugin),
+      'react-hooks': fixupPluginRules(reactHooks),
     },
 
     settings: {
@@ -82,9 +78,6 @@ export default defineConfig([
         },
         alias: {
           map: [['@site', '.']],
-        },
-        node: {
-          extensions: ['.js', '.jsx', '.ts', '.tsx', '.json', '.mdx'],
         },
       },
     },
@@ -117,6 +110,7 @@ export default defineConfig([
   },
   {
     files: ['**/*.mdx', '**/*.md'],
+    ...mdx.flat,
 
     rules: {
       'react/jsx-no-undef': 'off',

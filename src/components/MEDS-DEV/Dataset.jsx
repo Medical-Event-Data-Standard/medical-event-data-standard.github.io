@@ -96,7 +96,7 @@ function InfoBlock({ readme, metadata, refs }) {
   );
 }
 
-function TechnicalBlock({ requirements, predicates, commands }) {
+function TechnicalBlock({ requirements, commands }) {
   const { build_full = null, build_demo = null } = commands || {};
 
   const build_command = build_full || build_demo;

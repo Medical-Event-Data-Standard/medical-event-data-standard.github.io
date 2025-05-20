@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import yaml from 'js-yaml';
+import { load } from 'js-yaml';
 import PackageTable from './PackageTable';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -15,7 +15,7 @@ export default function Ecosystem({ yamlUrl }) {
   useEffect(() => {
     fetch(yamlUrl)
       .then(res => res.text())
-      .then(text => yaml.load(text))
+      .then(text => load(text))
       .then(setData);
   }, [yamlUrl]);
 
