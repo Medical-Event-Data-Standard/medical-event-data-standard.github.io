@@ -30,29 +30,34 @@ jobs:
         run: npm ci
 
       - name: Find modified files
-        id: file_changes
+        id: changed-files
         uses: tj-actions/changed-files@v44
         with:
-          separator: ' '
           files: |
-            **/*.ts
-            **/*.tsx
-            **/*.js
-            **/*.jsx
-            **/*.md
-            **/*.mdx
+            **.ts
+            **.tsx
+            **.js
+            **.jsx
+            **.md
+            **.mdx
 
       - name: List modified files
-        run: echo '${{ steps.file_changes.outputs.files}}'
+        if: steps.changed-files.outputs.any_changed == 'true'
+        env:
+          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+        run: |
+          for file in ${ALL_CHANGED_FILES}; do
+            echo "$file was changed"
+          done
 
       - name: Run Prettier check on changed files
-        if: ${{ steps.file_changes.outputs.all_changed_files != '' }}
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           echo "Checking formatting..."
-          npm run prettier:check -- ${{ steps.file_changes.outputs.all_changed_files }}
+          npm run prettier:check -- ${{ steps.changed-files.outputs.all_changed_files }}
 
       - name: Run ESLint on changed files
-        if: ${{ steps.file_changes.outputs.all_changed_files != '' }}
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           echo "Linting..."
-          npm run lint -- ${{ steps.file_changes.outputs.all_changed_files }}
+          npm run lint -- ${{ steps.changed-files.outputs.all_changed_files }}
