@@ -9,7 +9,7 @@ import {
   Select,
   Typography,
 } from '@mui/material';
-import { load_MEDS_DEV, RESULTS } from '@site/src/MEDS-DEV/load.js';
+import { load_MEDS_DEV, RESULTS } from '@site/src/lib/load';
 import BrowserOnly from '@docusaurus/BrowserOnly';
 
 

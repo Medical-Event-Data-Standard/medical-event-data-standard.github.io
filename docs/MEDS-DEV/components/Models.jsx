@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { ContentCopy } from '@mui/icons-material';
 
-import { load_MEDS_DEV, MODELS } from '@site/src/MEDS-DEV/load.js';
+import { load_MEDS_DEV, MODELS } from '@site/src/lib/load';
 import Model from './Model';
 //import EntityPage from './EntityTreeMenu';
 import EntityPage from './EntityPage';

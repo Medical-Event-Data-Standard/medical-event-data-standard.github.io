@@ -17,8 +17,8 @@ import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
 
 
-import { load_MEDS_DEV } from '@site/src/MEDS-DEV/load.js';
-import { parse_tree } from '@site/src/MEDS-DEV/parse_tree.js';
+import { load_MEDS_DEV } from '@site/src/lib/load';
+import { parse_tree } from '@site/src/lib/parse_tree';
 
 function RecursiveTreeItem({ name, entity }) {
   return (

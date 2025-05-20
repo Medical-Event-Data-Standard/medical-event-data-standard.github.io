@@ -16,7 +16,7 @@ import {
 import { ContentCopy } from '@mui/icons-material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-import { load_MEDS_DEV } from '@site/src/MEDS-DEV/load.js';
+import { load_MEDS_DEV } from '@site/src/lib/load';
 
 export default function EntityPage({ target, Entity }) {
   const [data, setData] = useState(null);
