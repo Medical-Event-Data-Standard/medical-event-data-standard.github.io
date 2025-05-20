@@ -22,12 +22,14 @@ import GitHubAvatar from './GitHubAvatar';
 function InfoBlock({ readme, metadata, refs }) {
   const [copied, setCopied] = useState(false);
 
-  const { description=null, links=[], contacts=[] } = metadata || {};
+  const { description = null, links = [], contacts = [] } = metadata || {};
 
   return (
     <Box mb={3}>
       {description && (
-        <Typography variant="body1" gutterBottom>{description}</Typography>
+        <Typography variant="body1" gutterBottom>
+          {description}
+        </Typography>
       )}
 
       <Divider sx={{ my: 3 }} />
@@ -40,7 +42,9 @@ function InfoBlock({ readme, metadata, refs }) {
 
       {links.length > 0 && (
         <Box mb={3}>
-          <Typography variant="h5" gutterBottom>Links</Typography>
+          <Typography variant="h5" gutterBottom>
+            Links
+          </Typography>
           <ul>
             {links.map((l, i) => (
               <li key={i}>
@@ -55,7 +59,9 @@ function InfoBlock({ readme, metadata, refs }) {
 
       {contacts.length > 0 && (
         <Box mb={3}>
-          <Typography variant="h5" gutterBottom>Contacts</Typography>
+          <Typography variant="h5" gutterBottom>
+            Contacts
+          </Typography>
           {contacts.map((c, i) => (
             <GitHubAvatar key={i} name={c.name} github_username={c.github_username} />
           ))}
@@ -69,7 +75,7 @@ function InfoBlock({ readme, metadata, refs }) {
           </AccordionSummary>
           <AccordionDetails>
             <Paper variant="outlined" sx={{ p: 2, position: 'relative' }}>
-              <Tooltip title={copied ? "Copied!" : "Copy"}>
+              <Tooltip title={copied ? 'Copied!' : 'Copy'}>
                 <IconButton
                   sx={{ position: 'absolute', top: 8, right: 8 }}
                   onClick={() => {
@@ -93,7 +99,7 @@ function InfoBlock({ readme, metadata, refs }) {
 }
 
 function TechnicalBlock({ requirements, commands }) {
-  const { build_full=null, build_demo=null } = commands || {};
+  const { build_full = null, build_demo = null } = commands || {};
 
   const build_command = build_full || build_demo;
 
@@ -101,7 +107,9 @@ function TechnicalBlock({ requirements, commands }) {
     <Box mb={3}>
       {(requirements || build_command) && (
         <Box mb={3}>
-          <Typography variant="h5" gutterBottom>Install Instructions</Typography>
+          <Typography variant="h5" gutterBottom>
+            Install Instructions
+          </Typography>
           {requirements && (
             <Box component="pre" sx={{ backgroundColor: '#f5f5f5', p: 2, overflowX: 'auto' }}>
               {requirements}
@@ -119,24 +127,26 @@ function TechnicalBlock({ requirements, commands }) {
 }
 
 export default function Model({ name, data }) {
-
   const { readme, model, refs, requirements } = data.data;
 
   const { metadata, commands } = model || {};
 
   return (
     <Box sx={{ maxWidth: 1000, margin: '0 auto' }}>
-      <Typography variant="h3" gutterBottom>{name}</Typography>
+      <Typography variant="h3" gutterBottom>
+        {name}
+      </Typography>
 
       <InfoBlock readme={readme} metadata={metadata} refs={refs} />
 
       <TechnicalBlock requirements={requirements} commands={commands} />
 
       <Box mt={5}>
-        <Typography variant="h5" gutterBottom>Benchmark Results</Typography>
+        <Typography variant="h5" gutterBottom>
+          Benchmark Results
+        </Typography>
         <BenchmarkPlot modelFilter={name} />
       </Box>
     </Box>
   );
 }
-

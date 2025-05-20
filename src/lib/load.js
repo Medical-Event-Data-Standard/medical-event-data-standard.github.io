@@ -17,30 +17,29 @@ export const TASKS = 'tasks';
 async function fetch_url(url) {
   return axios
     .get(url)
-    .then((res) => {
-      return res.data
+    .then(res => {
+      return res.data;
     })
-    .catch((err) => {
+    .catch(err => {
       console.error(`Failed to fetch data from ${url}:`, err);
       return null;
     });
 }
 
 export async function fetch_results() {
-  return fetch_url(RESULTS_URL)
-    .then((data) => (Object.entries(data).map(([id, result]) => ({ id, ...result }))));
+  return fetch_url(RESULTS_URL).then(data => Object.entries(data).map(([id, result]) => ({ id, ...result })));
 }
 
 export async function fetch_datasets() {
-  return fetch_url(DATASETS_URL)
+  return fetch_url(DATASETS_URL);
 }
 
 export async function fetch_models() {
-  return fetch_url(MODELS_URL)
+  return fetch_url(MODELS_URL);
 }
 
 export async function fetch_tasks() {
-  return fetch_url(TASKS_URL)
+  return fetch_url(TASKS_URL);
 }
 
 export async function fetch_MEDS_DEV(target) {
@@ -58,15 +57,14 @@ export async function fetch_MEDS_DEV(target) {
   }
 }
 
-
 function read_cache(key) {
   const cached = localStorage.getItem(key);
   if (cached) {
     try {
       const { data, timestamp } = JSON.parse(cached);
       return {
-        "data": data,
-        "is_fresh": (Date.now() - timestamp) < CACHE_TTL_MS
+        data: data,
+        is_fresh: Date.now() - timestamp < CACHE_TTL_MS,
       };
     } catch (err) {
       console.warn(`Cache read for ${key} failed (${err}). Clearing...`);
@@ -74,7 +72,7 @@ function read_cache(key) {
     }
   }
 
-  return {"data": null, "is_fresh": false};
+  return { data: null, is_fresh: false };
 }
 
 export async function load_MEDS_DEV(target) {
@@ -87,14 +85,11 @@ export async function load_MEDS_DEV(target) {
   }
 
   return fetch_MEDS_DEV(target)
-    .then((result) => {
-      localStorage.setItem(
-        cache_key,
-        JSON.stringify({ data: result, timestamp: Date.now() })
-      );
+    .then(result => {
+      localStorage.setItem(cache_key, JSON.stringify({ data: result, timestamp: Date.now() }));
       return result;
     })
-    .catch((err) => {
+    .catch(err => {
       console.warn(`Failed to fetch ${target}:`, err);
       if (data) {
         console.warn(`Using stale cached data for ${target}`);

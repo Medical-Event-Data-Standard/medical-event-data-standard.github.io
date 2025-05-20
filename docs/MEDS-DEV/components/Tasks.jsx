@@ -20,12 +20,6 @@ import { load_MEDS_DEV, TASKS } from '@site/src/lib/load';
 import Task from './Task';
 import EntityPage from './EntityPage';
 
-
 export default function Datasets() {
-  return (
-    <EntityPage
-      target={TASKS}
-      Entity={Task}
-    />
-  );
+  return <EntityPage target={TASKS} Entity={Task} />;
 }

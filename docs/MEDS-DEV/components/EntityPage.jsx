@@ -25,8 +25,12 @@ export default function EntityPage({ target, Entity }) {
 
   useEffect(() => {
     load_MEDS_DEV(target)
-    .then((res => { setData(res); }))
-    .finally(() => { setLoading(false); })
+      .then(res => {
+        setData(res);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   if (loading) return <CircularProgress />;
@@ -35,7 +39,10 @@ export default function EntityPage({ target, Entity }) {
   //data is an object mapping dataset names to their metadata
   return (
     <Box>
-      <Typography variant="h4" gutterBottom> {target} </Typography>
+      <Typography variant="h4" gutterBottom>
+        {' '}
+        {target}{' '}
+      </Typography>
 
       {Object.entries(data).map(([name, entity]) => (
         <Accordion key={name}>

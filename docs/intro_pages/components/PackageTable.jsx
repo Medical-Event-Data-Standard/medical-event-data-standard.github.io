@@ -50,14 +50,10 @@ export default function PackageTable({ packages }) {
         </tr>
       </thead>
       <tbody>
-        {pkgData.map((pkg) => (
+        {pkgData.map(pkg => (
           <tr key={pkg.name}>
             <td>
-              {pkg.github_repo ? (
-                <a href={`https://github.com/${pkg.github_repo}`}>{pkg.name}</a>
-              ) : (
-                pkg.name
-              )}
+              {pkg.github_repo ? <a href={`https://github.com/${pkg.github_repo}`}>{pkg.name}</a> : pkg.name}
             </td>
             <td>
               {pkg.warn ? <em>{pkg.warn}</em> : '—'}
@@ -66,20 +62,14 @@ export default function PackageTable({ packages }) {
             <td>{pkg.stars ?? '—'}</td>
             <td>{pkg.latest_release ?? '—'}</td>
             <td>{pkg.updated_at ? new Date(pkg.updated_at).toLocaleDateString() : '—'}</td>
-            <td>
-              {pkg.docs_url ? (
-                <a href={pkg.docs_url}>Docs</a>
-              ) : '—'}
-            </td>
-            <td>
-              {pkg.paper_url ? (
-                <a href={pkg.paper_url}>Paper</a>
-              ) : '—'}
-            </td>
+            <td>{pkg.docs_url ? <a href={pkg.docs_url}>Docs</a> : '—'}</td>
+            <td>{pkg.paper_url ? <a href={pkg.paper_url}>Paper</a> : '—'}</td>
             <td>
               {pkg.pypi_name ? (
                 <a href={`https://pypi.org/project/${pkg.pypi_name}`}>{pkg.pypi_name}</a>
-              ) : '—'}
+              ) : (
+                '—'
+              )}
             </td>
           </tr>
         ))}
@@ -87,4 +77,3 @@ export default function PackageTable({ packages }) {
     </table>
   );
 }
-

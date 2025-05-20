@@ -21,12 +21,14 @@ import Markdown from 'react-markdown';
 function InfoBlock({ readme, metadata, refs }) {
   const [copied, setCopied] = useState(false);
 
-  const { description=null, links=[], contacts=[] } = metadata || {};
+  const { description = null, links = [], contacts = [] } = metadata || {};
 
   return (
     <Box mb={3}>
       {description && (
-        <Typography variant="body1" gutterBottom>{description}</Typography>
+        <Typography variant="body1" gutterBottom>
+          {description}
+        </Typography>
       )}
 
       <Divider sx={{ my: 3 }} />
@@ -39,7 +41,9 @@ function InfoBlock({ readme, metadata, refs }) {
 
       {links.length > 0 && (
         <Box mb={3}>
-          <Typography variant="h5" gutterBottom>Links</Typography>
+          <Typography variant="h5" gutterBottom>
+            Links
+          </Typography>
           <ul>
             {links.map((l, i) => (
               <li key={i}>
@@ -54,7 +58,9 @@ function InfoBlock({ readme, metadata, refs }) {
 
       {contacts.length > 0 && (
         <Box mb={3}>
-          <Typography variant="h5" gutterBottom>Contacts</Typography>
+          <Typography variant="h5" gutterBottom>
+            Contacts
+          </Typography>
           {contacts.map((c, i) => (
             <Chip
               key={i}
@@ -76,7 +82,7 @@ function InfoBlock({ readme, metadata, refs }) {
           </AccordionSummary>
           <AccordionDetails>
             <Paper variant="outlined" sx={{ p: 2, position: 'relative' }}>
-              <Tooltip title={copied ? "Copied!" : "Copy"}>
+              <Tooltip title={copied ? 'Copied!' : 'Copy'}>
                 <IconButton
                   sx={{ position: 'absolute', top: 8, right: 8 }}
                   onClick={() => {
@@ -100,22 +106,24 @@ function InfoBlock({ readme, metadata, refs }) {
 }
 
 export default function Task({ name, data }) {
-
   const { readme, task, refs } = data.data;
 
   const { metadata } = task || {};
 
   return (
     <Box sx={{ maxWidth: 1000, margin: '0 auto' }}>
-      <Typography variant="h3" gutterBottom>{name}</Typography>
+      <Typography variant="h3" gutterBottom>
+        {name}
+      </Typography>
 
       <InfoBlock readme={readme} metadata={metadata} refs={refs} />
 
       <Box mt={5}>
-        <Typography variant="h5" gutterBottom>Benchmark Results</Typography>
+        <Typography variant="h5" gutterBottom>
+          Benchmark Results
+        </Typography>
         <BenchmarkPlot taskFilter={name} />
       </Box>
     </Box>
   );
 }
-

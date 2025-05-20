@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   CircularProgress,
@@ -16,16 +15,16 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
 
-
 import { load_MEDS_DEV } from '@site/src/lib/load';
 import { parse_tree } from '@site/src/lib/parse_tree';
 
 function RecursiveTreeItem({ name, entity }) {
   return (
     <TreeItem key={name} itemId={name} label={name}>
-      {entity.children && Object.entries(entity.children).map(([childName, childEntity]) => (
-        <RecursiveTreeItem key={childName} name={childName} entity={childEntity} />
-      ))}
+      {entity.children &&
+        Object.entries(entity.children).map(([childName, childEntity]) => (
+          <RecursiveTreeItem key={childName} name={childName} entity={childEntity} />
+        ))}
     </TreeItem>
   );
 }
@@ -37,8 +36,12 @@ export default function EntityPage({ target, Entity }) {
 
   useEffect(() => {
     load_MEDS_DEV(target)
-    .then((res => { setData(parse_tree(res)); }))
-    .finally(() => { setLoading(false); })
+      .then(res => {
+        setData(parse_tree(res));
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   if (loading) return <CircularProgress />;
@@ -47,7 +50,10 @@ export default function EntityPage({ target, Entity }) {
   //data is an object mapping dataset names to their metadata
   return (
     <Box>
-      <Typography variant="h4" gutterBottom> {target} </Typography>
+      <Typography variant="h4" gutterBottom>
+        {' '}
+        {target}{' '}
+      </Typography>
 
       <SimpleTreeView>
         {Object.entries(data).map(([name, entity]) => (

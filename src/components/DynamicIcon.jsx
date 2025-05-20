@@ -8,4 +8,3 @@ export default function DynamicIcon({ iconName, ...props }) {
 
   return <IconComponent {...props} />;
 }
-

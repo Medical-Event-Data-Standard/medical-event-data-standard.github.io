@@ -8,8 +8,8 @@ export default function MarkdownVersionedPage({ repo, markdownPath }) {
   const [selectedVersion, setSelectedVersion] = useState('main');
 
   useEffect(() => {
-    axios.get(`https://api.github.com/repos/${repo}/tags`).then((res) => {
-      const tags = res.data.map((tag) => tag.name);
+    axios.get(`https://api.github.com/repos/${repo}/tags`).then(res => {
+      const tags = res.data.map(tag => tag.name);
       setVersions(['main', ...tags]);
     });
   }, [repo]);
@@ -18,13 +18,8 @@ export default function MarkdownVersionedPage({ repo, markdownPath }) {
 
   return (
     <div>
-      <VersionSelector
-        versions={versions}
-        selectedVersion={selectedVersion}
-        onChange={setSelectedVersion}
-      />
+      <VersionSelector versions={versions} selectedVersion={selectedVersion} onChange={setSelectedVersion} />
       <MarkdownViewer markdownUrl={markdownUrl} />
     </div>
   );
 }
-

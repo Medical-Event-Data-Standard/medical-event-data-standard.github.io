@@ -20,12 +20,6 @@ import Model from './Model';
 //import EntityPage from './EntityTreeMenu';
 import EntityPage from './EntityPage';
 
-
 export default function Datasets() {
-  return (
-    <EntityPage
-      target={MODELS}
-      Entity={Model}
-    />
-  );
+  return <EntityPage target={MODELS} Entity={Model} />;
 }

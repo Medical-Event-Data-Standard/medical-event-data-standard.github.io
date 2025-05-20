@@ -11,11 +11,11 @@ export default function URLMarkdownViewer({ markdownUrl }) {
     setLoading(true);
     axios
       .get(markdownUrl)
-      .then((res) => {
+      .then(res => {
         setContent(res.data);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(err => {
         setError(err.message);
         setLoading(false);
       });

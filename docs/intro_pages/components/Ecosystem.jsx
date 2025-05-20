@@ -14,8 +14,8 @@ export default function Ecosystem({ yamlUrl }) {
 
   useEffect(() => {
     fetch(yamlUrl)
-      .then((res) => res.text())
-      .then((text) => yaml.load(text))
+      .then(res => res.text())
+      .then(text => yaml.load(text))
       .then(setData);
   }, [yamlUrl]);
 
@@ -35,16 +35,15 @@ export default function Ecosystem({ yamlUrl }) {
             <AccordionSummary
               expandIcon={<ExpandMoreIcon />}
               aria-controls={`${categoryKey}-content`}
-              id={`${categoryKey}-header`}>
+              id={`${categoryKey}-header`}
+            >
               <Typography variant="h4">
                 {categoryData.icon && <DynamicIcon iconName={categoryData.icon} sx={{ mr: 1 }} />}
                 {categoryData.title}
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography variant="subtitle1">
-                {categoryData.description}
-              </Typography>
+              <Typography variant="subtitle1">{categoryData.description}</Typography>
               {Object.entries(categoryData).map(([subKey, subData]) => {
                 if (subData.packages) {
                   return (
@@ -58,9 +57,7 @@ export default function Ecosystem({ yamlUrl }) {
                 return null;
               })}
 
-              {categoryData.packages && (
-                <PackageTable packages={categoryData.packages} />
-              )}
+              {categoryData.packages && <PackageTable packages={categoryData.packages} />}
             </AccordionDetails>
           </Accordion>
         </div>
@@ -68,4 +65,3 @@ export default function Ecosystem({ yamlUrl }) {
     </div>
   );
 }
-
