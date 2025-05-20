@@ -8,6 +8,9 @@ import js from '@eslint/js';
 import { FlatCompat } from '@eslint/eslintrc';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import * as mdx from 'eslint-plugin-mdx';
+import unusedImports from 'eslint-plugin-unused-imports';
+import react from 'eslint-plugin-react';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,6 +23,15 @@ const compat = new FlatCompat({
 
 export default defineConfig([
   globalIgnores(['node_modules/', 'build/', '.docusaurus/']),
+  {
+    ...mdx.flat,
+  },
+  {
+    ...mdx.flatCodeBlocks,
+    rules: {
+      ...mdx.flatCodeBlocks.rules,
+    },
+  },
   {
     languageOptions: {
       parser: tsParser,
@@ -55,6 +67,8 @@ export default defineConfig([
     plugins: {
       'jsx-a11y': fixupPluginRules(jsxA11Y),
       prettier: fixupPluginRules(prettier),
+      'unused-imports': fixupPluginRules(unusedImports),
+      react: fixupPluginRules(react),
     },
 
     settings: {
@@ -79,6 +93,8 @@ export default defineConfig([
       'prettier/prettier': 'error',
       'react/prop-types': 'off',
       'react/react-in-jsx-scope': 'off',
+      'react/jsx-uses-react': 'error',
+      'react/jsx-uses-vars': 'error',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       'import/no-unresolved': [
@@ -87,11 +103,20 @@ export default defineConfig([
           ignore: ['^@theme/', '^@docusaurus/'],
         },
       ],
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'warn',
+        {
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+        },
+      ],
     },
   },
   {
     files: ['**/*.mdx', '**/*.md'],
-    extends: compat.extends('plugin:mdx/recommended'),
 
     rules: {
       'react/jsx-no-undef': 'off',

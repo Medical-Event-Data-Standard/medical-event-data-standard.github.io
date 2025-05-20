@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import Plot from 'react-plotly.js';
 import { CircularProgress, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
-import { load_MEDS_DEV, RESULTS } from '@site/src/lib/load';
+import { loadMedsDev, MedsTarget } from '@site/src/lib/load';
 import BrowserOnly from '@docusaurus/BrowserOnly';
 
 function BenchmarkInner({ datasetFilter, modelFilter, taskFilter }) {
@@ -14,7 +13,7 @@ function BenchmarkInner({ datasetFilter, modelFilter, taskFilter }) {
   const [metricSet, setMetricSet] = useState('samples_equally_weighted');
 
   useEffect(() => {
-    load_MEDS_DEV(RESULTS)
+    loadMedsDev(MedsTarget.RESULTS)
       .then(res => {
         setResults(res);
       })

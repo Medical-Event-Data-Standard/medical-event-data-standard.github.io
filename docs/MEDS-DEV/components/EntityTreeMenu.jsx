@@ -1,21 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import {
-  CircularProgress,
-  Typography,
-  Box,
-  Paper,
-  Link,
-  Chip,
-  Tooltip,
-  IconButton,
-  Divider,
-} from '@mui/material';
-import { ContentCopy } from '@mui/icons-material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { CircularProgress, Typography, Box } from '@mui/material';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
 
-import { load_MEDS_DEV } from '@site/src/lib/load';
+import { loadMedsDev } from '@site/src/lib/load';
 import { parse_tree } from '@site/src/lib/parse_tree';
 
 function RecursiveTreeItem({ name, entity }) {
@@ -35,7 +23,7 @@ export default function EntityPage({ target, Entity }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    load_MEDS_DEV(target)
+    loadMedsDev(target)
       .then(res => {
         setData(parse_tree(res));
       })

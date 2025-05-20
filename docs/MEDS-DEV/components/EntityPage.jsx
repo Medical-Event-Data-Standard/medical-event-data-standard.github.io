@@ -3,20 +3,13 @@ import {
   CircularProgress,
   Typography,
   Box,
-  Paper,
-  Link,
-  Chip,
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Tooltip,
-  IconButton,
-  Divider,
 } from '@mui/material';
-import { ContentCopy } from '@mui/icons-material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-import { load_MEDS_DEV } from '@site/src/lib/load';
+import { loadMedsDev } from '@site/src/lib/load';
 
 export default function EntityPage({ target, Entity }) {
   const [data, setData] = useState(null);
@@ -24,7 +17,7 @@ export default function EntityPage({ target, Entity }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    load_MEDS_DEV(target)
+    loadMedsDev(target)
       .then(res => {
         setData(res);
       })

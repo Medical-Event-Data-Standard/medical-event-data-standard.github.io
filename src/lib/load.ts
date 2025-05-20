@@ -87,4 +87,3 @@ export async function loadMedsDev(target: MedsTarget): Promise<unknown> {
     throw new Error(`Failed to fetch ${target} and no cached data available.`);
   }
 }
-

@@ -6,12 +6,7 @@ export interface TreeNode {
 type FlatTree = Record<string, { children: string[] } & Record<string, any>>;
 type ParsedTree = Record<string, TreeNode>;
 
-function parseTreeNode(
-  data: FlatTree,
-  key: string,
-  tree: ParsedTree,
-  seen: Set<string>
-): ParsedTree {
+function parseTreeNode(data: FlatTree, key: string, tree: ParsedTree, seen: Set<string>): ParsedTree {
   if (!(key in data)) {
     throw new Error(`Key ${key} not found in data`);
   }
@@ -48,4 +43,3 @@ export function parseTree(data: FlatTree): ParsedTree {
 
   return tree;
 }
-
