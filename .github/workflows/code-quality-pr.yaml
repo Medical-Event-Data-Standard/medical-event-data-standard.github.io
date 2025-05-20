@@ -46,13 +46,13 @@ jobs:
         run: echo '${{ steps.file_changes.outputs.files}}'
 
       - name: Run Prettier check on changed files
-        if: ${{ steps.changed.outputs.all_changed_files != '' }}
+        if: ${{ steps.file_changes.outputs.all_changed_files != '' }}
         run: |
           echo "Checking formatting..."
-          npm run prettier:check -- ${{ steps.changed.outputs.all_changed_files }}
+          npm run prettier:check -- ${{ steps.file_changes.outputs.all_changed_files }}
 
       - name: Run ESLint on changed files
-        if: ${{ steps.changed.outputs.all_changed_files != '' }}
+        if: ${{ steps.file_changes.outputs.all_changed_files != '' }}
         run: |
           echo "Linting..."
-          npm run lint -- ${{ steps.changed.outputs.all_changed_files }}
+          npm run lint -- ${{ steps.file_changes.outputs.all_changed_files }}
