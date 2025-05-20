@@ -24,10 +24,7 @@
       "eslint --fix",
       "prettier --write"
     ],
-    "*.md": [
-      "prettier --write"
-    ],
-    "*.mdx": [
+    "*.{md,mdx}": [
       "prettier --write"
     ]
   },
