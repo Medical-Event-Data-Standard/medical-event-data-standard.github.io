@@ -2,6 +2,10 @@ import clsx from "clsx";
 import Heading from "@theme/Heading";
 import styles from "./styles.module.css";
 
+import shockinglySimpleSvg from "@site/static/img/shockingly_simple.svg";
+import builtForAiSvg from "@site/static/img/built_for_AI.svg";
+import frictionlessReproducibilityPng from "@site/static/img/frictionless_reproducibility.png";
+
 type FeatureItem = {
   title: string;
   Svg: React.ComponentType<React.ComponentProps<"svg">>;
@@ -11,7 +15,7 @@ type FeatureItem = {
 const FeatureList: FeatureItem[] = [
   {
     title: "Shockingly Simple",
-    Svg: require("@site/static/img/shockingly_simple.svg").default,
+    Svg: shockinglySimpleSvg,
     PNG: null,
     description: (
       <>
@@ -23,7 +27,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: "Health AI Ecosystem",
-    Svg: require("@site/static/img/built_for_AI.svg").default,
+    Svg: builtForAiSvg,
     PNG: null,
     description: (
       <>
@@ -34,8 +38,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: "Frictionless Reproducibility",
-    // Svg: require('@site/static/img/frictionless_reproducibility.svg').default,
-    PNG: require("@site/static/img/frictionless_reproducibility.png").default,
+    PNG: frictionlessReproducibilityPng,
     description: (
       <>
         MEDS ensures that your models, tools, and pipelines are easily
@@ -50,7 +53,7 @@ function Feature({ title, Svg, PNG, description }: FeatureItem) {
   return (
     <div className={clsx("col col--4")}>
       <div className="text--center">
-        {PNG && <img src={PNG} className={styles.featurePng} />}
+        {PNG && <img src={PNG} className={styles.featurePng} alt={title} />}
         {Svg && <Svg className={styles.featureSvg} />}
       </div>
       <div className="text--center padding-horiz--md">

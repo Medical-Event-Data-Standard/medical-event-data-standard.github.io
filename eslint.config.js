@@ -67,6 +67,18 @@ module.exports = defineConfig([{
         react: {
             version: "detect",
         },
+        'import/resolver': {
+          typescript: {
+            // This tells ESLint to use tsconfig paths
+            project: './tsconfig.json',
+          },
+          alias: {
+            map: [['@site', '.']],
+          },
+          node: {
+            extensions: ['.js', '.jsx', '.ts', '.tsx', '.json', '.mdx'],
+          },
+        },
     },
 
     rules: {
@@ -75,6 +87,12 @@ module.exports = defineConfig([{
         "react/react-in-jsx-scope": "off",
         "@typescript-eslint/explicit-module-boundary-types": "off",
         "@typescript-eslint/no-explicit-any": "warn",
+        "import/no-unresolved": [
+          "error",
+          {
+            ignore: ["^@theme/", "^@docusaurus/"]
+          }
+        ]
     },
 }, {
     files: ["**/*.mdx", "**/*.md"],
@@ -82,6 +100,7 @@ module.exports = defineConfig([{
 
     rules: {
         "react/jsx-no-undef": "off",
+        "@typescript-eslint/no-unused-vars": "off",  // 👈 suppress false positives
     },
 }, {
     files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
