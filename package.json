@@ -16,7 +16,20 @@
     "lint:fix": "eslint src docs --ext .ts,.tsx,.js,.jsx,.md,.mdx --fix",
     "prettier": "prettier 'docs/**/*.{js,ts,jsx,tsx,md,mdx,json,yml}' 'src/**/*.{js,ts,jsx,tsx,md,mdx,json,yml}' --write",
     "prettier:check": "prettier 'docs/**/*.{js,ts,jsx,tsx,md,mdx,json,yml}' 'src/**/*.{js,ts,jsx,tsx,md,mdx,json,yml}' --check",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.md": [
+      "prettier --write"
+    ],
+    "*.mdx": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@docusaurus/core": "^3.7.0",
