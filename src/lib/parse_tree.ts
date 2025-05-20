@@ -1,9 +1,9 @@
 export interface TreeNode {
-  children: Record<string, TreeNode>;
-  [key: string]: any;
+  children: Record<string, TreeNode | ParsedTree>;
+  [key: string]: unknown;
 }
 
-type FlatTree = Record<string, { children: string[] } & Record<string, any>>;
+type FlatTree = Record<string, { children: string[] } & Record<string, unknown>>;
 type ParsedTree = Record<string, TreeNode>;
 
 function parseTreeNode(data: FlatTree, key: string, tree: ParsedTree, seen: Set<string>): ParsedTree {

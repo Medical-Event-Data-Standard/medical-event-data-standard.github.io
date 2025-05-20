@@ -12,7 +12,6 @@ import js from '@eslint/js';
 import { FlatCompat } from '@eslint/eslintrc';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import * as mdx from 'eslint-plugin-mdx';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -40,7 +39,6 @@ export default defineConfig([
       globals: {
         ...globals.browser,
         ...globals.node,
-        ...globals.jest,
       },
     },
 
@@ -90,6 +88,7 @@ export default defineConfig([
       'react/jsx-uses-vars': 'error',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
+      'import/namespace': ['error', { allowComputed: true }],
       'import/no-unresolved': [
         'error',
         {
@@ -106,24 +105,6 @@ export default defineConfig([
           argsIgnorePattern: '^_',
         },
       ],
-    },
-  },
-  {
-    files: ['**/*.mdx', '**/*.md'],
-    ...mdx.flat,
-
-    rules: {
-      'react/jsx-no-undef': 'off',
-      '@typescript-eslint/no-unused-vars': 'off', // 👈 suppress false positives
-    },
-  },
-  {
-    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
-
-    languageOptions: {
-      globals: {
-        ...globals.jest,
-      },
     },
   },
 ]);
