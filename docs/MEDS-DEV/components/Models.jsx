@@ -14,10 +14,10 @@ import {
   Divider,
 } from '@mui/material';
 import { ContentCopy } from '@mui/icons-material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { load_MEDS_DEV, MODELS } from '@site/src/MEDS-DEV/load.js';
 import Model from './Model';
+//import EntityPage from './EntityTreeMenu';
 import EntityPage from './EntityPage';
 
 
