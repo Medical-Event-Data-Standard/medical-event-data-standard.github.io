@@ -1,22 +1,22 @@
 import clsx from 'clsx';
 import Heading from '@theme/Heading';
 import styles from './styles.module.css';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 
 import shockinglySimpleSvg from '@site/static/img/shockingly_simple.svg';
 import builtForAiSvg from '@site/static/img/built_for_AI.svg';
-import frictionlessReproducibilityPng from '@site/static/img/frictionless_reproducibility.png';
 
 type FeatureItem = {
   title: string;
-  Svg: React.ComponentType<React.ComponentProps<'svg'>>;
-  description: JSX.Element;
+  Svg?: React.ComponentType<React.ComponentProps<'svg'>>;
+  PNG?: string;
+  description: React.JSX.Element;
 };
 
 const FeatureList: FeatureItem[] = [
   {
     title: 'Shockingly Simple',
     Svg: shockinglySimpleSvg,
-    PNG: null,
     description: (
       <>
         MEDS (Medical Event Data Standard) is the simplest possible standard for health AI, making it easy to
@@ -27,7 +27,6 @@ const FeatureList: FeatureItem[] = [
   {
     title: 'Health AI Ecosystem',
     Svg: builtForAiSvg,
-    PNG: null,
     description: (
       <>
         MEDS empowers a high-performance and flexible health AI ecosystem to streamline your research via
@@ -37,7 +36,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Frictionless Reproducibility',
-    PNG: frictionlessReproducibilityPng,
+    PNG: '/img/frictionless_reproducibility.png',
     description: (
       <>
         MEDS ensures that your models, tools, and pipelines are easily reproducible across data sites,
@@ -51,7 +50,7 @@ function Feature({ title, Svg, PNG, description }: FeatureItem) {
   return (
     <div className={clsx('col col--4')}>
       <div className="text--center">
-        {PNG && <img src={PNG} className={styles.featurePng} alt={title} />}
+        {PNG && <img src={useBaseUrl(PNG)} className={styles.featurePng} alt={title} />}
         {Svg && <Svg className={styles.featureSvg} />}
       </div>
       <div className="text--center padding-horiz--md">
@@ -62,7 +61,7 @@ function Feature({ title, Svg, PNG, description }: FeatureItem) {
   );
 }
 
-export default function HomepageFeatures(): JSX.Element {
+export default function HomepageFeatures(): React.JSX.Element {
   return (
     <section className={styles.features}>
       <div className="container">
