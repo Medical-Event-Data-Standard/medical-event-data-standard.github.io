@@ -2,12 +2,14 @@
 
 This repository hosts the source code for the [MEDS website](https://medical-event-data-standard.github.io/).
 The MEDS website is a resource for the MEDS community, providing
+
   1. The official technical documentation for MEDS.
   2. Tutorials and examples for using MEDS.
   3. The official MEDS-DEV benchmark website.
   4. Lists of MEDS ecosystem tools and resources.
 
 This website is built using
+
   1. [Docusaurus](https://docusaurus.io/) for documentation, blog posts, and simple static site
      infrastructure, largely using [MDX](https://mdxjs.com/) for writing content.
   2. [React](https://reactjs.org/) for custom components and interactivity.
@@ -38,6 +40,7 @@ pip install -r requirements.txt
 ```
 
 ### Starting a Development Server
+
 To see your changes live, you should start a local development server.
 
 ```bash
@@ -50,6 +53,7 @@ open additional terminals for things like package management, editing, modifying
 ## Site Structure
 
 This repository has the following directory structure:
+
 ```txt
 medical-event-data-standard.github.io/
 ├── docs/                     # MDX content pages (used by Docusaurus)
@@ -77,11 +81,12 @@ medical-event-data-standard.github.io/
 ## Development Notes
 
 ### Tutorials
+
 Tutorials can be written either in markdown or jupyter notebooks, which are then rendered using
 [react-jupyter-notebook](https://github.com/Joeyonng/react-jupyter-notebook).
 
+### `docs/` pages
 
-### `docs/` pages:
 The docusaurus system `docs` plugin renders `.md`/`.mdx` files in the docs folder and shows them in the sidebar. You
 can include custom React components in `.mdx` files, allowing you to include more advanced content, such as
 jupyter notebook, e.g.,
@@ -100,6 +105,7 @@ import nb from "./converting_to_MEDS.ipynb";
 ```
 
 ## Deployment
+>
 > [!WARNING] Only do this when you are ready to deploy the site to the public facing page!
 
 ```

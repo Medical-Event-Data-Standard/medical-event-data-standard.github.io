@@ -21,9 +21,9 @@ sidebar_position: 5
 
 ## Datasets in MEDS
 
-- EHRSHOT: https://ehrshot.stanford.edu
+- [EHRSHOT Dataset](https://ehrshot.stanford.edu)
 
 ## Models in MEDS
 
-- CLMBR-T-base: https://huggingface.co/StanfordShahLab/clmbr-t-base
-- Context Clues (a collection of Mamba, Llama, Hyena, and GPT models across context lengths from 512 - 16,384 tokens): https://huggingface.co/collections/StanfordShahLab/context-clues-6757f893f6a2918c7ab809f1
+- [CLMBR-T-base](https://huggingface.co/StanfordShahLab/clmbr-t-base)
+- [Context Clues (a collection of Mamba, Llama, Hyena, and GPT models across context lengths from 512 - 16,384 tokens)](https://huggingface.co/collections/StanfordShahLab/context-clues-6757f893f6a2918c7ab809f1)
