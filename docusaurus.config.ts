@@ -1,5 +1,5 @@
-import {themes as prismThemes} from 'prism-react-renderer';
-import type {Config} from '@docusaurus/types';
+import { themes as prismThemes } from 'prism-react-renderer';
+import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
@@ -34,26 +34,24 @@ const config: Config = {
   },
 
   plugins: [
-    function myPlugin(context, options) {
-      return {
-        name: 'custom-webpack-config',
-        configureWebpack(config, isServer, utils) {
-          return {
-            module: {
-              rules: [
-                {
-                  test: /\.ipynb$/, // Match all .ipynb files
-                  type: 'json' // Treat as JSON in Webpack 5+
-                }
-              ]
-            },
-            resolve: {
-              extensions: ['.js', '.json', '.ipynb'] // Allow importing .ipynb
-            }
-          };
-        }
-      };
-    }
+    () => ({
+      name: 'custom-webpack-config',
+      configureWebpack() {
+        return {
+          module: {
+            rules: [
+              {
+                test: /\.ipynb$/, // Match all .ipynb files
+                type: 'json', // Treat as JSON in Webpack 5+
+              },
+            ],
+          },
+          resolve: {
+            extensions: ['.js', '.json', '.ipynb'], // Allow importing .ipynb
+          },
+        };
+      },
+    }),
   ],
 
   presets: [

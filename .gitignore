@@ -22,3 +22,5 @@ yarn-error.log*
 # Jupyter
 .ipynb_checkpoints
 demo_output
+
+.eslintcache
