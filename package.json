@@ -12,10 +12,10 @@
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
-    "lint": "eslint src docs --ext .ts,.tsx,.js,.jsx,.md,.mdx",
-    "lint:fix": "eslint src docs --ext .ts,.tsx,.js,.jsx,.md,.mdx --fix",
-    "prettier": "prettier 'docs/**/*.{js,ts,jsx,tsx,md,mdx,json,yml}' 'src/**/*.{js,ts,jsx,tsx,md,mdx,json,yml}' --write",
-    "prettier:check": "prettier 'docs/**/*.{js,ts,jsx,tsx,md,mdx,json,yml}' 'src/**/*.{js,ts,jsx,tsx,md,mdx,json,yml}' --check",
+    "lint": "eslint --ext .ts,.tsx,.js,.jsx,.md,.mdx",
+    "lint:fix": "eslint --ext .ts,.tsx,.js,.jsx,.md,.mdx --fix",
+    "prettier": "prettier . --write",
+    "prettier:check": "prettier . --check",
     "typecheck": "tsc",
     "prepare": "husky"
   },
@@ -86,7 +86,7 @@
     ]
   },
   "engines": {
-    "node": ">=18.0"
+    "node": ">=20.0"
   },
   "homepage": "https://medical-event-data-standard.github.io"
 }

@@ -3,20 +3,20 @@
 This repository hosts the source code for the [MEDS website](https://medical-event-data-standard.github.io/).
 The MEDS website is a resource for the MEDS community, providing
 
-  1. The official technical documentation for MEDS.
-  2. Tutorials and examples for using MEDS.
-  3. The official MEDS-DEV benchmark website.
-  4. Lists of MEDS ecosystem tools and resources.
+1. The official technical documentation for MEDS.
+2. Tutorials and examples for using MEDS.
+3. The official MEDS-DEV benchmark website.
+4. Lists of MEDS ecosystem tools and resources.
 
 This website is built using
 
-  1. [Docusaurus](https://docusaurus.io/) for documentation, blog posts, and simple static site
-     infrastructure, largely using [MDX](https://mdxjs.com/) for writing content.
-  2. [React](https://reactjs.org/) for custom components and interactivity.
-  3. [Jupyter](https://jupyter.org/) for interactive tutorials.
-  4. [Material UI](https://mui.com/) for styling and UI components.
-  5. [TypeScript](https://www.typescriptlang.org/) for core javascript content.
-  6. [GitHub Pages](https://pages.github.com/) for hosting the website.
+1. [Docusaurus](https://docusaurus.io/) for documentation, blog posts, and simple static site
+   infrastructure, largely using [MDX](https://mdxjs.com/) for writing content.
+2. [React](https://reactjs.org/) for custom components and interactivity.
+3. [Jupyter](https://jupyter.org/) for interactive tutorials.
+4. [Material UI](https://mui.com/) for styling and UI components.
+5. [TypeScript](https://www.typescriptlang.org/) for core javascript content.
+6. [GitHub Pages](https://pages.github.com/) for hosting the website.
 
 The rest of this README provides instructions for developing the website.
 
@@ -95,17 +95,17 @@ jupyter notebook, e.g.,
 ---
 sidebar_position: 2
 ---
+
 # Converting to MEDS
 
-import JupyterViewer from "react-jupyter-notebook";
-import nb from "./converting_to_MEDS.ipynb";
-
+import JupyterViewer from 'react-jupyter-notebook';
+import nb from './converting_to_MEDS.ipynb';
 
 <JupyterViewer rawIpynb={nb} />
 ```
 
 ## Deployment
->
+
 > [!WARNING] Only do this when you are ready to deploy the site to the public facing page!
 
 ```
