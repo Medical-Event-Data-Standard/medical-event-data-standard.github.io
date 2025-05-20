@@ -1,0 +1,58 @@
+# This workflow finds which files were changed, prints them,
+# and runs `pre-commit` on those files.
+
+# Inspired by the sktime library:
+# https://github.com/alan-turing-institute/sktime/blob/main/.github/workflows/test.yml
+
+name: Code Quality PR
+
+on:
+  pull_request:
+    branches: [main, 'release/*', 'dev']
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install packages
+        run: npm ci
+
+      - name: Find modified files
+        id: file_changes
+        uses: tj-actions/changed-files@v44
+        with:
+          separator: ' '
+          files: |
+            **/*.ts
+            **/*.tsx
+            **/*.js
+            **/*.jsx
+            **/*.md
+            **/*.mdx
+
+      - name: List modified files
+        run: echo '${{ steps.file_changes.outputs.files}}'
+
+      - name: Run Prettier check on changed files
+        if: ${{ steps.changed.outputs.all_changed_files != '' }}
+        run: |
+          echo "Checking formatting..."
+          npm run prettier:check -- ${{ steps.changed.outputs.all_changed_files }}
+
+      - name: Run ESLint on changed files
+        if: ${{ steps.changed.outputs.all_changed_files != '' }}
+        run: |
+          echo "Linting..."
+          npm run lint -- ${{ steps.changed.outputs.all_changed_files }}
