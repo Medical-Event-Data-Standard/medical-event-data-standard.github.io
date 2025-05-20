@@ -3,13 +3,13 @@ sidebar_position: 1
 ---
 
 # Welcome to MEDS
+
 <!--![The MEDS Ecosystem, Visually](/img/ecosystem_figure.svg)-->
 <!--<Svg src="/img/ecosystem_figure.svg" alt="The MEDS Ecosystem, Visually"/>-->
 
 <center>
     <img src="/img/ecosystem_figure.svg" alt="The MEDS Ecosystem, Visually" width="80%"/>
 </center>
-
 
 MEDS (the Medical Event Data Standard) is a shockingly simple, highly flexible, and efficient data standard
 for structured, longitudinal medical record data, built for reproducible, efficient Machine Learning
@@ -18,6 +18,7 @@ and libraries that make it easy to work with MEDS data, from pre-processing to c
 and beyond!
 
 ## How can MEDS help you?
+
 Working with MEDS is incredibly simple. Data in MEDS are stored in a simple, longitudinal format that consists
 of only four mandatory columns: `subject_id`, `time`, `code`, and `numeric_value`. This simplicity makes it
 easy to convert your data into MEDS and to use it when its in the MEDS format, and a number of existing
@@ -34,8 +35,8 @@ tutorial](/docs/tutorial-basics/converting_to_MEDS) to see how!
 Once your data is in MEDS, you can rely on the bevy of open-source tools built on MEDS to help you with your
 modeling tasks. Be it in [task-extraction](https://eventstreamaces.readthedocs.io/en/stable/), data
 pre-processing (with [MEDS-Transforms](https://meds-transforms.readthedocs.io/en/stable/) or
-[MEDS-Reader](https://meds-reader.readthedocs.io/en/stable/)), building 
-[baseline](https://meds-tab.readthedocs.io/en/stable/) or 
+[MEDS-Reader](https://meds-reader.readthedocs.io/en/stable/)), building
+[baseline](https://meds-tab.readthedocs.io/en/stable/) or
 [neural network](https://meds-torch.readthedocs.io/en/stable/)
 models, or [evaluating predictions](https://github.com/kamilest/meds-evaluation/tree/main), the MEDS
 ecosystem has tools that can help make your research easier, more efficient, and more reproducible.
@@ -59,13 +60,14 @@ local data. Check out the [MEDS-DEV GitHub repository](https://github.com/mmcder
 started!
 
 ## Where to go from here?
-  1. If you're new to MEDS and want to learn more about the nuts and bolts, check out the
-     [introductory tutorials](/docs/category/tutorial---build-a-model-with-meds) to get started!
-  2. IF you're looking for a dataset to work with, a model to compare to, or tools to help your research,
-     check out the [public research resources](/docs/MEDS_datasets_and_models) that support MEDS!
-  3. If you're looking to help build a shared understanding of the science of health AI, check out the
-     [MEDS-DEV](https://github.com/mmcdermott/MEDS-DEV) repository and see how you can contribute!
-  4. If you're looking to read academic papers about MEDS, check out
-     [our workshop paper](https://openreview.net/forum?id=IsHy2ebjIG)!
-  5. Finally, if you have a question or comment not covered here, feel free to file an issue on the
-     [MEDS GitHub repository](https://github.com/Medical-Event-Data-Standard/meds)!
+
+1. If you're new to MEDS and want to learn more about the nuts and bolts, check out the
+   [introductory tutorials](/docs/category/tutorial---build-a-model-with-meds) to get started!
+2. IF you're looking for a dataset to work with, a model to compare to, or tools to help your research,
+   check out the [public research resources](/docs/MEDS_datasets_and_models) that support MEDS!
+3. If you're looking to help build a shared understanding of the science of health AI, check out the
+   [MEDS-DEV](https://github.com/mmcdermott/MEDS-DEV) repository and see how you can contribute!
+4. If you're looking to read academic papers about MEDS, check out
+   [our workshop paper](https://openreview.net/forum?id=IsHy2ebjIG)!
+5. Finally, if you have a question or comment not covered here, feel free to file an issue on the
+   [MEDS GitHub repository](https://github.com/Medical-Event-Data-Standard/meds)!
