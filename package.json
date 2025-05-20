@@ -16,15 +16,19 @@
     "lint:fix": "eslint --ext .ts,.tsx,.js,.jsx,.md,.mdx --fix",
     "prettier": "prettier . --write",
     "prettier:check": "prettier . --check",
-    "typecheck": "tsc",
+    "typecheck": "tsc --noEmit",
     "prepare": "husky"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
+    "*.{js,jsx}": [
       "eslint --fix",
       "prettier --write"
     ],
     "*.{md,mdx}": [
+      "prettier --write"
+    ],
+    "*.{ts,tsx}": [
+      "eslint --cache --fix",
       "prettier --write"
     ]
   },
@@ -57,9 +61,10 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@types/jest": "^29.5.14",
+    "@types/react": "^19.1.4",
+    "@types/react-dom": "^19.1.5",
     "@typescript-eslint/eslint-plugin": "^8.32.1",
     "@typescript-eslint/parser": "^8.32.1",
-    "globals": "^16.1.0",
     "eslint": "^9.27.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-import-resolver-alias": "^1.1.2",
@@ -71,6 +76,7 @@
     "eslint-plugin-prettier": "^5.4.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.1.0",
     "husky": "^9.1.7",
     "jest": "^29.7.0",
     "lint-staged": "^16.0.0",
