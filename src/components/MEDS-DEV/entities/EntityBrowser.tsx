@@ -4,18 +4,20 @@ import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { loadEntities } from '@site/src/lib/MEDS-DEV/load';
 import { parseTree } from '@site/src/lib/MEDS-DEV/parse_tree';
 import {
+  SharedEntityData,
   MedsEntityType,
   MedsEntityNestedTree,
   MedsEntityFlatTree,
   MedsEntityNestedTreeNode,
 } from '@site/src/lib/MEDS-DEV/types';
 
-interface EntityBrowserProps<T> {
-  target: MedsEntityType;
-  Entity: React.ComponentType<{ name: string; data: T }>;
-}
+import EntityNode from './EntityNode';
 
-export default function EntityBrowser<T>({ target, Entity }: EntityBrowserProps<T>): React.JSX.Element {
+export default function EntityBrowser<T extends SharedEntityData>({
+  target,
+}: {
+  target: MedsEntityType;
+}): React.JSX.Element {
   const [nestedData, setNestedData] = useState<MedsEntityNestedTree<T> | null>(null);
   const [flatData, setFlatData] = useState<MedsEntityFlatTree<T> | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -69,7 +71,7 @@ export default function EntityBrowser<T>({ target, Entity }: EntityBrowserProps<
 
       <Grid size={9}>
         {selected && flatData[selected] ? (
-          <Entity name={selected} data={flatData[selected].data} />
+          <EntityNode<T> name={selected} data={flatData[selected].data} type={target} />
         ) : (
           <Typography variant="h6">
             {selected ? 'Select a valid entity.' : 'Select an entity from the tree.'}

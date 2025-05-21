@@ -2,6 +2,12 @@
 // #               Common Types                    #
 // #################################################
 
+export enum MedsEntityType {
+  DATASET = 'dataset',
+  MODEL = 'model',
+  TASK = 'task',
+}
+
 export interface Contact {
   name: string;
   github_username: string;
@@ -34,7 +40,13 @@ export type PredicateCollection = Record<string, Predicate>;
 
 // Data blocks for entities have a common format
 
+export interface SharedEntitySpec {
+  metadata?: Metadata;
+}
+
 export interface SharedEntityData {
+  type: MedsEntityType;
+  entity?: SharedEntitySpec;
   readme?: string;
   refs?: string;
   requirements?: string[];
@@ -51,13 +63,12 @@ export interface DatasetCommands {
 }
 
 // Dataset specification
-export interface DatasetSpec {
-  metadata?: Metadata;
+export interface DatasetSpec extends SharedEntitySpec {
   commands?: DatasetCommands;
 }
 
 export interface DatasetEntityData extends SharedEntityData {
-  dataset?: DatasetSpec;
+  entity?: DatasetSpec;
   predicates?: PredicateCollection;
 }
 
@@ -80,8 +91,7 @@ export interface Window {
 }
 
 // Task specification
-export interface TaskSpec {
-  metadata?: Metadata;
+export interface TaskSpec extends SharedEntitySpec {
   predicates: Record<string, Predicate>;
   trigger: string;
   windows: Record<string, Window>;
@@ -89,7 +99,7 @@ export interface TaskSpec {
 
 // Retrieved MEDS-DEV Task spec. TODO: Offload to a MEDS-DEV type package.
 export interface TaskEntityData extends SharedEntityData {
-  task?: TaskSpec;
+  entity?: TaskSpec;
 }
 
 // #################################################
@@ -103,8 +113,7 @@ export interface ModelCommands {
 }
 
 // Model specification
-export interface ModelSpec {
-  metadata?: Metadata;
+export interface ModelSpec extends SharedEntitySpec {
   commands: {
     unsupervised?: ModelCommands | null;
     supervised?: ModelCommands | null;
@@ -112,7 +121,7 @@ export interface ModelSpec {
 }
 
 export interface ModelEntityData extends SharedEntityData {
-  model?: ModelSpec;
+  entity?: ModelSpec;
 }
 
 // #################################################
@@ -133,12 +142,6 @@ export type MedsEntityFlatTree<T> = Record<string, MedsEntityFlatTreeNode<T>>;
 export type MedsDatasets = MedsEntityFlatTree<DatasetEntityData>;
 export type MedsTasks = MedsEntityFlatTree<TaskEntityData>;
 export type MedsModels = MedsEntityFlatTree<ModelEntityData>;
-
-export enum MedsEntityType {
-  DATASETS = 'datasets',
-  MODELS = 'models',
-  TASKS = 'tasks',
-}
 
 export interface MedsEntityNestedTreeNode<T> extends TreeNode<T> {
   children: MedsEntityNestedTree<T>;
@@ -166,12 +169,12 @@ export interface Result {
 
 // TODO: Offload to a MEDS-DEV type package
 export interface BenchmarkEntry {
-  dataset?: string;
-  task?: string;
-  model?: string;
-  timestamp?: string;
-  result?: Result;
-  version?: string;
+  dataset: string;
+  task: string;
+  model: string;
+  timestamp: string;
+  result: Result;
+  version: string;
 }
 
 // Define the overall structure as a record with string keys

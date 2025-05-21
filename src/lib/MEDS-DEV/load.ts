@@ -5,7 +5,7 @@ import { MedsEntityType, BenchmarkResults, MedsEntityFlatTree } from './types';
 import { readOrFetchToCache } from '@site/src/lib/loadAndCache';
 
 export async function loadEntities<T>(target: MedsEntityType): Promise<MedsEntityFlatTree<T> | null> {
-  const url = `${BASE_URL}/entities/${target}.json`;
+  const url = `${BASE_URL}/entities/${target}s.json`;
   return readOrFetchToCache<MedsEntityFlatTree<T>>(url);
 }
 
