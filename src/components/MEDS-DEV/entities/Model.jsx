@@ -13,9 +13,9 @@ import {
 } from '@mui/material';
 import { ContentCopy } from '@mui/icons-material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import BenchmarkPlot from './BenchmarkPlot';
+import BenchmarkPlot from '../plots/BenchmarkPlot';
 import Markdown from 'react-markdown';
-import GitHubAvatar from './GitHubAvatar';
+import GitHubAvatar from '../GitHubAvatar';
 
 function InfoBlock({ readme, metadata, refs }) {
   const [copied, setCopied] = useState(false);
@@ -124,10 +124,10 @@ function TechnicalBlock({ requirements, commands }) {
   );
 }
 
-export default function Dataset({ name, data }) {
-  const { readme, dataset, predicates, refs, requirements } = data.data;
+export default function Model({ name, data }) {
+  const { readme, model, refs, requirements } = data.data;
 
-  const { metadata, commands } = dataset || {};
+  const { metadata, commands } = model || {};
 
   return (
     <Box sx={{ maxWidth: 1000, margin: '0 auto' }}>
@@ -137,13 +137,13 @@ export default function Dataset({ name, data }) {
 
       <InfoBlock readme={readme} metadata={metadata} refs={refs} />
 
-      <TechnicalBlock requirements={requirements} predicates={predicates} commands={commands} />
+      <TechnicalBlock requirements={requirements} commands={commands} />
 
       <Box mt={5}>
         <Typography variant="h5" gutterBottom>
           Benchmark Results
         </Typography>
-        <BenchmarkPlot datasetFilter={name} />
+        <BenchmarkPlot modelFilter={name} />
       </Box>
     </Box>
   );

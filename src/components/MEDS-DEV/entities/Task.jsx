@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import { ContentCopy } from '@mui/icons-material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import BenchmarkPlot from './BenchmarkPlot';
+import BenchmarkPlot from '../plots/BenchmarkPlot';
 import Markdown from 'react-markdown';
 
 function InfoBlock({ readme, metadata, refs }) {
