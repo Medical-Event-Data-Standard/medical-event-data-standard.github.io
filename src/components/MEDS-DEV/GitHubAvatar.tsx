@@ -1,7 +1,12 @@
 import { Chip } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
 
-export default function GitHubAvatar({ name, github_username }) {
+interface GitHubAvatarProps {
+  name: string;
+  github_username: string;
+}
+
+export default function GitHubAvatar({ name, github_username }: GitHubAvatarProps): React.JSX.Element {
   const profileUrl = `https://github.com/${github_username}`;
   const avatarUrl = `${profileUrl}.png?size=256`;
 

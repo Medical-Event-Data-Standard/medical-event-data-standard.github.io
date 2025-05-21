@@ -3,18 +3,51 @@ import Plot from 'react-plotly.js';
 import { CircularProgress, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
 import { loadMedsDev, MedsTarget } from '@site/src/lib/load';
 import BrowserOnly from '@docusaurus/BrowserOnly';
+import { Data } from 'plotly.js';
 
-function BenchmarkInner({ datasetFilter, modelFilter, taskFilter }) {
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [dataset, setDataset] = useState(datasetFilter || '');
-  const [task, setTask] = useState(taskFilter || '');
-  const [model, setModel] = useState(modelFilter || '');
-  const [metricSet, setMetricSet] = useState('samples_equally_weighted');
+interface Result {
+  id: string;
+  dataset: string;
+  task: string;
+  model: string;
+  version: string;
+  result?: {
+    samples_equally_weighted?: {
+      roc_auc_score?: number;
+      average_precision_score?: number;
+      f1_score?: number;
+    };
+    subjects_equally_weighted?: {
+      roc_auc_score?: number;
+      average_precision_score?: number;
+      f1_score?: number;
+    };
+  };
+}
+
+interface BenchmarkInnerProps {
+  datasetFilter?: string;
+  modelFilter?: string;
+  taskFilter?: string;
+}
+
+interface BenchmarkPlotProps {
+  datasetFilter?: string;
+  modelFilter?: string;
+  taskFilter?: string;
+}
+
+function BenchmarkInner({ datasetFilter, modelFilter, taskFilter }: BenchmarkInnerProps): React.JSX.Element {
+  const [results, setResults] = useState<Result[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [dataset, setDataset] = useState<string>(datasetFilter || '');
+  const [task, setTask] = useState<string>(taskFilter || '');
+  const [model, setModel] = useState<string>(modelFilter || '');
+  const [metricSet, setMetricSet] = useState<string>('samples_equally_weighted');
 
   useEffect(() => {
     loadMedsDev(MedsTarget.RESULTS)
-      .then(res => {
+      .then((res: any) => {
         setResults(res);
       })
       .finally(() => {
@@ -33,11 +66,15 @@ function BenchmarkInner({ datasetFilter, modelFilter, taskFilter }) {
   const allModels = [...new Set(filteredByTask.map(r => r.model))].sort();
   const filtered = model ? filteredByTask.filter(r => r.model === model) : filteredByTask;
 
-  const plotData = filtered.map(r => {
-    const metrics = r.result?.[metricSet] || {};
+  const plotData: Data[] = filtered.map(r => {
+    const metrics = r.result?.[metricSet as keyof Result['result']] || {};
     return {
       x: ['ROC AUC', 'Avg Precision', 'F1 Score'],
-      y: [metrics.roc_auc_score ?? 0, metrics.average_precision_score ?? 0, metrics.f1_score ?? 0],
+      y: [
+        (metrics as any).roc_auc_score ?? 0,
+        (metrics as any).average_precision_score ?? 0,
+        (metrics as any).f1_score ?? 0,
+      ],
       type: 'bar',
       name: r.model,
       hovertext: `Issue: ${r.id}<br>Dataset: ${r.dataset}<br>Task: ${r.task}<br>Model: ${r.model}<br>Version: ${r.version}<br>${metricSet}`,
@@ -113,9 +150,9 @@ function BenchmarkInner({ datasetFilter, modelFilter, taskFilter }) {
         data={plotData}
         layout={{
           barmode: 'group',
-          title: `Metric Scores${dataset ? ` for ${dataset}` : ''}${task ? ` – ${task}` : ''}`,
-          xaxis: { title: 'Metric' },
-          yaxis: { title: 'Score', range: [0, 1] },
+          title: { text: `Metric Scores${dataset ? ` for ${dataset}` : ''}${task ? ` – ${task}` : ''}` },
+          xaxis: { title: { text: 'Metric' } },
+          yaxis: { title: { text: 'Score' }, range: [0, 1] },
           autosize: true,
         }}
         style={{ width: '100%', height: '600px' }}
@@ -126,7 +163,11 @@ function BenchmarkInner({ datasetFilter, modelFilter, taskFilter }) {
   );
 }
 
-export default function BenchmarkPlot({ datasetFilter, modelFilter, taskFilter }) {
+export default function BenchmarkPlot({
+  datasetFilter,
+  modelFilter,
+  taskFilter,
+}: BenchmarkPlotProps): React.JSX.Element {
   return (
     <BrowserOnly fallback={<div>Loading client-side plot...</div>}>
       {() => (
