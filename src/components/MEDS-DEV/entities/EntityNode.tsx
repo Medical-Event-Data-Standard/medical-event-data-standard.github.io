@@ -1,8 +1,8 @@
-import React from 'react';
-import { Box } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Box, CircularProgress } from '@mui/material';
 import BenchmarkPlot from '../plots/BenchmarkPlot';
 
-import { MedsEntityType, SharedEntityData } from '@site/src/lib/MEDS-DEV/types';
+import { MedsEntityType, SharedEntityData, BenchmarkEntryWithId } from '@site/src/lib/MEDS-DEV/types';
 
 import {
   HeaderBlock,
@@ -14,6 +14,7 @@ import {
 } from './EntityBlocks';
 
 import { parseReadme } from '@site/src/lib/parseMarkdown';
+import { getFilteredResults } from '@site/src/lib/MEDS-DEV/benchmark';
 
 interface EntityNodeProps<T extends SharedEntityData> {
   type: MedsEntityType;
@@ -26,6 +27,39 @@ export default function EntityNode<T extends SharedEntityData>({
   data,
   type,
 }: EntityNodeProps<T>): React.JSX.Element {
+  const [results, setResults] = useState<BenchmarkEntryWithId[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  let datasetFilter: string | null = null;
+  let taskFilter: string | null = null;
+  let modelFilter: string | null = null;
+
+  switch (type) {
+    case MedsEntityType.DATASET:
+      datasetFilter = name;
+      taskFilter = null;
+      modelFilter = null;
+      break;
+    case MedsEntityType.TASK:
+      datasetFilter = null;
+      taskFilter = name;
+      modelFilter = null;
+      break;
+    case MedsEntityType.MODEL:
+      datasetFilter = null;
+      taskFilter = null;
+      modelFilter = name;
+      break;
+  }
+
+  useEffect(() => {
+    getFilteredResults(datasetFilter, taskFilter, modelFilter)
+      .then(setResults)
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [datasetFilter, taskFilter, modelFilter]);
+
   const { readme, refs, requirements } = data;
 
   const { metadata = {} } = data.entity || {};
@@ -47,9 +81,12 @@ export default function EntityNode<T extends SharedEntityData>({
 
       {refs && <CitationBlock refs={refs} />}
 
-      <Box mt={5}>
-        <BenchmarkPlot {...{ [`${type}Filter`]: name }} />
-      </Box>
+      {loading && <CircularProgress />}
+      {!loading && results && results.length > 0 && (
+        <Box mt={5}>
+          <BenchmarkPlot {...{ [`${type}Filter`]: name }} />
+        </Box>
+      )}
     </Box>
   );
 }

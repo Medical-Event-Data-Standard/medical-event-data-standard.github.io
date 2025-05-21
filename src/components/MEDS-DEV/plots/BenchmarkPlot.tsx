@@ -5,11 +5,7 @@ import BrowserOnly from '@docusaurus/BrowserOnly';
 import { Data } from 'plotly.js';
 
 import { loadMedsDevResults } from '@site/src/lib/MEDS-DEV/load';
-import { BenchmarkResults, Result, BenchmarkEntry } from '@site/src/lib/MEDS-DEV/types';
-
-interface BenchmarkEntryWithId extends BenchmarkEntry {
-  id: string;
-}
+import { BenchmarkEntryWithId, Result } from '@site/src/lib/MEDS-DEV/types';
 
 interface BenchmarkInnerProps {
   datasetFilter?: string;
@@ -33,10 +29,7 @@ function BenchmarkInner({ datasetFilter, modelFilter, taskFilter }: BenchmarkInn
 
   useEffect(() => {
     loadMedsDevResults()
-      .then((res: BenchmarkResults | null) => {
-        const resList = res ? Object.entries(res).map(([id, result]) => ({ id, ...result })) : [];
-        setResults(resList);
-      })
+      .then(setResults)
       .finally(() => {
         setLoading(false);
       });

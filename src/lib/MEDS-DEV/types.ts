@@ -177,5 +177,9 @@ export interface BenchmarkEntry {
   version: string;
 }
 
+export interface BenchmarkEntryWithId extends BenchmarkEntry {
+  id: string;
+}
+
 // Define the overall structure as a record with string keys
-export type BenchmarkResults = Record<string, BenchmarkEntry>;
+export type RawBenchmarkResults = Record<string, BenchmarkEntry>;
