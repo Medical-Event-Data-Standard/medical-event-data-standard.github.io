@@ -1,18 +1,19 @@
-export interface TreeNode {
-  children: Record<string, TreeNode>;
-  [key: string]: unknown;
-}
+import { MedsEntityFlatTree, MedsEntityNestedTree, MedsEntityNestedTreeNode } from './types';
 
-type FlatTree = Record<string, { children: string[] } & Record<string, unknown>>;
-type ParsedTree = Record<string, TreeNode>;
-
-function parseTreeNode(data: FlatTree, key: string, tree: ParsedTree, seen: Set<string>): TreeNode {
+function parseTreeNode<T>(
+  data: MedsEntityFlatTree<T>,
+  key: string,
+  tree: MedsEntityNestedTree<T>,
+  seen: Set<string>
+): MedsEntityNestedTreeNode<T> {
   if (!(key in data)) {
     throw new Error(`Key ${key} not found in data`);
   }
 
   const { children, ...rest } = data[key];
-  const node: TreeNode = { ...rest, children: {} };
+
+  const parsedChildren: MedsEntityNestedTree<T> = {};
+  const node: MedsEntityNestedTreeNode<T> = { ...rest, children: parsedChildren };
 
   for (const childKey of children) {
     if (childKey in tree) {
@@ -30,8 +31,8 @@ function parseTreeNode(data: FlatTree, key: string, tree: ParsedTree, seen: Set<
   return node;
 }
 
-export function parseTree(data: FlatTree): ParsedTree {
-  const tree: ParsedTree = {};
+export function parseTree<T>(data: MedsEntityFlatTree<T>): MedsEntityNestedTree<T> {
+  const tree: MedsEntityNestedTree<T> = {};
   const seen = new Set<string>();
 
   for (const key of Object.keys(data)) {

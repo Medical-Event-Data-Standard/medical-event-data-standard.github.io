@@ -9,28 +9,25 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { loadEntities } from '@site/src/lib/MEDS-DEV/load';
-import { MedsDatasets, MedsTasks, MedsModels, MedsEntityType } from '@site/src/lib/MEDS-DEV/types';
+import { MedsEntityType, MedsEntityFlatTree, MedsEntityFlatTreeNode } from '@site/src/lib/MEDS-DEV/types';
 
-interface EntityProps {
+interface EntityProps<T> {
   name: string;
-  data: any;
+  data: MedsEntityFlatTreeNode<T>;
 }
 
-interface EntityPageProps {
+interface EntityPageProps<T> {
   target: MedsEntityType;
-  Entity: React.ComponentType<EntityProps>;
+  Entity: React.ComponentType<EntityProps<T>>;
 }
 
-export default function EntityPage<T = MedsDatasets | MedsTasks | MedsModels>({
-  target,
-  Entity,
-}: EntityPageProps): React.JSX.Element {
-  const [data, setData] = useState<T | null>(null);
+export default function EntityPage<T>({ target, Entity }: EntityPageProps<T>): React.JSX.Element {
+  const [data, setData] = useState<MedsEntityFlatTree<T> | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     loadEntities<T>(target)
-      .then((res: T | null) => {
+      .then((res: MedsEntityFlatTree<T> | null) => {
         setData(res);
       })
       .finally(() => {

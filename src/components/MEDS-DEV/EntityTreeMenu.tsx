@@ -1,12 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CircularProgress, Typography, Box } from '@mui/material';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
+import { loadEntities } from '@site/src/lib/MEDS-DEV/load';
+import {
+  MedsEntityType,
+  MedsEntityNestedTreeNode,
+  MedsEntityNestedTree,
+  MedsEntityFlatTree,
+} from '@site/src/lib/MEDS-DEV/types';
+import { parseTree } from '@site/src/lib/MEDS-DEV/parse_tree';
 
-import { loadMedsDev } from '@site/src/lib/MEDS-DEV/load';
-import { parse_tree } from '@site/src/lib/parse_tree';
+interface RecursiveTreeItemProps<T> {
+  name: string;
+  entity: MedsEntityNestedTreeNode<T>;
+}
 
-function RecursiveTreeItem({ name, entity }) {
+function RecursiveTreeItem<T>({ name, entity }: RecursiveTreeItemProps<T>): React.JSX.Element {
   return (
     <TreeItem key={name} itemId={name} label={name}>
       {entity.children &&
@@ -17,14 +27,18 @@ function RecursiveTreeItem({ name, entity }) {
   );
 }
 
-export default function EntityPage({ target }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+interface EntityPageProps {
+  target: MedsEntityType;
+}
+
+export default function EntityTreeMenu<T>({ target }: EntityPageProps): React.JSX.Element {
+  const [data, setData] = useState<MedsEntityNestedTree<T> | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    loadMedsDev(target)
-      .then(res => {
-        setData(parse_tree(res));
+    loadEntities<T>(target)
+      .then((res: MedsEntityFlatTree<T> | null) => {
+        setData(res ? parseTree<T>(res) : null);
       })
       .finally(() => {
         setLoading(false);
@@ -41,10 +55,9 @@ export default function EntityPage({ target }) {
         {' '}
         {target}{' '}
       </Typography>
-
       <SimpleTreeView>
         {Object.entries(data).map(([name, entity]) => (
-          <RecursiveTreeItem key={name} name={name} entity={entity} />
+          <RecursiveTreeItem<T> key={name} name={name} entity={entity} />
         ))}
       </SimpleTreeView>
     </Box>
