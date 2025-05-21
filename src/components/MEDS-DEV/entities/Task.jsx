@@ -105,7 +105,7 @@ function InfoBlock({ readme, metadata, refs }) {
 }
 
 export default function Task({ name, data }) {
-  const { readme, task, refs } = data.data;
+  const { readme, task, refs } = data;
 
   const { metadata } = task || {};
 

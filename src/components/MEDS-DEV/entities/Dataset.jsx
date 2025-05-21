@@ -125,7 +125,7 @@ function TechnicalBlock({ requirements, commands }) {
 }
 
 export default function Dataset({ name, data }) {
-  const { readme, dataset, predicates, refs, requirements } = data.data;
+  const { readme, dataset, predicates, refs, requirements } = data;
 
   const { metadata, commands } = dataset || {};
 

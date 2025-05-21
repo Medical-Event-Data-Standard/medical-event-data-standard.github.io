@@ -9,17 +9,16 @@ import {
 import Dataset from './Dataset';
 import Task from './Task';
 import Model from './Model';
-//import EntityPage from './EntityTreeMenu';
-import EntityPage from './EntityPage';
+import EntityBrowser from './EntityBrowser';
 
 export function Datasets(): React.JSX.Element {
-  return <EntityPage<DatasetEntityData> target={MedsEntityType.DATASETS} Entity={Dataset} />;
+  return <EntityBrowser<DatasetEntityData> target={MedsEntityType.DATASETS} Entity={Dataset} />;
 }
 
 export function Tasks(): React.JSX.Element {
-  return <EntityPage<TaskEntityData> target={MedsEntityType.TASKS} Entity={Task} />;
+  return <EntityBrowser<TaskEntityData> target={MedsEntityType.TASKS} Entity={Task} />;
 }
 
 export function Models(): React.JSX.Element {
-  return <EntityPage<ModelEntityData> target={MedsEntityType.MODELS} Entity={Model} />;
+  return <EntityBrowser<ModelEntityData> target={MedsEntityType.MODELS} Entity={Model} />;
 }

@@ -125,7 +125,7 @@ function TechnicalBlock({ requirements, commands }) {
 }
 
 export default function Model({ name, data }) {
-  const { readme, model, refs, requirements } = data.data;
+  const { readme, model, refs, requirements } = data;
 
   const { metadata, commands } = model || {};
 
