@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   CircularProgress,
   Typography,
@@ -8,16 +8,29 @@ import {
   AccordionDetails,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { loadEntities } from '@site/src/lib/MEDS-DEV/load';
+import { MedsDatasets, MedsTasks, MedsModels, MedsEntityType } from '@site/src/lib/MEDS-DEV/types';
 
-import { loadMedsDev } from '@site/src/lib/load';
+interface EntityProps {
+  name: string;
+  data: any;
+}
 
-export default function EntityPage({ target, Entity }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+interface EntityPageProps {
+  target: MedsEntityType;
+  Entity: React.ComponentType<EntityProps>;
+}
+
+export default function EntityPage<T = MedsDatasets | MedsTasks | MedsModels>({
+  target,
+  Entity,
+}: EntityPageProps): React.JSX.Element {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    loadMedsDev(target)
-      .then(res => {
+    loadEntities<T>(target)
+      .then((res: T | null) => {
         setData(res);
       })
       .finally(() => {
@@ -32,10 +45,8 @@ export default function EntityPage({ target, Entity }) {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        {' '}
-        {target}{' '}
+        {target}
       </Typography>
-
       {Object.entries(data).map(([name, entity]) => (
         <Accordion key={name}>
           <AccordionSummary

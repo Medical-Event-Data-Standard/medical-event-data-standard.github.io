@@ -1,9 +1,9 @@
 import React from 'react';
 
-import { MedsTarget } from '@site/src/lib/load';
+import { MedsEntityType } from '@site/src/lib/MEDS-DEV/types';
 import Task from './Task';
 import EntityPage from './EntityPage';
 
 export default function Datasets() {
-  return <EntityPage target={MedsTarget.TASKS} Entity={Task} />;
+  return <EntityPage target={MedsEntityType.TASKS} Entity={Task} />;
 }

@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { MedsTarget } from '@site/src/lib/load';
+import { MedsEntityType } from '@site/src/lib/MEDS-DEV/types';
 import Dataset from './Dataset';
 //import EntityPage from './EntityTreeMenu';
 import EntityPage from './EntityPage';
 
 export default function Datasets() {
-  return <EntityPage target={MedsTarget.DATASETS} Entity={Dataset} />;
+  return <EntityPage target={MedsEntityType.DATASETS} Entity={Dataset} />;
 }

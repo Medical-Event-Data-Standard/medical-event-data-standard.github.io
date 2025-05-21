@@ -1,28 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import Plot from 'react-plotly.js';
 import { CircularProgress, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
-import { loadMedsDev, MedsTarget } from '@site/src/lib/load';
 import BrowserOnly from '@docusaurus/BrowserOnly';
 import { Data } from 'plotly.js';
 
-interface Result {
+import { loadMedsDevResults } from '@site/src/lib/MEDS-DEV/load';
+import { BenchmarkResults, Result, BenchmarkEntry } from '@site/src/lib/MEDS-DEV/types';
+
+interface BenchmarkEntryWithId extends BenchmarkEntry {
   id: string;
-  dataset: string;
-  task: string;
-  model: string;
-  version: string;
-  result?: {
-    samples_equally_weighted?: {
-      roc_auc_score?: number;
-      average_precision_score?: number;
-      f1_score?: number;
-    };
-    subjects_equally_weighted?: {
-      roc_auc_score?: number;
-      average_precision_score?: number;
-      f1_score?: number;
-    };
-  };
 }
 
 interface BenchmarkInnerProps {
@@ -38,7 +24,7 @@ interface BenchmarkPlotProps {
 }
 
 function BenchmarkInner({ datasetFilter, modelFilter, taskFilter }: BenchmarkInnerProps): React.JSX.Element {
-  const [results, setResults] = useState<Result[]>([]);
+  const [results, setResults] = useState<BenchmarkEntryWithId[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [dataset, setDataset] = useState<string>(datasetFilter || '');
   const [task, setTask] = useState<string>(taskFilter || '');
@@ -46,9 +32,10 @@ function BenchmarkInner({ datasetFilter, modelFilter, taskFilter }: BenchmarkInn
   const [metricSet, setMetricSet] = useState<string>('samples_equally_weighted');
 
   useEffect(() => {
-    loadMedsDev(MedsTarget.RESULTS)
-      .then((res: any) => {
-        setResults(res);
+    loadMedsDevResults()
+      .then((res: BenchmarkResults | null) => {
+        const resList = res ? Object.entries(res).map(([id, result]) => ({ id, ...result })) : [];
+        setResults(resList);
       })
       .finally(() => {
         setLoading(false);
@@ -67,7 +54,7 @@ function BenchmarkInner({ datasetFilter, modelFilter, taskFilter }: BenchmarkInn
   const filtered = model ? filteredByTask.filter(r => r.model === model) : filteredByTask;
 
   const plotData: Data[] = filtered.map(r => {
-    const metrics = r.result?.[metricSet as keyof Result['result']] || {};
+    const metrics = r.result?.[metricSet as keyof Result] || {};
     return {
       x: ['ROC AUC', 'Avg Precision', 'F1 Score'],
       y: [

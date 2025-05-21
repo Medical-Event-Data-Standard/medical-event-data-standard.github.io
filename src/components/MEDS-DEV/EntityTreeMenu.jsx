@@ -3,7 +3,7 @@ import { CircularProgress, Typography, Box } from '@mui/material';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
 
-import { loadMedsDev } from '@site/src/lib/load';
+import { loadMedsDev } from '@site/src/lib/MEDS-DEV/load';
 import { parse_tree } from '@site/src/lib/parse_tree';
 
 function RecursiveTreeItem({ name, entity }) {
