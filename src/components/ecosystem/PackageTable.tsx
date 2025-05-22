@@ -1,39 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import { CircularProgress } from '@mui/material';
 
-export default function PackageTable({ packages }) {
-  const [pkgData, setPkgData] = useState([]);
+import { Package, PackageWithMetadata } from '@site/src/lib/ecosystem/types';
+import { loadPackageMetadata } from '@site/src/lib/ecosystem/loadPackageMetadata';
+
+export default function PackageTable({ packages }: { packages: Package[] }): React.JSX.Element {
+  const [pkgData, setPkgData] = useState<PackageWithMetadata[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    async function fetchGitHubMetadata(pkg) {
-      if (!pkg.github_repo) return pkg;
-
-      const res = await fetch(`https://api.github.com/repos/${pkg.github_repo}`);
-      const repoInfo = await res.json();
-      const stars = repoInfo.stargazers_count;
-      const updated_at = repoInfo.updated_at;
-
-      let latest_release = 'N/A';
-      const releaseRes = await fetch(`https://api.github.com/repos/${pkg.github_repo}/releases/latest`);
-      if (releaseRes.ok) {
-        const releaseData = await releaseRes.json();
-        latest_release = releaseData.tag_name || 'N/A';
-      }
-
-      return {
-        ...pkg,
-        stars,
-        updated_at,
-        latest_release,
-      };
-    }
-
-    async function fetchAllData() {
-      const results = await Promise.all(packages.map(fetchGitHubMetadata));
-      setPkgData(results);
-    }
-
-    fetchAllData();
+    Promise.all(packages.map(loadPackageMetadata))
+      .then(results => {
+        setPkgData(results);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error loading package metadata:', err);
+        setLoading(false);
+      });
   }, [packages]);
+
+  if (loading) return <CircularProgress />;
 
   return (
     <table>
@@ -59,7 +46,7 @@ export default function PackageTable({ packages }) {
               {pkg.warn ? <em>{pkg.warn}</em> : '—'}
               {pkg.demo_available && <span> (Demo Available)</span>}
             </td>
-            <td>{pkg.stars ?? '—'}</td>
+            <td>{pkg.stargazers_count ?? '—'}</td>
             <td>{pkg.latest_release ?? '—'}</td>
             <td>{pkg.updated_at ? new Date(pkg.updated_at).toLocaleDateString() : '—'}</td>
             <td>{pkg.docs_url ? <a href={pkg.docs_url}>Docs</a> : '—'}</td>
