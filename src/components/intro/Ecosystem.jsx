@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { load } from 'js-yaml';
 import PackageTable from './PackageTable';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -9,18 +8,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Paper from '@mui/material/Paper';
 import DynamicIcon from '@site/src/components/DynamicIcon';
 
-export default function Ecosystem({ yamlUrl }) {
-  const [data, setData] = useState(null);
-
-  useEffect(() => {
-    fetch(yamlUrl)
-      .then(res => res.text())
-      .then(text => load(text))
-      .then(setData);
-  }, [yamlUrl]);
-
-  if (!data) return <div>Loading ecosystem data...</div>;
-
+export default function Ecosystem({ data }) {
   return (
     <div>
       {Object.entries(data).map(([categoryKey, categoryData]) => (

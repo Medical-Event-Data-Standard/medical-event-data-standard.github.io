@@ -44,10 +44,14 @@ const config: Config = {
                 test: /\.ipynb$/, // Match all .ipynb files
                 type: 'json', // Treat as JSON in Webpack 5+
               },
+              {
+                test: /\.ya?ml$/,
+                use: 'yaml-loader',
+              },
             ],
           },
           resolve: {
-            extensions: ['.js', '.json', '.ipynb'], // Allow importing .ipynb
+            extensions: ['.js', '.json', '.ipynb', '.yaml', '.yml'], // Allow importing .ipynb and YAML files
           },
         };
       },

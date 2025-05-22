@@ -47,7 +47,6 @@
     "clsx": "^2.0.0",
     "gh-pages": "^6.2.0",
     "gray-matter": "^4.0.3",
-    "js-yaml": "^4.1.0",
     "plotly.js-dist": "^3.0.1",
     "prism-react-renderer": "^2.3.0",
     "react": "^18.0.0",
@@ -83,7 +82,8 @@
     "lint-staged": "^16.0.0",
     "markdownlint-cli": "^0.45.0",
     "prettier": "^3.5.3",
-    "typescript": "~5.6.2"
+    "typescript": "~5.6.2",
+    "yaml-loader": "^0.8.1"
   },
   "browserslist": {
     "production": [
