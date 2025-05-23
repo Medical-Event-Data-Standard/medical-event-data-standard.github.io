@@ -1,10 +1,10 @@
 tools:
-  title: 'Tools'
+  name: 'Tools'
   description: 'Tools/packages for working with MEDS datasets across various AI tasks'
   icon: 'Build'
 
   core:
-    title: 'MEDS Core'
+    name: 'MEDS Core'
     description: 'Core components of the MEDS ecosystem, including the schema and fundamental utilities.'
     packages:
       - name: 'MEDS Schema'
@@ -12,7 +12,7 @@ tools:
         github_repo: 'Medical-Event-Data-Standard/meds'
 
   preprocessing:
-    title: 'Preprocessing'
+    name: 'Preprocessing'
     description: 'Tools for preprocessing EHR data that is in the MEDS format or for building custom ETLs.'
     packages:
       - name: 'MEDS-Reader'
@@ -25,7 +25,7 @@ tools:
         docs_url: 'https://meds-transforms.readthedocs.io'
 
   exploration:
-    title: 'Exploration and Visualization'
+    name: 'Exploration and Visualization'
     description: 'Tools for exploring, visualizing, and understanding MEDS datasets.'
     packages:
       - name: 'MEDS-Inspect'
@@ -33,7 +33,7 @@ tools:
         github_repo: 'rvandewater/MEDS-Inspect'
 
   task_extraction:
-    title: 'Task Extraction'
+    name: 'Task Extraction'
     description: 'Tools for extracting prediction task cohorts from MEDS datasets.'
     packages:
       - name: 'ACES'
@@ -43,7 +43,7 @@ tools:
         docs_url: 'https://eventstreamaces.readthedocs.io'
 
   model_evaluation:
-    title: 'Model Evaluation'
+    name: 'Model Evaluation'
     description: 'Tools for evaluating models trained on MEDS datasets.'
     packages:
       - name: 'meds-evaluation'
@@ -51,12 +51,12 @@ tools:
         github_repo: 'kamilest/meds-evaluation'
 
 dataset_etls:
-  title: 'Dataset ETLs'
+  name: 'Dataset ETLs'
   description: 'Publicly available ETL pipelines for converting EHR datasets into the MEDS format.'
   icon: 'Storage'
 
   templates_and_tools:
-    title: 'ETL Templates/Tools'
+    name: 'ETL Templates/Tools'
     description: 'Template ETLs or tools to build your own custom ETLs.'
 
     packages:
@@ -70,7 +70,7 @@ dataset_etls:
         github_repo: 'mmcdermott/MEDS_extract'
 
   publicly_available_datasets:
-    title: 'Public Datasets'
+    name: 'Public Datasets'
     description: 'ETLs for datasets that are open for public use (subject to DUA and license agreements).'
 
     packages:
@@ -96,14 +96,14 @@ dataset_etls:
         github_repo: 'rvandewater/INSPIRE_MEDS'
 
   other_standards:
-    title: 'Alternate Data Standards'
+    name: 'Alternate Data Standards'
     description: 'ETLs for converting from other EHR data standards (e.g., OMOP).'
     packages:
       - name: 'OMOP (via MEDS-ETL)'
         github_repo: 'Medical-Event-Data-Standard/meds_etl'
 
 models:
-  title: 'Published Models'
+  name: 'Published Models'
   description: 'Publicly available, reproducible model training recipes you can use on your MEDS data.'
   icon: 'ModelTraining'
 
