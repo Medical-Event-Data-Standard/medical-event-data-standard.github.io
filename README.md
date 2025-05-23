@@ -73,6 +73,7 @@ medical-event-data-standard.github.io/
 │   ├── components/           # Custom React components
 │   │   ├── ui/               # UI components (e.g., buttons, cards)
 │   │   └── layout/           # Custom wrappers, layouts, headers
+│   ├── lib/                  # Custom JS libraries (e.g., fetching MEDS-DEV data)
 │   ├── pages/                # Custom pages under `/src/pages` (for non-doc routes)
 │   │   └── index.tsx         # Optional: homepage override
 │   ├── theme/                # Custom theme component overrides (optional)

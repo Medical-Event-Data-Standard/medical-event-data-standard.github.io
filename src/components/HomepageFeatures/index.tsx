@@ -1,7 +1,6 @@
 import clsx from 'clsx';
 import Heading from '@theme/Heading';
 import styles from './styles.module.css';
-import useBaseUrl from '@docusaurus/useBaseUrl';
 
 import shockinglySimpleSvg from '@site/static/img/shockingly_simple.svg';
 import builtForAiSvg from '@site/static/img/built_for_AI.svg';
@@ -50,7 +49,7 @@ function Feature({ title, Svg, PNG, description }: FeatureItem) {
   return (
     <div className={clsx('col col--4')}>
       <div className="text--center">
-        {PNG && <img src={useBaseUrl(PNG)} className={styles.featurePng} alt={title} />}
+        {PNG && <img src={PNG} className={styles.featurePng} alt={title} />}
         {Svg && <Svg className={styles.featureSvg} />}
       </div>
       <div className="text--center padding-horiz--md">

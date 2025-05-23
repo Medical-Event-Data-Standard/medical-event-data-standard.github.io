@@ -44,10 +44,14 @@ const config: Config = {
                 test: /\.ipynb$/, // Match all .ipynb files
                 type: 'json', // Treat as JSON in Webpack 5+
               },
+              {
+                test: /\.ya?ml$/,
+                use: 'yaml-loader',
+              },
             ],
           },
           resolve: {
-            extensions: ['.js', '.json', '.ipynb'], // Allow importing .ipynb
+            extensions: ['.js', '.json', '.ipynb', '.yaml', '.yml'], // Allow importing .ipynb and YAML files
           },
         };
       },
@@ -90,18 +94,30 @@ const config: Config = {
   themeConfig: {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
+    colorMode: {
+      defaultMode: 'light',
+      respectPrefersColorScheme: false,
+      disableSwitch: true,
+    },
     navbar: {
       title: 'MEDS',
       logo: {
         alt: 'MEDS Logo',
         src: 'img/logo.svg',
+        srcDark: 'img/logo-dark.svg',
       },
       items: [
         {
           type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
+          sidebarId: 'mainSidebar',
           position: 'left',
-          label: 'Tutorials',
+          label: 'Get Started',
+        },
+        {
+          type: 'docSidebar',
+          sidebarId: 'medsDevSidebar',
+          position: 'left',
+          label: 'MEDS-DEV',
         },
         //{to: '/blog', label: 'Blog', position: 'left'},
         {
