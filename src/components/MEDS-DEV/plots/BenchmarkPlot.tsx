@@ -37,13 +37,18 @@ function BenchmarkInner({ datasetFilter, modelFilter, taskFilter }: BenchmarkInn
 
   if (loading) return <CircularProgress />;
 
+  console.log('Loaded results:', results);
+
   const allDatasets = [...new Set(results.map(r => r.dataset))].sort();
+  console.log('All datasets:', allDatasets);
   const filteredByDataset = dataset ? results.filter(r => r.dataset === dataset) : results;
 
   const allTasks = [...new Set(filteredByDataset.map(r => r.task))].sort();
+  console.log('All tasks:', allTasks);
   const filteredByTask = task ? filteredByDataset.filter(r => r.task === task) : filteredByDataset;
 
   const allModels = [...new Set(filteredByTask.map(r => r.model))].sort();
+  console.log('All models:', allModels);
   const filtered = model ? filteredByTask.filter(r => r.model === model) : filteredByTask;
 
   const plotData: Data[] = filtered.map(r => {
