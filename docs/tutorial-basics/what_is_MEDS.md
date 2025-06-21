@@ -17,11 +17,16 @@ The critical aspects of the MEDS standard can be seen visually, in the image bel
 
 Here, we show both the required organization of MEDS files on disk, as well as the schema of the core data and
 metadata elements for MEDS datasets. In the rest of this document, we will explore these key concepts in more
-detail, in particular covering: 2. Requirements for a MEDS compliant dataset 3. MEDS dataset conventions and best practices 4. Future roadmap and how to contribute 5. And, finally, a glossary of some key terminology and concepts
+detail, in particular covering:
+
+- Requirements for a MEDS compliant dataset,
+- MEDS dataset conventions and best practices,
+- Future roadmap and how to contribute,
+- And, finally, a glossary of some key terminology and concepts.
 
 ## Requirements for a MEDS Compliant Dataset
 
-For a dataset to be compliant with the MEDS standard at a given version (versioning is given by the PyPi
+For a dataset to be compliant with the MEDS standard at a given version (versioning is given by the PyPI
 package version), it must satisfy several requirements:
 
 1. It must be stored in a directory structure that is compliant with the MEDS directory structure
@@ -227,45 +232,6 @@ building maximally compatible datasets. These include:
    [`meds.train_split = "train"`](https://github.com/Medical-Event-Data-Standard/meds/blob/main/src/meds/schema.py#L106)
    [`meds.tuning_split = "tuning"`](https://github.com/Medical-Event-Data-Standard/meds/blob/main/src/meds/schema.py#L107)
    [`meds.held_out_split = "held_out"`](https://github.com/Medical-Event-Data-Standard/meds/blob/main/src/meds/schema.py#L108)
-
-## Future Roadmap and How to Contribute
-
-While MEDS enables a lot of exciting research already, we have a number of exciting plans to make it even
-better. Key ongoing efforts include but are not limited to those listed below. If you'd like to contribute to
-MEDS, either through any of these efforts or other approaches, please feel free to reach out on our GitHub. We
-welcome any and all contributions!
-
-### Multi-modal data support
-
-MEDS is built for supporting longitudinal, structured EHR data, but it is clear that health AI covers more
-than just this kind of data. We are actively working to extend MEDS to support additional data modalities,
-including free-text, imaging, waveform, and other data types. There are already several tools that make use of
-some free-text data through a proposed `text_value` column, but official support is still in the works. Stay
-tuned or get involved on our GitHub to help with these efforts!
-
-### Visualization and data exploration tools
-
-In order to model data effectively, you first have to understand it, and few things help data understanding
-more than high-quality visualization and data exploration tools. The ecosystem for such tools in the EHR data
-landscape is very limited, and we are actively working to build out a set of tools that can help researchers
-better understand their data for the MEDS format.
-
-### Standardized support for complex data pre-processing steps
-
-While MEDS is designed to be simple and flexible, there are a number of complex data pre-processing steps that
-are common in health AI research but not yet supported out of the box through existing tools, such as
-vocabulary conversion, unit standardization, structured-data summarization to free-text, use of large language
-models (LLMs), or data QA testing. We are actively working to build support for these tools through both
-dedicated [MEDS-Transforms](https://meds-transforms.readthedocs.io/en/stable/) stages or standalone tools on a
-case-by-case basis. Feel free to reach out if these efforts would help your research or you'd like to
-contribute!
-
-### More extensive data validation and error checking
-
-Health data is known to be highly noisy and suffer from high rates of errors, be it physiologically impossible
-measurements, mis-labeled data, or low-information content observations. We are actively working to build out
-standardized tools that can help automatically clean MEDS datasets to a limited degree to help researchers
-make their data more meaningful and reliable in a transparent, reproducible way.
 
 ## Key Terminology and Concepts
 

@@ -4,56 +4,71 @@ sidebar_position: 5
 
 # Future Roadmap
 
-There are several critical areas of future investment for the MEDS project. These areas are outlined below,
-and we welcome contributions from the community to help us achieve these goals. To contribute, please file a
-[GitHub Issue](https://github.com/Medical-Event-Data-Standard/meds/issues) in the core MEDS repository. Note
-that this is just a smattering of the issues we are thinking about; if you have an idea that is not listed
-below, don't hesitate to reach out to us!
+The MEDS project has several critical areas of future investment outlined below.
+We welcome contributions from the community to help us achieve these goals.
+To contribute, please file a [GitHub Issue](https://github.com/Medical-Event-Data-Standard/meds/issues) in the core MEDS repository.
+This represents just some of the issues we're considering—if you have ideas not listed here, don't hesitate to reach out!
 
-## Immediate Future
+## Development Timeline
 
-MEDS is currently undergoing significant expansion and development. We are actively working on the following
-aspects:
+### Immediate Priorities
 
-1. Improved documentation and tutorials. In addition, writing up formal, finalized papers for the MEDS
-   ecosystem and MEDS-DEV benchmarking system.
-2. Additional tools, datasets, models, ETLs -- as driven by community need.
-3. Resources to make it easier to build MEDS tools, datasets, and models in a tested, validable manner.
-   E.g., synthetic or demo datasets for automated testing of any new models or tools. See
-   [this GitHub issue](https://github.com/Medical-Event-Data-Standard/meds/issues/44)
-   to contribute to that discussion.
-4. Expanding the set of covered tasks significantly and engendering community buy-in on defining and
-   collaboarating on tasks in this way.
+MEDS is currently undergoing significant expansion and development.
+We are actively working on:
 
-## Near Future to Longer-term
+1. **Documentation and Research**: Improved documentation, tutorials, and formal papers for the MEDS ecosystem and MEDS-DEV benchmarking system
+2. **Community-Driven Tools**: Additional tools, datasets, models, and ETLs based on community needs
+3. **Development Resources**: Tools to make building MEDS components easier, e.g. [helpers for automated testing](https://github.com/Medical-Event-Data-Standard/meds_testing_helpers)
+4. **Task Expansion**: Significantly expanding covered tasks and building community consensus on task definitions
 
-### Multi-modality
+### Near-Term to Long-Term Goals
 
-The MEDS working group believes strongly that multi-modal data is essential for health AI. We are actively
-working on integrating multi-modal data into the MEDS standard, and we welcome contributions from the
-community towards this front! See
-[this GitHub Issue](https://github.com/Medical-Event-Data-Standard/meds/issues/50) to add to the discussion!
+#### Multi-Modal Data Support
 
-### Data Visualization and Understanding
+The MEDS working group believes multi-modal data is essential for health AI.
+While MEDS currently supports longitudinal, structured EHR data, we're actively working to extend support to additional modalities including:
 
-We believe that one of the key things that is missing from the Health AI ecosystem, especially for junior
-students and researchers, are tools to help visualize, understand, interact with, and improve the quality of
-health data. Given how paramount understanding the realities of healthcare and the data generative process, it
-is essential that we have tools to help us understand the data we are working with. To help ideate and build
-efforts in this space, get in touch with us and we can loop you in on further discussions on this issue
-internally, or start building a tool for this yourself and let us know how we can help you!
+- Free-text data (some tools already use a proposed `text_value` column, but official support is in development)
+- Medical imaging
+- Waveform data
+- Other healthcare data types
 
-### Support tooling-based harmonization utilities
+See [GitHub Issue #50](https://github.com/Medical-Event-Data-Standard/meds/issues/50) to join the discussion!
 
-While MEDS (intentionally) prioritizes data _standardization_ over _harmonization_, we recognize that in a
-number of cases data harmonization or data linkage with external ontologies can be very valuable. There are
-preliminary efforts underway to enable such efforts; if you are interested, please see [this GitHub pull
-request](https://github.com/mmcdermott/MEDS_transforms/pull/206).
+#### Data Visualization and Understanding Tools
 
-### Better metadata integration in MEDS-DEV
+One key gap in the Health AI ecosystem is tools to help researchers—especially junior students—visualize, understand, and interact with health data.
+Given the importance of understanding healthcare realities and data generation processes, we're developing tools to:
 
-Right now, it is up to the community's best efforts to appropriately link tasks, datasets, and models together
-when running specific experiments, despite the fact that, in some cases, various combinations of these three
-should not go together -- e.g., we cannot study a primary care task on the MIMIC ICU datasets. We are
-currently brainstorming on ways to structure this sort of dataset-task-model metadata in a way that is easy to
-use and understand, and we welcome contributions to this discussion.
+- Provide high-quality visualization and data exploration capabilities
+- Help researchers better understand their MEDS-formatted data
+- Improve data quality assessment and interaction
+
+The ecosystem for EHR data visualization tools is currently very limited, making this a priority area.
+
+#### Advanced Data Processing and Quality Assurance
+
+We're building support for complex preprocessing steps common in health AI research, including:
+
+- **Vocabulary conversion and unit standardization**
+- **Structured-data summarization to free-text**
+- **Large language model (LLM) integration**
+- **Comprehensive data validation and error checking** to address health data's notorious noise and error rates (e.g. physiologically impossible measurements and mislabeled data)
+- **Automated data cleaning tools** that work transparently and reproducibly
+
+These capabilities will be delivered through dedicated [MEDS-Transforms](https://meds-transforms.readthedocs.io/en/stable/) stages or standalone tools as appropriate.
+
+#### Data Harmonization Support
+
+While MEDS intentionally prioritizes data _standardization_ over _harmonization_, we recognize that data harmonization and linkage with external ontologies can be valuable.
+Preliminary efforts are underway—see [this GitHub pull request](https://github.com/mmcdermott/MEDS_transforms/pull/206) if you're interested in contributing.
+
+#### Enhanced MEDS-DEV Metadata Integration
+
+Currently, the community must manually ensure appropriate linkages between tasks, datasets, and models when running experiments.
+However, some combinations shouldn't go together (e.g., studying primary care tasks on MIMIC ICU datasets).
+We're developing structured dataset-task-model metadata systems that will be intuitive and prevent incompatible combinations.
+
+---
+
+_Get involved on our [GitHub](https://github.com/Medical-Event-Data-Standard/meds) to help with any of these efforts!_
