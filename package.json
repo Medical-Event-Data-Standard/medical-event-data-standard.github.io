@@ -18,7 +18,8 @@
     "prettier:check": "prettier . --check",
     "typecheck": "tsc --noEmit",
     "prepare": "husky",
-    "test": "jest"
+    "test": "jest",
+    "test:coverage": "jest --coverage"
   },
   "lint-staged": {
     "*.{js,jsx}": [

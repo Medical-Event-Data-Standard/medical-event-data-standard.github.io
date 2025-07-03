@@ -8,4 +8,7 @@ export default {
   transform: {
     ...tsJestTransformCfg,
   },
+  moduleNameMapper: {
+    '^@site/(.*)$': '<rootDir>/$1',
+  },
 };

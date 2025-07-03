@@ -1,4 +1,4 @@
-import { parseReadme } from './parseMarkdown';
+import { parseReadme } from '@site/src/lib/parseMarkdown';
 
 describe('parseReadme', () => {
   it('extracts title and normalizes headings', () => {
