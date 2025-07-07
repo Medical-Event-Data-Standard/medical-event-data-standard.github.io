@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-tutorials/basic/converting_to_MEDS" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.8.1">
+<title data-rh="true">Converting to MEDS | MEDS: a Health AI Ecosystem</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://medical-event-data-standard.github.io/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://medical-event-data-standard.github.io/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://medical-event-data-standard.github.io/docs/tutorials/basic/converting_to_MEDS"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Converting to MEDS | MEDS: a Health AI Ecosystem"><meta data-rh="true" name="description" content="In this tutorial, we&#x27;ll extract a dataset in MEDS format for downstream use."><meta data-rh="true" property="og:description" content="In this tutorial, we&#x27;ll extract a dataset in MEDS format for downstream use."><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://medical-event-data-standard.github.io/docs/tutorials/basic/converting_to_MEDS"><link data-rh="true" rel="alternate" href="https://medical-event-data-standard.github.io/docs/tutorials/basic/converting_to_MEDS" hreflang="en"><link data-rh="true" rel="alternate" href="https://medical-event-data-standard.github.io/docs/tutorials/basic/converting_to_MEDS" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Tutorial - Build a Model with MEDS","item":"https://medical-event-data-standard.github.io/docs/category/tutorial---build-a-model-with-meds"},{"@type":"ListItem","position":2,"name":"Converting to MEDS","item":"https://medical-event-data-standard.github.io/docs/tutorials/basic/converting_to_MEDS"}]}</script><link rel="stylesheet" href="/assets/css/styles.af4d4dfa.css">
+<script src="/assets/js/runtime~main.787b6d75.js" defer="defer"></script>
+<script src="/assets/js/main.700093fc.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t="light";var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",e||t),document.documentElement.setAttribute("data-theme-choice",e||t)}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><div class="navbar__logo"><img src="/img/logo.svg" alt="MEDS Logo" class="themedComponent_mlkZ themedComponent--light_NVdE"><img src="/img/logo-dark.svg" alt="MEDS Logo" class="themedComponent_mlkZ themedComponent--dark_xIcU"></div><b class="navbar__title text--truncate">MEDS</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/intro_pages/intro">Get Started</a><a class="navbar__item navbar__link" href="/docs/MEDS-DEV/intro">MEDS-DEV</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a href="https://github.com/Medical-Event-Data-Standard" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/intro">Welcome to MEDS</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/what_is_MEDS">What is MEDS?</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--active" href="/docs/category/tutorial---build-a-model-with-meds">Tutorial - Build a Model with MEDS</a><button aria-label="Collapse sidebar category &#x27;Tutorial - Build a Model with MEDS&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/docs/tutorials/basic/converting_to_MEDS">Converting to MEDS</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/tutorials/basic/preprocessing_MEDS_data">Pre-processing MEDS Data</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/tutorials/basic/extracting_prediction_tasks">Extracting a Prediction Task Cohort from MEDS Data</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/tutorials/basic/modeling_over_MEDS_data">Modeling over MEDS data</a></li></ul></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/ecosystem">MEDS Ecosystem</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/roadmap">Future Roadmap</a></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="Breadcrumbs"><ul class="breadcrumbs"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_YNFT"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/category/tutorial---build-a-model-with-meds"><span>Tutorial - Build a Model with MEDS</span></a></li><li class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link">Converting to MEDS</span></li></ul></nav><div class="theme-doc-markdown markdown"><header><h1>Converting to MEDS</h1></header>
+<p>In this tutorial, we&#x27;ll extract a dataset in MEDS format for downstream use.</p>
+<div class="jupyter-viewer"><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p><strong>Tip</strong>:
+If you&#x27;re using a public dataset, it may already be available in the MEDS format! Check out
+<a href="/docs/MEDS_datasets_and_models">our list of public datasets</a> to see if the dataset you&#x27;re interested in
+is already available in MEDS format.</p>
+<p>Converting your data to the MEDS format is a straightforward process that can generally be done with a few
+simple tools and packages. In particular, if your dataset is in the OMOP format, you can use the <a href="https://github.com/Medical-Event-Data-Standard/meds_etl/tree/main?tab=readme-ov-file#omop">MEDS OMOP
+ETL</a> to extract
+your data directly to the MEDS format.</p>
+<p>Otherwise, in the below tutorial, we will demonstrate how you can use the
+<a href="https://meds-transforms.readthedocs.io/en/stable/">MEDS-Transforms</a> package to extract (nearly) arbitrary
+input structured datasets into the MEDS format easily and efficiently.</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h2>Tutorial Set-up</h2></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source">[2]: </pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span style="color:#00f">import</span><span> os
+</span><span></span><span style="color:#00f">from</span><span> pathlib </span><span style="color:#00f">import</span><span> Path
+</span>
+<span>DEMO_DIR = Path(os.getenv(</span><span style="color:#a31515">&quot;MEDS_DEMO_DIR&quot;</span><span>, </span><span style="color:#a31515">&quot;./demo_output&quot;</span><span>))</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>Input Dataset</h3>
+<h3>Installation</h3></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source">[4]: </pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">5</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">6</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">7</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">8</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">9</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">10</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">11</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">12</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">13</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">14</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">15</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">16</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">17</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">18</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">19</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">20</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">21</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">22</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">23</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>MIMICIV_RAW_DIR = </span><span style="color:#a31515">&quot;https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map&quot;</span><span>
+</span><span>MIMICIV_PRE_MEDS_DIR = DEMO_DIR / </span><span style="color:#a31515">&quot;pre_meds/&quot;</span><span>
+</span><span>MIMICIV_PRE_MEDS_DIR.mkdir(parents=</span><span style="color:#a31515">True</span><span>, exist_ok=</span><span style="color:#a31515">True</span><span>)
+</span>
+<span>OUTPUT_DIR = DEMO_DIR / </span><span style="color:#a31515">&quot;download/mimic-iv-demo/2.2&quot;</span><span>
+</span><span>OUTPUT_DIR.mkdir(parents=</span><span style="color:#a31515">True</span><span>, exist_ok=</span><span style="color:#a31515">True</span><span>)
+</span>
+<!-- -->files = [
+<span>    </span><span style="color:#a31515">&#x27;d_labitems_to_loinc.csv&#x27;</span><span>,
+</span><span>    </span><span style="color:#a31515">&#x27;inputevents_to_rxnorm.csv&#x27;</span><span>,
+</span><span>    </span><span style="color:#a31515">&#x27;lab_itemid_to_loinc.csv&#x27;</span><span>,
+</span><span>    </span><span style="color:#a31515">&#x27;meas_chartevents_main.csv&#x27;</span><span>,
+</span><span>    </span><span style="color:#a31515">&#x27;meas_chartevents_value.csv&#x27;</span><span>,
+</span><span>    </span><span style="color:#a31515">&#x27;numerics-summary.csv&#x27;</span><span>,
+</span><span>    </span><span style="color:#a31515">&#x27;outputevents_to_loinc.csv&#x27;</span><span>,
+</span><span>    </span><span style="color:#a31515">&#x27;proc_datetimeevents.csv&#x27;</span><span>,
+</span><span>    </span><span style="color:#a31515">&#x27;proc_itemid.csv&#x27;</span><span>,
+</span><span>    </span><span style="color:#a31515">&#x27;waveforms-summary.csv&#x27;</span><span>
+</span>]
+<!-- -->
+<span></span><span style="color:#00f">for</span><span> file </span><span style="color:#00f">in</span><span> files:
+</span>    !wget -O {OUTPUT_DIR}/{file} {MIMICIV_RAW_DIR}/{file}
+<!-- -->    !wget -O {MIMICIV_PRE_MEDS_DIR}/{file} {MIMICIV_RAW_DIR}/{file}</code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content" style="max-height:0;height:200px;box-shadow:inset 0 0 6px 2px rgb(0 0 0 / 30%);resize:vertical"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">--2024-12-10 10:57:46--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/d_labitems_to_loinc.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.110.133, 185.199.111.133, 185.199.108.133, ...
+connected. to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.110.133|:443... 
+HTTP request sent, awaiting response... 200 OK
+Length: 361048 (353K) [text/plain]
+Saving to: ‘demo_output/download/mimic-iv-demo/2.2/d_labitems_to_loinc.csv’
+
+demo_output/downloa 100%[===================&gt;] 352.59K  --.-KB/s    in 0.07s   
+
+2024-12-10 10:57:47 (4.90 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/d_labitems_to_loinc.csv’ saved [361048/361048]
+
+--2024-12-10 10:57:48--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/d_labitems_to_loinc.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.110.133, 185.199.111.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.109.133|:443... connected.
+200 OKequest sent, awaiting response... 
+Length: 361048 (353K) [text/plain]
+Saving to: ‘demo_output/pre_meds/d_labitems_to_loinc.csv’
+
+demo_output/pre_med 100%[===================&gt;] 352.59K  --.-KB/s    in 0.1s    
+
+2024-12-10 10:57:48 (3.21 MB/s) - ‘demo_output/pre_meds/d_labitems_to_loinc.csv’ saved [361048/361048]
+
+--2024-12-10 10:57:48--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/inputevents_to_rxnorm.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.108.133, 185.199.110.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
+200 OKequest sent, awaiting response... 
+Length: 79195 (77K) [text/plain]
+Saving to: ‘demo_output/download/mimic-iv-demo/2.2/inputevents_to_rxnorm.csv’
+
+demo_output/downloa 100%[===================&gt;]  77.34K  --.-KB/s    in 0.01s   
+
+2024-12-10 10:57:49 (6.90 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/inputevents_to_rxnorm.csv’ saved [79195/79195]
+
+--2024-12-10 10:57:49--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/inputevents_to_rxnorm.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.110.133, 185.199.111.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 79195 (77K) [text/plain]
+Saving to: ‘demo_output/pre_meds/inputevents_to_rxnorm.csv’
+
+demo_output/pre_med 100%[===================&gt;]  77.34K  --.-KB/s    in 0.01s   
+
+2024-12-10 10:57:49 (5.74 MB/s) - ‘demo_output/pre_meds/inputevents_to_rxnorm.csv’ saved [79195/79195]
+
+--2024-12-10 10:57:49--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/lab_itemid_to_loinc.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.111.133, 185.199.109.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+200 OKequest sent, awaiting response... 
+Length: 79970 (78K) [text/plain]
+Saving to: ‘demo_output/download/mimic-iv-demo/2.2/lab_itemid_to_loinc.csv’
+
+demo_output/downloa 100%[===================&gt;]  78.10K  --.-KB/s    in 0.01s   
+
+2024-12-10 10:57:49 (5.89 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/lab_itemid_to_loinc.csv’ saved [79970/79970]
+
+--2024-12-10 10:57:50--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/lab_itemid_to_loinc.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.110.133, 185.199.109.133, 185.199.108.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.110.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 79970 (78K) [text/plain]
+Saving to: ‘demo_output/pre_meds/lab_itemid_to_loinc.csv’
+
+demo_output/pre_med 100%[===================&gt;]  78.10K  --.-KB/s    in 0.01s   
+
+2024-12-10 10:57:50 (6.60 MB/s) - ‘demo_output/pre_meds/lab_itemid_to_loinc.csv’ saved [79970/79970]
+
+--2024-12-10 10:57:50--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/meas_chartevents_main.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.109.133, 185.199.110.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 34862 (34K) [text/plain]
+Saving to: ‘demo_output/download/mimic-iv-demo/2.2/meas_chartevents_main.csv’
+
+demo_output/downloa 100%[===================&gt;]  34.04K  --.-KB/s    in 0.001s  
+
+2024-12-10 10:57:50 (39.4 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/meas_chartevents_main.csv’ saved [34862/34862]
+
+--2024-12-10 10:57:50--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/meas_chartevents_main.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.108.133, 185.199.111.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.109.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 34862 (34K) [text/plain]
+Saving to: ‘demo_output/pre_meds/meas_chartevents_main.csv’
+
+demo_output/pre_med 100%[===================&gt;]  34.04K  --.-KB/s    in 0.009s  
+
+2024-12-10 10:57:50 (3.76 MB/s) - ‘demo_output/pre_meds/meas_chartevents_main.csv’ saved [34862/34862]
+
+--2024-12-10 10:57:50--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/meas_chartevents_value.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.110.133, 185.199.109.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
+200 OKequest sent, awaiting response... 
+Length: 5902 (5.8K) [text/plain]
+Saving to: ‘demo_output/download/mimic-iv-demo/2.2/meas_chartevents_value.csv’
+
+demo_output/downloa 100%[===================&gt;]   5.76K  --.-KB/s    in 0s      
+
+2024-12-10 10:57:51 (110 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/meas_chartevents_value.csv’ saved [5902/5902]
+
+--2024-12-10 10:57:51--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/meas_chartevents_value.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.111.133, 185.199.109.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 5902 (5.8K) [text/plain]
+Saving to: ‘demo_output/pre_meds/meas_chartevents_value.csv’
+
+demo_output/pre_med 100%[===================&gt;]   5.76K  --.-KB/s    in 0s      
+
+2024-12-10 10:57:51 (58.7 MB/s) - ‘demo_output/pre_meds/meas_chartevents_value.csv’ saved [5902/5902]
+
+--2024-12-10 10:57:51--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/numerics-summary.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.110.133, 185.199.111.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.109.133|:443... connected.
+200 OKequest sent, awaiting response... 
+Length: 32353 (32K) [text/plain]
+Saving to: ‘demo_output/download/mimic-iv-demo/2.2/numerics-summary.csv’
+
+demo_output/downloa 100%[===================&gt;]  31.59K  --.-KB/s    in 0.006s  
+
+2024-12-10 10:57:51 (5.56 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/numerics-summary.csv’ saved [32353/32353]
+
+--2024-12-10 10:57:51--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/numerics-summary.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.110.133, 185.199.108.133, 185.199.109.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.110.133|:443... connected.
+200 OKequest sent, awaiting response... 
+Length: 32353 (32K) [text/plain]
+Saving to: ‘demo_output/pre_meds/numerics-summary.csv’
+
+demo_output/pre_med 100%[===================&gt;]  31.59K  --.-KB/s    in 0.003s  
+
+2024-12-10 10:57:52 (9.94 MB/s) - ‘demo_output/pre_meds/numerics-summary.csv’ saved [32353/32353]
+
+--2024-12-10 10:57:52--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/outputevents_to_loinc.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.109.133, 185.199.108.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 34008 (33K) [text/plain]
+Saving to: ‘demo_output/download/mimic-iv-demo/2.2/outputevents_to_loinc.csv’
+
+demo_output/downloa 100%[===================&gt;]  33.21K  --.-KB/s    in 0.001s  
+
+2024-12-10 10:57:52 (29.5 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/outputevents_to_loinc.csv’ saved [34008/34008]
+
+--2024-12-10 10:57:52--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/outputevents_to_loinc.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.110.133, 185.199.111.133, 185.199.108.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.110.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 34008 (33K) [text/plain]
+Saving to: ‘demo_output/pre_meds/outputevents_to_loinc.csv’
+
+demo_output/pre_med 100%[===================&gt;]  33.21K  --.-KB/s    in 0.006s  
+
+2024-12-10 10:57:52 (5.07 MB/s) - ‘demo_output/pre_meds/outputevents_to_loinc.csv’ saved [34008/34008]
+
+--2024-12-10 10:57:52--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/proc_datetimeevents.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.111.133, 185.199.110.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.109.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 25205 (25K) [text/plain]
+Saving to: ‘demo_output/download/mimic-iv-demo/2.2/proc_datetimeevents.csv’
+
+demo_output/downloa 100%[===================&gt;]  24.61K  --.-KB/s    in 0s      
+
+2024-12-10 10:57:53 (139 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/proc_datetimeevents.csv’ saved [25205/25205]
+
+--2024-12-10 10:57:53--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/proc_datetimeevents.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.108.133, 185.199.110.133, ...
+connected. to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... 
+HTTP request sent, awaiting response... 200 OK
+Length: 25205 (25K) [text/plain]
+Saving to: ‘demo_output/pre_meds/proc_datetimeevents.csv’
+
+demo_output/pre_med 100%[===================&gt;]  24.61K  --.-KB/s    in 0.01s   
+
+2024-12-10 10:57:53 (1.90 MB/s) - ‘demo_output/pre_meds/proc_datetimeevents.csv’ saved [25205/25205]
+
+--2024-12-10 10:57:53--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/proc_itemid.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.111.133, 185.199.110.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+200 OKequest sent, awaiting response... 
+Length: 21414 (21K) [text/plain]
+Saving to: ‘demo_output/download/mimic-iv-demo/2.2/proc_itemid.csv’
+
+demo_output/downloa 100%[===================&gt;]  20.91K  --.-KB/s    in 0.001s  
+
+2024-12-10 10:57:53 (32.1 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/proc_itemid.csv’ saved [21414/21414]
+
+--2024-12-10 10:57:54--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/proc_itemid.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.110.133, 185.199.111.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.109.133|:443... connected.
+200 OKequest sent, awaiting response... 
+Length: 21414 (21K) [text/plain]
+Saving to: ‘demo_output/pre_meds/proc_itemid.csv’
+
+demo_output/pre_med 100%[===================&gt;]  20.91K  --.-KB/s    in 0s      
+
+2024-12-10 10:57:54 (161 MB/s) - ‘demo_output/pre_meds/proc_itemid.csv’ saved [21414/21414]
+
+--2024-12-10 10:57:54--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/waveforms-summary.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.110.133, 185.199.108.133, 185.199.109.133, ...
+connected. to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.110.133|:443... 
+200 OKequest sent, awaiting response... 
+Length: 5743 (5.6K) [text/plain]
+Saving to: ‘demo_output/download/mimic-iv-demo/2.2/waveforms-summary.csv’
+
+demo_output/downloa 100%[===================&gt;]   5.61K  --.-KB/s    in 0s      
+
+2024-12-10 10:57:54 (58.4 MB/s) - ‘demo_output/download/mimic-iv-demo/2.2/waveforms-summary.csv’ saved [5743/5743]
+
+--2024-12-10 10:57:54--  https://raw.githubusercontent.com/MIT-LCP/mimic-code/v2.4.0/mimic-iv/concepts/concept_map/waveforms-summary.csv
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.108.133, 185.199.110.133, ...
+connected. to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... 
+HTTP request sent, awaiting response... 200 OK
+Length: 5743 (5.6K) [text/plain]
+Saving to: ‘demo_output/pre_meds/waveforms-summary.csv’
+
+demo_output/pre_med 100%[===================&gt;]   5.61K  --.-KB/s    in 0s      
+
+2024-12-10 10:57:54 (41.7 MB/s) - ‘demo_output/pre_meds/waveforms-summary.csv’ saved [5743/5743]
+
+</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h2>Extracting Data to MEDS</h2></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>Writing the Event Configuration File</h3>
+<h3>Copying the Pipeline Configuration File</h3>
+<h3>Running the Pipeline</h3>
+<h2>Advanced Topics</h2>
+<h3>Parallelizing your Pipeline</h3>
+<h3>Extracting Metadata</h3>
+<h3>Additional Post-processing</h3></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div></div></div></div></div></div></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/tree/main/docs/docs/tutorials/basic/converting_to_MEDS.mdx" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/category/tutorial---build-a-model-with-meds"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Tutorial - Build a Model with MEDS</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/tutorials/basic/preprocessing_MEDS_data"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Pre-processing MEDS Data</div></a></nav></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Docs</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/intro_pages/intro">Tutorials</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://stackoverflow.com/questions/tagged/meds" target="_blank" rel="noopener noreferrer" class="footer__link-item">Stack Overflow<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a href="https://github.com/Medical-Event-Data-Standard" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/Medical-Event-Data-Standard" target="_blank" rel="noopener noreferrer" class="footer__link-item">Schema</a></li><li class="footer__item"><a href="https://github.com/mmcdermott/MEDS-DEV" target="_blank" rel="noopener noreferrer" class="footer__link-item">MEDS-DEV<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2025 Medical Event Data Standard.</div></div></div></footer></div>
+</body>
+</html>
