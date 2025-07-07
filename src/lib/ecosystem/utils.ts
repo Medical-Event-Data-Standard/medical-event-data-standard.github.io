@@ -133,6 +133,7 @@ function parseCategory(rawCategory: RawCategory, topicPrefix: string | null = nu
     }
     pkg.topics.push(categoryRichTopicName);
     topics[topicName].featured?.push(pkgName);
+    topicPackages[topicName].push(pkgName);
   }
 
   return mergeParsedEcosystems({ packages, topics, topicPackages }, nestedEcosystem);

@@ -30,7 +30,7 @@ export default function PackageGrid({
   const packageList = Object.values(packages);
   const filtered = packageList.filter(pkg => {
     const matchesSearch = pkg.name.toLowerCase().includes(search.toLowerCase());
-    const matchesTopics = [...selectedTopics].every(tag => topicPackages[tag]?.includes(pkg.name));
+    const matchesTopics = [...selectedTopics].some(tag => topicPackages[tag]?.includes(pkg.name));
     return matchesSearch && matchesTopics;
   });
 
