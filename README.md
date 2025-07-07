@@ -2,14 +2,11 @@
 
 [![MEDS v0.4](https://img.shields.io/badge/MEDS-0.3.3-blue)](https://medical-event-data-standard.github.io/)
 [![code-quality](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/actions/workflows/code-quality-main.yaml/badge.svg)](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/actions/workflows/code-quality-main.yaml)
+[![tests](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/actions/workflows/tests.yaml/badge.svg)](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/actions/workflows/tests.yaml)
+[![codecov](https://codecov.io/gh/Medical-Event-Data-Standard/medical-event-data-standard.github.io/graph/badge.svg?token=MX9IMUWGG0)](https://codecov.io/gh/Medical-Event-Data-Standard/medical-event-data-standard.github.io)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io#license)
 [![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/pulls)
 [![contributors](https://img.shields.io/github/contributors/Medical-Event-Data-Standard/medical-event-data-standard.github.io.svg)](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/graphs/contributors)
-
-<!---
-[![codecov](https://codecov.io/gh/Medical-Event-Data-Standard/medical-event-data-standard.github.io/graph/badge.svg?token=5RORKQOZF9)](https://codecov.io/gh/Medical-Event-Data-Standard/medical-event-data-standard.github.io)
-[![tests](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/actions/workflows/tests.yaml/badge.svg)](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/actions/workflows/tests.yml)
--->
 
 This repository hosts the source code for the [MEDS website](https://medical-event-data-standard.github.io/).
 The MEDS website is a resource for the MEDS community, providing
