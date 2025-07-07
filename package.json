@@ -19,7 +19,7 @@
     "typecheck": "tsc --noEmit",
     "prepare": "husky",
     "test": "jest",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --ci --coverage"
   },
   "lint-staged": {
     "*.{js,jsx}": [
