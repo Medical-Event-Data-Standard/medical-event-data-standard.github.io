@@ -28,8 +28,12 @@ export default function PackageGrid({
   };
 
   const packageList = Object.values(packages);
+
   const filtered = packageList.filter(pkg => {
     const matchesSearch = pkg.name.toLowerCase().includes(search.toLowerCase());
+    if (selectedTopics.size === 0) {
+      return matchesSearch;
+    }
     const matchesTopics = [...selectedTopics].some(tag => topicPackages[tag]?.includes(pkg.name));
     return matchesSearch && matchesTopics;
   });
