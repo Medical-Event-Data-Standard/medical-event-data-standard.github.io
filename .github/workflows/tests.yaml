@@ -2,7 +2,7 @@ name: Tests
 
 on:
   pull_request:
-    branches: [main, "release/*", "dev"]
+    branches: [main, 'release/*', 'dev']
   push:
     branches: [main]
 
