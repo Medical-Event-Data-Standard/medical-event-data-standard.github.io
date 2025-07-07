@@ -24,3 +24,5 @@ yarn-error.log*
 demo_output
 
 .eslintcache
+
+coverage

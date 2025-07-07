@@ -17,7 +17,9 @@
     "prettier": "prettier . --write",
     "prettier:check": "prettier . --check",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "jest",
+    "test:coverage": "jest --ci --coverage"
   },
   "lint-staged": {
     "*.{js,jsx}": [
@@ -59,7 +61,12 @@
     "@docusaurus/tsconfig": "^3.7.0",
     "@docusaurus/types": "^3.7.0",
     "@eslint/compat": "^1.2.9",
+    "@jest/globals": "^30.0.4",
+    "@swc/core": "^1.12.9",
+    "@swc/jest": "^0.2.38",
+    "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.15.21",
     "@types/plotly.js": "^3.0.0",
     "@types/react": "^19.1.4",
@@ -79,9 +86,13 @@
     "eslint-plugin-unused-imports": "^4.1.4",
     "globals": "^16.1.0",
     "husky": "^9.1.7",
+    "jest": "^30.0.4",
+    "jest-environment-jsdom": "^30.0.4",
     "lint-staged": "^16.0.0",
     "markdownlint-cli": "^0.45.0",
     "prettier": "^3.5.3",
+    "ts-jest": "^29.4.0",
+    "ts-node": "^10.9.2",
     "typescript": "~5.6.2",
     "yaml-loader": "^0.8.1"
   },
