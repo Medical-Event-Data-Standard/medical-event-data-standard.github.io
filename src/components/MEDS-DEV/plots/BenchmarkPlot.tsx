@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import Plot from 'react-plotly.js';
 import { CircularProgress, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
 import BrowserOnly from '@docusaurus/BrowserOnly';
 import { Data } from 'plotly.js';
 
 import { loadMedsDevResults } from '@site/src/lib/MEDS-DEV/load';
 import { BenchmarkEntryWithId, Result } from '@site/src/lib/MEDS-DEV/types';
+import PlotlyWrapper from '@site/src/components/MEDS-DEV/plots/PlotlyWrapper';
 
 interface BenchmarkInnerProps {
   datasetFilter?: string;
@@ -131,7 +131,7 @@ function BenchmarkInner({ datasetFilter, modelFilter, taskFilter }: BenchmarkInn
         </FormControl>
       </div>
 
-      <Plot
+      <PlotlyWrapper
         data={plotData}
         layout={{
           barmode: 'group',
