@@ -50,6 +50,15 @@ tools:
         pypi_name: 'meds-evaluation'
         github_repo: 'kamilest/meds-evaluation'
 
+  testing:
+    name: 'Testing'
+    description: 'Utilities and fixtures for testing MEDS pipelines and generating sample datasets.'
+    packages:
+      - name: 'MEDS Testing Helpers'
+        pypi_name: 'meds_testing_helpers'
+        github_repo: 'Medical-Event-Data-Standard/meds_testing_helpers'
+        docs_url: 'https://meds-testing-helpers.readthedocs.io'
+
 dataset_etls:
   name: 'Dataset ETLs'
   description: 'Publicly available ETL pipelines for converting EHR datasets into the MEDS format.'
