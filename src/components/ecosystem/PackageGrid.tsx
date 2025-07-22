@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Grid, TextField, Chip, Box } from '@mui/material';
+import { useHistory, useLocation } from '@docusaurus/router';
 import { Package, Topic } from '@site/src/lib/ecosystem/types';
 import PackageCard from './PackageCard';
 
@@ -12,8 +13,32 @@ export default function PackageGrid({
   topics: Record<string, Topic>;
   topicPackages: Record<string, string[]>;
 }): React.JSX.Element {
-  const [search, setSearch] = useState('');
-  const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
+  const location = useLocation();
+  const history = useHistory();
+
+  const searchParams = React.useMemo(() => new URLSearchParams(location.search), [location.search]);
+
+  const [search, setSearch] = useState<string>(searchParams.get('search') ?? '');
+  const [selectedTopics, setSelectedTopics] = useState<Set<string>>(
+    () => new Set((searchParams.get('topics') ?? '').split(',').filter(t => t))
+  );
+
+  useEffect(() => {
+    const newParams = new URLSearchParams();
+    if (search) {
+      newParams.set('search', search);
+    }
+    if (selectedTopics.size > 0) {
+      newParams.set('topics', Array.from(selectedTopics).join(','));
+    }
+    history.replace({ ...location, search: newParams.toString() });
+  }, [search, selectedTopics, history, location]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    setSearch(params.get('search') ?? '');
+    setSelectedTopics(new Set((params.get('topics') ?? '').split(',').filter(t => t)));
+  }, [location.search]);
 
   const handleToggleTopic = (topic: string) => {
     setSelectedTopics(prev => {
