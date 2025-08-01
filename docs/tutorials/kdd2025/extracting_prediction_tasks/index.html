@@ -1,0 +1,1142 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-tutorials/kdd2025/extracting_prediction_tasks" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.8.1">
+<title data-rh="true">Extracting a Prediction Task | MEDS: a Health AI Ecosystem</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://medical-event-data-standard.github.io/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://medical-event-data-standard.github.io/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/extracting_prediction_tasks"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Extracting a Prediction Task | MEDS: a Health AI Ecosystem"><meta data-rh="true" name="description" content="To easily extract prediction tasks from MEDS Data, we will use the"><meta data-rh="true" property="og:description" content="To easily extract prediction tasks from MEDS Data, we will use the"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/extracting_prediction_tasks"><link data-rh="true" rel="alternate" href="https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/extracting_prediction_tasks" hreflang="en"><link data-rh="true" rel="alternate" href="https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/extracting_prediction_tasks" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Tutorial - Build a Model with MEDS (KDD 2025)","item":"https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/"},{"@type":"ListItem","position":2,"name":"Extracting a Prediction Task","item":"https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/extracting_prediction_tasks"}]}</script><link rel="stylesheet" href="/assets/css/styles.25b0cb31.css">
+<script src="/assets/js/runtime~main.e02617de.js" defer="defer"></script>
+<script src="/assets/js/main.83c33bb1.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t="light";var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",e||t),document.documentElement.setAttribute("data-theme-choice",e||t)}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><div class="navbar__logo"><img src="/img/logo.svg" alt="MEDS Logo" class="themedComponent_mlkZ themedComponent--light_NVdE"><img src="/img/logo-dark.svg" alt="MEDS Logo" class="themedComponent_mlkZ themedComponent--dark_xIcU"></div><b class="navbar__title text--truncate">MEDS</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/intro_pages/intro">Get Started</a><a class="navbar__item navbar__link" href="/docs/MEDS-DEV/intro">MEDS-DEV</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a href="https://github.com/Medical-Event-Data-Standard" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/intro">Welcome to MEDS</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/what_is_MEDS">What is MEDS?</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--active" href="/docs/tutorials/kdd2025/">Tutorial - Build a Model with MEDS (KDD 2025)</a><button aria-label="Collapse sidebar category &#x27;Tutorial - Build a Model with MEDS (KDD 2025)&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/tutorials/kdd2025/MEDS_intro">Getting Familiar with MEDS</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/tutorials/kdd2025/converting_to_MEDS">Converting to MEDS</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/docs/tutorials/kdd2025/extracting_prediction_tasks">Extracting a Prediction Task</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/tutorials/kdd2025/build_a_model_tabular">Build a (Tabular Baseline) Model over MEDS data</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/tutorials/kdd2025/build_a_model_NN">Build a (Neural Network) Model over MEDS data</a></li></ul></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/ecosystem">MEDS Ecosystem</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/roadmap">Future Roadmap</a></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="Breadcrumbs"><ul class="breadcrumbs"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_YNFT"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/tutorials/kdd2025/"><span>Tutorial - Build a Model with MEDS (KDD 2025)</span></a></li><li class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link">Extracting a Prediction Task</span></li></ul></nav><div class="theme-doc-markdown markdown"><header><h1>Extracting a Prediction Task</h1></header>
+<p>To easily extract prediction tasks from MEDS Data, we will use the
+<a href="https://github.com/justin13601/aces/" target="_blank" rel="noopener noreferrer">ACES</a> package. This package allows you to define simple
+configuration files that specify the inclusion/exclusion criteria for tasks you want to extract and have them
+be automatically extractable from MEDS data via a command line interface. See the
+<a href="https://eventstreamaces.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer">ACES documentation</a> for more information.</p>
+<p>In this tutorial, we&#x27;ll explore both the motivation behind the ACES language and how it works technically in
+the jupyter notebook below. You can also check it out online on <a href="https://colab.research.google.com/github/Medical-Event-Data-Standard/medical-event-data-standard.github.io/blob/main/tutorial_notebooks/KDD_tutorial/Extract_a_Prediction_Task.ipynb" target="_blank" rel="noopener noreferrer">Google
+Colab</a>
+or on our <a href="https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/blob/main/tutorial_notebooks/KDD_tutorial/Extract_a_Prediction_Task.ipynb" target="_blank" rel="noopener noreferrer">GitHub Repository</a></p>
+<div class="jupyter-viewer"><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h1>Extracting a Prediction Task</h1>
+<p>Now that we know how to convert a dataset into MEDS, lets do something useful with it! For this section of the tutorial, we&#x27;ll demonstrate how to extract a set of labels of a prediction task for a health AI model.</p>
+<p>What&#x27;s the first step in extracting this prediction task cohort? Figuring out what we actually want our task to be!</p>
+<p>We said at the start of this tutorial that our goal was to:</p>
+<blockquote>
+<p><em>Identify patients who will have a long length of stay in the ICU</em></p>
+</blockquote>
+<p>Simple, right? Well, not quite. This goal is clinically motivated, but vague from a computational and modeling standpoint. For whom exactly? How long is &quot;long&quot;? When should the prediction be made?</p>
+<p>To determine how to answer these questions and operationalize this task definition, one must work with clinical and local dataset experts to understand whether or not a given patient should be included in our cohort and even what their label should be.</p>
+<p>For this tutorial, we&#x27;ll simulate a dialogue between yourself (acting as the role of the implementing AI developer) and a clinical and local dataset domain expert. The purpose of this simulated dialogue is to show (1) what the right kinds of questions to ask are when refining your task definition and (2) how to translate answers to those questions into operationalized criteria on a task of interest. To make this clear, after each question and answer exchange, we&#x27;ll curate our evolving &quot;formal definition&quot; of the task in a semi-structured format to help us be clear in our thoughts. Much like our &quot;conceptual spec&quot; turned out to be very similar to the actually MEDS Extract specification file, we&#x27;ll see that our conceptual model here will help us define our true final task definition file, which will use the <a href="https://eventstreamaces.readthedocs.io">ACES</a> language to make task extraction deterministic and reproducible.</p>
+<p><em><strong>Note 1</strong>: This is just a simulated dialogue, and is not intended to be an accurate reflection of how you really would or should work with clinical collaborators or what their opinions or answers might be. No clinical experts were consulted in making this tutorial, as we were constrained in what tasks can be used that permit meaningful prediction over the demo dataset in use.</em></p>
+<p><em><strong>Note 2</strong>: You do not need to understand the clinical context of this example to follow along -- just how to translate what the domain expert requests into a concrete task specification.</em></p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h2>Question 1: Why predict this task?</h2>
+<p>The first thing to understand when defining a prediction task is <em>why</em> do we care about that task. This question is easy to answer superficially, but is suprisingly hard to answer in a more concrete way. A good way to ensure you&#x27;re being sufficiently concrete in your answer is to reframe your question under a more quantitative, rather than qualitative framework, such as the <a href="https://en.wikipedia.org/wiki/Value_of_information"><em>Value of Information</em></a> framing. Under this framing, instead of asking &quot;<em>why do we care about this task?</em>&quot;, we ask &quot;<em>What would the quantitative benefit be to being able to predict this task perfectly?</em>&quot; -- and, ideally, &quot;<em>How would that benefit be realized?</em>&quot;. A similar approach is to leverage the <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6857505/#ocz088-T1">prediction-action dyad</a> approach, asking about what actions a prediction will enable or prompt and the benefits those actions will offer.</p>
+<p>Done properly, understanding why we care about a task will help reveal:</p>
+<ol>
+<li>When would a prediction for this task be useful?</li>
+<li>For what patients would predicting this task be useful?</li>
+<li>What metrics do we care about in this prediction? What is our best proxy for eventual utility?</li>
+<li>What trade-offs are we navigating in making this prediction? E.g., what are our constraints in trying to predict this outcome?</li>
+</ol>
+<p>So, let&#x27;s explore this question in our hypothetical scenario!</p>
+<hr>
+<p><strong>Q (You):</strong> What&#x27;s the goal here? What would you do differently if you knew a patient would have a long ICU stay?</p>
+<p><strong>A (Domain Expert):</strong> There are a lot of things that prediction could be used for. It could be used to help us optimize patient flow, for example, by allowing us to know in advance when ICU beds would be available or not. For this case, though, I&#x27;m most interested in what a prolonged length of stay (LOS) means about the patient&#x27;s acuity. The idea here is that patients with prolonged ICU stays often experience worse outcomes—more complications, hospital-acquired infections, and higher mortality risk. If we can predict early on which patients are likely to have extended ICU stays, we could proactively intervene to prevent complications. Specifically, we&#x27;re thinking about applying interventions like early mobilization, targeted nutritional support, or additional clinical monitoring resources.</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>Question 1.A: When are we predicting this?</h3>
+<p><strong>Q (You)</strong>: Ok, given that goal, when would understanding that these interventions might be needed be most useful?</p>
+<p><strong>A (Domain Expert)</strong>: Obviously the earlier the better, but critically for some of these interventions, what really matters is beginning them sufficiently early in the course to improve long term outcomes. So, we&#x27;d want to predict these as far in advance as we can.</p>
+<p><strong>Q (You)</strong>: Do we need to predict that the stay will remain ongoing for a long time continuously throughout the stay? E.g., are we predicting that the remaining time in the ICU will be long? Or is this a one-time prediction?</p>
+<p><strong>A (Domain Expert)</strong>: Often it will become clear pretty quickly whether a patient is going to be in this state or not -- but the issue is that we want to know and be able to plan for these interventions even earlier than that. So, rather than predicting that the remaining time will be long, the biggest impact would be if we could predict earlier that the patient will remain in the ICU for a long time. Maybe if we could use their first day in the ICU as an input before making our prediction that their stay would be long, that&#x27;d be a good balance?</p>
+<hr>
+<p>With this, we have our first piece of operationalization of our task: we want to make the prediction using data up to and including the first 24 hours of their ICU stay. Let&#x27;s record that for now:</p>
+<pre><code class="language-yaml">input: ICU admission + 24h
+</code></pre>
+<p>Note that this actually implies something about our patient population: Let&#x27;s clarify further.</p>
+<hr>
+<p><strong>Q (You)</strong>: Ok, sounds great, but what about patients who are in the ICU for less than 24 hours?</p>
+<p><strong>A (Domain Expert)</strong>: We should omit those patients. If we&#x27;re trying to plan for interventions, we don&#x27;t need to plan around those patients who are already discharged.</p>
+<hr>
+<p>So, this has revealed our first constraint in defining our task. Namely, the patient&#x27;s ICU stay can&#x27;t end within the first 24 hours. To represent that in our &quot;conceptual specification&quot;, we&#x27;ll add a note that there can&#x27;t be an &quot;ICU discharge&quot; event in the input window:</p>
+<pre><code class="language-yaml">input:
+  start: ICU admission
+  end: ICU admission + 24h
+  has: no ICU discharge
+</code></pre></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>Question 1.B: For which patients would this task actually help?</h3>
+<p>Our last exchange indicated that we want to exclude some patients from our cohort, because predicting this task label on those patients would not be meaningful. Are there more patients like this?</p>
+<hr>
+<p><strong>Q (You)</strong>: Are there other patients for whom we wouldn&#x27;t use this predictor, beyond those who aren&#x27;t in the ICU for long enough?</p>
+<p><strong>A (Domain Expert)</strong>: Great question. Some patients come in and are already so ill that the care team knows what to expect in advance. The most obvious example of these are patients who actually have do not recussitate (DNR) or comfort measures only (CMO) orders on record, or add them in their first day -- these patients are under palliative care, and so we already know what kinds of interventions are most suited and may be needed in that setting. We should probably exclude them too.</p>
+<hr>
+<p>We can add this to our specification too:</p>
+<pre><code class="language-yaml">input:
+  start: ICU admission
+  end: ICU admission + 24h
+  has:
+    ICU discharge: None
+    CMO: None
+    DNR: None
+</code></pre>
+<p><strong>Note</strong> In a real task, we might have many more exclusion or inclusion criteria than just this.</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>Question 1.C: What does &quot;long LOS&quot; actually mean?</h3>
+<p><strong>Q (You)</strong>: What threshold defines a &quot;long&quot; ICU stay?</p>
+<p><strong>A (Domain Expert)</strong>: Generally speaking, if a patient is in the ICU for more than a few days, something is wrong. We can use three days as a threshold for our purposes here.</p>
+<hr>
+<p>This lets us define not just our input window, but also the window that defines our prediction target.</p>
+<pre><code class="language-yaml">input:
+  start: ICU admission
+  end: ICU admission + 24h
+  has:
+    ICU discharge: None
+    CMO: None
+    DNR: None
+target:
+  start: ICU admission
+  end: ICU discharge
+  label: Longer than 3 days?
+</code></pre></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h2>Question 2: Accounting for Edge Cases and Messy Data</h2>
+<p>So far, our questions have been very focused on an &quot;idealized&quot; view of the task and the dataset. But, in reality, there are a lot of complications we need to consider in clinical predictions; things like censoring, data leakage, incomplete labels, and more. We can explore some of these too to refine our task definition.</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>Question 2.A: Future Leakage and Gap Windows</h3>
+<p><strong>Q (You)</strong>: How reliable is our data? Is it ever possible that a patient would be recorded as being discharged from the ICU at a certain time, but in reality the clinical team would all know they were getting discharged or the patient might have actually been discharged earlier, for example?</p>
+<p><strong>A (Domain Expert)</strong>: Oh, that&#x27;s definitely possible. There could be a deviation of up to a few hours where that might be known.</p>
+<hr>
+<p>This sort of error (the possibility of future leakage) suggests we should consider adding a <em>gap window</em> to our task. This is a window that extends some of our constraints out beyond the end of our input time to avoid having very easy patients in our training set who are only so easy because in reality the care team already knows the answer. We&#x27;ll add one for 6 hours here:</p>
+<pre><code class="language-yaml">input:
+  start: ICU admission
+  end: ICU admission + 24h
+  has:
+    ICU discharge: None
+    CMO: None
+    DNR: None
+target:
+  start: ICU admission
+  end: ICU discharge
+  label: Longer than 3 days?
+gap:
+  start: input.end
+  end: input.end + 6h
+  has:
+    ICU discharge: None
+    CMO: None
+    DNR: None
+</code></pre></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>Question 2.B: Conditional Predictions</h3>
+<p><strong>Q (You)</strong>: What about patients who don&#x27;t stay a long time in the ICU becuase they die? Or what about patients who leave the ICU quickly, but then die shortly thereafter. In both cases, these patients clearly had severe illness, but our current task would count them as negative samples. What do we want to do about that?</p>
+<p><strong>A (Domain Expert)</strong>: Oh, that&#x27;s a big issue. We should really predict that separately -- if a patient is at severe risk of mortality, then we&#x27;d take a potentially different set of actions than we would if we thought they were going to stay in the ICU for a long time, but survive.</p>
+<p><strong>Q (You)</strong>: So for this task, is it acceptable to think of it as prediction of prolonged length of stay conditioned on the patient not dying?</p>
+<p><strong>A (Domain Expert)</strong>: Yes, that&#x27;s what we&#x27;re going for here.</p>
+<hr>
+<pre><code class="language-yaml">input:
+  start: ICU admission
+  end: ICU admission + 24h
+  has:
+    ICU discharge: None
+    CMO: None
+    DNR: None
+target:
+  start: ICU admission
+  end: ICU discharge
+  label: Longer than 3 days?
+  has:
+    death: None
+gap:
+  start: input.end
+  end: input.end + 6h
+  has:
+    ICU discharge: None
+    CMO: None
+    DNR: None
+</code></pre></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h2>Other questions</h2>
+<p>We&#x27;re going to stop here for this task, but there are many more questions and refinements you could make! You could ask about:</p>
+<ol>
+<li>How should we handle censored patients (patients whose data ends before the end of our period of interest)?</li>
+<li>What about patients who have very little data recorded?</li>
+<li>Are there properties that we should want patients to have in order to be considered for this task at all?</li>
+</ol></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h2>Operationalizing our &quot;conceptual task description&quot;: The ACES Language</h2></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>So far, we&#x27;ve put together this description of our task:</p>
+<pre><code class="language-yaml">input:
+  start: ICU admission
+  end: ICU admission + 24h
+  has:
+    ICU discharge: None
+    CMO: None
+    DNR: None
+target:
+  start: ICU admission
+  end: ICU discharge
+  label: Longer than 3 days?
+  has:
+    death: None
+gap:
+  start: input.end
+  end: input.end + 6h
+  has:
+    ICU discharge: None
+    CMO: None
+    DNR: None
+</code></pre>
+<p>How can we turn this into something that is precise and operationalizable? The key idea we&#x27;ll use here is formalizing some of the notions of the &quot;building blocks&quot; of this conceptual specification. As we do so, what we&#x27;ll really be doing is building up the formal <a href="https://eventstreamaces.readthedocs.io/en/latest/readme.html#task-configuration-file">ACES task configuration language</a> -- so if you want to peek ahead, check out the documentation!</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>Building Block 1: Windows</h3></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>The first and most important such building block is that of the windows we&#x27;ve specified. Here, we have an <code>input</code> window, a <code>target</code> window, and a <code>gap</code> window -- but the names of the windows themselves aren&#x27;t important. Really, what&#x27;s important here is we&#x27;re using these to indicate specific relative parts of a patient&#x27;s timeline -- parts that are dependent on one another and could possibly be realized multiple times over a patient record. Here, these windows are connected in that we have:</p>
+<ul>
+<li>A &quot;root&quot; or &quot;trigger&quot; event of an ICU admission.</li>
+<li>Our <code>input</code> window spanning from that trigger event until 24 hours later.</li>
+<li>Our <code>gap</code> window spanning from the end of that <code>input</code> window until 6 hours later.</li>
+<li>Our <code>target</code> window spanning from that trigger event until _the next &quot;ICU discharge&quot; event.</li>
+</ul>
+<p>Let&#x27;s re-write this specification to make these connections between windows more apparent.</p>
+<pre><code class="language-yaml">trigger: ICU admission
+
+windows:
+  input:
+    start: trigger
+    end: start + 24h
+    has:
+      ICU discharge: None
+      CMO: None
+      DNR: None
+  target:
+    start: trigger
+    end: start -&gt; ICU discharge
+    label: Longer than 3 days?
+    has:
+      death: None
+  gap:
+    start: input.end
+    end: start + 6h
+    has:
+      ICU discharge: None
+      CMO: None
+      DNR: None
+</code></pre></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>Building Block 2: Predicates</h3></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>The next building block of our language we&#x27;ll highlight is that of the key concepts or &quot;predicates&quot; we rely on in order to define both our relative windows and their constraints. Namely, here, we need to know how to identify within our given dataset all of the following:</p>
+<ul>
+<li>An <code>ICU admission</code></li>
+<li>An <code>ICU discharge</code></li>
+<li>A <code>death</code></li>
+<li>A <code>CMO</code> event</li>
+<li>A <code>DNR</code> event</li>
+</ul>
+<p>If we don&#x27;t know how to recognize those events within our data, our nice description of our windows isn&#x27;t helpful! This is where we need that &quot;local data expertise&quot; we described above -- understanding how we can recognize these key events within our dataset.</p>
+<p><em><strong>Note</strong>: If your input data source were from a harmonized standard, such as <a href="https://www.ohdsi.org/data-standardization/">OHDSI OMOP</a>, you could also use those standard vocabularies and existing tools; unfortunately, however, not all datasets are harmonized at the start.</em></p>
+<p><strong>What if you didn&#x27;t have a collaborator with local data expertise?</strong> Then there&#x27;s a reasonable question to be asked about why are you working with that dataset! But, in the event that you are, you can always inspect the MEDS dataset directly across three easy to use axes to see if you can figure out which codes are reasonable starting points:</p>
+<ol>
+<li>The code strings themselves may be human readable (e.g., in MEDS, death events often use codes that begin with <code>MEDS_DEATH</code>).</li>
+<li>The <code>text_value</code> field may indicate the events of interest (see below for an example).</li>
+<li>The <code>metadata/codes.parquet</code> file may contain free-text descriptions for the codes or links to external ontologies that can be used.</li>
+</ol>
+<p>To use these strategies here, let&#x27;s pull in our dataset from the tutorial resources, then we can dive in!</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">5</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">6</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">7</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">8</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">9</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>%%bash
+</span><span></span><span style="color:#00f">set</span><span> -e
+</span>
+<span>wget -q -c https://github.com/Medical-Event-Data-Standard/MEDS_KDD_2025_Tutorial/raw/refs/heads/main/MEDS_data.</span><span style="color:#00f">zip</span><span>
+</span><span>unzip -q -o MEDS_data.</span><span style="color:#00f">zip</span><span>
+</span><span>rm MEDS_data/labels -r </span><span style="color:#008000"># We don&#x27;t need that here</span><span>
+</span>
+<!-- -->apt-get -qq install tree
+<!-- -->tree MEDS_data</code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Selecting previously unselected package tree.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 126284 files and directories currently installed.)
+Preparing to unpack .../tree_2.0.2-1_amd64.deb ...
+Unpacking tree (2.0.2-1) ...
+Setting up tree (2.0.2-1) ...
+Processing triggers for man-db (2.10.2-1) ...
+MEDS_data
+├── data
+│   ├── held_out
+│   │   └── 0.parquet
+│   ├── train
+│   │   └── 0.parquet
+│   └── tuning
+│       └── 0.parquet
+└── metadata
+    ├── codes.parquet
+    ├── dataset.json
+    └── subject_splits.parquet
+
+5 directories, 6 files
+</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>Now that we have the data, how can we look through it? To help here, we&#x27;ll use a simple function that will let us search through a dataframe via a text string. It&#x27;s far from perfect, but will help us here:</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">5</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">6</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">7</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">8</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">9</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">10</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">11</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">12</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">13</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">14</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">15</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">16</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">17</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">18</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">19</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">20</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">21</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">22</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">23</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">24</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">25</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">26</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">27</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">28</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">29</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span style="color:#00f">import</span><span> pandas </span><span style="color:#00f">as</span><span> pd
+</span><span></span><span style="color:#00f">import</span><span> ipywidgets </span><span style="color:#00f">as</span><span> widgets
+</span><span></span><span style="color:#00f">from</span><span> IPython.display </span><span style="color:#00f">import</span><span> display
+</span><span></span><span style="color:#00f">from</span><span> functools </span><span style="color:#00f">import</span><span> partial
+</span>
+<span></span><span class="hljs-function" style="color:#00f">def</span><span class="hljs-function"> </span><span class="hljs-function" style="color:#a31515">df_search</span><span class="hljs-function">(</span><span class="hljs-function hljs-params">df: pd.DataFrame</span><span class="hljs-function">):</span><span>
+</span><span>  </span><span style="color:#008000"># Create a Text widget for the search input</span><span>
+</span>  search_input = widgets.Text(
+<span>      value=</span><span style="color:#a31515">&#x27;&#x27;</span><span>,
+</span><span>      placeholder=</span><span style="color:#a31515">&#x27;Enter search term...&#x27;</span><span>,
+</span><span>      description=</span><span style="color:#a31515">&#x27;Search:&#x27;</span><span>,
+</span><span>      disabled=</span><span style="color:#a31515">False</span><span>
+</span>  )
+<!-- -->
+<span>  </span><span style="color:#008000"># Function to filter the DataFrame based on the search term</span><span>
+</span><span>  </span><span class="hljs-function" style="color:#00f">def</span><span class="hljs-function"> </span><span class="hljs-function" style="color:#a31515">filter_dataframe</span><span class="hljs-function">(</span><span class="hljs-function hljs-params">df: pd.DataFrame, search_term: </span><span class="hljs-function hljs-params" style="color:#00f">str</span><span class="hljs-function">):</span><span>
+</span><span>      </span><span style="color:#00f">if</span><span> </span><span style="color:#00f">not</span><span> search_term:
+</span>        display(df)
+<span>      </span><span style="color:#00f">else</span><span>:
+</span><span>        filtered_df = df[df.apply(</span><span style="color:#00f">lambda</span><span> row: row.astype(</span><span style="color:#00f">str</span><span>).</span><span style="color:#00f">str</span><span>.contains(search_term, case=</span><span style="color:#a31515">False</span><span>).</span><span style="color:#00f">any</span><span>(), axis=</span><span class="hljs-number">1</span><span>)]
+</span>        display(filtered_df)
+<!-- -->
+<span>  </span><span style="color:#008000"># Create an interactive output to display the filtered DataFrame</span><span>
+</span>  output = widgets.interactive_output(
+<span>      partial(filter_dataframe, df=df), {</span><span style="color:#a31515">&#x27;search_term&#x27;</span><span>: search_input}
+</span>  )
+<!-- -->
+<span>  </span><span style="color:#008000"># Display the search input and the output</span><span>
+</span>  display(search_input, output)</code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>Let&#x27;s see it in action by searching through the metadata first!</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>metadata_df = pd.read_parquet(</span><span style="color:#a31515">&quot;MEDS_data/metadata/codes.parquet&quot;</span><span>)[[</span><span style="color:#a31515">&quot;code&quot;</span><span>, </span><span style="color:#a31515">&quot;description&quot;</span><span>, </span><span style="color:#a31515">&quot;parent_codes&quot;</span><span>]]
+</span><span>data_df = pd.read_parquet(</span><span style="color:#a31515">&quot;MEDS_data/data/train/0.parquet&quot;</span><span>)[[</span><span style="color:#a31515">&quot;code&quot;</span><span>, </span><span style="color:#a31515">&quot;text_value&quot;</span><span>]].drop_duplicates()</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> </span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>df_search(metadata_df)</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Text(value=&#x27;&#x27;, description=&#x27;Search:&#x27;, placeholder=&#x27;Enter search term...&#x27;)</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Output()</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>In this case, the metadata doesn&#x27;t seem that helpful. What about the data itself, via the code strings and text value fields?</p>
+<p><strong>NOTE</strong> The search operation may take a long time and may seem to complete, but really only show results from a partial search.</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> </span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>df_search(data_df)</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Text(value=&#x27;&#x27;, description=&#x27;Search:&#x27;, placeholder=&#x27;Enter search term...&#x27;)</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Output()</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>In this case, for this tutorial, we&#x27;ll just tell you how to define each of these predicates for our tutorial dataset (the MIMIC demo dataset):</p>
+<ol>
+<li>ICU admissions have codes of the form <code>ICU_ADMISSION//*</code></li>
+<li>ICU discharges have codes of the form <code>ICU_DISCHARGE//*</code></li>
+<li>Death events have codes of the from <code>MEDS_DEATH*</code></li>
+<li>CMO events are either recorded with codes of the form <code>LAB//220001//UNK</code> or <code>LAB//223758//UNK</code> <em>and</em> with text values that are either <code>&quot;Comfort measures only&quot;</code> or <code>&quot;Comfort care (CMO, Comfort Measures)&quot;</code>.</li>
+<li>DNR events are either recorded with the same two codes used for CMO events, but with text values of any of the following forms:</li>
+</ol>
+<pre><code>- `&quot;DNR / DNI&quot;`
+- `&quot;DNAR (Do Not Attempt Resuscitation)  [DNR]&quot;`
+- `&quot;DNAR (Do Not Attempt Resuscitation) [DNR] / DNI&quot;`
+- `&quot;DNR (do not resuscitate)&quot;`
+</code></pre>
+<p>So, how can we represent this in our specification? Here, we&#x27;ll introduce a bit of the formal ACES language, and show you how to represent all of that in an ACES predicate block -- it isn&#x27;t quite a clean as some of the windows specification is, but it should be transparent when you see it.</p>
+<pre><code class="language-yaml">predicates:
+  icu_admission:
+    code: { regex: &quot;^ICU_ADMISSION//.*&quot; }
+  icu_discharge:
+    code: { regex: &quot;^ICU_DISCHARGE//.*&quot; }
+  death:
+    code: { regex: &quot;MEDS_DEATH.*&quot; }
+
+  # CMO predicates
+  cmo_1:
+    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+    text_value: &quot;Comfort measures only&quot;
+  cmo_2:
+    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+    text_value: &quot;Comfort care (CMO, Comfort Measures)&quot;
+
+  # DNR predicates
+  dnr_1:
+    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+    text_value: &quot;DNR / DNI&quot;
+  dnr_2:
+    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+    text_value: &quot;DNAR (Do Not Attempt Resuscitation)  [DNR]&quot;
+  dnr_3:
+    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+    text_value: &quot;DNAR (Do Not Attempt Resuscitation) [DNR] / DNI&quot;
+  dnr_4:
+    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+    text_value: &quot;DNR (do not resuscitate)&quot;
+
+  # derived predicates
+  cmo:
+    expr: or(cmo_1, cmo_2)
+  dnr:
+    expr: or(dnr_1, dnr_2, dnr_3, dnr_4)
+  death_or_discharge:
+    expr: or(icu_discharge, death)
+</code></pre></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>Putting it all together</h3></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>Lastly, we need to clean up a few small aspects of our configuration file to put it all together. Let&#x27;s see what the final config looks like:</p>
+<pre><code class="language-yaml">predicates:
+  icu_admission:
+    code: { regex: &quot;^ICU_ADMISSION//.*&quot; }
+  icu_discharge:
+    code: { regex: &quot;^ICU_DISCHARGE//.*&quot; }
+  death:
+    code: { regex: &quot;MEDS_DEATH.*&quot; }
+
+  # CMO predicates
+  cmo_1:
+    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+    text_value: &quot;Comfort measures only&quot;
+  cmo_2:
+    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+    text_value: &quot;Comfort care (CMO, Comfort Measures)&quot;
+
+  # DNR predicates
+  dnr_1:
+    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+    text_value: &quot;DNR / DNI&quot;
+  dnr_2:
+    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+    text_value: &quot;DNAR (Do Not Attempt Resuscitation)  [DNR]&quot;
+  dnr_3:
+    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+    text_value: &quot;DNAR (Do Not Attempt Resuscitation) [DNR] / DNI&quot;
+  dnr_4:
+    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+    text_value: &quot;DNR (do not resuscitate)&quot;
+
+  # derived predicates
+  cmo:
+    expr: or(cmo_1, cmo_2)
+  dnr:
+    expr: or(dnr_1, dnr_2, dnr_3, dnr_4)
+
+trigger: icu_admission
+
+windows:
+  input:
+    start: null
+    end: trigger + 24h
+    start_inclusive: True
+    end_inclusive: True
+    index_timestamp: end
+    has:
+      cmo: (None, 0) # Exclude patients on comfort measures only
+      dnr: (None, 0) # Exclude patients with DNR orders
+  gap:
+    start: trigger
+    end: start + 30h
+    start_inclusive: False
+    end_inclusive: True
+    has:
+      cmo: (None, 0)
+      dnr: (None, 0)
+      icu_discharge: (None, 0)
+  target:
+    start: trigger
+    end: start + 3d
+    start_inclusive: True
+    end_inclusive: True
+    label: icu_discharge
+    has:
+      death: (None, 0)
+</code></pre>
+<p>We can see there are a few small changes here.</p>
+<ol>
+<li>Our syntax for specifying constraints is a bit different -- we give a range of a lower bound and an upper bound for the number of times a predicate can occur, instead of just saying &quot;None&quot;.</li>
+<li>We&#x27;ve revised the gap window to encompass the discharge constraint over the full first 30 hours, and have it link to the trigger directly, rather than the input. This lets us also make the input window restrict the CMO or DNR constraint over the <em>full</em> prior record, not just the 24 hours since the ICU stay started.</li>
+<li>We&#x27;ve added an <code>index_timestamp</code> key to the <code>input</code> window. This tells ACES when in the relative set of window endpoints we are allowed to use data up until for prediction.</li>
+<li>We&#x27;ve swapped the nature of the prediction for the target window. As ACES doesn&#x27;t support a label being defined by the length of a window, only by predicates present or not, we now define the window to go for 3 days after the trigger and predict whether or not there is a discharge in that period. If so, the ICU stay must end within 3 days (and therefore is a short ICU stay). Note this inverts our notion of positive vs. negative label, but otherwise makes no other change. This also lets us exclude patients who die in that period appropriately.</li>
+</ol></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h2>Running ACES Extraction</h2></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>Now that we have a fully defined task in the form of an ACES configuration file, how can we actually extract the labels for this task? Well, we can use the ACES CLI, of course!</p>
+<p>To use this, all we have to do is write our task configuration YAML specification to a file on disk, then run the ACES CLI in the right way. Let&#x27;s see it!</p>
+<p>First, to write the task config:</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">5</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">6</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">7</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">8</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">9</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">10</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">11</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">12</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">13</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">14</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">15</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">16</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">17</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">18</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">19</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">20</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">21</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">22</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">23</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">24</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">25</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">26</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">27</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">28</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">29</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">30</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">31</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">32</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">33</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">34</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">35</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">36</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">37</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">38</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">39</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">40</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">41</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">42</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">43</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">44</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">45</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">46</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">47</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">48</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">49</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">50</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">51</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">52</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">53</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">54</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">55</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">56</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">57</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">58</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">59</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">60</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">61</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">62</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">63</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">64</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">65</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">66</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">67</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">68</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">69</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">70</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">71</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span style="color:#00f">from</span><span> pathlib </span><span style="color:#00f">import</span><span> Path
+</span>
+<span>task_cfg_yaml = </span><span style="color:#a31515">&quot;&quot;&quot;
+</span><span style="color:#a31515">predicates:
+</span><span style="color:#a31515">  icu_admission:
+</span><span style="color:#a31515">    code: { regex: &quot;^ICU_ADMISSION//.*&quot; }
+</span><span style="color:#a31515">  icu_discharge:
+</span><span style="color:#a31515">    code: { regex: &quot;^ICU_DISCHARGE//.*&quot; }
+</span><span style="color:#a31515">  death:
+</span><span style="color:#a31515">    code: { regex: &quot;MEDS_DEATH.*&quot; }
+</span><span style="color:#a31515">
+</span><span style="color:#a31515">  # CMO predicates
+</span><span style="color:#a31515">  cmo_1:
+</span><span style="color:#a31515">    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+</span><span style="color:#a31515">    text_value: &quot;Comfort measures only&quot;
+</span><span style="color:#a31515">  cmo_2:
+</span><span style="color:#a31515">    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+</span><span style="color:#a31515">    text_value: &quot;Comfort care (CMO, Comfort Measures)&quot;
+</span><span style="color:#a31515">
+</span><span style="color:#a31515">  # DNR predicates
+</span><span style="color:#a31515">  dnr_1:
+</span><span style="color:#a31515">    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+</span><span style="color:#a31515">    text_value: &quot;DNR / DNI&quot;
+</span><span style="color:#a31515">  dnr_2:
+</span><span style="color:#a31515">    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+</span><span style="color:#a31515">    text_value: &quot;DNAR (Do Not Attempt Resuscitation)  [DNR]&quot;
+</span><span style="color:#a31515">  dnr_3:
+</span><span style="color:#a31515">    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+</span><span style="color:#a31515">    text_value: &quot;DNAR (Do Not Attempt Resuscitation) [DNR] / DNI&quot;
+</span><span style="color:#a31515">  dnr_4:
+</span><span style="color:#a31515">    code: { any: [&quot;LAB//220001//UNK&quot;, &quot;LAB//223758//UNK&quot;] }
+</span><span style="color:#a31515">    text_value: &quot;DNR (do not resuscitate)&quot;
+</span><span style="color:#a31515">
+</span><span style="color:#a31515">  # derived predicates
+</span><span style="color:#a31515">  cmo:
+</span><span style="color:#a31515">    expr: or(cmo_1, cmo_2)
+</span><span style="color:#a31515">  dnr:
+</span><span style="color:#a31515">    expr: or(dnr_1, dnr_2, dnr_3, dnr_4)
+</span><span style="color:#a31515">
+</span><span style="color:#a31515">trigger: icu_admission
+</span><span style="color:#a31515">
+</span><span style="color:#a31515">windows:
+</span><span style="color:#a31515">  input:
+</span><span style="color:#a31515">    start: null
+</span><span style="color:#a31515">    end: trigger + 24h
+</span><span style="color:#a31515">    start_inclusive: True
+</span><span style="color:#a31515">    end_inclusive: True
+</span><span style="color:#a31515">    index_timestamp: end
+</span><span style="color:#a31515">    has:
+</span><span style="color:#a31515">      cmo: (None, 0) # Exclude patients on comfort measures only
+</span><span style="color:#a31515">      dnr: (None, 0) # Exclude patients with DNR orders
+</span><span style="color:#a31515">  gap:
+</span><span style="color:#a31515">    start: trigger
+</span><span style="color:#a31515">    end: start + 30h
+</span><span style="color:#a31515">    start_inclusive: False
+</span><span style="color:#a31515">    end_inclusive: True
+</span><span style="color:#a31515">    has:
+</span><span style="color:#a31515">      cmo: (None, 0)
+</span><span style="color:#a31515">      dnr: (None, 0)
+</span><span style="color:#a31515">      icu_discharge: (None, 0)
+</span><span style="color:#a31515">  target:
+</span><span style="color:#a31515">    start: trigger
+</span><span style="color:#a31515">    end: start + 3d
+</span><span style="color:#a31515">    start_inclusive: True
+</span><span style="color:#a31515">    end_inclusive: True
+</span><span style="color:#a31515">    label: icu_discharge
+</span><span style="color:#a31515">    has:
+</span><span style="color:#a31515">      death: (None, 0)
+</span><span style="color:#a31515">&quot;&quot;&quot;</span><span>
+</span>
+<span>Path(</span><span style="color:#a31515">&quot;task_config.yaml&quot;</span><span>).write_text(task_cfg_yaml);</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>Now to run the command -- note that we&#x27;ve renamed the task to <code>short_LOS</code> here, because we had to invert the label. A <code>True</code> indicates the subject has a length of stay less than 3 days, and <code>False</code> meant it was more.</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">5</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">6</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">7</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">8</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">9</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">10</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">11</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>%%bash
+</span><span>pip install --quiet es-aces==</span><span class="hljs-number">0.7</span><span class="hljs-number">.1</span><span>
+</span>aces-cli \
+<!-- -->    config_path=task_config.yaml \
+<span>    cohort_name=</span><span style="color:#a31515">&quot;short_LOS&quot;</span><span> \
+</span><span>    cohort_dir=</span><span style="color:#a31515">&quot;MEDS_data/labels&quot;</span><span> \
+</span>    data=sharded \
+<!-- -->    data.standard=meds \
+<!-- -->    data.root=MEDS_data/data \
+<span>    data.shard=$(expand_shards train/</span><span class="hljs-number">1</span><span> tuning/</span><span class="hljs-number">1</span><span> held_out/</span><span class="hljs-number">1</span><span>) \
+</span>    -m</code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 61.0/61.0 kB 2.0 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 61.8/61.8 kB 2.7 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 76.2/76.2 kB 3.0 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 7.9 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 118.6/118.6 kB 5.8 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 154.5/154.5 kB 4.8 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 18.3/18.3 MB 12.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 36.3/36.3 MB 10.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 739.1/739.1 kB 15.7 MB/s eta 0:00:00
+[2025-07-31 15:10:22,677][HYDRA] Launching 3 jobs locally
+[2025-07-31 15:10:22,677][HYDRA] 	#0 : config_path=task_config.yaml cohort_name=short_LOS cohort_dir=MEDS_data/labels data=sharded data.standard=meds data.root=MEDS_data/data data.shard=train/0
+[2025-07-31 15:10:22,803][aces.run][INFO] - Loading config from &#x27;task_config.yaml&#x27;
+[2025-07-31 15:10:22,815][aces.config][INFO] - Parsing windows...
+[2025-07-31 15:10:22,816][aces.config][INFO] - Parsing trigger event...
+[2025-07-31 15:10:22,816][aces.config][INFO] - Parsing predicates...
+[2025-07-31 15:10:22,827][aces.run][INFO] - Attempting to get predicates dataframe given:
+standard: meds
+ts_format: &#x27;%m/%d/%Y %H:%M&#x27;
+root: MEDS_data/data
+shard: train/0
+path: ${data.root}/${data.shard}.parquet
+_prefix: /${data.shard}
+
+[2025-07-31 15:10:22,829][aces.predicates][INFO] - Loading MEDS data...
+[2025-07-31 15:10:23,246][aces.predicates][INFO] - Generating plain predicate columns...
+[2025-07-31 15:10:23,279][aces.predicates][INFO] - Added predicate column &#x27;icu_admission&#x27;.
+[2025-07-31 15:10:23,312][aces.predicates][INFO] - Added predicate column &#x27;icu_discharge&#x27;.
+[2025-07-31 15:10:23,359][aces.predicates][INFO] - Added predicate column &#x27;death&#x27;.
+[2025-07-31 15:10:23,376][aces.predicates][INFO] - Added predicate column &#x27;cmo_1&#x27;.
+[2025-07-31 15:10:23,392][aces.predicates][INFO] - Added predicate column &#x27;cmo_2&#x27;.
+[2025-07-31 15:10:23,408][aces.predicates][INFO] - Added predicate column &#x27;dnr_1&#x27;.
+[2025-07-31 15:10:23,424][aces.predicates][INFO] - Added predicate column &#x27;dnr_2&#x27;.
+[2025-07-31 15:10:23,441][aces.predicates][INFO] - Added predicate column &#x27;dnr_3&#x27;.
+[2025-07-31 15:10:23,457][aces.predicates][INFO] - Added predicate column &#x27;dnr_4&#x27;.
+[2025-07-31 15:10:23,457][aces.predicates][INFO] - Cleaning up predicates dataframe...
+[2025-07-31 15:10:23,663][aces.predicates][INFO] - Loaded plain predicates. Generating derived predicate columns...
+[2025-07-31 15:10:23,664][aces.predicates][INFO] - Added predicate column &#x27;cmo&#x27;.
+[2025-07-31 15:10:23,666][aces.predicates][INFO] - Added predicate column &#x27;dnr&#x27;.
+[2025-07-31 15:10:23,666][aces.predicates][INFO] - Generating special predicate columns...
+[2025-07-31 15:10:23,666][aces.query][INFO] - Checking if &#x27;(subject_id, timestamp)&#x27; columns are unique...
+[2025-07-31 15:10:23,677][aces.utils][INFO] - 
+trigger
+┣━━ input.end
+┃   ┗━━ input.start
+┣━━ gap.end
+┗━━ target.end
+
+[2025-07-31 15:10:23,677][aces.query][INFO] - Beginning query...
+[2025-07-31 15:10:23,677][aces.query][INFO] - No static variable criteria specified, removing all rows with null timestamps...
+[2025-07-31 15:10:23,680][aces.query][INFO] - Identifying possible trigger nodes based on the specified trigger event...
+[2025-07-31 15:10:23,681][aces.constraints][INFO] - Excluding 72,774 rows as they failed to satisfy &#x27;1 &lt;= icu_admission &lt;= None&#x27;.
+[2025-07-31 15:10:23,682][aces.extract_subtree][INFO] - Summarizing subtree rooted at &#x27;input.end&#x27;...
+[2025-07-31 15:10:23,807][aces.extract_subtree][INFO] - Summarizing subtree rooted at &#x27;input.start&#x27;...
+[2025-07-31 15:10:24,044][aces.constraints][INFO] - Excluding 0 rows as they failed to satisfy &#x27;None &lt;= cmo &lt;= 0&#x27;.
+[2025-07-31 15:10:24,045][aces.constraints][INFO] - Excluding 3 rows as they failed to satisfy &#x27;None &lt;= dnr &lt;= 0&#x27;.
+[2025-07-31 15:10:24,049][aces.extract_subtree][INFO] - Summarizing subtree rooted at &#x27;gap.end&#x27;...
+[2025-07-31 15:10:24,178][aces.constraints][INFO] - Excluding 0 rows as they failed to satisfy &#x27;None &lt;= cmo &lt;= 0&#x27;.
+[2025-07-31 15:10:24,179][aces.constraints][INFO] - Excluding 1 rows as they failed to satisfy &#x27;None &lt;= dnr &lt;= 0&#x27;.
+[2025-07-31 15:10:24,179][aces.constraints][INFO] - Excluding 35 rows as they failed to satisfy &#x27;None &lt;= icu_discharge &lt;= 0&#x27;.
+[2025-07-31 15:10:24,182][aces.extract_subtree][INFO] - Summarizing subtree rooted at &#x27;target.end&#x27;...
+[2025-07-31 15:10:24,315][aces.constraints][INFO] - Excluding 3 rows as they failed to satisfy &#x27;None &lt;= death &lt;= 0&#x27;.
+[2025-07-31 15:10:24,319][aces.query][INFO] - Done. 74 valid rows returned corresponding to 57 subjects.
+[2025-07-31 15:10:24,319][aces.query][INFO] - Extracting label &#x27;icu_discharge&#x27; from window &#x27;target&#x27;...
+[2025-07-31 15:10:24,320][aces.query][INFO] - Setting index timestamp as &#x27;end&#x27; of window &#x27;input&#x27;...
+[2025-07-31 15:10:24,323][aces.run][WARNING] - Output contains columns that are not valid MEDS label columns. For now, we are dropping them.
+If you need these columns, please comment on https://github.com/justin13601/ACES/issues/97
+Columns:
+  - trigger
+  - input.end_summary
+  - input.start_summary
+  - gap.end_summary
+  - target.end_summary
+[2025-07-31 15:10:24,331][aces.run][INFO] - Completed in 0:00:01.526181. Results saved to &#x27;MEDS_data/labels/short_LOS/train/0.parquet&#x27;.
+[2025-07-31 15:10:24,332][HYDRA] 	#1 : config_path=task_config.yaml cohort_name=short_LOS cohort_dir=MEDS_data/labels data=sharded data.standard=meds data.root=MEDS_data/data data.shard=tuning/0
+[2025-07-31 15:10:24,467][aces.run][INFO] - Loading config from &#x27;task_config.yaml&#x27;
+[2025-07-31 15:10:24,477][aces.config][INFO] - Parsing windows...
+[2025-07-31 15:10:24,478][aces.config][INFO] - Parsing trigger event...
+[2025-07-31 15:10:24,478][aces.config][INFO] - Parsing predicates...
+[2025-07-31 15:10:24,479][aces.run][INFO] - Attempting to get predicates dataframe given:
+standard: meds
+ts_format: &#x27;%m/%d/%Y %H:%M&#x27;
+root: MEDS_data/data
+shard: tuning/0
+path: ${data.root}/${data.shard}.parquet
+_prefix: /${data.shard}
+
+[2025-07-31 15:10:24,480][aces.predicates][INFO] - Loading MEDS data...
+[2025-07-31 15:10:24,520][aces.predicates][INFO] - Generating plain predicate columns...
+[2025-07-31 15:10:24,524][aces.predicates][INFO] - Added predicate column &#x27;icu_admission&#x27;.
+[2025-07-31 15:10:24,530][aces.predicates][INFO] - Added predicate column &#x27;icu_discharge&#x27;.
+[2025-07-31 15:10:24,539][aces.predicates][INFO] - Added predicate column &#x27;death&#x27;.
+[2025-07-31 15:10:24,542][aces.predicates][INFO] - Added predicate column &#x27;cmo_1&#x27;.
+[2025-07-31 15:10:24,545][aces.predicates][INFO] - Added predicate column &#x27;cmo_2&#x27;.
+[2025-07-31 15:10:24,548][aces.predicates][INFO] - Added predicate column &#x27;dnr_1&#x27;.
+[2025-07-31 15:10:24,552][aces.predicates][INFO] - Added predicate column &#x27;dnr_2&#x27;.
+[2025-07-31 15:10:24,557][aces.predicates][INFO] - Added predicate column &#x27;dnr_3&#x27;.
+[2025-07-31 15:10:24,561][aces.predicates][INFO] - Added predicate column &#x27;dnr_4&#x27;.
+[2025-07-31 15:10:24,562][aces.predicates][INFO] - Cleaning up predicates dataframe...
+[2025-07-31 15:10:24,574][aces.predicates][INFO] - Loaded plain predicates. Generating derived predicate columns...
+[2025-07-31 15:10:24,575][aces.predicates][INFO] - Added predicate column &#x27;cmo&#x27;.
+[2025-07-31 15:10:24,575][aces.predicates][INFO] - Added predicate column &#x27;dnr&#x27;.
+[2025-07-31 15:10:24,575][aces.predicates][INFO] - Generating special predicate columns...
+[2025-07-31 15:10:24,575][aces.query][INFO] - Checking if &#x27;(subject_id, timestamp)&#x27; columns are unique...
+[2025-07-31 15:10:24,577][aces.utils][INFO] - 
+trigger
+┣━━ input.end
+┃   ┗━━ input.start
+┣━━ gap.end
+┗━━ target.end
+
+[2025-07-31 15:10:24,577][aces.query][INFO] - Beginning query...
+[2025-07-31 15:10:24,577][aces.query][INFO] - No static variable criteria specified, removing all rows with null timestamps...
+[2025-07-31 15:10:24,578][aces.query][INFO] - Identifying possible trigger nodes based on the specified trigger event...
+[2025-07-31 15:10:24,578][aces.constraints][INFO] - Excluding 6,242 rows as they failed to satisfy &#x27;1 &lt;= icu_admission &lt;= None&#x27;.
+[2025-07-31 15:10:24,579][aces.extract_subtree][INFO] - Summarizing subtree rooted at &#x27;input.end&#x27;...
+[2025-07-31 15:10:24,593][aces.extract_subtree][INFO] - Summarizing subtree rooted at &#x27;input.start&#x27;...
+[2025-07-31 15:10:24,617][aces.constraints][INFO] - Excluding 0 rows as they failed to satisfy &#x27;None &lt;= cmo &lt;= 0&#x27;.
+[2025-07-31 15:10:24,618][aces.constraints][INFO] - Excluding 0 rows as they failed to satisfy &#x27;None &lt;= dnr &lt;= 0&#x27;.
+[2025-07-31 15:10:24,622][aces.extract_subtree][INFO] - Summarizing subtree rooted at &#x27;gap.end&#x27;...
+[2025-07-31 15:10:24,636][aces.constraints][INFO] - Excluding 0 rows as they failed to satisfy &#x27;None &lt;= cmo &lt;= 0&#x27;.
+[2025-07-31 15:10:24,636][aces.constraints][INFO] - Excluding 0 rows as they failed to satisfy &#x27;None &lt;= dnr &lt;= 0&#x27;.
+[2025-07-31 15:10:24,636][aces.constraints][INFO] - Excluding 5 rows as they failed to satisfy &#x27;None &lt;= icu_discharge &lt;= 0&#x27;.
+[2025-07-31 15:10:24,638][aces.extract_subtree][INFO] - Summarizing subtree rooted at &#x27;target.end&#x27;...
+[2025-07-31 15:10:24,652][aces.constraints][INFO] - Excluding 0 rows as they failed to satisfy &#x27;None &lt;= death &lt;= 0&#x27;.
+[2025-07-31 15:10:24,655][aces.query][INFO] - Done. 10 valid rows returned corresponding to 7 subjects.
+[2025-07-31 15:10:24,655][aces.query][INFO] - Extracting label &#x27;icu_discharge&#x27; from window &#x27;target&#x27;...
+[2025-07-31 15:10:24,656][aces.query][INFO] - Setting index timestamp as &#x27;end&#x27; of window &#x27;input&#x27;...
+[2025-07-31 15:10:24,659][aces.run][WARNING] - Output contains columns that are not valid MEDS label columns. For now, we are dropping them.
+If you need these columns, please comment on https://github.com/justin13601/ACES/issues/97
+Columns:
+  - trigger
+  - input.end_summary
+  - input.start_summary
+  - gap.end_summary
+  - target.end_summary
+[2025-07-31 15:10:24,664][aces.run][INFO] - Completed in 0:00:00.196449. Results saved to &#x27;MEDS_data/labels/short_LOS/tuning/0.parquet&#x27;.
+[2025-07-31 15:10:24,666][HYDRA] 	#2 : config_path=task_config.yaml cohort_name=short_LOS cohort_dir=MEDS_data/labels data=sharded data.standard=meds data.root=MEDS_data/data data.shard=held_out/0
+[2025-07-31 15:10:24,878][aces.run][INFO] - Loading config from &#x27;task_config.yaml&#x27;
+[2025-07-31 15:10:24,889][aces.config][INFO] - Parsing windows...
+[2025-07-31 15:10:24,889][aces.config][INFO] - Parsing trigger event...
+[2025-07-31 15:10:24,889][aces.config][INFO] - Parsing predicates...
+[2025-07-31 15:10:24,891][aces.run][INFO] - Attempting to get predicates dataframe given:
+standard: meds
+ts_format: &#x27;%m/%d/%Y %H:%M&#x27;
+root: MEDS_data/data
+shard: held_out/0
+path: ${data.root}/${data.shard}.parquet
+_prefix: /${data.shard}
+
+[2025-07-31 15:10:24,892][aces.predicates][INFO] - Loading MEDS data...
+[2025-07-31 15:10:24,922][aces.predicates][INFO] - Generating plain predicate columns...
+[2025-07-31 15:10:24,925][aces.predicates][INFO] - Added predicate column &#x27;icu_admission&#x27;.
+[2025-07-31 15:10:24,927][aces.predicates][INFO] - Added predicate column &#x27;icu_discharge&#x27;.
+[2025-07-31 15:10:24,931][aces.predicates][INFO] - Added predicate column &#x27;death&#x27;.
+[2025-07-31 15:10:24,933][aces.predicates][INFO] - Added predicate column &#x27;cmo_1&#x27;.
+[2025-07-31 15:10:24,934][aces.predicates][INFO] - Added predicate column &#x27;cmo_2&#x27;.
+[2025-07-31 15:10:24,936][aces.predicates][INFO] - Added predicate column &#x27;dnr_1&#x27;.
+[2025-07-31 15:10:24,937][aces.predicates][INFO] - Added predicate column &#x27;dnr_2&#x27;.
+[2025-07-31 15:10:24,939][aces.predicates][INFO] - Added predicate column &#x27;dnr_3&#x27;.
+[2025-07-31 15:10:24,941][aces.predicates][INFO] - Added predicate column &#x27;dnr_4&#x27;.
+[2025-07-31 15:10:24,941][aces.predicates][INFO] - Cleaning up predicates dataframe...
+[2025-07-31 15:10:24,947][aces.predicates][INFO] - Loaded plain predicates. Generating derived predicate columns...
+[2025-07-31 15:10:24,948][aces.predicates][INFO] - Added predicate column &#x27;cmo&#x27;.
+[2025-07-31 15:10:24,948][aces.predicates][INFO] - Added predicate column &#x27;dnr&#x27;.
+[2025-07-31 15:10:24,949][aces.predicates][INFO] - Generating special predicate columns...
+[2025-07-31 15:10:24,949][aces.query][INFO] - Checking if &#x27;(subject_id, timestamp)&#x27; columns are unique...
+[2025-07-31 15:10:24,950][aces.utils][INFO] - 
+trigger
+┣━━ input.end
+┃   ┗━━ input.start
+┣━━ gap.end
+┗━━ target.end
+
+[2025-07-31 15:10:24,950][aces.query][INFO] - Beginning query...
+[2025-07-31 15:10:24,950][aces.query][INFO] - No static variable criteria specified, removing all rows with null timestamps...
+[2025-07-31 15:10:24,951][aces.query][INFO] - Identifying possible trigger nodes based on the specified trigger event...
+[2025-07-31 15:10:24,951][aces.constraints][INFO] - Excluding 4,163 rows as they failed to satisfy &#x27;1 &lt;= icu_admission &lt;= None&#x27;.
+[2025-07-31 15:10:24,952][aces.extract_subtree][INFO] - Summarizing subtree rooted at &#x27;input.end&#x27;...
+[2025-07-31 15:10:24,961][aces.extract_subtree][INFO] - Summarizing subtree rooted at &#x27;input.start&#x27;...
+[2025-07-31 15:10:24,979][aces.constraints][INFO] - Excluding 0 rows as they failed to satisfy &#x27;None &lt;= cmo &lt;= 0&#x27;.
+[2025-07-31 15:10:24,980][aces.constraints][INFO] - Excluding 0 rows as they failed to satisfy &#x27;None &lt;= dnr &lt;= 0&#x27;.
+[2025-07-31 15:10:24,983][aces.extract_subtree][INFO] - Summarizing subtree rooted at &#x27;gap.end&#x27;...
+[2025-07-31 15:10:24,992][aces.constraints][INFO] - Excluding 0 rows as they failed to satisfy &#x27;None &lt;= cmo &lt;= 0&#x27;.
+[2025-07-31 15:10:24,993][aces.constraints][INFO] - Excluding 0 rows as they failed to satisfy &#x27;None &lt;= dnr &lt;= 0&#x27;.
+[2025-07-31 15:10:24,993][aces.constraints][INFO] - Excluding 4 rows as they failed to satisfy &#x27;None &lt;= icu_discharge &lt;= 0&#x27;.
+[2025-07-31 15:10:24,995][aces.extract_subtree][INFO] - Summarizing subtree rooted at &#x27;target.end&#x27;...
+[2025-07-31 15:10:25,005][aces.constraints][INFO] - Excluding 1 rows as they failed to satisfy &#x27;None &lt;= death &lt;= 0&#x27;.
+[2025-07-31 15:10:25,008][aces.query][INFO] - Done. 8 valid rows returned corresponding to 6 subjects.
+[2025-07-31 15:10:25,009][aces.query][INFO] - Extracting label &#x27;icu_discharge&#x27; from window &#x27;target&#x27;...
+[2025-07-31 15:10:25,009][aces.query][INFO] - Setting index timestamp as &#x27;end&#x27; of window &#x27;input&#x27;...
+[2025-07-31 15:10:25,012][aces.run][WARNING] - Output contains columns that are not valid MEDS label columns. For now, we are dropping them.
+If you need these columns, please comment on https://github.com/justin13601/ACES/issues/97
+Columns:
+  - trigger
+  - input.end_summary
+  - input.start_summary
+  - gap.end_summary
+  - target.end_summary
+[2025-07-31 15:10:25,016][aces.run][INFO] - Completed in 0:00:00.137151. Results saved to &#x27;MEDS_data/labels/short_LOS/held_out/0.parquet&#x27;.
+</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-err">ERROR: pip&#x27;s dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+opencv-python 4.12.0.88 requires numpy&lt;2.3.0,&gt;=2; python_version &gt;= &quot;3.9&quot;, but you have numpy 1.26.4 which is incompatible.
+opencv-python-headless 4.12.0.88 requires numpy&lt;2.3.0,&gt;=2; python_version &gt;= &quot;3.9&quot;, but you have numpy 1.26.4 which is incompatible.
+opencv-contrib-python 4.12.0.88 requires numpy&lt;2.3.0,&gt;=2; python_version &gt;= &quot;3.9&quot;, but you have numpy 1.26.4 which is incompatible.
+torch 2.6.0+cu124 requires nvidia-cublas-cu12==12.4.5.8; platform_system == &quot;Linux&quot; and platform_machine == &quot;x86_64&quot;, but you have nvidia-cublas-cu12 12.5.3.2 which is incompatible.
+torch 2.6.0+cu124 requires nvidia-cuda-cupti-cu12==12.4.127; platform_system == &quot;Linux&quot; and platform_machine == &quot;x86_64&quot;, but you have nvidia-cuda-cupti-cu12 12.5.82 which is incompatible.
+torch 2.6.0+cu124 requires nvidia-cuda-nvrtc-cu12==12.4.127; platform_system == &quot;Linux&quot; and platform_machine == &quot;x86_64&quot;, but you have nvidia-cuda-nvrtc-cu12 12.5.82 which is incompatible.
+torch 2.6.0+cu124 requires nvidia-cuda-runtime-cu12==12.4.127; platform_system == &quot;Linux&quot; and platform_machine == &quot;x86_64&quot;, but you have nvidia-cuda-runtime-cu12 12.5.82 which is incompatible.
+torch 2.6.0+cu124 requires nvidia-cudnn-cu12==9.1.0.70; platform_system == &quot;Linux&quot; and platform_machine == &quot;x86_64&quot;, but you have nvidia-cudnn-cu12 9.3.0.75 which is incompatible.
+torch 2.6.0+cu124 requires nvidia-cufft-cu12==11.2.1.3; platform_system == &quot;Linux&quot; and platform_machine == &quot;x86_64&quot;, but you have nvidia-cufft-cu12 11.2.3.61 which is incompatible.
+torch 2.6.0+cu124 requires nvidia-curand-cu12==10.3.5.147; platform_system == &quot;Linux&quot; and platform_machine == &quot;x86_64&quot;, but you have nvidia-curand-cu12 10.3.6.82 which is incompatible.
+torch 2.6.0+cu124 requires nvidia-cusolver-cu12==11.6.1.9; platform_system == &quot;Linux&quot; and platform_machine == &quot;x86_64&quot;, but you have nvidia-cusolver-cu12 11.6.3.83 which is incompatible.
+torch 2.6.0+cu124 requires nvidia-cusparse-cu12==12.3.1.170; platform_system == &quot;Linux&quot; and platform_machine == &quot;x86_64&quot;, but you have nvidia-cusparse-cu12 12.5.1.3 which is incompatible.
+torch 2.6.0+cu124 requires nvidia-nvjitlink-cu12==12.4.127; platform_system == &quot;Linux&quot; and platform_machine == &quot;x86_64&quot;, but you have nvidia-nvjitlink-cu12 12.5.82 which is incompatible.
+thinc 8.3.6 requires numpy&lt;3.0.0,&gt;=2.0.0, but you have numpy 1.26.4 which is incompatible.
+cudf-polars-cu12 25.6.0 requires polars&lt;1.29,&gt;=1.25, but you have polars 1.30.0 which is incompatible.
+</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>%%bash
+</span>tree MEDS_data/labels</code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">MEDS_data/labels
+└── short_LOS
+    ├── held_out
+    │   └── 0.parquet
+    ├── train
+    │   └── 0.parquet
+    └── tuning
+        └── 0.parquet
+
+4 directories, 3 files
+</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>What do the labels look like? Let&#x27;s open one up and see:</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> </span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>pd.read_parquet(</span><span style="color:#a31515">&quot;MEDS_data/labels/short_LOS/train/0.parquet&quot;</span><span>)</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output">[17]: </pre><div class="cell-content output-display" style="justify-content:center">
+  <div id="df-16aaeb6e-c15d-46f2-99bc-28717e37a359" class="colab-df-container">
+    <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>subject_id</th>
+      <th>prediction_time</th>
+      <th>boolean_value</th>
+      <th>integer_value</th>
+      <th>float_value</th>
+      <th>categorical_value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>10002428</td>
+      <td>2156-04-13 16:24:18</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>10002428</td>
+      <td>2156-04-20 18:11:19</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>10002428</td>
+      <td>2156-05-01 21:53:00</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>10002428</td>
+      <td>2156-05-12 14:49:34</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>10002495</td>
+      <td>2141-05-23 20:18:01</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>69</th>
+      <td>10038933</td>
+      <td>2148-09-11 13:19:00</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>70</th>
+      <td>10038999</td>
+      <td>2131-05-23 21:50:33</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>71</th>
+      <td>10039708</td>
+      <td>2140-01-24 18:08:00</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>72</th>
+      <td>10039708</td>
+      <td>2140-06-19 01:41:00</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>73</th>
+      <td>10040025</td>
+      <td>2148-01-25 04:50:17</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table>
+<p>74 rows × 6 columns</p>
+</div>
+    <div class="colab-df-buttons">
+
+  <div class="colab-df-container">
+    <button class="colab-df-convert" onclick='convertToInteractive("df-16aaeb6e-c15d-46f2-99bc-28717e37a359")' title="Convert this dataframe to an interactive table." style="display:none;">
+
+  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
+    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
+  </svg>
+    </button>
+
+  <style>
+    .colab-df-container {
+      display:flex;
+      gap: 12px;
+    }
+
+    .colab-df-convert {
+      background-color: #E8F0FE;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+      fill: #1967D2;
+      height: 32px;
+      padding: 0 0 0 0;
+      width: 32px;
+    }
+
+    .colab-df-convert:hover {
+      background-color: #E2EBFA;
+      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
+      fill: #174EA6;
+    }
+
+    .colab-df-buttons div {
+      margin-bottom: 4px;
+    }
+
+    [theme=dark] .colab-df-convert {
+      background-color: #3B4455;
+      fill: #D2E3FC;
+    }
+
+    [theme=dark] .colab-df-convert:hover {
+      background-color: #434B5C;
+      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
+      fill: #FFFFFF;
+    }
+  </style>
+
+    <script>const buttonEl=document.querySelector("#df-16aaeb6e-c15d-46f2-99bc-28717e37a359 button.colab-df-convert");async function convertToInteractive(e){const t=document.querySelector("#df-16aaeb6e-c15d-46f2-99bc-28717e37a359"),o=await google.colab.kernel.invokeFunction("convertToInteractive",[e],{});if(!o)return;t.innerHTML="",o.output_type="display_data",await google.colab.output.renderOutput(o,t);const a=document.createElement("div");a.innerHTML='Like what you see? Visit the <a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a> to learn more about interactive tables.',t.appendChild(a)}buttonEl.style.display=google.colab.kernel.accessAllowed?"block":"none"</script>
+  </div>
+
+
+    <div id="df-af8be797-0e57-4b8c-813e-88e1323dea05">
+      <button class="colab-df-quickchart" onclick='quickchart("df-af8be797-0e57-4b8c-813e-88e1323dea05")' title="Suggest charts" style="display:none;">
+
+<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px">
+    <g>
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+    </g>
+</svg>
+      </button>
+
+<style>
+  .colab-df-quickchart {
+      --bg-color: #E8F0FE;
+      --fill-color: #1967D2;
+      --hover-bg-color: #E2EBFA;
+      --hover-fill-color: #174EA6;
+      --disabled-fill-color: #AAA;
+      --disabled-bg-color: #DDD;
+  }
+
+  [theme=dark] .colab-df-quickchart {
+      --bg-color: #3B4455;
+      --fill-color: #D2E3FC;
+      --hover-bg-color: #434B5C;
+      --hover-fill-color: #FFFFFF;
+      --disabled-bg-color: #3B4455;
+      --disabled-fill-color: #666;
+  }
+
+  .colab-df-quickchart {
+    background-color: var(--bg-color);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none;
+    fill: var(--fill-color);
+    height: 32px;
+    padding: 0;
+    width: 32px;
+  }
+
+  .colab-df-quickchart:hover {
+    background-color: var(--hover-bg-color);
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+    fill: var(--button-hover-fill-color);
+  }
+
+  .colab-df-quickchart-complete:disabled,
+  .colab-df-quickchart-complete:disabled:hover {
+    background-color: var(--disabled-bg-color);
+    fill: var(--disabled-fill-color);
+    box-shadow: none;
+  }
+
+  .colab-df-spinner {
+    border: 2px solid var(--fill-color);
+    border-color: transparent;
+    border-bottom-color: var(--fill-color);
+    animation:
+      spin 1s steps(1) infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      border-color: transparent;
+      border-bottom-color: var(--fill-color);
+      border-left-color: var(--fill-color);
+    }
+    20% {
+      border-color: transparent;
+      border-left-color: var(--fill-color);
+      border-top-color: var(--fill-color);
+    }
+    30% {
+      border-color: transparent;
+      border-left-color: var(--fill-color);
+      border-top-color: var(--fill-color);
+      border-right-color: var(--fill-color);
+    }
+    40% {
+      border-color: transparent;
+      border-right-color: var(--fill-color);
+      border-top-color: var(--fill-color);
+    }
+    60% {
+      border-color: transparent;
+      border-right-color: var(--fill-color);
+    }
+    80% {
+      border-color: transparent;
+      border-right-color: var(--fill-color);
+      border-bottom-color: var(--fill-color);
+    }
+    90% {
+      border-color: transparent;
+      border-bottom-color: var(--fill-color);
+    }
+  }
+</style>
+
+      <script>async function quickchart(e){const c=document.querySelector("#"+e+" button");c.disabled=!0,c.classList.add("colab-df-spinner");try{await google.colab.kernel.invokeFunction("suggestCharts",[e],{})}catch(e){console.error("Error during call to suggestCharts:",e)}c.classList.remove("colab-df-spinner"),c.classList.add("colab-df-quickchart-complete")}document.querySelector("#df-af8be797-0e57-4b8c-813e-88e1323dea05 button").style.display=google.colab.kernel.accessAllowed?"block":"none"</script>
+    </div>
+
+    </div>
+  </div>
+</div></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h2>Wrapping Up</h2></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>And that&#x27;s it! Through this tutorial, you&#x27;ve:</p>
+<ol>
+<li>
+<p>Started with a vague task (“predict long ICU stay”)</p>
+</li>
+<li>
+<p>Iteratively refined it through clinical + modeling questions</p>
+</li>
+<li>
+<p>Created a structured conceptual spec</p>
+</li>
+<li>
+<p>Translated that into a formal ACES task config</p>
+</li>
+<li>
+<p>Prepared to extract a high-quality prediction cohort</p>
+</li>
+</ol>
+<p>This workflow makes it easy to build clinically relevant, reproducible machine learning tasks directly from EHR data in the MEDS format.</p></div></div></div></div></div></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/tree/main/docs/docs/tutorials/kdd2025/extracting_prediction_tasks.mdx" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/tutorials/kdd2025/converting_to_MEDS"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Converting to MEDS</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/tutorials/kdd2025/build_a_model_tabular"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Build a (Tabular Baseline) Model over MEDS data</div></a></nav></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Docs</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/intro_pages/intro">Tutorials</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://stackoverflow.com/questions/tagged/meds" target="_blank" rel="noopener noreferrer" class="footer__link-item">Stack Overflow<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a href="https://github.com/Medical-Event-Data-Standard" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/Medical-Event-Data-Standard" target="_blank" rel="noopener noreferrer" class="footer__link-item">Schema</a></li><li class="footer__item"><a href="https://github.com/mmcdermott/MEDS-DEV" target="_blank" rel="noopener noreferrer" class="footer__link-item">MEDS-DEV<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2025 Medical Event Data Standard.</div></div></div></footer></div>
+</body>
+</html>

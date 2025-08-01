@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-tutorials/kdd2025/build_a_model_NN" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.8.1">
+<title data-rh="true">Build a (Neural Network) Model over MEDS data | MEDS: a Health AI Ecosystem</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://medical-event-data-standard.github.io/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://medical-event-data-standard.github.io/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/build_a_model_NN"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Build a (Neural Network) Model over MEDS data | MEDS: a Health AI Ecosystem"><meta data-rh="true" name="description" content="In this tutorial, we&#x27;ll use the dataset we extracted previously and build a neural network model to predict"><meta data-rh="true" property="og:description" content="In this tutorial, we&#x27;ll use the dataset we extracted previously and build a neural network model to predict"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/build_a_model_NN"><link data-rh="true" rel="alternate" href="https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/build_a_model_NN" hreflang="en"><link data-rh="true" rel="alternate" href="https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/build_a_model_NN" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Tutorial - Build a Model with MEDS (KDD 2025)","item":"https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/"},{"@type":"ListItem","position":2,"name":"Build a (Neural Network) Model over MEDS data","item":"https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/build_a_model_NN"}]}</script><link rel="stylesheet" href="/assets/css/styles.25b0cb31.css">
+<script src="/assets/js/runtime~main.e02617de.js" defer="defer"></script>
+<script src="/assets/js/main.83c33bb1.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t="light";var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",e||t),document.documentElement.setAttribute("data-theme-choice",e||t)}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><div class="navbar__logo"><img src="/img/logo.svg" alt="MEDS Logo" class="themedComponent_mlkZ themedComponent--light_NVdE"><img src="/img/logo-dark.svg" alt="MEDS Logo" class="themedComponent_mlkZ themedComponent--dark_xIcU"></div><b class="navbar__title text--truncate">MEDS</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/intro_pages/intro">Get Started</a><a class="navbar__item navbar__link" href="/docs/MEDS-DEV/intro">MEDS-DEV</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a href="https://github.com/Medical-Event-Data-Standard" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/intro">Welcome to MEDS</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/what_is_MEDS">What is MEDS?</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--active" href="/docs/tutorials/kdd2025/">Tutorial - Build a Model with MEDS (KDD 2025)</a><button aria-label="Collapse sidebar category &#x27;Tutorial - Build a Model with MEDS (KDD 2025)&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/tutorials/kdd2025/MEDS_intro">Getting Familiar with MEDS</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/tutorials/kdd2025/converting_to_MEDS">Converting to MEDS</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/tutorials/kdd2025/extracting_prediction_tasks">Extracting a Prediction Task</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/tutorials/kdd2025/build_a_model_tabular">Build a (Tabular Baseline) Model over MEDS data</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/docs/tutorials/kdd2025/build_a_model_NN">Build a (Neural Network) Model over MEDS data</a></li></ul></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/ecosystem">MEDS Ecosystem</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/roadmap">Future Roadmap</a></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="Breadcrumbs"><ul class="breadcrumbs"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_YNFT"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/tutorials/kdd2025/"><span>Tutorial - Build a Model with MEDS (KDD 2025)</span></a></li><li class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link">Build a (Neural Network) Model over MEDS data</span></li></ul></nav><div class="theme-doc-markdown markdown"><header><h1>Build a (Neural Network) Model over MEDS data</h1></header>
+<p>In this tutorial, we&#x27;ll use the dataset we extracted previously and build a <em>neural network</em> model to predict
+the task we extracted previously. See below for the jupyter notebook tutorial, rendered here, or check it out
+online on <a href="https://colab.research.google.com/github/Medical-Event-Data-Standard/medical-event-data-standard.github.io/blob/main/tutorial_notebooks/KDD_tutorial/Build_a_Model_(NN).ipynb" target="_blank" rel="noopener noreferrer">Google
+Colab</a>
+or on our <a href="https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/blob/main/tutorial_notebooks/KDD_tutorial/Build_a_Model_(NN).ipynb" target="_blank" rel="noopener noreferrer">GitHub
+Repository</a></p>
+<div class="jupyter-viewer"><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h1>Building a Model</h1>
+<p>In this part of the tutorial, we&#x27;ll walk through the task of building a (neural network) model with MEDS</p>
+<p>We will continue exactly where we&#x27;ve left off in the previous part of the tutorial. Our task is to predict <em>a short ICU stay</em> (of &lt; 3 days) given the patient&#x27;s input data. We have already transformed the dataset into the MEDS format and extracted a set of label files for the dataset, and built a baseline model -- now, let&#x27;s go a bit further!</p>
+<p>Let&#x27;s download the files we produced in the prior sections from the tutorial resources:</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">5</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">6</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">7</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>%%bash
+</span><span>wget -q -c https://github.com/Medical-Event-Data-Standard/MEDS_KDD_2025_Tutorial/raw/refs/heads/main/MEDS_data.</span><span style="color:#00f">zip</span><span>
+</span>
+<span>unzip -q -o MEDS_data.</span><span style="color:#00f">zip</span><span>
+</span>
+<!-- -->apt-get -qq install tree
+<!-- -->tree MEDS_data</code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Selecting previously unselected package tree.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 126284 files and directories currently installed.)
+Preparing to unpack .../tree_2.0.2-1_amd64.deb ...
+Unpacking tree (2.0.2-1) ...
+Setting up tree (2.0.2-1) ...
+Processing triggers for man-db (2.10.2-1) ...
+MEDS_data
+├── data
+│   ├── held_out
+│   │   └── 0.parquet
+│   ├── train
+│   │   └── 0.parquet
+│   └── tuning
+│       └── 0.parquet
+├── labels
+│   └── short_LOS
+│       ├── held_out
+│       │   └── 0.parquet
+│       ├── train
+│       │   └── 0.parquet
+│       └── tuning
+│           └── 0.parquet
+└── metadata
+    ├── codes.parquet
+    ├── dataset.json
+    └── subject_splits.parquet
+
+10 directories, 9 files
+</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">5</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">6</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">7</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">8</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">9</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span style="color:#00f">from</span><span> pathlib </span><span style="color:#00f">import</span><span> Path
+</span><span></span><span style="color:#00f">import</span><span> pandas </span><span style="color:#00f">as</span><span> pd
+</span>
+<span>data_root = Path(</span><span style="color:#a31515">&quot;MEDS_data/data&quot;</span><span>)
+</span><span>labels_root = Path(</span><span style="color:#a31515">&quot;MEDS_data/labels/short_LOS&quot;</span><span>)
+</span><span>metadata_root = Path(</span><span style="color:#a31515">&quot;MEDS_data/metadata&quot;</span><span>)
+</span>
+<span>train_data = pd.read_parquet(data_root / </span><span style="color:#a31515">&quot;train&quot;</span><span>)[[</span><span style="color:#a31515">&quot;subject_id&quot;</span><span>, </span><span style="color:#a31515">&quot;time&quot;</span><span>, </span><span style="color:#a31515">&quot;code&quot;</span><span>, </span><span style="color:#a31515">&quot;numeric_value&quot;</span><span>, </span><span style="color:#a31515">&quot;text_value&quot;</span><span>]]
+</span><span>train_labels = pd.read_parquet(labels_root / </span><span style="color:#a31515">&quot;train&quot;</span><span>)[[</span><span style="color:#a31515">&quot;subject_id&quot;</span><span>, </span><span style="color:#a31515">&quot;prediction_time&quot;</span><span>, </span><span style="color:#a31515">&quot;boolean_value&quot;</span><span>]]</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h2>A Neural Network Model</h2>
+<p>Building a neural network model is inherently very different than building a tabular baseline. There are lots of questions we&#x27;ll need to answer to do this effectively; questions like:</p>
+<ol>
+<li>What kind of neural network do we want to build?</li>
+<li>How will it need its data pre-processed?</li>
+<li>How will we train this neural network?</li>
+</ol>
+<p>All of these will dictate what we need to do with our data to build the right kind of model.</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>For this tutorial, we&#x27;ll build a pretty simple model. We&#x27;ll take the patient&#x27;s sequence of measurements, ordered by time (<em>note this is a bit ambiguous -- many measurements happen at the same time point</em>), and apply a simple, 1D convolution over those measurements, embedded via a simple strategy using an embedding of the code and the numeric value, if present. We&#x27;ll bubble this convolution up to a single output, and use that to make our prediction.</p>
+<p>This modeling strategy is reasonable, but definitely also has some issues -- it doesn&#x27;t take into account time (or the fact that many measurements happen at the same time), we aren&#x27;t using static data, and we don&#x27;t know if convolution is the right way to model patient data here. But for this tutorial, its sufficient.</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h2>How is (this kind) of a NN different than our tabularized baseline?</h2></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>In our tabular baseline, our primary challenge was identifying how to take a dataset and extract a fixed size set of tabular features that explicitly summarized the longitudinal MEDS data. This approach was necessary because tabular baselines can only take in fixed size data -- not sequential data.</p>
+<p>But, neural networks (or at least the kind we&#x27;re building here, as well as many other architectures) <em>can</em> work with sequential data directly. This means that here, our challenge is not one of manual featurization, but instead is one of transforming our raw data into a format suitable for ingestion by this kind of neural network.</p>
+<p>To do so, we have to meet a few constraints:</p>
+<ol>
+<li>Neural networks can&#x27;t take in text features directly. Instead, for our codes (as well as for the <code>text_value</code> column, if we wanted to use that), we need to put them in a form suitable for embedding.</li>
+<li>Neural networks can take in variable length sequences but still have a limit. This means that we need a vehicle to both encode too-short sequences (e.g., a patient who has less data in total than the maximum size sequence our model can process) and too-long sequences (a sequence of patient data longer than this maximum limit). We also need to make sure that when we try to predict a label for a task sample with a given prediction time, we don&#x27;t use data from beyond that time.</li>
+<li>We need to make sure we can easily and efficiently load data in our model, without wasting valuable compute resources on repeated, non-modeling work.</li>
+</ol></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>Here&#x27;s how we&#x27;ll solve these challenges:</p>
+<ol>
+<li><strong>Embedding</strong>: We&#x27;ll do this in the normal way--by assigning an integer index for each unique code, then passing those indices into the model to be parsed with an embedding matrix.</li>
+<li><strong>Sequence Lengths</strong>: We&#x27;ll use a <em>padding index</em> to represent sequence elements (i.e., codes) that are not actually present (e.g., if a patient&#x27;s data is too short), and we&#x27;ll truncate sequences that are too long. There are many ways we could truncate sequences -- in this case, as we&#x27;re trying to make a prediction as of a specific time, we&#x27;ll use the longest contiguous sequence allowed that ends on or before the specified prediction time.</li>
+<li><strong>Efficient Processing</strong>: We&#x27;ll follow best practices and perform as many calculations as we can in advance of modeling time, and store just the data we need (in a format suitable for efficient subsequence slicing) on disk before we start modeling. Then, each batch of modeling, we&#x27;ll just need to load the data we need and we&#x27;ll be good to go! For this, we&#x27;ll use existing external packages, and most of the details will be outside the scope of this tutorial.</li>
+</ol></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h2>MEDS TorchData</h2></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>To help us out, we&#x27;ll use a tool from the MEDS ecosystem that makes it easier to get the data in the right format. This tool is <a href="https://meds-torch-data.readthedocs.io/en/latest/">MEDS TorchData</a> -- we won&#x27;t go through all the details of how it works, but suffice it to say it has a couple of capabilities we can use:</p>
+<ol>
+<li>It comes with a script that will pre-process our dataset, ensuring that: (a) every code is assigned to a integer index suitable for an embedding matrix, (b) numeric values are centered and scaled to have zero mean and unit variance, and (c) data are written to disk in a manner that permits easy loading in a PyTorch dataset.</li>
+<li>It comes with a <a href="https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html">PyTorch dataset</a> class we can inherit and instantiate that will let us work with the data in a straightforward manner.</li>
+<li>It lets us integrate natively with <a href="https://lightning.ai/docs/pytorch/stable/">Lightning</a> if we want to use that to help streamline training (which we will here).</li>
+</ol>
+<p>Let&#x27;s install it and see it in action!</p>
+<p><em>Note: Installation may take some time. Additionally, if you see any pip dependency errors about polars versions, this is not something to worry about.</em></p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>%%bash
+</span>pip install --quiet meds-torch-data[lightning]</code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 57.2/57.2 kB 2.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 821.1/821.1 kB 22.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 200.6/200.6 kB 13.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 36.3/36.3 MB 39.1 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 363.4/363.4 MB 5.3 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 13.8/13.8 MB 103.7 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 24.6/24.6 MB 83.3 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 883.7/883.7 kB 43.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 664.8/664.8 MB 1.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 211.5/211.5 MB 5.8 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 56.3/56.3 MB 12.9 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 127.9/127.9 MB 8.0 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 207.5/207.5 MB 7.3 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 21.1/21.1 MB 55.0 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 154.5/154.5 kB 9.8 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 57.1/57.1 kB 4.0 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 981.9/981.9 kB 37.8 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 825.4/825.4 kB 35.6 MB/s eta 0:00:00
+</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-err">ERROR: pip&#x27;s dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+cudf-polars-cu12 25.6.0 requires polars&lt;1.29,&gt;=1.25, but you have polars 1.30.0 which is incompatible.
+</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>Data Pre-processing</h3>
+<p>After installation, the next step is to pre-process our dataset. Following <a href="https://meds-torch-data.readthedocs.io/en/latest/#step-2-data-tensorization">the documentation</a>, all we have to do is run the following command.</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>%%bash
+</span><span>MTD_preprocess MEDS_dataset_dir=</span><span style="color:#a31515">&quot;MEDS_data&quot;</span><span> output_dir=</span><span style="color:#a31515">&quot;tensorized_MEDS_data&quot;</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">[2025-07-31 18:13:40,721][meds_torchdata.preprocessing.__main__][INFO] - Running in serial mode as N_WORKERS is not set.
+[2025-07-31 18:13:40,722][meds_torchdata.preprocessing.__main__][INFO] - Running command: INPUT_DIR=/content/MEDS_data OUTPUT_DIR=/content/tensorized_MEDS_data MEDS_transform-pipeline --config-path=/usr/local/lib/python3.11/dist-packages/meds_torchdata/preprocessing/configs --config-name=runner pipeline_config_fp=/usr/local/lib/python3.11/dist-packages/meds_torchdata/preprocessing/configs/_MTD_preprocess.yaml ~parallelize ++do_overwrite=False
+</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>Let&#x27;s see what that command produced!</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>%%bash
+</span>tree tensorized_MEDS_data</code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">tensorized_MEDS_data
+├── data
+│   ├── held_out
+│   │   └── 0.nrt
+│   ├── train
+│   │   └── 0.nrt
+│   └── tuning
+│       └── 0.nrt
+├── fit_normalization
+│   ├── codes.parquet
+│   └── train
+│       └── 0.parquet
+├── fit_vocabulary_indices
+├── metadata
+│   └── codes.parquet
+├── normalization
+│   ├── held_out
+│   │   └── 0.parquet
+│   ├── train
+│   │   └── 0.parquet
+│   └── tuning
+│       └── 0.parquet
+└── tokenization
+    ├── event_seqs
+    │   ├── held_out
+    │   │   └── 0.parquet
+    │   ├── train
+    │   │   └── 0.parquet
+    │   └── tuning
+    │       └── 0.parquet
+    └── schemas
+        ├── held_out
+        │   └── 0.parquet
+        ├── train
+        │   └── 0.parquet
+        └── tuning
+            └── 0.parquet
+
+21 directories, 15 files
+</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>There are a number of files that are in this folder. Luckily, we don&#x27;t need to understand them all to use them -- we can let MEDS TorchData handle that for us if we set up our dataset properly. Let&#x27;s check it out!</p>
+<p><em>Note: If you&#x27;re interested, check out <a href="https://meds-torch-data.readthedocs.io/en/latest/#data-tensorization-and-pre-processing-details">this part of the documentation</a> and the documentation for the <a href="https://nested-ragged-tensors.readthedocs.io/en/latest/">nested-ragged-tensors</a> package for more information!</em></p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>A PyTorch Dataset</h3>
+<p>To build a pytorch dataset, we first consturct a configuration object that defines the parameters of the dataset we want to create. There are a number of options supported by MEDS TorchData. Options about ways to work with static data, how you want your data represented, etc. For now, we&#x27;ll use the following configuration file to kick off our modeling exploration. To explore different options, check out <a href="https://meds-torch-data.readthedocs.io/en/latest/#medstorchdataconfig-configuration-object">the documentation</a>.</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">5</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">6</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">7</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">8</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">9</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">10</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">11</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span style="color:#00f">from</span><span> meds_torchdata </span><span style="color:#00f">import</span><span> MEDSTorchDataConfig
+</span>
+<span>tensorized_cohort_dir = Path(</span><span style="color:#a31515">&quot;tensorized_MEDS_data&quot;</span><span>)
+</span>
+<!-- -->config = MEDSTorchDataConfig(
+<span>    tensorized_cohort_dir,            </span><span style="color:#008000"># Our tensorized data directory</span><span>
+</span><span>    max_seq_len=</span><span class="hljs-number">256</span><span>,                  </span><span style="color:#008000"># How many measurements we want</span><span>
+</span><span>    seq_sampling_strategy=</span><span style="color:#a31515">&quot;to_end&quot;</span><span>,   </span><span style="color:#008000"># What part of the patient&#x27;s data to grab</span><span>
+</span><span>    static_inclusion_mode=</span><span style="color:#a31515">&quot;omit&quot;</span><span>,     </span><span style="color:#008000"># What to do with static data</span><span>
+</span><span>    task_labels_dir=labels_root,      </span><span style="color:#008000"># Our labels</span><span>
+</span>)</code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>Now, with our config defined, let&#x27;s build a dataset and see some data!</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span style="color:#00f">from</span><span> meds_torchdata </span><span style="color:#00f">import</span><span> MEDSPytorchDataset
+</span>
+<span>pyd = MEDSPytorchDataset(config, split=</span><span style="color:#a31515">&quot;train&quot;</span><span>)
+</span><span></span><span style="color:#00f">print</span><span>(</span><span style="color:#a31515">f&quot;Dataset constructed with </span><span class="hljs-subst" style="color:#a31515">{</span><span class="hljs-subst" style="color:#00f">len</span><span class="hljs-subst" style="color:#a31515">(pyd)}</span><span style="color:#a31515"> samples!&quot;</span><span>)</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Dataset constructed with 74 samples!
+</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>Inspecting data in a pytorch dataset can be a bit hard. We can simplify this by looking at full batches which have a special print function. We can use the built in dataloader function to help with this:</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>dataloader = pyd.get_dataloader(batch_size=</span><span class="hljs-number">16</span><span>)
+</span><span>batch = </span><span style="color:#00f">next</span><span>(</span><span style="color:#00f">iter</span><span>(dataloader))
+</span><span></span><span style="color:#00f">print</span><span>(batch)</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">MEDSTorchBatch:
+│ Mode: Subject-Measurement (SM)
+│ Static data? ✗
+│ Labels? ✓
+│
+│ Shape:
+│ │ Batch size: 16
+│ │ Sequence length: 256
+│ │
+│ │ All dynamic data: (16, 256)
+│ │ Labels: torch.Size([16])
+│
+│ Data:
+│ │ Dynamic:
+│ │ │ time_delta_days (torch.float32):
+│ │ │ │ [[0.00, 0.00,  ..., 0.00, 0.00],
+│ │ │ │  [0.00, 0.00,  ..., 0.00, 0.00],
+│ │ │ │  ...,
+│ │ │ │  [0.00, 0.00,  ..., 0.00, 0.00],
+│ │ │ │  [0.00, 0.00,  ..., 0.00, 0.01]]
+│ │ │ code (torch.int64):
+│ │ │ │ [[1980, 2150,  ..., 2692, 6529],
+│ │ │ │  [1985, 2007,  ..., 2009, 6529],
+│ │ │ │  ...,
+│ │ │ │  [1983, 1995,  ..., 2162, 2134],
+│ │ │ │  [2770, 1982,  ..., 1997, 1704]]
+│ │ │ numeric_value (torch.float32):
+│ │ │ │ [[-0.49,  0.00,  ..., -0.10, -0.80],
+│ │ │ │  [-0.71,  1.12,  ...,  0.34, -0.46],
+│ │ │ │  ...,
+│ │ │ │  [ 0.33, -0.19,  ...,  0.00,  0.00],
+│ │ │ │  [-1.01,  0.00,  ...,  0.50, -0.31]]
+│ │ │ numeric_value_mask (torch.bool):
+│ │ │ │ [[ True, False,  ...,  True,  True],
+│ │ │ │  [ True,  True,  ...,  True,  True],
+│ │ │ │  ...,
+│ │ │ │  [ True,  True,  ..., False, False],
+│ │ │ │  [ True, False,  ...,  True,  True]]
+│ │
+│ │ Labels:
+│ │ │ boolean_value (torch.bool):
+│ │ │ │ [False, False,  ...,  True, False]
+</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>This will be the structure we can work with in our model -- we&#x27;ll have access to 2D tensors of time deltas, codes, and numeric values (with a mask indicating when numeric values were present).</p>
+<p><em><strong>Note:</strong> The time-deltas here are not normalized, and are often zero, as many measurements occur at the same point in time. This is normal, but may or may not be desired for your particular model application.</em></p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span style="color:#00f">print</span><span>(batch.PAD_INDEX)
+</span><span></span><span style="color:#00f">print</span><span>(batch.code)
+</span><span></span><span style="color:#00f">print</span><span>(batch.numeric_value)
+</span><span></span><span style="color:#00f">print</span><span>(batch.numeric_value_mask)</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">0
+tensor([[1980, 2150, 2708,  ..., 1982, 2692, 6529],
+        [1985, 2007, 2000,  ..., 2878, 2009, 6529],
+        [2885, 2407, 2203,  ..., 2216, 2206, 2207],
+        ...,
+        [2692, 2235, 2198,  ..., 3042, 3031, 3023],
+        [1983, 1995, 1979,  ..., 2157, 2162, 2134],
+        [2770, 1982, 2003,  ..., 1998, 1997, 1704]])
+tensor([[-0.4875,  0.0000,  0.0000,  ...,  0.0000, -0.1005, -0.8004],
+        [-0.7122,  1.1156,  0.7586,  ...,  0.0000,  0.3388, -0.4600],
+        [ 0.0000,  0.0000,  0.0000,  ...,  0.0000,  0.0000,  0.0000],
+        ...,
+        [ 0.0227, -0.0556, -0.3237,  ...,  0.0000,  0.0000,  0.0000],
+        [ 0.3286, -0.1904, -0.5563,  ...,  0.0000,  0.0000,  0.0000],
+        [-1.0095,  0.0000,  0.5741,  ..., -0.6803,  0.4985, -0.3070]])
+tensor([[ True, False, False,  ..., False,  True,  True],
+        [ True,  True,  True,  ..., False,  True,  True],
+        [False, False, False,  ..., False, False, False],
+        ...,
+        [ True,  True,  True,  ..., False, False, False],
+        [ True,  True,  True,  ..., False, False, False],
+        [ True, False,  True,  ...,  True,  True,  True]])
+</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>Building the model</h3>
+<p>Using this, let&#x27;s go ahead and build our model! Given we know what the batch will contain, all that&#x27;s left is to put together our model&#x27;s structure.</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">5</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">6</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">7</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">8</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">9</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">10</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">11</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">12</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">13</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">14</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">15</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">16</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">17</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">18</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">19</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">20</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">21</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">22</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">23</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">24</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">25</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">26</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">27</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">28</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">29</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">30</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">31</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">32</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">33</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">34</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">35</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">36</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">37</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">38</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">39</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">40</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">41</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">42</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">43</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">44</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">45</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">46</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">47</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">48</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">49</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">50</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">51</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">52</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">53</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">54</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">55</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">56</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">57</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">58</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">59</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">60</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">61</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">62</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">63</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">64</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">65</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">66</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">67</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">68</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">69</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">70</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">71</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">72</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">73</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">74</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">75</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">76</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">77</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">78</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">79</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">80</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">81</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">82</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">83</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">84</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">85</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">86</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">87</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">88</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">89</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">90</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">91</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">92</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">93</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">94</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">95</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">96</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">97</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">98</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">99</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">100</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">101</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">102</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">103</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">104</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">105</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">106</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">107</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">108</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">109</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">110</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">111</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">112</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">113</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">114</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">115</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">116</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">117</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">118</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">119</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">120</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:3.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">121</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span style="color:#00f">import</span><span> torch.nn </span><span style="color:#00f">as</span><span> nn
+</span><span></span><span style="color:#00f">import</span><span> torch
+</span><span></span><span style="color:#00f">from</span><span> meds_torchdata </span><span style="color:#00f">import</span><span> MEDSTorchBatch
+</span>
+<span></span><span class="hljs-class" style="color:#00f">class</span><span class="hljs-class"> </span><span class="hljs-class" style="color:#a31515">SimpleConv</span><span class="hljs-class">(</span><span class="hljs-class hljs-params">nn.Module</span><span class="hljs-class">):</span><span>
+</span><span>    </span><span style="color:#a31515">&quot;&quot;&quot;
+</span><span style="color:#a31515">    1D-convolutional model for sequence + static inputs.
+</span><span style="color:#a31515">
+</span><span style="color:#a31515">    Pipeline
+</span><span style="color:#a31515">    --------
+</span><span style="color:#a31515">    1) Embed code indices (with padding_idx).
+</span><span style="color:#a31515">    2) Concatenate [code_embedding, numeric_value_mask, numeric_value] per timestep.
+</span><span style="color:#a31515">    3) Pass through a Conv1d stack over time -&gt; global pooling -&gt; fixed-size sequence embedding.
+</span><span style="color:#a31515">    4) Embed static features (linear MLP projection).
+</span><span style="color:#a31515">    5) Concatenate [sequence_embedding, static_embedding] -&gt; predict labels.
+</span><span style="color:#a31515">
+</span><span style="color:#a31515">    Inputs (forward)
+</span><span style="color:#a31515">    ----------------
+</span><span style="color:#a31515">    batch.code: LongTensor of shape (B, T)
+</span><span style="color:#a31515">        Tokenized code indices, padded with `pad_index`.
+</span><span style="color:#a31515">    batch.numeric_value: FloatTensor of shape (B, T)
+</span><span style="color:#a31515">        Numeric values (e.g., lab values) aligned with `code_idx`. Should be pre-normalized.
+</span><span style="color:#a31515">    batch.numeric_value_mask: Bool/FloatTensor of shape (B, T)
+</span><span style="color:#a31515">        1 if numeric_value is present/valid for that timestep, else 0.
+</span><span style="color:#a31515">
+</span><span style="color:#a31515">    Output
+</span><span style="color:#a31515">    ------
+</span><span style="color:#a31515">    logits: FloatTensor of shape (B,)
+</span><span style="color:#a31515">        Raw (unnormalized) predictions. Apply sigmoid/softmax outside as appropriate.
+</span><span style="color:#a31515">
+</span><span style="color:#a31515">    Notes
+</span><span style="color:#a31515">    -----
+</span><span style="color:#a31515">    - Padding handling: The embedding uses `padding_idx` so padded positions produce a zero vector.
+</span><span style="color:#a31515">      With ReLU activations and global max pooling, padded zeros will not dominate non-pad activations.
+</span><span style="color:#a31515">    &quot;&quot;&quot;</span><span>
+</span>
+<span>    </span><span class="hljs-function" style="color:#00f">def</span><span class="hljs-function"> </span><span class="hljs-function" style="color:#a31515">__init__</span><span class="hljs-function">(</span><span class="hljs-function hljs-params">
+</span><span class="hljs-function hljs-params">        self,
+</span><span class="hljs-function hljs-params">        *,
+</span><span class="hljs-function hljs-params">        code_vocab_size: </span><span class="hljs-function hljs-params" style="color:#00f">int</span><span class="hljs-function hljs-params">,
+</span><span class="hljs-function hljs-params">        pad_index: </span><span class="hljs-function hljs-params" style="color:#00f">int</span><span class="hljs-function hljs-params"> = MEDSTorchBatch.PAD_INDEX,
+</span><span class="hljs-function hljs-params">        code_embed_dim: </span><span class="hljs-function hljs-params" style="color:#00f">int</span><span class="hljs-function hljs-params"> = </span><span class="hljs-function hljs-params hljs-number">128</span><span class="hljs-function hljs-params">,
+</span><span class="hljs-function hljs-params">        conv_channels=(</span><span class="hljs-function hljs-params hljs-number">128</span><span class="hljs-function hljs-params">, </span><span class="hljs-function hljs-params hljs-number">128</span><span class="hljs-function hljs-params">, </span><span class="hljs-function hljs-params hljs-number">128</span><span class="hljs-function hljs-params">),
+</span><span class="hljs-function hljs-params">        conv_kernel_sizes=(</span><span class="hljs-function hljs-params hljs-number">5</span><span class="hljs-function hljs-params">, </span><span class="hljs-function hljs-params hljs-number">5</span><span class="hljs-function hljs-params">, </span><span class="hljs-function hljs-params hljs-number">3</span><span class="hljs-function hljs-params">),
+</span><span class="hljs-function hljs-params">        conv_dropout: </span><span class="hljs-function hljs-params" style="color:#00f">float</span><span class="hljs-function hljs-params"> = </span><span class="hljs-function hljs-params hljs-number">0.1</span><span class="hljs-function hljs-params">,
+</span><span class="hljs-function hljs-params">        head_hidden_dim: </span><span class="hljs-function hljs-params" style="color:#00f">int</span><span class="hljs-function hljs-params"> = </span><span class="hljs-function hljs-params hljs-number">128</span><span class="hljs-function hljs-params">,
+</span><span class="hljs-function hljs-params">        act: nn.Module = nn.ReLU,
+</span><span class="hljs-function hljs-params">    </span><span class="hljs-function">):</span><span>
+</span><span>        </span><span style="color:#00f">super</span><span>().__init__()
+</span><span>        </span><span style="color:#00f">assert</span><span> </span><span style="color:#00f">len</span><span>(conv_channels) == </span><span style="color:#00f">len</span><span>(conv_kernel_sizes), </span><span style="color:#a31515">&quot;conv_channels and conv_kernel_sizes must be same length&quot;</span><span>
+</span>        self.pad_index = pad_index
+<!-- -->
+<span>        </span><span style="color:#008000"># 1) Code embedding</span><span>
+</span>        self.code_emb = nn.Embedding(
+<!-- -->            num_embeddings=code_vocab_size,
+<!-- -->            embedding_dim=code_embed_dim,
+<!-- -->            padding_idx=pad_index,
+<!-- -->        )
+<!-- -->
+<span>        </span><span style="color:#008000"># 2–3) Conv stack over time</span><span>
+</span><span>        in_ch = code_embed_dim + </span><span class="hljs-number">2</span><span>  </span><span style="color:#008000"># [code_emb || numeric_value_mask || numeric_value]</span><span>
+</span>        conv_blocks = []
+<span>        </span><span style="color:#00f">for</span><span> out_ch, k </span><span style="color:#00f">in</span><span> </span><span style="color:#00f">zip</span><span>(conv_channels, conv_kernel_sizes):
+</span>            conv_blocks += [
+<span>                nn.Conv1d(in_channels=in_ch, out_channels=out_ch, kernel_size=k, padding=k // </span><span class="hljs-number">2</span><span>),
+</span>                nn.BatchNorm1d(out_ch),
+<!-- -->                act(),
+<!-- -->                nn.Dropout(conv_dropout),
+<!-- -->            ]
+<!-- -->            in_ch = out_ch
+<!-- -->        self.conv = nn.Sequential(*conv_blocks)
+<span>        self.pool = nn.AdaptiveMaxPool1d(</span><span class="hljs-number">1</span><span>)  </span><span style="color:#008000"># -&gt; (B, C, 1) then squeeze to (B, C)</span><span>
+</span>
+<span>        </span><span style="color:#008000"># 5) Head</span><span>
+</span><span>        head_in = conv_channels[-</span><span class="hljs-number">1</span><span>]
+</span>        self.head = nn.Sequential(
+<!-- -->            nn.Linear(head_in, head_hidden_dim),
+<!-- -->            act(),
+<!-- -->            nn.Dropout(conv_dropout),
+<span>            nn.Linear(head_hidden_dim, </span><span class="hljs-number">1</span><span>),
+</span>        )
+<!-- -->
+<!-- -->        self._reset_parameters()
+<!-- -->
+<span>    </span><span class="hljs-function" style="color:#00f">def</span><span class="hljs-function"> </span><span class="hljs-function" style="color:#a31515">_reset_parameters</span><span class="hljs-function">(</span><span class="hljs-function hljs-params">self</span><span class="hljs-function">):</span><span>
+</span><span>        </span><span style="color:#008000"># Kaiming init for conv/linear; embeddings default init is fine (padding row already handled)</span><span>
+</span><span>        </span><span style="color:#00f">for</span><span> m </span><span style="color:#00f">in</span><span> self.modules():
+</span><span>            </span><span style="color:#00f">if</span><span> </span><span style="color:#00f">isinstance</span><span>(m, nn.Conv1d):
+</span><span>                nn.init.kaiming_normal_(m.weight, nonlinearity=</span><span style="color:#a31515">&quot;relu&quot;</span><span>)
+</span><span>                </span><span style="color:#00f">if</span><span> m.bias </span><span style="color:#00f">is</span><span> </span><span style="color:#00f">not</span><span> </span><span style="color:#a31515">None</span><span>:
+</span>                    nn.init.zeros_(m.bias)
+<span>            </span><span style="color:#00f">elif</span><span> </span><span style="color:#00f">isinstance</span><span>(m, nn.Linear):
+</span><span>                nn.init.kaiming_uniform_(m.weight, nonlinearity=</span><span style="color:#a31515">&quot;relu&quot;</span><span>)
+</span>                nn.init.zeros_(m.bias)
+<!-- -->
+<span>    </span><span class="hljs-function" style="color:#00f">def</span><span class="hljs-function"> </span><span class="hljs-function" style="color:#a31515">forward</span><span class="hljs-function">(</span><span class="hljs-function hljs-params">
+</span><span class="hljs-function hljs-params">        self,
+</span><span class="hljs-function hljs-params">        batch: MEDSTorchBatch
+</span><span class="hljs-function hljs-params">    </span><span class="hljs-function">) -&gt; torch.Tensor:</span><span>
+</span>        B, T = batch.code.shape
+<!-- -->
+<span>        </span><span style="color:#008000"># (B, T, E)</span><span>
+</span>        code_e = self.code_emb(batch.code)
+<!-- -->
+<span>        </span><span style="color:#008000"># Ensure mask is float</span><span>
+</span><span>        </span><span style="color:#00f">if</span><span> batch.numeric_value_mask.dtype != torch.float32:
+</span><span>            batch.numeric_value_mask = batch.numeric_value_mask.</span><span style="color:#00f">float</span><span>()
+</span>
+<span>        </span><span style="color:#008000"># (B, T, E+2)</span><span>
+</span>        x = torch.cat(
+<span>            [code_e, batch.numeric_value_mask.unsqueeze(-</span><span class="hljs-number">1</span><span>), batch.numeric_value.unsqueeze(-</span><span class="hljs-number">1</span><span>)],
+</span><span>            dim=-</span><span class="hljs-number">1</span><span>,
+</span>        )
+<!-- -->
+<span>        </span><span style="color:#008000"># Conv1d expects (B, C, T)</span><span>
+</span><span>        x = x.transpose(</span><span class="hljs-number">1</span><span>, </span><span class="hljs-number">2</span><span>)  </span><span style="color:#008000"># -&gt; (B, C=E+2, T)</span><span>
+</span><span>        x = self.conv(x)       </span><span style="color:#008000"># -&gt; (B, C_out, T)</span><span>
+</span><span>        x = self.pool(x).squeeze(-</span><span class="hljs-number">1</span><span>)  </span><span style="color:#008000"># -&gt; (B, C_out)</span><span>
+</span>
+<span>        logits = self.head(x).squeeze()  </span><span style="color:#008000"># (B,)</span><span>
+</span><span>        </span><span style="color:#00f">return</span><span> logits</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>Let&#x27;s see if it runs!</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>M = SimpleConv(code_vocab_size=config.vocab_size)
+</span>M(batch)</code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output">[22]: </pre><pre class="cell-content output-std">tensor([ 7.8502, 10.1843,  4.1388,  6.4581,  8.9709, 11.3923,  6.9392,  7.1074,
+         7.2635,  9.4971,  8.3914,  7.9199,  4.2960,  7.1975,  8.3680,  8.2609],
+       grad_fn=&lt;SqueezeBackward0&gt;)</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>Training</h3>
+<p>What about training this model? For our purposes, we&#x27;ll make this step a bit simpler using <a href="https://lightning.ai/docs/pytorch/stable/">Lightning</a>. To use lightning, we&#x27;ll need to do two things:</p>
+<ol>
+<li>Convert our PyTorch dataset into a Lightning DataModule (this is handled for us by MEDS TorchData, as we&#x27;ll see in a moment)</li>
+<li>Build a Lightning Module for our model.</li>
+</ol>
+<p>For step 1, as indicated, we can use MEDS TorchData for this; let&#x27;s see it in action:</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">5</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span style="color:#00f">from</span><span> meds_torchdata.extensions.lightning_datamodule </span><span style="color:#00f">import</span><span> Datamodule
+</span>
+<span>dm = Datamodule(config, batch_size=</span><span class="hljs-number">32</span><span>, num_workers=</span><span class="hljs-number">0</span><span>, pin_memory=</span><span style="color:#a31515">False</span><span>)
+</span>
+<span></span><span style="color:#00f">print</span><span>(</span><span style="color:#00f">next</span><span>(</span><span style="color:#00f">iter</span><span>(dm.train_dataloader())))</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">MEDSTorchBatch:
+│ Mode: Subject-Measurement (SM)
+│ Static data? ✗
+│ Labels? ✓
+│
+│ Shape:
+│ │ Batch size: 32
+│ │ Sequence length: 256
+│ │
+│ │ All dynamic data: (32, 256)
+│ │ Labels: torch.Size([32])
+│
+│ Data:
+│ │ Dynamic:
+│ │ │ time_delta_days (torch.float32):
+│ │ │ │ [[0.00, 0.00,  ..., 0.00, 0.00],
+│ │ │ │  [0.00, 0.00,  ..., 0.00, 0.00],
+│ │ │ │  ...,
+│ │ │ │  [0.00, 0.00,  ..., 0.00, 0.00],
+│ │ │ │  [0.00, 0.00,  ..., 0.00, 0.00]]
+│ │ │ code (torch.int64):
+│ │ │ │ [[2885, 2059,  ..., 2083, 2708],
+│ │ │ │  [2739, 2666,  ..., 6566, 1795],
+│ │ │ │  ...,
+│ │ │ │  [2278, 2057,  ..., 2007, 6529],
+│ │ │ │  [6529, 2198,  ..., 2249, 2250]]
+│ │ │ numeric_value (torch.float32):
+│ │ │ │ [[ 0.00,  0.00,  ..., -0.44,  0.00],
+│ │ │ │  [ 0.00,  0.00,  ...,  2.24,  0.18],
+│ │ │ │  ...,
+│ │ │ │  [ 0.60,  0.00,  ...,  0.77, -0.72],
+│ │ │ │  [-0.74, -0.32,  ...,  0.00,  0.00]]
+│ │ │ numeric_value_mask (torch.bool):
+│ │ │ │ [[False, False,  ...,  True, False],
+│ │ │ │  [False, False,  ...,  True,  True],
+│ │ │ │  ...,
+│ │ │ │  [ True, False,  ...,  True,  True],
+│ │ │ │  [ True,  True,  ..., False, False]]
+│ │
+│ │ Labels:
+│ │ │ boolean_value (torch.bool):
+│ │ │ │ [False, False,  ...,  True,  True]
+</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>To build our lightning module, we just need to add a few methods to our class. To keep things clean, we&#x27;ll have our module take our PyTorch model class as an input.</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">5</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">6</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">7</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">8</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">9</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">10</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">11</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">12</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">13</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">14</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">15</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">16</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">17</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">18</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">19</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">20</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">21</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">22</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">23</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">24</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">25</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">26</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">27</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">28</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">29</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">30</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">31</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">32</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">33</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">34</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">35</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">36</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">37</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">38</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">39</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">40</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">41</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">42</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">43</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">44</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">45</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span style="color:#00f">import</span><span> lightning </span><span style="color:#00f">as</span><span> L
+</span><span></span><span style="color:#00f">from</span><span> torchmetrics </span><span style="color:#00f">import</span><span> Accuracy
+</span>
+<span></span><span class="hljs-class" style="color:#00f">class</span><span class="hljs-class"> </span><span class="hljs-class" style="color:#a31515">SimpleConvL</span><span class="hljs-class">(</span><span class="hljs-class hljs-params">L.LightningModule</span><span class="hljs-class">):</span><span>
+</span><span>    </span><span class="hljs-function" style="color:#00f">def</span><span class="hljs-function"> </span><span class="hljs-function" style="color:#a31515">__init__</span><span class="hljs-function">(</span><span class="hljs-function hljs-params">self, lr, **kwargs</span><span class="hljs-function">):</span><span>
+</span><span>        </span><span style="color:#00f">super</span><span>().__init__()
+</span>        self.save_hyperparameters()
+<!-- -->        self.lr = lr
+<!-- -->        self.model = SimpleConv(**kwargs)
+<!-- -->        self.loss = nn.BCEWithLogitsLoss()
+<span>        self.accuracy = Accuracy(task=</span><span style="color:#a31515">&quot;binary&quot;</span><span>)
+</span>
+<span>    </span><span class="hljs-function" style="color:#00f">def</span><span class="hljs-function"> </span><span class="hljs-function" style="color:#a31515">forward</span><span class="hljs-function">(</span><span class="hljs-function hljs-params">self, batch: MEDSTorchBatch</span><span class="hljs-function">):</span><span>
+</span><span>        </span><span style="color:#00f">return</span><span> self.model(batch)
+</span>
+<span>    </span><span class="hljs-function" style="color:#00f">def</span><span class="hljs-function"> </span><span class="hljs-function" style="color:#a31515">_step</span><span class="hljs-function">(</span><span class="hljs-function hljs-params">self, batch: MEDSTorchBatch, split: </span><span class="hljs-function hljs-params" style="color:#00f">str</span><span class="hljs-function">):</span><span>
+</span>        logits = self(batch)
+<span>        labels = batch.boolean_value.</span><span style="color:#00f">float</span><span>()
+</span>
+<!-- -->        loss = self.loss(logits, labels)
+<span>        self.log(</span><span style="color:#a31515">f&quot;</span><span class="hljs-subst" style="color:#a31515">{split}</span><span style="color:#a31515">_loss&quot;</span><span>, loss)
+</span>
+<span>        preds = (logits &gt; </span><span class="hljs-number">0</span><span>).</span><span style="color:#00f">float</span><span>()
+</span>        acc = self.accuracy(preds, labels)
+<!-- -->        self.log(
+<span>            </span><span style="color:#a31515">f&quot;</span><span class="hljs-subst" style="color:#a31515">{split}</span><span style="color:#a31515">_acc&quot;</span><span>,
+</span>            acc,
+<span>            on_step=</span><span style="color:#a31515">False</span><span>,
+</span><span>            on_epoch=</span><span style="color:#a31515">True</span><span>,
+</span><span>            prog_bar=</span><span style="color:#a31515">True</span><span>
+</span>        )
+<!-- -->
+<span>        </span><span style="color:#00f">return</span><span> loss
+</span>
+<span>    </span><span class="hljs-function" style="color:#00f">def</span><span class="hljs-function"> </span><span class="hljs-function" style="color:#a31515">training_step</span><span class="hljs-function">(</span><span class="hljs-function hljs-params">self, batch, _</span><span class="hljs-function">):</span><span>
+</span><span>        </span><span style="color:#00f">return</span><span> self._step(batch, </span><span style="color:#a31515">&quot;train&quot;</span><span>)
+</span>
+<span>    </span><span class="hljs-function" style="color:#00f">def</span><span class="hljs-function"> </span><span class="hljs-function" style="color:#a31515">validation_step</span><span class="hljs-function">(</span><span class="hljs-function hljs-params">self, batch, _</span><span class="hljs-function">):</span><span>
+</span><span>        </span><span style="color:#00f">return</span><span> self._step(batch, </span><span style="color:#a31515">&quot;val&quot;</span><span>)
+</span>
+<span>    </span><span class="hljs-function" style="color:#00f">def</span><span class="hljs-function"> </span><span class="hljs-function" style="color:#a31515">test_step</span><span class="hljs-function">(</span><span class="hljs-function hljs-params">self, batch, _</span><span class="hljs-function">):</span><span>
+</span><span>        </span><span style="color:#00f">return</span><span> self._step(batch, </span><span style="color:#a31515">&quot;test&quot;</span><span>)
+</span>
+<span>    </span><span class="hljs-function" style="color:#00f">def</span><span class="hljs-function"> </span><span class="hljs-function" style="color:#a31515">configure_optimizers</span><span class="hljs-function">(</span><span class="hljs-function hljs-params">self</span><span class="hljs-function">):</span><span>
+</span><span>        </span><span style="color:#00f">return</span><span> torch.optim.Adam(self.parameters(), lr=self.lr)</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>With these defined, let&#x27;s try training our model!</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>LM = SimpleConvL(lr=</span><span class="hljs-number">1e-3</span><span>, code_vocab_size=config.vocab_size)
+</span>
+<span>trainer = L.Trainer(max_epochs=</span><span class="hljs-number">10</span><span>, check_val_every_n_epoch=</span><span class="hljs-number">1</span><span>, log_every_n_steps=</span><span class="hljs-number">1</span><span>)
+</span>trainer.fit(model=LM, datamodule=dm)</code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-err">INFO:pytorch_lightning.utilities.rank_zero:💡 Tip: For seamless cloud uploads and versioning, try installing [litmodels](https://pypi.org/project/litmodels/) to enable LitModelCheckpoint, which syncs automatically with the Lightning model registry.
+INFO:pytorch_lightning.utilities.rank_zero:GPU available: False, used: False
+INFO:pytorch_lightning.utilities.rank_zero:TPU available: False, using: 0 TPU cores
+INFO:pytorch_lightning.utilities.rank_zero:HPU available: False, using: 0 HPUs
+INFO: 
+  | Name     | Type              | Params | Mode 
+-------------------------------------------------------
+0 | model    | SimpleConv        | 1.1 M  | train
+1 | loss     | BCEWithLogitsLoss | 0      | train
+2 | accuracy | BinaryAccuracy    | 0      | train
+-------------------------------------------------------
+1.1 M     Trainable params
+0         Non-trainable params
+1.1 M     Total params
+4.318     Total estimated model params size (MB)
+23        Modules in train mode
+0         Modules in eval mode
+INFO:lightning.pytorch.callbacks.model_summary:
+  | Name     | Type              | Params | Mode 
+-------------------------------------------------------
+0 | model    | SimpleConv        | 1.1 M  | train
+1 | loss     | BCEWithLogitsLoss | 0      | train
+2 | accuracy | BinaryAccuracy    | 0      | train
+-------------------------------------------------------
+1.1 M     Trainable params
+0         Non-trainable params
+1.1 M     Total params
+4.318     Total estimated model params size (MB)
+23        Modules in train mode
+0         Modules in eval mode
+</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Sanity Checking: |          | 0/? [00:00&lt;?, ?it/s]</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Training: |          | 0/? [00:00&lt;?, ?it/s]</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Validation: |          | 0/? [00:00&lt;?, ?it/s]</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Validation: |          | 0/? [00:00&lt;?, ?it/s]</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Validation: |          | 0/? [00:00&lt;?, ?it/s]</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Validation: |          | 0/? [00:00&lt;?, ?it/s]</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Validation: |          | 0/? [00:00&lt;?, ?it/s]</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Validation: |          | 0/? [00:00&lt;?, ?it/s]</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Validation: |          | 0/? [00:00&lt;?, ?it/s]</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Validation: |          | 0/? [00:00&lt;?, ?it/s]</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Validation: |          | 0/? [00:00&lt;?, ?it/s]</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Validation: |          | 0/? [00:00&lt;?, ?it/s]</pre></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-err">INFO:pytorch_lightning.utilities.rank_zero:`Trainer.fit` stopped: `max_epochs=10` reached.
+</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>With lightning, we can easily test our model too:</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> </span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>trainer.test(model=LM, datamodule=dm)</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Testing: |          | 0/? [00:00&lt;?, ?it/s]</pre></div><div class="cell-row"><pre class="cell-header output"></pre><div class="cell-content output-display" style="justify-content:flex-start"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃<span style="font-weight: bold">        Test metric        </span>┃<span style="font-weight: bold">       DataLoader 0        </span>┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│<span style="color: #008080; text-decoration-color: #008080">         test_acc          </span>│<span style="color: #800080; text-decoration-color: #800080">           0.375           </span>│
+│<span style="color: #008080; text-decoration-color: #008080">         test_loss         </span>│<span style="color: #800080; text-decoration-color: #800080">    1.6943222284317017     </span>│
+└───────────────────────────┴───────────────────────────┘
+</pre>
+</div></div><div class="cell-row"><pre class="cell-header output">[39]: </pre><pre class="cell-content output-std">[{&#x27;test_loss&#x27;: 1.6943222284317017, &#x27;test_acc&#x27;: 0.375}]</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>Unsurprisingly, for our very small dataset of only ~70 samples, this model has grossly overfit. You should see (from the lightning progress bar description) that the train accuracy has gotten very high, but the test accuracy is still quite poor. But, were you to use this model on the real data--who knows!</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h2>Key Takeaways</h2>
+<p>In this part of the tutorial, you&#x27;ve learned how to train a neural network model over MEDS data -- how to convert it into a representation suitable for training a sequential neural network architecture using tools in the MEDS Ecosystem and train a simple model for a real task.</p></div></div></div></div></div></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/tree/main/docs/docs/tutorials/kdd2025/build_a_model_NN.mdx" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/tutorials/kdd2025/build_a_model_tabular"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Build a (Tabular Baseline) Model over MEDS data</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/intro_pages/ecosystem"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">MEDS Ecosystem</div></a></nav></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Docs</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/intro_pages/intro">Tutorials</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://stackoverflow.com/questions/tagged/meds" target="_blank" rel="noopener noreferrer" class="footer__link-item">Stack Overflow<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a href="https://github.com/Medical-Event-Data-Standard" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/Medical-Event-Data-Standard" target="_blank" rel="noopener noreferrer" class="footer__link-item">Schema</a></li><li class="footer__item"><a href="https://github.com/mmcdermott/MEDS-DEV" target="_blank" rel="noopener noreferrer" class="footer__link-item">MEDS-DEV<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2025 Medical Event Data Standard.</div></div></div></footer></div>
+</body>
+</html>

@@ -1,0 +1,1033 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-tutorials/kdd2025/MEDS_intro" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.8.1">
+<title data-rh="true">Getting Familiar with MEDS | MEDS: a Health AI Ecosystem</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://medical-event-data-standard.github.io/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://medical-event-data-standard.github.io/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/MEDS_intro"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Getting Familiar with MEDS | MEDS: a Health AI Ecosystem"><meta data-rh="true" name="description" content="Before we start building datasets and models using the MEDS ecosystem, we need to understand what the MEDS"><meta data-rh="true" property="og:description" content="Before we start building datasets and models using the MEDS ecosystem, we need to understand what the MEDS"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/MEDS_intro"><link data-rh="true" rel="alternate" href="https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/MEDS_intro" hreflang="en"><link data-rh="true" rel="alternate" href="https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/MEDS_intro" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Tutorial - Build a Model with MEDS (KDD 2025)","item":"https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/"},{"@type":"ListItem","position":2,"name":"Getting Familiar with MEDS","item":"https://medical-event-data-standard.github.io/docs/tutorials/kdd2025/MEDS_intro"}]}</script><link rel="stylesheet" href="/assets/css/styles.25b0cb31.css">
+<script src="/assets/js/runtime~main.e02617de.js" defer="defer"></script>
+<script src="/assets/js/main.83c33bb1.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t="light";var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",e||t),document.documentElement.setAttribute("data-theme-choice",e||t)}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><div class="navbar__logo"><img src="/img/logo.svg" alt="MEDS Logo" class="themedComponent_mlkZ themedComponent--light_NVdE"><img src="/img/logo-dark.svg" alt="MEDS Logo" class="themedComponent_mlkZ themedComponent--dark_xIcU"></div><b class="navbar__title text--truncate">MEDS</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/intro_pages/intro">Get Started</a><a class="navbar__item navbar__link" href="/docs/MEDS-DEV/intro">MEDS-DEV</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a href="https://github.com/Medical-Event-Data-Standard" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/intro">Welcome to MEDS</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/what_is_MEDS">What is MEDS?</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--active" href="/docs/tutorials/kdd2025/">Tutorial - Build a Model with MEDS (KDD 2025)</a><button aria-label="Collapse sidebar category &#x27;Tutorial - Build a Model with MEDS (KDD 2025)&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/docs/tutorials/kdd2025/MEDS_intro">Getting Familiar with MEDS</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/tutorials/kdd2025/converting_to_MEDS">Converting to MEDS</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/tutorials/kdd2025/extracting_prediction_tasks">Extracting a Prediction Task</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/tutorials/kdd2025/build_a_model_tabular">Build a (Tabular Baseline) Model over MEDS data</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/tutorials/kdd2025/build_a_model_NN">Build a (Neural Network) Model over MEDS data</a></li></ul></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/ecosystem">MEDS Ecosystem</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro_pages/roadmap">Future Roadmap</a></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="Breadcrumbs"><ul class="breadcrumbs"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_YNFT"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/tutorials/kdd2025/"><span>Tutorial - Build a Model with MEDS (KDD 2025)</span></a></li><li class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link">Getting Familiar with MEDS</span></li></ul></nav><div class="theme-doc-markdown markdown"><header><h1>Getting Familiar with MEDS</h1></header>
+<p>Before we start building datasets and models using the MEDS ecosystem, we need to understand what the MEDS
+schema is and how it can be used to represent medical data. This tutorial does exactly that, with a simple
+introduction to the file format, layout, and what MEDS is all about. Check it out in the jupyter
+notebook tutorial below, or see it on <a href="https://colab.research.google.com/github/Medical-Event-Data-Standard/medical-event-data-standard.github.io/blob/main/tutorial_notebooks/KDD_tutorial/What_is_MEDS.ipynb" target="_blank" rel="noopener noreferrer">Google
+Colab</a>
+or on our <a href="https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/blob/main/tutorial_notebooks/KDD_tutorial/What_is_MEDS.ipynb" target="_blank" rel="noopener noreferrer">GitHub
+Repository</a></p>
+<div class="jupyter-viewer"><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h1>What is MEDS?</h1>
+<!-- -->&lt;p align=&quot;center&quot;&gt;
+  &lt;picture&gt;
+    &lt;source media=&quot;(prefers-color-scheme: dark)&quot; srcset=&quot;https://raw.githubusercontent.com/Medical-Event-Data-Standard/meds/refs/heads/main/static/logo_dark.svg&quot;&gt;
+    &lt;source media=&quot;(prefers-color-scheme: light)&quot; srcset=&quot;https://raw.githubusercontent.com/Medical-Event-Data-Standard/meds/refs/heads/main/static/logo_light.svg&quot;&gt;
+    &lt;img width=&quot;200&quot; height=&quot;200&quot; alt=&quot;MEDS Logo&quot; src=&quot;https://raw.githubusercontent.com/Medical-Event-Data-Standard/meds/refs/heads/main/static/logo_light.svg&quot;&gt;
+  &lt;/picture&gt;
+&lt;/p&gt;<!-- -->
+<p>MEDS (The Medical Event Data Standard) is both a data standard for electronic health record (EHR) data and an open source ecosystem built atop that data standard that enables transportable, efficient tools to be used across different AI applications. This tutorial quickly explores that standard and ecosystem, so you can learn more. Let&#x27;s dive in!</p>
+<h2>MEDS Data Standard</h2>
+<p>The MEDS Data standard embodies simplicity first and foremost -- rather than trying to capture in a unified vocabulary all aspects of EHR data, MEDS tries to capture <em>only</em> the shared underlying structure that defines EHR data. Namely, the fact that EHR data consists of a sequence of complex events occurring for a patient in continuous time. Let&#x27;s see how this translates into our schema, visually:</p>
+<!-- -->&lt;p align=&quot;center&quot;&gt;
+&lt;img alt=&quot;MEDS Data Standard&quot; src=&quot;https://raw.githubusercontent.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/refs/heads/main/static/img/data_figure.svg&quot;&gt;
+&lt;/p&gt;<!-- -->
+<p>Seeing this visually is one thing, but let&#x27;s check out some actual data! To do this, we&#x27;ll use a simple, static dataset defined in the <a href="https://github.com/Medical-Event-Data-Standard/meds_testing_helpers/blob/main/src/meds_testing_helpers/static_sample_data/simple_static_sharded_by_split.yaml">MEDS Testing Helpers</a> repository, which we&#x27;ll write to the directory <code>MEDS_data</code> in this notebook:</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> </span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>!pip install --quiet meds_testing_helpers~=</span><span class="hljs-number">0.3</span><span class="hljs-number">.0</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">[?25l   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/154.5 kB[0m [31m?[0m eta [36m-:--:--[0m[2K   [91m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[91m╸[0m [32m153.6/154.5 kB[0m [31m4.8 MB/s[0m eta [36m0:00:01[0m[2K   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m154.5/154.5 kB[0m [31m2.8 MB/s[0m eta [36m0:00:00[0m
+[?25h</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">5</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">6</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">7</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">8</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span style="color:#00f">from</span><span> meds_testing_helpers.static_sample_data </span><span style="color:#00f">import</span><span> SIMPLE_STATIC_SHARDED_BY_SPLIT
+</span><span></span><span style="color:#00f">from</span><span> meds_testing_helpers.dataset </span><span style="color:#00f">import</span><span> MEDSDataset
+</span><span></span><span style="color:#00f">from</span><span> pathlib </span><span style="color:#00f">import</span><span> Path
+</span>
+<span>data_root = Path(</span><span style="color:#a31515">&quot;MEDS_data&quot;</span><span>)
+</span>
+<!-- -->data = MEDSDataset.from_yaml(SIMPLE_STATIC_SHARDED_BY_SPLIT)
+<!-- -->data.write(data_root);</code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>What&#x27;s in this directory? We&#x27;ll use the linux <code>tree</code> command to print it:</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>%%bash
+</span>apt-get -qq install tree &gt; /dev/null
+<!-- -->tree MEDS_data</code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">MEDS_data
+├── data
+│   ├── held_out
+│   │   └── 0.parquet
+│   ├── train
+│   │   ├── 0.parquet
+│   │   └── 1.parquet
+│   └── tuning
+│       └── 0.parquet
+└── metadata
+    ├── codes.parquet
+    ├── dataset.json
+    └── subject_splits.parquet
+
+5 directories, 7 files
+</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>As we can see, there are a variety of files here. Let&#x27;s break them down by type: data and metadata.</p>
+<h3>MEDS Data Files (<code>data/**.parquet</code>)</h3>
+<p>MEDS data files are stored as a sharded set of <a href="https://parquet.apache.org/">Parquet</a> files. In MEDS, we use the term &quot;shard name&quot; to refer to the full relative string to the file name under the <code>data/</code> sub-directory. So, in this case, we have 4 shards, with the following names:</p>
+<ul>
+<li><code>held_out/0</code></li>
+<li><code>train/0</code></li>
+<li><code>train/1</code></li>
+<li><code>tuning/0</code></li>
+</ul>
+<p>Importantly, note that there are no requirements on shard names -- clearly, this dataset is &quot;sharded by split&quot; so that all patients in any given shard are within the same modeling split (either a train, tuning, or held out split), but this is <em>not</em> required in general.</p>
+<p>Each of these data files follows the schema above:</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">5</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">6</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span style="color:#00f">import</span><span> pandas </span><span style="color:#00f">as</span><span> pd
+</span>
+<span></span><span style="color:#00f">print</span><span>(</span><span style="color:#a31515">&quot;Train 0:&quot;</span><span>)
+</span><span>display(pd.read_parquet(data_root / </span><span style="color:#a31515">&quot;data&quot;</span><span> / </span><span style="color:#a31515">&quot;train/0.parquet&quot;</span><span>).head(</span><span class="hljs-number">5</span><span>))
+</span><span></span><span style="color:#00f">print</span><span>(</span><span style="color:#a31515">&quot;\nTuning 0:&quot;</span><span>)
+</span><span>display(pd.read_parquet(data_root / </span><span style="color:#a31515">&quot;data&quot;</span><span> / </span><span style="color:#a31515">&quot;tuning/0.parquet&quot;</span><span>).head(</span><span class="hljs-number">5</span><span>))</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">Train 0:
+</pre></div><div class="cell-row"><pre class="cell-header output"></pre><div class="cell-content output-display" style="justify-content:flex-start">
+  <div id="df-08b3b641-c28e-4876-a6b5-e0cd264aeffc" class="colab-df-container">
+    <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>subject_id</th>
+      <th>time</th>
+      <th>code</th>
+      <th>numeric_value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>239684</td>
+      <td>NaT</td>
+      <td>EYE_COLOR//BROWN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>239684</td>
+      <td>NaT</td>
+      <td>HEIGHT</td>
+      <td>175.271118</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>239684</td>
+      <td>1980-12-28 00:00:00</td>
+      <td>DOB</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>239684</td>
+      <td>2010-05-11 17:41:51</td>
+      <td>ADMISSION//CARDIAC</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>239684</td>
+      <td>2010-05-11 17:41:51</td>
+      <td>HR</td>
+      <td>102.599998</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+    <div class="colab-df-buttons">
+
+  <div class="colab-df-container">
+    <button class="colab-df-convert" onclick='convertToInteractive("df-08b3b641-c28e-4876-a6b5-e0cd264aeffc")' title="Convert this dataframe to an interactive table." style="display:none;">
+
+  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
+    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
+  </svg>
+    </button>
+
+  <style>
+    .colab-df-container {
+      display:flex;
+      gap: 12px;
+    }
+
+    .colab-df-convert {
+      background-color: #E8F0FE;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+      fill: #1967D2;
+      height: 32px;
+      padding: 0 0 0 0;
+      width: 32px;
+    }
+
+    .colab-df-convert:hover {
+      background-color: #E2EBFA;
+      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
+      fill: #174EA6;
+    }
+
+    .colab-df-buttons div {
+      margin-bottom: 4px;
+    }
+
+    [theme=dark] .colab-df-convert {
+      background-color: #3B4455;
+      fill: #D2E3FC;
+    }
+
+    [theme=dark] .colab-df-convert:hover {
+      background-color: #434B5C;
+      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
+      fill: #FFFFFF;
+    }
+  </style>
+
+    <script>const buttonEl=document.querySelector("#df-08b3b641-c28e-4876-a6b5-e0cd264aeffc button.colab-df-convert");async function convertToInteractive(e){const t=document.querySelector("#df-08b3b641-c28e-4876-a6b5-e0cd264aeffc"),o=await google.colab.kernel.invokeFunction("convertToInteractive",[e],{});if(!o)return;t.innerHTML="",o.output_type="display_data",await google.colab.output.renderOutput(o,t);const a=document.createElement("div");a.innerHTML='Like what you see? Visit the <a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a> to learn more about interactive tables.',t.appendChild(a)}buttonEl.style.display=google.colab.kernel.accessAllowed?"block":"none"</script>
+  </div>
+
+
+    <div id="df-a9f2fd34-6a6c-42ea-85fd-4486afce2ad1">
+      <button class="colab-df-quickchart" onclick='quickchart("df-a9f2fd34-6a6c-42ea-85fd-4486afce2ad1")' title="Suggest charts" style="display:none;">
+
+<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px">
+    <g>
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+    </g>
+</svg>
+      </button>
+
+<style>
+  .colab-df-quickchart {
+      --bg-color: #E8F0FE;
+      --fill-color: #1967D2;
+      --hover-bg-color: #E2EBFA;
+      --hover-fill-color: #174EA6;
+      --disabled-fill-color: #AAA;
+      --disabled-bg-color: #DDD;
+  }
+
+  [theme=dark] .colab-df-quickchart {
+      --bg-color: #3B4455;
+      --fill-color: #D2E3FC;
+      --hover-bg-color: #434B5C;
+      --hover-fill-color: #FFFFFF;
+      --disabled-bg-color: #3B4455;
+      --disabled-fill-color: #666;
+  }
+
+  .colab-df-quickchart {
+    background-color: var(--bg-color);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none;
+    fill: var(--fill-color);
+    height: 32px;
+    padding: 0;
+    width: 32px;
+  }
+
+  .colab-df-quickchart:hover {
+    background-color: var(--hover-bg-color);
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+    fill: var(--button-hover-fill-color);
+  }
+
+  .colab-df-quickchart-complete:disabled,
+  .colab-df-quickchart-complete:disabled:hover {
+    background-color: var(--disabled-bg-color);
+    fill: var(--disabled-fill-color);
+    box-shadow: none;
+  }
+
+  .colab-df-spinner {
+    border: 2px solid var(--fill-color);
+    border-color: transparent;
+    border-bottom-color: var(--fill-color);
+    animation:
+      spin 1s steps(1) infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      border-color: transparent;
+      border-bottom-color: var(--fill-color);
+      border-left-color: var(--fill-color);
+    }
+    20% {
+      border-color: transparent;
+      border-left-color: var(--fill-color);
+      border-top-color: var(--fill-color);
+    }
+    30% {
+      border-color: transparent;
+      border-left-color: var(--fill-color);
+      border-top-color: var(--fill-color);
+      border-right-color: var(--fill-color);
+    }
+    40% {
+      border-color: transparent;
+      border-right-color: var(--fill-color);
+      border-top-color: var(--fill-color);
+    }
+    60% {
+      border-color: transparent;
+      border-right-color: var(--fill-color);
+    }
+    80% {
+      border-color: transparent;
+      border-right-color: var(--fill-color);
+      border-bottom-color: var(--fill-color);
+    }
+    90% {
+      border-color: transparent;
+      border-bottom-color: var(--fill-color);
+    }
+  }
+</style>
+
+      <script>async function quickchart(e){const c=document.querySelector("#"+e+" button");c.disabled=!0,c.classList.add("colab-df-spinner");try{await google.colab.kernel.invokeFunction("suggestCharts",[e],{})}catch(e){console.error("Error during call to suggestCharts:",e)}c.classList.remove("colab-df-spinner"),c.classList.add("colab-df-quickchart-complete")}document.querySelector("#df-a9f2fd34-6a6c-42ea-85fd-4486afce2ad1 button").style.display=google.colab.kernel.accessAllowed?"block":"none"</script>
+    </div>
+
+    </div>
+  </div>
+</div></div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">
+
+Tuning 0:
+</pre></div><div class="cell-row"><pre class="cell-header output"></pre><div class="cell-content output-display" style="justify-content:flex-start">
+  <div id="df-7ada9c8c-85f8-4232-82b7-75207ba05d8e" class="colab-df-container">
+    <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>subject_id</th>
+      <th>time</th>
+      <th>code</th>
+      <th>numeric_value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>754281</td>
+      <td>NaT</td>
+      <td>EYE_COLOR//BROWN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>754281</td>
+      <td>NaT</td>
+      <td>HEIGHT</td>
+      <td>166.22261</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>754281</td>
+      <td>1988-12-19 00:00:00</td>
+      <td>DOB</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>754281</td>
+      <td>2010-01-03 06:27:59</td>
+      <td>ADMISSION//PULMONARY</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>754281</td>
+      <td>2010-01-03 06:27:59</td>
+      <td>HR</td>
+      <td>142.00000</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+    <div class="colab-df-buttons">
+
+  <div class="colab-df-container">
+    <button class="colab-df-convert" onclick='convertToInteractive("df-7ada9c8c-85f8-4232-82b7-75207ba05d8e")' title="Convert this dataframe to an interactive table." style="display:none;">
+
+  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
+    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
+  </svg>
+    </button>
+
+  <style>
+    .colab-df-container {
+      display:flex;
+      gap: 12px;
+    }
+
+    .colab-df-convert {
+      background-color: #E8F0FE;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+      fill: #1967D2;
+      height: 32px;
+      padding: 0 0 0 0;
+      width: 32px;
+    }
+
+    .colab-df-convert:hover {
+      background-color: #E2EBFA;
+      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
+      fill: #174EA6;
+    }
+
+    .colab-df-buttons div {
+      margin-bottom: 4px;
+    }
+
+    [theme=dark] .colab-df-convert {
+      background-color: #3B4455;
+      fill: #D2E3FC;
+    }
+
+    [theme=dark] .colab-df-convert:hover {
+      background-color: #434B5C;
+      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
+      fill: #FFFFFF;
+    }
+  </style>
+
+    <script>const buttonEl=document.querySelector("#df-7ada9c8c-85f8-4232-82b7-75207ba05d8e button.colab-df-convert");async function convertToInteractive(e){const t=document.querySelector("#df-7ada9c8c-85f8-4232-82b7-75207ba05d8e"),o=await google.colab.kernel.invokeFunction("convertToInteractive",[e],{});if(!o)return;t.innerHTML="",o.output_type="display_data",await google.colab.output.renderOutput(o,t);const a=document.createElement("div");a.innerHTML='Like what you see? Visit the <a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a> to learn more about interactive tables.',t.appendChild(a)}buttonEl.style.display=google.colab.kernel.accessAllowed?"block":"none"</script>
+  </div>
+
+
+    <div id="df-bdd7093f-076b-44da-aa4c-4f018a0f70ea">
+      <button class="colab-df-quickchart" onclick='quickchart("df-bdd7093f-076b-44da-aa4c-4f018a0f70ea")' title="Suggest charts" style="display:none;">
+
+<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px">
+    <g>
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+    </g>
+</svg>
+      </button>
+
+<style>
+  .colab-df-quickchart {
+      --bg-color: #E8F0FE;
+      --fill-color: #1967D2;
+      --hover-bg-color: #E2EBFA;
+      --hover-fill-color: #174EA6;
+      --disabled-fill-color: #AAA;
+      --disabled-bg-color: #DDD;
+  }
+
+  [theme=dark] .colab-df-quickchart {
+      --bg-color: #3B4455;
+      --fill-color: #D2E3FC;
+      --hover-bg-color: #434B5C;
+      --hover-fill-color: #FFFFFF;
+      --disabled-bg-color: #3B4455;
+      --disabled-fill-color: #666;
+  }
+
+  .colab-df-quickchart {
+    background-color: var(--bg-color);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none;
+    fill: var(--fill-color);
+    height: 32px;
+    padding: 0;
+    width: 32px;
+  }
+
+  .colab-df-quickchart:hover {
+    background-color: var(--hover-bg-color);
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+    fill: var(--button-hover-fill-color);
+  }
+
+  .colab-df-quickchart-complete:disabled,
+  .colab-df-quickchart-complete:disabled:hover {
+    background-color: var(--disabled-bg-color);
+    fill: var(--disabled-fill-color);
+    box-shadow: none;
+  }
+
+  .colab-df-spinner {
+    border: 2px solid var(--fill-color);
+    border-color: transparent;
+    border-bottom-color: var(--fill-color);
+    animation:
+      spin 1s steps(1) infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      border-color: transparent;
+      border-bottom-color: var(--fill-color);
+      border-left-color: var(--fill-color);
+    }
+    20% {
+      border-color: transparent;
+      border-left-color: var(--fill-color);
+      border-top-color: var(--fill-color);
+    }
+    30% {
+      border-color: transparent;
+      border-left-color: var(--fill-color);
+      border-top-color: var(--fill-color);
+      border-right-color: var(--fill-color);
+    }
+    40% {
+      border-color: transparent;
+      border-right-color: var(--fill-color);
+      border-top-color: var(--fill-color);
+    }
+    60% {
+      border-color: transparent;
+      border-right-color: var(--fill-color);
+    }
+    80% {
+      border-color: transparent;
+      border-right-color: var(--fill-color);
+      border-bottom-color: var(--fill-color);
+    }
+    90% {
+      border-color: transparent;
+      border-bottom-color: var(--fill-color);
+    }
+  }
+</style>
+
+      <script>async function quickchart(e){const c=document.querySelector("#"+e+" button");c.disabled=!0,c.classList.add("colab-df-spinner");try{await google.colab.kernel.invokeFunction("suggestCharts",[e],{})}catch(e){console.error("Error during call to suggestCharts:",e)}c.classList.remove("colab-df-spinner"),c.classList.add("colab-df-quickchart-complete")}document.querySelector("#df-bdd7093f-076b-44da-aa4c-4f018a0f70ea button").style.display=google.colab.kernel.accessAllowed?"block":"none"</script>
+    </div>
+
+    </div>
+  </div>
+</div></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>MEDS Metadata Files (<code>metadata/**</code>)</h3>
+<p>In addition to the data files, we also have metadata files <code>codes.parquet</code>, <code>dataset.json</code>, and <code>subject_splits.parquet</code>. Let&#x27;s check those out now:</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h4><code>codes.parquet</code></h4>
+<p>This helps users understand the vocabulary of codes in a given dataset -- and it can be a source to link codes in the dataset to external ontologies or vocabularies.</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> </span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>pd.read_parquet(data_root / </span><span style="color:#a31515">&quot;metadata&quot;</span><span> / </span><span style="color:#a31515">&quot;codes.parquet&quot;</span><span>).head(</span><span class="hljs-number">5</span><span>)</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output">[5]: </pre><div class="cell-content output-display" style="justify-content:flex-start">
+  <div id="df-67906d59-5913-4e91-bba9-24ec1a097adb" class="colab-df-container">
+    <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>code</th>
+      <th>description</th>
+      <th>parent_codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>EYE_COLOR//BLUE</td>
+      <td>Blue Eyes. Less common than brown.</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>EYE_COLOR//BROWN</td>
+      <td>Brown Eyes. The most common eye color.</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>EYE_COLOR//HAZEL</td>
+      <td>Hazel eyes. These are uncommon</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>HR</td>
+      <td>Heart Rate</td>
+      <td>[LOINC/8867-4]</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>TEMP</td>
+      <td>Body Temperature</td>
+      <td>[LOINC/8310-5]</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+    <div class="colab-df-buttons">
+
+  <div class="colab-df-container">
+    <button class="colab-df-convert" onclick='convertToInteractive("df-67906d59-5913-4e91-bba9-24ec1a097adb")' title="Convert this dataframe to an interactive table." style="display:none;">
+
+  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
+    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
+  </svg>
+    </button>
+
+  <style>
+    .colab-df-container {
+      display:flex;
+      gap: 12px;
+    }
+
+    .colab-df-convert {
+      background-color: #E8F0FE;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+      fill: #1967D2;
+      height: 32px;
+      padding: 0 0 0 0;
+      width: 32px;
+    }
+
+    .colab-df-convert:hover {
+      background-color: #E2EBFA;
+      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
+      fill: #174EA6;
+    }
+
+    .colab-df-buttons div {
+      margin-bottom: 4px;
+    }
+
+    [theme=dark] .colab-df-convert {
+      background-color: #3B4455;
+      fill: #D2E3FC;
+    }
+
+    [theme=dark] .colab-df-convert:hover {
+      background-color: #434B5C;
+      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
+      fill: #FFFFFF;
+    }
+  </style>
+
+    <script>const buttonEl=document.querySelector("#df-67906d59-5913-4e91-bba9-24ec1a097adb button.colab-df-convert");async function convertToInteractive(e){const t=document.querySelector("#df-67906d59-5913-4e91-bba9-24ec1a097adb"),o=await google.colab.kernel.invokeFunction("convertToInteractive",[e],{});if(!o)return;t.innerHTML="",o.output_type="display_data",await google.colab.output.renderOutput(o,t);const a=document.createElement("div");a.innerHTML='Like what you see? Visit the <a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a> to learn more about interactive tables.',t.appendChild(a)}buttonEl.style.display=google.colab.kernel.accessAllowed?"block":"none"</script>
+  </div>
+
+
+    <div id="df-51e8a9cd-9f21-4dd7-90a3-0e6e65d47f5d">
+      <button class="colab-df-quickchart" onclick='quickchart("df-51e8a9cd-9f21-4dd7-90a3-0e6e65d47f5d")' title="Suggest charts" style="display:none;">
+
+<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px">
+    <g>
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+    </g>
+</svg>
+      </button>
+
+<style>
+  .colab-df-quickchart {
+      --bg-color: #E8F0FE;
+      --fill-color: #1967D2;
+      --hover-bg-color: #E2EBFA;
+      --hover-fill-color: #174EA6;
+      --disabled-fill-color: #AAA;
+      --disabled-bg-color: #DDD;
+  }
+
+  [theme=dark] .colab-df-quickchart {
+      --bg-color: #3B4455;
+      --fill-color: #D2E3FC;
+      --hover-bg-color: #434B5C;
+      --hover-fill-color: #FFFFFF;
+      --disabled-bg-color: #3B4455;
+      --disabled-fill-color: #666;
+  }
+
+  .colab-df-quickchart {
+    background-color: var(--bg-color);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none;
+    fill: var(--fill-color);
+    height: 32px;
+    padding: 0;
+    width: 32px;
+  }
+
+  .colab-df-quickchart:hover {
+    background-color: var(--hover-bg-color);
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+    fill: var(--button-hover-fill-color);
+  }
+
+  .colab-df-quickchart-complete:disabled,
+  .colab-df-quickchart-complete:disabled:hover {
+    background-color: var(--disabled-bg-color);
+    fill: var(--disabled-fill-color);
+    box-shadow: none;
+  }
+
+  .colab-df-spinner {
+    border: 2px solid var(--fill-color);
+    border-color: transparent;
+    border-bottom-color: var(--fill-color);
+    animation:
+      spin 1s steps(1) infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      border-color: transparent;
+      border-bottom-color: var(--fill-color);
+      border-left-color: var(--fill-color);
+    }
+    20% {
+      border-color: transparent;
+      border-left-color: var(--fill-color);
+      border-top-color: var(--fill-color);
+    }
+    30% {
+      border-color: transparent;
+      border-left-color: var(--fill-color);
+      border-top-color: var(--fill-color);
+      border-right-color: var(--fill-color);
+    }
+    40% {
+      border-color: transparent;
+      border-right-color: var(--fill-color);
+      border-top-color: var(--fill-color);
+    }
+    60% {
+      border-color: transparent;
+      border-right-color: var(--fill-color);
+    }
+    80% {
+      border-color: transparent;
+      border-right-color: var(--fill-color);
+      border-bottom-color: var(--fill-color);
+    }
+    90% {
+      border-color: transparent;
+      border-bottom-color: var(--fill-color);
+    }
+  }
+</style>
+
+      <script>async function quickchart(e){const c=document.querySelector("#"+e+" button");c.disabled=!0,c.classList.add("colab-df-spinner");try{await google.colab.kernel.invokeFunction("suggestCharts",[e],{})}catch(e){console.error("Error during call to suggestCharts:",e)}c.classList.remove("colab-df-spinner"),c.classList.add("colab-df-quickchart-complete")}document.querySelector("#df-51e8a9cd-9f21-4dd7-90a3-0e6e65d47f5d button").style.display=google.colab.kernel.accessAllowed?"block":"none"</script>
+    </div>
+
+    </div>
+  </div>
+</div></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h4><code>dataset.json</code></h4>
+<p>This file has basic metadata about the dataset, used for tracking and versioining results using the dataset. In this case, as this is a testing dataset, it is empty, but you&#x27;ll see some other datasets later where it will be filled in.</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> </span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span style="color:#00f">print</span><span>(Path(data_root / </span><span style="color:#a31515">&quot;metadata&quot;</span><span> / </span><span style="color:#a31515">&quot;dataset.json&quot;</span><span>).read_text())</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><pre class="cell-content output-std">{}
+</pre></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h4><code>subject_splits.parquet</code></h4>
+<p>This file allows a data owner to perscribe a specific data split to use in downstream modeling, to ensure results are maximally comparable. The split names used in MEDS are <code>train</code>, for the training set; <code>tuning</code>, for the set of patients you may use for hyperparameter tuning, etc., but are not part of the final held-out test set (often called &quot;dev&quot; or &quot;val&quot;); and <code>held_out</code>, for the held-out set of patients (often called &quot;test&quot;). Users can, however, also include other, special splits corresponding to additional sets of patients held-out for other reasons specific to that dataset (e.g., dedicated, existing internal held-out sets for different projects).</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:1.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> </span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span>pd.read_parquet(data_root / </span><span style="color:#a31515">&quot;metadata&quot;</span><span> / </span><span style="color:#a31515">&quot;subject_splits.parquet&quot;</span><span>).head(</span><span class="hljs-number">5</span><span>)</span></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output">[7]: </pre><div class="cell-content output-display" style="justify-content:flex-start">
+  <div id="df-457f39e6-0768-49d8-b331-e2c4b29b97bc" class="colab-df-container">
+    <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>subject_id</th>
+      <th>split</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>239684</td>
+      <td>train</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1195293</td>
+      <td>train</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>68729</td>
+      <td>train</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>814703</td>
+      <td>train</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>754281</td>
+      <td>tuning</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+    <div class="colab-df-buttons">
+
+  <div class="colab-df-container">
+    <button class="colab-df-convert" onclick='convertToInteractive("df-457f39e6-0768-49d8-b331-e2c4b29b97bc")' title="Convert this dataframe to an interactive table." style="display:none;">
+
+  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
+    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
+  </svg>
+    </button>
+
+  <style>
+    .colab-df-container {
+      display:flex;
+      gap: 12px;
+    }
+
+    .colab-df-convert {
+      background-color: #E8F0FE;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+      fill: #1967D2;
+      height: 32px;
+      padding: 0 0 0 0;
+      width: 32px;
+    }
+
+    .colab-df-convert:hover {
+      background-color: #E2EBFA;
+      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
+      fill: #174EA6;
+    }
+
+    .colab-df-buttons div {
+      margin-bottom: 4px;
+    }
+
+    [theme=dark] .colab-df-convert {
+      background-color: #3B4455;
+      fill: #D2E3FC;
+    }
+
+    [theme=dark] .colab-df-convert:hover {
+      background-color: #434B5C;
+      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
+      fill: #FFFFFF;
+    }
+  </style>
+
+    <script>const buttonEl=document.querySelector("#df-457f39e6-0768-49d8-b331-e2c4b29b97bc button.colab-df-convert");async function convertToInteractive(e){const t=document.querySelector("#df-457f39e6-0768-49d8-b331-e2c4b29b97bc"),o=await google.colab.kernel.invokeFunction("convertToInteractive",[e],{});if(!o)return;t.innerHTML="",o.output_type="display_data",await google.colab.output.renderOutput(o,t);const n=document.createElement("div");n.innerHTML='Like what you see? Visit the <a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a> to learn more about interactive tables.',t.appendChild(n)}buttonEl.style.display=google.colab.kernel.accessAllowed?"block":"none"</script>
+  </div>
+
+
+    <div id="df-0cb69de5-e60f-4824-918e-4c2611219074">
+      <button class="colab-df-quickchart" onclick='quickchart("df-0cb69de5-e60f-4824-918e-4c2611219074")' title="Suggest charts" style="display:none;">
+
+<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px">
+    <g>
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+    </g>
+</svg>
+      </button>
+
+<style>
+  .colab-df-quickchart {
+      --bg-color: #E8F0FE;
+      --fill-color: #1967D2;
+      --hover-bg-color: #E2EBFA;
+      --hover-fill-color: #174EA6;
+      --disabled-fill-color: #AAA;
+      --disabled-bg-color: #DDD;
+  }
+
+  [theme=dark] .colab-df-quickchart {
+      --bg-color: #3B4455;
+      --fill-color: #D2E3FC;
+      --hover-bg-color: #434B5C;
+      --hover-fill-color: #FFFFFF;
+      --disabled-bg-color: #3B4455;
+      --disabled-fill-color: #666;
+  }
+
+  .colab-df-quickchart {
+    background-color: var(--bg-color);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none;
+    fill: var(--fill-color);
+    height: 32px;
+    padding: 0;
+    width: 32px;
+  }
+
+  .colab-df-quickchart:hover {
+    background-color: var(--hover-bg-color);
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+    fill: var(--button-hover-fill-color);
+  }
+
+  .colab-df-quickchart-complete:disabled,
+  .colab-df-quickchart-complete:disabled:hover {
+    background-color: var(--disabled-bg-color);
+    fill: var(--disabled-fill-color);
+    box-shadow: none;
+  }
+
+  .colab-df-spinner {
+    border: 2px solid var(--fill-color);
+    border-color: transparent;
+    border-bottom-color: var(--fill-color);
+    animation:
+      spin 1s steps(1) infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      border-color: transparent;
+      border-bottom-color: var(--fill-color);
+      border-left-color: var(--fill-color);
+    }
+    20% {
+      border-color: transparent;
+      border-left-color: var(--fill-color);
+      border-top-color: var(--fill-color);
+    }
+    30% {
+      border-color: transparent;
+      border-left-color: var(--fill-color);
+      border-top-color: var(--fill-color);
+      border-right-color: var(--fill-color);
+    }
+    40% {
+      border-color: transparent;
+      border-right-color: var(--fill-color);
+      border-top-color: var(--fill-color);
+    }
+    60% {
+      border-color: transparent;
+      border-right-color: var(--fill-color);
+    }
+    80% {
+      border-color: transparent;
+      border-right-color: var(--fill-color);
+      border-bottom-color: var(--fill-color);
+    }
+    90% {
+      border-color: transparent;
+      border-bottom-color: var(--fill-color);
+    }
+  }
+</style>
+
+      <script>async function quickchart(e){const c=document.querySelector("#"+e+" button");c.disabled=!0,c.classList.add("colab-df-spinner");try{await google.colab.kernel.invokeFunction("suggestCharts",[e],{})}catch(e){console.error("Error during call to suggestCharts:",e)}c.classList.remove("colab-df-spinner"),c.classList.add("colab-df-quickchart-complete")}document.querySelector("#df-0cb69de5-e60f-4824-918e-4c2611219074 button").style.display=google.colab.kernel.accessAllowed?"block":"none"</script>
+    </div>
+
+    </div>
+  </div>
+</div></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h3>Using MEDS Data</h3>
+<p>How can we use these files to answer a simple question? Let&#x27;s try plotting to see if there is a correlation in this dataset between the patient&#x27;s height and their max heart rate.</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">1</span><span> 
+</span><span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">2</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">3</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">4</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">5</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">6</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">7</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">8</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">9</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">10</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">11</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">12</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">13</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">14</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">15</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">16</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">17</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">18</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">19</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">20</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">21</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">22</span>
+<span class="comment linenumber react-syntax-highlighter-line-number" style="display:inline-block;min-width:2.25em;padding-right:1em;text-align:right;user-select:none;width:37px;padding:0 8px 0 8px;box-sizing:border-box;color:#999999">23</span></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"><span style="color:#00f">from</span><span> matplotlib </span><span style="color:#00f">import</span><span> pyplot </span><span style="color:#00f">as</span><span> plt
+</span><span></span><span style="color:#00f">import</span><span> numpy </span><span style="color:#00f">as</span><span> np
+</span>
+<span></span><span style="color:#008000"># For this hypothetical question, we&#x27;ll just use all the data</span><span>
+</span>df = pd.concat(
+<span>    [pd.read_parquet(fp) </span><span style="color:#00f">for</span><span> fp </span><span style="color:#00f">in</span><span> (data_root / </span><span style="color:#a31515">&quot;data&quot;</span><span>).rglob(</span><span style="color:#a31515">&quot;*.parquet&quot;</span><span>)]
+</span>)
+<!-- -->
+<span>max_HR_df = df[df.code == </span><span style="color:#a31515">&quot;HR&quot;</span><span>].groupby(</span><span style="color:#a31515">&quot;subject_id&quot;</span><span>)[</span><span style="color:#a31515">&quot;numeric_value&quot;</span><span>].</span><span style="color:#00f">max</span><span>()
+</span>
+<!-- -->subjects = max_HR_df.index
+<!-- -->
+<!-- -->height = (
+<span>    df[df.code == </span><span style="color:#a31515">&quot;HEIGHT&quot;</span><span>]
+</span><span>    .set_index(</span><span style="color:#a31515">&quot;subject_id&quot;</span><span>)
+</span>    .loc[subjects]
+<span>    [</span><span style="color:#a31515">&quot;numeric_value&quot;</span><span>]
+</span>)
+<!-- -->
+<!-- -->plt.scatter(height, max_HR_df)
+<span>plt.xlabel(</span><span style="color:#a31515">&quot;Height (cm)&quot;</span><span>)
+</span><span>plt.ylabel(</span><span style="color:#a31515">&quot;Max HR (bpm)&quot;</span><span>)
+</span>plt.show()</code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div><div class="cell-row"><pre class="cell-header output"></pre><div class="cell-content output-display" style="justify-content:flex-start"><img src="data:image/png;base64,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Vq5cqa1bt+rEiRMaMmRIteudM2eO5s6dqwULFigjI0PNmjVT//79VVpa6tH5Xa628z1x4oROnDihV199VdnZ2VqyZInS0tI0duzYK667uveNt3hi+0ruvzcb6vaNiYmp8PmdOXOmmjdvrgEDBlS77vrYvtKV53z5fN555x1ZLBYNHTrU0WfEiBHat2+f1q9fr3Xr1mnbtm0aN25cteutyefeE2o732+//VZ2u11vv/229u3bp9dff10LFizQn/70pyuu2xf/RruyfSXphRdecOo3ceLEatdbZ9vXQL2TZKxevdqpbfTo0cY999zj8hjnz583WrZsabzwwgvV9rvtttuMJ554wv0iPaiy+d5///3GyJEjq3zN6dOnjcaNGxsrV650tB04cMCQZKSnp1f6GrvdbkRGRhqvvPKK0ziBgYHG8uXLazcJN9RkvpX57//+byMgIMC4cOFClX3cfd94Q03n6+5702zb9+abbzYeeuihavv4wvY1jMrnfLl77rnHuP322x3P9+/fb0gydu/e7Wj77LPPDIvFYvz444+VjlGTz7031GS+lZkzZ44RGxtbbR9f/Rt9ucrm26ZNG+P11193eT11uX3Zs+PDtmzZolatWqljx44aP368Tp06VWXfjz/+WKdOndKYMWOuOO6yZcsUHh6u+Ph4TZs2TWfPnvVk2W6z2+365JNP1KFDB/Xv31+tWrVSYmKi027UzMxMXbhwQcnJyY62Tp06qXXr1kpPT6903NzcXOXn5zu9xmq1KjExscrX1AVX5lsZm82m4OBg+ftX/5N27rxv6oI783XnvWmm7ZuZmamsrCyX9tz52vatzMmTJ/XJJ584zSc9PV0hISFOe56Tk5Pl5+enjIyMSsepyee+PlQ238rYbDaFhoZecTxf+xt9uermO3v2bIWFhSkhIUGvvPKKLl68WOU4dbl9CTs+KiUlRe+++642btyol19+WVu3btWAAQNUVlZWaf9Fixapf//+V/xB0//4j//Q0qVLtXnzZk2bNk3vvfeeRo4c6Y0puKygoEAlJSWaPXu2UlJS9MUXX2jw4MEaMmSItm7dKknKz89XQECAQkJCnF4bERGh/Pz8Ssctb4+IiHD5NXXBlfle7qefftJf/vKXK+7yd/d9Uxdcna+7700zbd9Fixapc+fO6tWrV7Vj++L2rcw//vEPtWjRwulwRH5+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t99+q969eysoKEhxcXHasGGDLBaL1qxZ4zTu999/r759+6pp06bq0qWL0tPTJV3auzRmzBjZbDZZLBZZLBY9//zzldb2P//zP9q0aZNSU1Od2k+fPq1HH31UERERCgoKUnx8vNatWyfpf/carVu3Th07dlTTpk1177336uzZs/rHP/6htm3b6pprrtGkSZNUVlbmGLNRo0a66667tGLFilr8awJwBWEHQJ05fPiwUlJSNHToUO3du1fvv/++duzYoQkTJlTav6ysTIMGDVLTpk2VkZGhhQsX6s9//nOlff/85z/r6aefVlZWljp06KDhw4fr4sWL6tWrl9544w0FBwcrLy9PeXl5evrppysdY8eOHWratKk6d+7saLPb7RowYIB27typpUuXav/+/Zo9e7YaNWrk6HP27FnNnTtXK1asUFpamrZs2aLBgwfr008/1aeffqr33ntPb7/9tj744AOn9fXs2VPbt293958RgJv867sAAOawbt06NW/e3Knt13syJGnWrFkaMWKE/vCHP0iSrr/+es2dO1e33Xab5s+fr6CgIKf+69ev1+HDh7VlyxZFRkZKkl566SXdcccdFdb/9NNP6+6775YkzZw5UzfccINycnLUqVMnWa1WWSwWxxhVOXLkiCIiIpwOYW3YsEG7du3SgQMH1KFDB0nSdddd5/S6CxcuaP78+WrXrp0k6d5779V7772nkydPqnnz5oqLi1Pfvn21efNm3X///Y7XRUdH69ixY7Lb7V4/bAZczQg7ADyib9++mj9/vlNbRkaGRo4c6Xj+zTffaO/evVq2bJmjzTAM2e125ebmOu1RkaSDBw8qJibGKaT07Nmz0vXfdNNNjv+OioqSJBUUFKhTp04uz+GXX36pELiysrJ07bXXOoJOZZo2beoIOpIUERGhtm3bOoW/iIgIFRQUOL2uSZMmstvtOnfunJo0aeJynQDcQ9gB4BHNmjVT+/btndqOHz/u9LykpESPPvqoJk2aVOH1rVu3rtX6Gzdu7Phvi8UiSW5f6RQeHq6ff/7Zqc2VEPLrdZevv7K2y+spLCxUs2bNCDqAlxF2ANSZrl27av/+/RVCUVU6duyoY8eO6eTJk4qIiJB06dJ0dwUEBFQ4pFaZhIQE5efn6+eff9Y111wj6dIeo+PHj+u7776rdu9OTWRnZyshIcGjYwKoiIPEAOrM1KlT9eWXX2rChAnKysrSoUOH9NFHH1V5gvIdd9yhdu3aafTo0dq7d6927typZ599VtL/7r1xRdu2bVVSUqKNGzfqp59+0tmzZyvtl5CQoPDwcO3cudPRdtttt+nWW2/V0KFDtX79euXm5uqzzz5TWlqaGzOv3Pbt23XnnXfWehwA1SPsAKgzN910k7Zu3arvvvtOv/nNb5SQkKDnnntO0dHRlfZv1KiR1qxZo5KSEvXo0UMPP/yw42qsy8+tqU6vXr302GOP6f7771fLli01Z86cKtc3ZswYp3OKJOnDDz9Ujx49NHz4cMXFxWnKlCku7Smqzo8//qgvv/xSY8aMqdU4AK7MYhiGUd9FAICrdu7cqd69eysnJ8fppGBPyc/P1w033KA9e/aoTZs2Hh+/3NSpU/Xzzz9r4cKFXlsHgEs4ZweAT1u9erWaN2+u66+/Xjk5OXriiSf0f/7P//FK0JGkyMhILVq0SEePHvVq2GnVqpUmT57stfEB/C/27ADwae+++65efPFFHT16VOHh4UpOTtZ//ud/KiwsrL5LA9BAEHYAAICpcYIyAAAwNcIOAAAwNcIOAAAwNcIOAAAwNcIOAAAwNcIOAAAwNcIOAAAwNcIOAAAwtf8HkbdUJ9zSnYEAAAAASUVORK5CYII=" width="auto" height="auto" alt=""></div></div></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><p>Alas, here we see no clear relationship -- though this does make sense as this dataset is, after all, purely random! But hopefully through this simple example you see how you can begin to manipulate MEDS formatted data to perform modeling tasks. Beyond that, maybe you even see how such processes might be easier to standardize across different EHR systems.</p>
+<p>This is clearly an overly simplified example, but if you want to explore the basics of MEDS further and see how you can build real models on MEDS, with no external MEDS-specific packages required, you can check out <a href="https://colab.research.google.com/drive/1xjqEcLkrxBokKnK-TBL-YUnfp6ImycWn#scrollTo=nac1yvWs3Z4p">this additional tutorial</a> which explores these ideas in more depth!</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-markdown"><h2>MEDS Ecosystem</h2>
+<!-- -->&lt;p align=&quot;center&quot;&gt;
+  &lt;img alt=&quot;MEDS Ecosystem&quot; width=&quot;60%&quot; src=&quot;https://raw.githubusercontent.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/refs/heads/main/static/img/ecosystem_figure.svg&quot;&gt;
+&lt;/p&gt;<!-- -->
+<p>It is exactly the ideas explored in our simple plotting task that empower the growth of the MEDS ecosystem. There are a lot of things in that ecosystem, including utilities for task extraction, tabular baseline generation, model building, evaluation, and more! Check out some of the projects that use MEDS <a href="https://medical-event-data-standard.github.io/docs/intro_pages/ecosystem">here</a>!</p></div></div></div></div><div class="block"><div class="block-source"><div class="block-light"></div><div class="cell-row"><pre class="cell-header source"></pre><div class="cell-content source-code"><pre style="display:block;overflow-x:auto;padding:5px 0 5px 0;background:#EEEEEE;color:black;width:37px;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;overflow:hidden"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"></code></pre><div class="source-code-main"><pre style="display:block;overflow-x:auto;padding:5px 4px 5px 4px;background:#F5F5F5;color:black;margin:0 0 0 0;box-sizing:border-box;border:solid 1px #E0E0E0;flex:1"><code style="white-space:pre;font-family:Menlo, Consolas, &#x27;DejaVu Sans Mono&#x27;, monospace;font-size:13px"></code></pre></div></div></div></div><div class="block-output"><div class="block-light"></div><div class="block-output-content"><div></div></div></div></div></div></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/tree/main/docs/docs/tutorials/kdd2025/MEDS_intro.mdx" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/tutorials/kdd2025/"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">MEDS KDD 2025 Tutorial</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/tutorials/kdd2025/converting_to_MEDS"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Converting to MEDS</div></a></nav></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Docs</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/intro_pages/intro">Tutorials</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://stackoverflow.com/questions/tagged/meds" target="_blank" rel="noopener noreferrer" class="footer__link-item">Stack Overflow<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a href="https://github.com/Medical-Event-Data-Standard" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/Medical-Event-Data-Standard" target="_blank" rel="noopener noreferrer" class="footer__link-item">Schema</a></li><li class="footer__item"><a href="https://github.com/mmcdermott/MEDS-DEV" target="_blank" rel="noopener noreferrer" class="footer__link-item">MEDS-DEV<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2025 Medical Event Data Standard.</div></div></div></footer></div>
+</body>
+</html>
