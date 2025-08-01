@@ -32,7 +32,7 @@ export default function PackageGrid({
       newParams.set('topics', Array.from(selectedTopics).join(','));
     }
     history.replace({ ...location, search: newParams.toString() });
-  }, [search, selectedTopics, history, location]);
+  }, [search, selectedTopics]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
