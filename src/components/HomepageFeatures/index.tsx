@@ -1,9 +1,12 @@
 import clsx from 'clsx';
+import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
 import styles from './styles.module.css';
 
 import shockinglySimpleSvg from '@site/static/img/shockingly_simple.svg';
 import builtForAiSvg from '@site/static/img/built_for_AI.svg';
+
+import SchoolIcon from '@mui/icons-material/School';
 
 type FeatureItem = {
   title: string;
@@ -64,6 +67,16 @@ export default function HomepageFeatures(): React.JSX.Element {
   return (
     <section className={styles.features}>
       <div className="container">
+        <center>
+          <div className={styles.buttons}>
+            <Link className="button button--primary button--lg" to="/docs/tutorials/kdd2025">
+              <span style={{ display: 'flex', alignItems: 'center', fontSize: '2em' }}>
+                <SchoolIcon sx={{ fontSize: '1em' }} />
+                <span style={{ paddingLeft: '1em' }}> Check out the MEDS KDD 2025 Tutorial!</span>
+              </span>
+            </Link>
+          </div>
+        </center>
         <div className="row">
           {FeatureList.map((props, idx) => (
             <Feature key={idx} {...props} />

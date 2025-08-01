@@ -1,8 +1,0 @@
-{
-  "label": "Tutorial - Build a Model with MEDS",
-  "position": 3,
-  "link": {
-    "type": "generated-index",
-    "description": "Building a model with MEDS: from the key design principles through data extraction, pre-processing, task definition, and model building."
-  }
-}
