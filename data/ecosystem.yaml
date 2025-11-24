@@ -81,7 +81,11 @@ dataset_etls:
   publicly_available_datasets:
     name: 'Public Datasets'
     description: 'ETLs for datasets that are open for public use (subject to DUA and license agreements).'
-
+    
+    datasets:
+      - name: 'MIMIC-IV Demo'
+        physionet_repo: https://physionet.org/content/mimic-iv-demo-meds/0.0.1/
+        
     packages:
       - name: 'MIMIC-IV'
         demo_available: true
@@ -110,6 +114,13 @@ dataset_etls:
     packages:
       - name: 'OMOP (via MEDS-ETL)'
         github_repo: 'Medical-Event-Data-Standard/meds_etl'
+        pypi_name: 'meds-etl'
+      - name: 'OMOP (via dedicated OMOP_MEDS)'
+        github_repo: 'rvandewater/OMOP_MEDS'
+        pypi_name: 'OMOP-MEDS'
+      - name: 'FHIR'
+        github_repo: 'rvandewater/FHIR_MEDS'
+        pypi_name: 'fhir2meds'
 
 models:
   name: 'Published Models'
