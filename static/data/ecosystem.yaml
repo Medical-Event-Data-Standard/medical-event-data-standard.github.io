@@ -141,3 +141,15 @@ models:
       github_repo: 'cumc-dbmi/cehrbert'
       pypi_name: 'cehrbert'
       MEDS_DEV_name: 'cehrbert'
+    - name: "MEDS-Tab"
+      paper_url: ' https://arxiv.org/abs/2411.00200'
+      github_repo: 'mmcdermott/MEDS_Tabular_AutoML'
+      pypi_name: 'meds-tab'
+      MEDS_DEV_name: 'meds_tab'
+    - name: "GenHPF"
+      paper_url: 'https://arxiv.org/abs/2305.10403'
+      github_repo: 'hoon9405/GenHPF'
+      pypi_name: 'genhpf'
+      MEDS_DEV_name: 'genhpf'
+    
+    
