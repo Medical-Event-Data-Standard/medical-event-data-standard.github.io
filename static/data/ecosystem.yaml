@@ -103,6 +103,14 @@ dataset_etls:
         demo_available: false
         pypi_name: 'INSPIRE_MEDS'
         github_repo: 'rvandewater/INSPIRE_MEDS'
+      - name: 'eICU'
+        demo_available: true
+        pypi_name: 'eICU_MEDS'
+        github_repo: 'Medical-Event-Data-Standard/eICU_MEDS'
+      - name: 'HiRID'
+        demo_available: false
+        pypi_name: 'HiRID_MEDS'
+        github_repo: 'rvandewater/HIRID_MEDS'
 
   other_standards:
     name: 'Alternate Data Standards'
