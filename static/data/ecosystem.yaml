@@ -147,7 +147,7 @@ models:
       pypi_name: 'meds-tab'
       MEDS_DEV_name: 'meds_tab'
     - name: "GenHPF"
-      paper_url: 'https://arxiv.org/abs/2305.10403'
+      paper_url: 'https://ieeexplore.ieee.org/document/10298642'
       github_repo: 'hoon9405/GenHPF'
       pypi_name: 'genhpf'
       MEDS_DEV_name: 'genhpf'
