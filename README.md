@@ -41,7 +41,7 @@ cd medical-event-data-standard.github.io
 
 ```bash
 export ENV_NAME="MEDS_web"
-conda create -n $ENV_NAME python=3.12 nodejs=22.11.0 -c conda-forge
+conda create -n $ENV_NAME python=3.12 nodejs=22 -c conda-forge
 conda activate $ENV_NAME
 npm install
 pip install -r requirements.txt
