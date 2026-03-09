@@ -11,7 +11,6 @@ export async function loadEntities<T>(target: MedsEntityType): Promise<MedsEntit
 
 function parseIfStringAndFixNaNs(input: unknown): object | null {
   if (typeof input === 'string') {
-    // Replace standalone `NaN` with `null`
     const fixed = input.replace(/\bNaN\b/g, 'null');
     try {
       return JSON.parse(fixed);
@@ -20,11 +19,29 @@ function parseIfStringAndFixNaNs(input: unknown): object | null {
       return null;
     }
   } else if (typeof input === 'object' && input !== null) {
-    return input; // Already a valid object
+    return input;
   } else {
-    console.warn('Unexpected input type:', typeof input);
     return null;
   }
+}
+
+/**
+ * Deduplicate benchmark entries by (dataset, task, model), keeping the entry
+ * with the most recent timestamp for each combination.
+ */
+function deduplicateResults(entries: BenchmarkEntryWithId[]): BenchmarkEntryWithId[] {
+  const best = new Map<string, BenchmarkEntryWithId>();
+
+  for (const entry of entries) {
+    const key = `${entry.dataset}|${entry.task}|${entry.model}`;
+    const existing = best.get(key);
+
+    if (!existing || entry.timestamp > existing.timestamp) {
+      best.set(key, entry);
+    }
+  }
+
+  return Array.from(best.values());
 }
 
 export async function loadMedsDevResults(): Promise<BenchmarkEntryWithId[]> {
@@ -39,23 +56,10 @@ export async function loadMedsDevResults(): Promise<BenchmarkEntryWithId[]> {
 
   const results: BenchmarkEntryWithId[] = [];
 
-  let i: number = 0;
-
   for (const [id, result] of Object.entries(out)) {
     if (!result) continue;
-
-    const entry: BenchmarkEntryWithId = { id, ...result };
-    console.log(`Processing entry ${id}:`, entry);
-
-    results.push(entry);
-    i++;
-
-    if (i > 100) {
-      console.warn('Processed 100 entries, stopping to avoid excessive output');
-      break;
-    }
+    results.push({ id, ...result });
   }
 
-  console.log(`Total processed entries: ${i}`);
-  return results;
+  return deduplicateResults(results);
 }
