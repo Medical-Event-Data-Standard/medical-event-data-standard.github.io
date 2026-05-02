@@ -69,10 +69,10 @@ export default function HomepageFeatures(): React.JSX.Element {
       <div className="container">
         <center>
           <div className={styles.buttons}>
-            <Link className="button button--primary button--lg" to="/docs/tutorials/kdd2025">
+            <Link className="button button--primary button--lg" to="/docs/tutorials/ml4h2025">
               <span style={{ display: 'flex', alignItems: 'center', fontSize: '2em' }}>
                 <SchoolIcon sx={{ fontSize: '1em' }} />
-                <span style={{ paddingLeft: '1em' }}> Check out the MEDS KDD 2025 Tutorial!</span>
+                <span style={{ paddingLeft: '1em' }}> Check out the MEDS ML4H 2025 Tutorial!</span>
               </span>
             </Link>
           </div>
