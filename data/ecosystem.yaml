@@ -81,11 +81,11 @@ dataset_etls:
   publicly_available_datasets:
     name: 'Public Datasets'
     description: 'ETLs for datasets that are open for public use (subject to DUA and license agreements).'
-    
+
     datasets:
       - name: 'MIMIC-IV Demo'
         physionet_repo: https://physionet.org/content/mimic-iv-demo-meds/0.0.1/
-        
+
     packages:
       - name: 'MIMIC-IV'
         demo_available: true
@@ -141,15 +141,13 @@ models:
       github_repo: 'cumc-dbmi/cehrbert'
       pypi_name: 'cehrbert'
       MEDS_DEV_name: 'cehrbert'
-    - name: "MEDS-Tab"
+    - name: 'MEDS-Tab'
       paper_url: ' https://arxiv.org/abs/2411.00200'
       github_repo: 'mmcdermott/MEDS_Tabular_AutoML'
       pypi_name: 'meds-tab'
       MEDS_DEV_name: 'meds_tab'
-    - name: "GenHPF"
+    - name: 'GenHPF'
       paper_url: 'https://ieeexplore.ieee.org/document/10298642'
       github_repo: 'hoon9405/GenHPF'
       pypi_name: 'genhpf'
       MEDS_DEV_name: 'genhpf'
-    
-    
