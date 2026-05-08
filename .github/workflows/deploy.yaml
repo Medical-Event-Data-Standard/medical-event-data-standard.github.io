@@ -1,0 +1,57 @@
+name: Deploy to GitHub Pages
+
+# Triggers a Pages deploy when a new version tag is pushed (e.g. v1.0.0 from
+# `git tag` or from a GitHub Release). Also supports manual dispatch from the
+# Actions tab — useful for re-deploying the latest tag without cutting a new
+# release.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+# `id-token: write` + `pages: write` are required by actions/deploy-pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent Pages deploy. Don't cancel in-progress runs — let
+# them finish so the site isn't left in a half-deployed state.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
