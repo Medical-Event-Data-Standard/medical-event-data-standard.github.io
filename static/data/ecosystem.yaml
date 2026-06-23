@@ -151,3 +151,7 @@ models:
       github_repo: 'hoon9405/GenHPF'
       pypi_name: 'genhpf'
       MEDS_DEV_name: 'genhpf'
+    - name: 'EHR-RAGp'
+      paper_url: 'https://arxiv.org/abs/2605.12335'
+      github_repo: 'nyuad-cai/EHR-RAGp'
+
