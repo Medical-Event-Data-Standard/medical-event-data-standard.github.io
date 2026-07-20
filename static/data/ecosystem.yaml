@@ -154,4 +154,3 @@ models:
     - name: 'EHR-RAGp'
       paper_url: 'https://arxiv.org/abs/2605.12335'
       github_repo: 'nyuad-cai/EHR-RAGp'
-
