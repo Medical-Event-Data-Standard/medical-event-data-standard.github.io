@@ -115,12 +115,30 @@ import nb from './converting_to_MEDS.ipynb';
 
 ## Deployment
 
-> [!WARNING] Only do this when you are ready to deploy the site to the public facing page!
+The site auto-deploys to <https://medical-event-data-standard.github.io/> via the
+`Deploy to GitHub Pages` workflow (`.github/workflows/deploy.yaml`) whenever a
+`v*` tag is pushed. To cut a release:
 
-```
-npm run build
-npm run deploy
+```bash
+git tag v0.1.0
+git push origin v0.1.0
 ```
 
-This command generates static content into the `build` directory and can be served using any static contents
-hosting service.
+Or create a GitHub Release in the UI with a new `v*` tag — that pushes the tag
+and triggers the same workflow.
+
+The workflow can also be re-run manually from the Actions tab via `Run workflow`.
+
+### Local build / preview
+
+```bash
+npm run build      # generates ./build
+npm run serve      # serves ./build at http://localhost:3000
+```
+
+### Manual / fallback deploy
+
+`npm run deploy` (which runs `docusaurus deploy`) is still wired up as a fallback
+that publishes from your local checkout to the `gh-pages` branch — but once Pages
+is switched to `GitHub Actions` as its source (see `deploy.yaml`), the manual
+path will no longer move the live site. Use the workflow.
