@@ -77,6 +77,9 @@ dataset_etls:
       - name: 'MEDS Extract'
         pypi_name: 'MEDS-extract'
         github_repo: 'mmcdermott/MEDS_extract'
+      - name: 'EHR2Trace'
+        paper_url: 'https://arxiv.org/abs/2609.38193'
+        github_repo: 'Yangxinyee/ehr2trace'
 
   publicly_available_datasets:
     name: 'Public Datasets'
