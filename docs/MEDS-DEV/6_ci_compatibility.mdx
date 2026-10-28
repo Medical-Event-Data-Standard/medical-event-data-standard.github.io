@@ -1,0 +1,44 @@
+---
+sidebar_position: 6
+title: CI compatibility
+---
+
+import CiCompatibilityMatrix from '@site/src/components/MEDS-DEV/CiCompatibilityMatrix';
+
+# CI compatibility
+
+This matrix shows **pipeline CI compatibility on demo datasets** for model, dataset, and task combinations
+collected by MEDS-DEV's full-integration suite. It does not measure predictive performance or establish
+clinical validity. See the [benchmark](./5_benchmark.mdx) for predictive-performance results such as AUROC.
+
+Statuses describe **GitHub Actions job conclusions**, not individual pytest case outcomes. A passed job can
+contain skipped pytest cases. The pytest step conclusion is shown separately: for example, tests can succeed
+while a later artifact upload causes the job to fail. Follow a status link to inspect the job logs; the run
+also provides the CI matrix report and available JUnit artifacts.
+
+<CiCompatibilityMatrix />
+
+## Reading the matrix
+
+- **Passed**: the job completed successfully; this does not imply every pytest case ran and passed.
+- **Failed**: the job failed or timed out, potentially outside the pytest step.
+- **Skipped**: GitHub Actions skipped the job, distinct from individual skipped pytest cases.
+- **Cancelled**: the job was cancelled.
+- **Not run**: the combination was expected from pytest collection, but no matching job was found.
+- **Other**: the job has another or unavailable conclusion; inspect its logs for details.
+- **— (not included)**: the combination was not in the collected matrix. It may be unsupported or untested;
+  it is not a failure and is excluded from the counts.
+
+Use the dataset, task, and model selectors to narrow the matrix. Counts reflect only collected combinations
+matching all selected filters, rather than the full cross-product of rows and columns.
+
+## Snapshot availability
+
+The report is the latest published full-integration snapshot from MEDS-DEV's `main` branch, not a live view
+of every pull request or the latest commit. Use its generated timestamp, commit, and run link to assess freshness.
+Pull request and `dev` runs do not update this public snapshot.
+
+Publication is introduced by [MEDS-DEV PR #345](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/pull/345).
+The feed will become available after that change reaches `main` and a qualifying full run publishes it.
+If the report is absent, invalid, or unavailable, use
+[MEDS-DEV GitHub Actions](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/actions) to inspect runs directly.
