@@ -129,6 +129,7 @@ dataset_etls:
         pypi_name: 'MEDS-extract'
         github_repo: 'mmcdermott/MEDS_extract'
       - name: 'EHR2Trace'
+        pypi_name: 'ehr2trace'
         paper_url: 'https://arxiv.org/abs/2609.38193'
         github_repo: 'Yangxinyee/ehr2trace'
       - name: 'WeavEHR'
