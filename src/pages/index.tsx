@@ -16,9 +16,12 @@ function HomepageHeader() {
           {siteConfig.title}
         </Heading>
         <p className="hero__subtitle">{siteConfig.tagline}</p>
-        <div className={styles.buttons}>
+        <div className={styles.buttons} style={{ gap: '1rem', flexWrap: 'wrap' }}>
           <Link className="button button--secondary button--lg" to="/docs/intro_pages/intro">
             Get Started with MEDS
+          </Link>
+          <Link className="button button--secondary button--lg" to="/docs/intro_pages/contributing">
+            Contribute to MEDS
           </Link>
         </div>
       </div>

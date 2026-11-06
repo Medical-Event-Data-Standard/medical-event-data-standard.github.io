@@ -24,7 +24,12 @@ const config: Config = {
   deploymentBranch: 'gh-pages',
 
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
+  },
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -69,8 +74,10 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
+          // Docusaurus appends the doc's path relative to the site root (e.g. `docs/intro_pages/1_intro.mdx`),
+          // so this must point at the repository root, not at `docs/`.
           editUrl:
-            'https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/tree/main/docs',
+            'https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/tree/main/',
         },
         // blog: {
         //   showReadingTime: true,
@@ -146,18 +153,26 @@ const config: Config = {
               label: 'Tutorials',
               to: '/docs/intro_pages/intro',
             },
+            {
+              label: 'Roadmap',
+              to: '/docs/intro_pages/roadmap',
+            },
           ],
         },
         {
           title: 'Community',
           items: [
             {
+              label: 'GitHub',
+              href: 'https://github.com/Medical-Event-Data-Standard',
+            },
+            {
               label: 'Stack Overflow',
               href: 'https://stackoverflow.com/questions/tagged/meds',
             },
             {
-              label: 'GitHub',
-              href: 'https://github.com/Medical-Event-Data-Standard',
+              label: 'How to Contribute',
+              to: '/docs/intro_pages/contributing',
             },
           ],
         },
@@ -170,7 +185,7 @@ const config: Config = {
             },
             {
               label: 'MEDS-DEV',
-              href: 'https://github.com/mmcdermott/MEDS-DEV',
+              href: 'https://github.com/Medical-Event-Data-Standard/MEDS-DEV',
             },
           ],
         },
