@@ -4,6 +4,16 @@ title: Collaborate
 ---
 
 import CollaborationRequestForm from '@site/src/components/collaborate/CollaborationRequestForm';
+import { COLLABORATION_EMAIL } from '@site/src/lib/collaborate/request';
+
+export const PrivateEmailNote = () =>
+  COLLABORATION_EMAIL ? (
+    <p>
+      To keep your request private instead, choose <strong>Send by email</strong>. It opens a pre-filled email
+      to the MEDS-DEV maintainers in your own mail app, so only they receive it and you keep a copy in your
+      Sent folder.
+    </p>
+  ) : null;
 
 # Collaborate
 
@@ -38,5 +48,11 @@ files each one needs. If you already know what you want to add, you can open an 
 Otherwise, use the form below to start the conversation.
 
 ## Send a collaboration request
+
+Tick every role that applies to you, for example both dataset owner and model owner. This page does not store
+your answers or ask for contact details: it opens your request as a pre-filled issue on the public MEDS-DEV
+GitHub repository, where you can review and post it.
+
+<PrivateEmailNote />
 
 <CollaborationRequestForm />
