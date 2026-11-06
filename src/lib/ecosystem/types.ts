@@ -58,6 +58,18 @@ export interface Package {
   medsDev?: MedsDevInfo;
 }
 
+// GitHub metadata, fetched at build time by the `ecosystem-metadata` plugin (plugins/ecosystemMetadata.ts)
+
+export interface RepoMetadata {
+  stars: number | null;
+  /** ISO 8601 timestamp (plugin global data must be JSON-serializable). */
+  lastUpdated: string | null;
+  release: string | null;
+}
+
+/** Keyed by `repoKey(githubRepo)`, i.e. lower-cased `owner/repo`. */
+export type EcosystemMetadata = Record<string, RepoMetadata>;
+
 export interface PackageWithMetadata extends Package {
   stars: number | null;
   lastUpdated: Date | null;

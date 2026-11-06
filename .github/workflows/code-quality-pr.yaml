@@ -60,3 +60,6 @@ jobs:
 
       - name: Build site
         run: npm run build
+        env:
+          # Used at build time to fetch GitHub stars/releases for the ecosystem page.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
