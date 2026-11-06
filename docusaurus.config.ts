@@ -185,7 +185,7 @@ const config: Config = {
             },
             {
               label: 'MEDS-DEV',
-              href: 'https://github.com/mmcdermott/MEDS-DEV',
+              href: 'https://github.com/Medical-Event-Data-Standard/MEDS-DEV',
             },
           ],
         },
