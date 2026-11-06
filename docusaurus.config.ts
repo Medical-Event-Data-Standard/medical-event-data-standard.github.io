@@ -24,7 +24,12 @@ const config: Config = {
   deploymentBranch: 'gh-pages',
 
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
+  },
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -146,18 +151,26 @@ const config: Config = {
               label: 'Tutorials',
               to: '/docs/intro_pages/intro',
             },
+            {
+              label: 'Roadmap',
+              to: '/docs/intro_pages/roadmap',
+            },
           ],
         },
         {
           title: 'Community',
           items: [
             {
+              label: 'GitHub',
+              href: 'https://github.com/Medical-Event-Data-Standard',
+            },
+            {
               label: 'Stack Overflow',
               href: 'https://stackoverflow.com/questions/tagged/meds',
             },
             {
-              label: 'GitHub',
-              href: 'https://github.com/Medical-Event-Data-Standard',
+              label: 'How to Contribute',
+              to: '/docs/intro_pages/contributing',
             },
           ],
         },
