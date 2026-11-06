@@ -1,3 +1,10 @@
+# The packages listed on the ecosystem page (https://medical-event-data-standard.github.io/docs/intro_pages/ecosystem).
+#
+# Each category's `stage` places its packages in the "Which tool do I use for what?" flowchart at the top of that
+# page; a subcategory without a `stage` uses its parent's. The stages are: convert, explore, preprocess, task,
+# model, evaluate, benchmark (the steps of the MEDS workflow) and general (useful at any step). They are described
+# in src/lib/ecosystem/workflow.ts. The packages of a category with no stage are listed under "Other tools".
+
 tools:
   name: 'Tools'
   description: 'Tools/packages for working with MEDS datasets across various AI tasks'
@@ -6,6 +13,7 @@ tools:
   core:
     name: 'MEDS Core'
     description: 'Core components of the MEDS ecosystem, including the schema and fundamental utilities.'
+    stage: 'general'
     packages:
       - name: 'MEDS Schema'
         pypi_name: 'meds'
@@ -14,6 +22,7 @@ tools:
   preprocessing:
     name: 'Preprocessing'
     description: 'Tools for preprocessing EHR data that is in the MEDS format or for building custom ETLs.'
+    stage: 'preprocess'
     packages:
       - name: 'MEDS-Reader'
         pypi_name: 'meds-reader'
@@ -31,6 +40,7 @@ tools:
   exploration:
     name: 'Exploration and Visualization'
     description: 'Tools for exploring, visualizing, and understanding MEDS datasets.'
+    stage: 'explore'
     packages:
       - name: 'MEDS-Inspect'
         pypi_name: 'MEDS-Inspect'
@@ -48,6 +58,7 @@ tools:
   task_extraction:
     name: 'Task Extraction'
     description: 'Tools for extracting prediction task cohorts from MEDS datasets.'
+    stage: 'task'
     packages:
       - name: 'ACES'
         paper_url: 'https://openreview.net/forum?id=P4XmKjXTrM'
@@ -63,6 +74,7 @@ tools:
   modeling:
     name: 'Modeling'
     description: 'Libraries for building, training, and serializing models over MEDS datasets.'
+    stage: 'model'
     packages:
       - name: 'MEDS-Torch'
         paper_url: 'https://openreview.net/forum?id=uwnK2LZtjX'
@@ -86,14 +98,26 @@ tools:
   model_evaluation:
     name: 'Model Evaluation'
     description: 'Tools for evaluating models trained on MEDS datasets.'
+    stage: 'evaluate'
     packages:
       - name: 'meds-evaluation'
         pypi_name: 'meds-evaluation'
         github_repo: 'kamilest/meds-evaluation'
 
+  benchmarking:
+    name: 'Benchmarking'
+    description: 'Benchmarks for comparing and sharing tasks, models, and results across MEDS datasets.'
+    stage: 'benchmark'
+    packages:
+      - name: 'MEDS-DEV'
+        pypi_name: 'MEDS-DEV'
+        github_repo: 'Medical-Event-Data-Standard/MEDS-DEV'
+        docs_url: 'https://medical-event-data-standard.github.io/docs/MEDS-DEV/intro'
+
   testing:
     name: 'Testing'
     description: 'Utilities and fixtures for testing MEDS pipelines and generating sample datasets.'
+    stage: 'general'
     packages:
       - name: 'MEDS Testing Helpers'
         pypi_name: 'meds_testing_helpers'
@@ -103,6 +127,7 @@ tools:
   semantic_web:
     name: 'Semantic Web'
     description: 'Ontologies and converters for representing MEDS data as linked data.'
+    stage: 'general'
     packages:
       - name: 'MEDS Ontology'
         github_repo: 'TeamHeKA/meds-ontology'
@@ -114,6 +139,7 @@ dataset_etls:
   name: 'Dataset ETLs'
   description: 'Publicly available ETL pipelines for converting EHR datasets into the MEDS format.'
   icon: 'Storage'
+  stage: 'convert'
 
   templates_and_tools:
     name: 'ETL Templates/Tools'
@@ -231,6 +257,7 @@ models:
   name: 'Published Models'
   description: 'Publicly available, reproducible model training recipes you can use on your MEDS data.'
   icon: 'ModelTraining'
+  stage: 'model'
 
   packages:
     - name: 'CEHR-BERT'

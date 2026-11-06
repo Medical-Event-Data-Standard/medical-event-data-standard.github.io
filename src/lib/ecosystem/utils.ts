@@ -1,5 +1,15 @@
-import { RawCategory, RawPackage, Package, RichTopicName, Topic, ParsedEcosystem } from './types';
+import {
+  Category,
+  RawCategory,
+  RawPackage,
+  Package,
+  RichTopicName,
+  StageId,
+  Topic,
+  ParsedEcosystem,
+} from './types';
 import { MedsEntityType } from '@site/src/lib/MEDS-DEV/types';
+import { STAGE_IDS, isStageId } from './workflow';
 
 // The ecosystem page is rendered at build time, so the errors thrown below for malformed entries in
 // static/data/ecosystem.yaml fail the build instead of silently dropping data from the page.
@@ -19,10 +29,14 @@ const MEDS_ENTITY_TYPES: string[] = Object.values(MedsEntityType);
 
 const STRING: FieldSpec = { isValid: isString, expected: 'a string' };
 
-const CATEGORY_FIELDS: Record<'name' | 'description' | 'icon' | 'packages', FieldSpec> = {
+const CATEGORY_FIELDS: Record<'name' | 'description' | 'icon' | 'stage' | 'packages', FieldSpec> = {
   name: STRING,
   description: STRING,
   icon: STRING,
+  stage: {
+    isValid: isStageId,
+    expected: `one of ${STAGE_IDS.join(', ')} (the workflow stages in src/lib/ecosystem/workflow.ts)`,
+  },
   packages: { isValid: Array.isArray, expected: 'a list of packages' },
 };
 
@@ -84,6 +98,7 @@ export function mergeParsedEcosystems(
   const topicPackages: Record<string, string[]> = { ...original.topicPackages };
 
   const { packages: newPackages, topics: newTopics, topicPackages: newTopicPackages } = newEcosystem;
+  const categories: Category[] = [...original.categories, ...newEcosystem.categories];
 
   for (const newTopic of Object.values(newTopics)) {
     if (!topics[newTopic.name]) {
@@ -112,31 +127,41 @@ export function mergeParsedEcosystems(
     topicPackages[newTopicName].push(...newTopicPackages[newTopicName]);
   }
 
-  return { packages, topics, topicPackages };
+  return { packages, topics, topicPackages, categories };
 }
 
 /**
  * Parses the categories of static/data/ecosystem.yaml (or a category's subcategories, keyed by their YAML key).
  *
  * Throws an error naming the YAML path of the first malformed entry: an unknown package key, a field of the wrong
- * type, or a category key that is neither a category field nor a subcategory.
+ * type (including a `stage` that is not a known workflow stage), or a category key that is neither a category
+ * field nor a subcategory.
  */
 export function parseCategoryMap(
   categories: Record<string, RawCategory>,
   topicPrefix: string | null = null,
-  path: string | null = null
+  path: string | null = null,
+  parentStage?: StageId
 ): ParsedEcosystem {
-  let ecosystem: ParsedEcosystem = { packages: {}, topics: {}, topicPackages: {} };
+  let ecosystem: ParsedEcosystem = { packages: {}, topics: {}, topicPackages: {}, categories: [] };
 
   for (const [key, rawCategory] of Object.entries(categories)) {
     const categoryPath = path ? `${path}.${key}` : key;
-    ecosystem = mergeParsedEcosystems(ecosystem, parseCategory(rawCategory, topicPrefix, categoryPath));
+    ecosystem = mergeParsedEcosystems(
+      ecosystem,
+      parseCategory(rawCategory, topicPrefix, categoryPath, parentStage)
+    );
   }
 
   return ecosystem;
 }
 
-function parseCategory(rawCategory: unknown, topicPrefix: string | null, path: string): ParsedEcosystem {
+function parseCategory(
+  rawCategory: unknown,
+  topicPrefix: string | null,
+  path: string,
+  parentStage: StageId | undefined
+): ParsedEcosystem {
   if (!isMapping(rawCategory) || !isString(rawCategory.name)) {
     fail(
       path,
@@ -156,7 +181,13 @@ function parseCategory(rawCategory: unknown, topicPrefix: string | null, path: s
     }
   }
 
-  const { name, description, icon, packages: rawPackages = [] } = rawCategory as RawCategory;
+  const {
+    name,
+    description,
+    icon,
+    stage = parentStage,
+    packages: rawPackages = [],
+  } = rawCategory as RawCategory;
 
   const topicName: string = topicPrefix ? `${topicPrefix}/${name}` : name;
 
@@ -178,6 +209,8 @@ function parseCategory(rawCategory: unknown, topicPrefix: string | null, path: s
 
   const topicPackages: Record<string, string[]> = {};
   topicPackages[topicName] = [];
+
+  const category: Category = { topic: topicName, name, stage, packages: [] };
 
   rawPackages.forEach((value, index) => {
     const rawPkg = parseRawPackage(value, `${path}.packages[${index}]`);
@@ -202,6 +235,7 @@ function parseCategory(rawCategory: unknown, topicPrefix: string | null, path: s
     packages[pkg.name] = pkg;
     categoryTopic.featured?.push(pkg.name);
     topicPackages[topicName].push(pkg.name);
+    category.packages.push(pkg.name);
     for (const topic of pkgTopics) {
       const newTopic: RichTopicName = { name: topic };
       if (!topics[topic]) {
@@ -215,7 +249,7 @@ function parseCategory(rawCategory: unknown, topicPrefix: string | null, path: s
     }
   });
 
-  const nestedEcosystem = parseCategoryMap(rawSubcategories, topicName, path);
+  const nestedEcosystem = parseCategoryMap(rawSubcategories, topicName, path, stage);
 
   for (const [pkgName, pkg] of Object.entries(nestedEcosystem.packages)) {
     if (!pkg.topics) {
@@ -226,5 +260,5 @@ function parseCategory(rawCategory: unknown, topicPrefix: string | null, path: s
     topicPackages[topicName].push(pkgName);
   }
 
-  return mergeParsedEcosystems({ packages, topics, topicPackages }, nestedEcosystem);
+  return mergeParsedEcosystems({ packages, topics, topicPackages, categories: [category] }, nestedEcosystem);
 }

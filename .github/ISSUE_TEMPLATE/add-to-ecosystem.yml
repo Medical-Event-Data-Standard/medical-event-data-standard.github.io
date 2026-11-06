@@ -26,7 +26,7 @@ body:
     id: category
     attributes:
       label: Category
-      description: Which section of the ecosystem page should it be listed under?
+      description: Which section of the ecosystem page should it be listed under? The section also decides which step of the "Which tool do I use for what?" flowchart it appears in.
       options:
         - 'Tools > MEDS Core'
         - 'Tools > Preprocessing'
@@ -34,6 +34,7 @@ body:
         - 'Tools > Task Extraction'
         - 'Tools > Modeling'
         - 'Tools > Model Evaluation'
+        - 'Tools > Benchmarking'
         - 'Tools > Testing'
         - 'Tools > Semantic Web'
         - 'Dataset ETLs > ETL Templates/Tools'
