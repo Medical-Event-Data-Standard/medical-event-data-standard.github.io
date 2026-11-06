@@ -1,4 +1,5 @@
 import { themes as prismThemes } from 'prism-react-renderer';
+import etlSummaryStatsPlugin from './plugins/etlSummaryStats';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import ecosystemMetadataPlugin from './plugins/ecosystemMetadata';
@@ -40,6 +41,9 @@ const config: Config = {
   },
 
   plugins: [
+    // Charts the meds_summary_stats files that dataset ETLs publish (docs/intro_pages/3_dataset_statistics.mdx),
+    // collected from GitHub at build time with a committed snapshot as fallback; see the plugin for details.
+    etlSummaryStatsPlugin,
     () => ({
       name: 'custom-webpack-config',
       configureWebpack() {

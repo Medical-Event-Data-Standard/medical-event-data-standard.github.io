@@ -1,0 +1,31 @@
+# Which published `meds_summary_stats` files the "Dataset statistics" page (docs/intro_pages/3_dataset_statistics.mdx)
+# shows. See plugins/etlSummaryStats.ts for how they are collected.
+#
+# Every package under `dataset_etls` in static/data/ecosystem.yaml that has a `github_repo` is searched
+# automatically, on its default branch, for committed files named `*summary_stats*.json`, so a new ETL appears on
+# the page as soon as it commits one. A file whose name contains "demo" is treated as a demo dataset. Use this file
+# only for what that can't work out:
+#
+#   repos:    ETL repositories that aren't in ecosystem.yaml, and overrides for those that are. Each entry has a
+#             `github_repo` (owner/repo) and optionally a `label` (defaults to the ecosystem package name) and
+#             `files`: per-file overrides, keyed by the path in the repository, with a `label` and/or a `variant`
+#             (`full` or `demo`). A file listed here is shown even if its name doesn't match the pattern above.
+#             A `note` for reviewers is allowed anywhere and ignored.
+#   exclude:  repositories (owner/repo) or single files (owner/repo/path/to/file.json) to leave out.
+#
+# After editing this file, refresh the committed snapshot, which the dev server uses (see the plugin's comments).
+
+repos:
+  - github_repo: ji-ch01/K-MIMIC-MEDS
+    label: K-MIMIC (synthetic)
+    note: Synthetic K-MIMIC (SYN-ICU); not (yet) listed in ecosystem.yaml.
+  - github_repo: Medical-Event-Data-Standard/MIMIC_IV_MEDS
+    files:
+      tests/regression/full_summary_stats.json:
+        label: MIMIC-IV
+        variant: full
+      tests/regression/demo_summary_stats.json:
+        label: MIMIC-IV demo
+        variant: demo
+
+exclude: []
