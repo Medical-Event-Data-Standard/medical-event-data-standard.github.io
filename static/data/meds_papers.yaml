@@ -1,0 +1,63 @@
+# The main MEDS papers, shown on a timeline on the homepage (src/components/HomepageTimeline).
+#
+# List the papers on the standard itself and on its core tools and benchmark once they are published at a venue: a
+# journal, conference or workshop. Papers that are only preprints (e.g. on arXiv) are left out until then. The
+# homepage sorts the papers by date, so they can be listed in any order. Each paper has:
+#
+#   label:   short name shown on the timeline, e.g. 'ACES'
+#   title:   full title, as published
+#   venue:   where it was published
+#   year:    when it was published: for a journal, the date of publication; for a conference or workshop, the
+#            date of the meeting
+#   month:   optional; the month (1-12) of that date
+#   url:     link to the paper: its DOI, the publisher's page or, for papers published there, its OpenReview page
+#   summary: one line on what the paper is
+#   id:      optional; the paper's Semantic Scholar paperId
+#
+# `label`, `title`, `venue`, `year`, `url` and `id` mean the same as in the seeds of static/data/papers.yaml.
+
+papers:
+  - label: 'MEDS'
+    title: 'Medical Event Data Standard (MEDS): Facilitating Machine Learning for Health'
+    venue: 'ICLR 2024 Workshop on Learning from Time Series for Health'
+    year: 2024
+    month: 5
+    url: 'https://openreview.net/forum?id=IsHy2ebjIG'
+    summary: 'Introduces MEDS, a minimal schema for machine learning on electronic health record data.'
+    id: '5c9dd4ea7e027ada78e0567a78bba86cecee68d0'
+
+  - label: 'MEDS-Torch'
+    # "Pipleine" is how the workshop's listing (https://nips.cc/virtual/2024/103000) spells the title.
+    title: 'MEDS-torch: An ML Pipleine for Inductive Experiments for EHR Medical Foundation Models'
+    venue: 'NeurIPS 2024 Workshop on Time Series in the Age of Large Models'
+    year: 2024
+    month: 12
+    url: 'https://openreview.net/forum?id=uwnK2LZtjX'
+    summary: 'A modelling pipeline for MEDS datasets, used to compare tokenization and transfer-learning methods.'
+
+  - label: 'ACES'
+    title: 'ACES: Automatic Cohort Extraction System for Event-Stream Datasets'
+    venue: 'ICLR 2025'
+    year: 2025
+    month: 4
+    url: 'https://proceedings.iclr.cc/paper_files/paper/2025/hash/d8542126cd3e0dd6c0a44e0aa1957072-Abstract-Conference.html'
+    summary: 'A configuration language and library to define prediction tasks and extract their cohorts reproducibly.'
+    id: '27689dd149c473d24cdf22124c2a29d187c960b8'
+
+  - label: 'MEDS tutorial'
+    title: 'MEDS: Building Models and Tools in a Reproducible Health AI Ecosystem'
+    venue: 'KDD 2025 (tutorial)'
+    year: 2025
+    month: 8
+    url: 'https://doi.org/10.1145/3711896.3737608'
+    summary: 'A hands-on tutorial: convert data to MEDS, build models, and benchmark them with MEDS-DEV.'
+    id: '2619008e94a623872a48eeb05da7e0a4a97e2ed5'
+
+  - label: 'MEDS review'
+    title: 'MEDS — An Emerging Data Standard and Ecosystem for Health AI Research'
+    venue: 'NEJM AI'
+    year: 2026
+    month: 5
+    url: 'https://doi.org/10.1056/AIra2501253'
+    summary: 'Describes MEDS in detail and reviews its adoption across institutions, datasets and models.'
+    id: '50846012e25acae4aebf1d2b2953655a19fe2e93'
