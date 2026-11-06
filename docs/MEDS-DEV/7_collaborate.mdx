@@ -1,0 +1,42 @@
+---
+sidebar_position: 7
+title: Collaborate
+---
+
+import CollaborationRequestForm from '@site/src/components/collaborate/CollaborationRequestForm';
+
+# Collaborate
+
+MEDS-DEV is a decentralized benchmark: the community contributes datasets, prediction tasks and model training
+recipes, and experiments on each dataset are run by the people who have access to it. If you own a dataset, a
+task or a model, we would like to work with you to bring it into MEDS-DEV.
+
+Collaborating makes your work part of a reproducible benchmark. Tasks are shared as
+[ACES](https://eventstreamaces.readthedocs.io/en/latest/) configurations and models as training recipes that,
+in principle, transfer to any MEDS-compliant dataset, so results can be reproduced and compared. Contributions
+are listed on the [datasets](./2_datasets.mdx), [tasks](./3_tasks.mdx) and [models](./4_models.mdx) pages, and
+submitted results appear in the [benchmark](./5_benchmark.mdx). Along the way, you can use the MEDS-DEV
+command-line helpers and the [MEDS ecosystem](../intro_pages/3_ecosystem.mdx) to build datasets, extract tasks,
+train models and evaluate predictions.
+
+- **Dataset owners** describe their dataset and add the commands that convert it to MEDS, plus the ACES
+  predicates that MEDS-DEV tasks need. Adding a dataset does not require releasing the data: MEDS-DEV stores
+  configuration files and results, not the data itself. You can then run MEDS-DEV tasks and models on your data
+  locally and contribute the results.
+- **Task owners** add an ACES task configuration with a description. A task can be added before any dataset
+  supports it, so the community can comment on and refine the definition. MEDS-DEV currently supports binary
+  classification tasks only.
+- **Model owners** add a training recipe: the commands that train the model from scratch on a MEDS dataset and
+  write its predictions for evaluation. MEDS-DEV currently compares training recipes rather than pre-trained
+  weights, so others can train and evaluate your model on their own data.
+
+Contributions are made as pull requests to the
+[MEDS-DEV repository](https://github.com/Medical-Event-Data-Standard/MEDS-DEV), whose
+[README](https://github.com/Medical-Event-Data-Standard/MEDS-DEV#contributing-new-things-to-meds-dev) lists the
+files each one needs. If you already know what you want to add, you can open an issue from one of the
+[MEDS-DEV issue templates](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/issues/new/choose).
+Otherwise, use the form below to start the conversation.
+
+## Send a collaboration request
+
+<CollaborationRequestForm />
