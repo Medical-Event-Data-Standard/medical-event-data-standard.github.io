@@ -13,10 +13,11 @@ export interface Topic extends RichTopicName {
   featured?: string[];
 }
 
-// Raw packages (sourced from the YAML file)
+// Raw packages (sourced from static/data/ecosystem.yaml; `parseCategoryMap` rejects any other keys)
 
+/** The entity in the MEDS-DEV registry (shown on this site's MEDS-DEV pages) that a package corresponds to. */
 export interface RawMedsDevInfo {
-  entity_type: string;
+  entity_type: `${MedsEntityType}`;
   name: string;
 }
 
@@ -28,15 +29,20 @@ export interface RawPackage {
   docs_url?: string;
   paper_url?: string;
   pypi_name?: string;
+  physionet_url?: string;
   topics?: string[];
-  'MEDS-DEV'?: RawMedsDevInfo;
+  meds_dev?: RawMedsDevInfo;
 }
 
 // Raw categories from the YAML file
 
-export interface RawCategory extends Topic {
+export interface RawCategory {
+  name: string;
+  description?: string;
+  icon?: keyof typeof MuiIcons;
   packages?: RawPackage[];
-  [key: string]: string | RawPackage[] | RawCategory | keyof typeof MuiIcons | string[] | undefined;
+  /** Every other key holds a nested subcategory. */
+  [subcategoryKey: string]: RawCategory | RawPackage[] | string | undefined;
 }
 
 // Parsed packages
@@ -54,6 +60,7 @@ export interface Package {
   docsUrl?: string;
   paperUrl?: string;
   pypiName?: string;
+  physionetUrl?: string;
   topics?: RichTopicName[];
   medsDev?: MedsDevInfo;
 }
