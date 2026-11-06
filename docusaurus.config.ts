@@ -114,6 +114,12 @@ const config: Config = {
           label: 'Get Started',
         },
         {
+          type: 'doc',
+          docId: 'intro_pages/ecosystem',
+          position: 'left',
+          label: 'Ecosystem',
+        },
+        {
           type: 'docSidebar',
           sidebarId: 'medsDevSidebar',
           position: 'left',
