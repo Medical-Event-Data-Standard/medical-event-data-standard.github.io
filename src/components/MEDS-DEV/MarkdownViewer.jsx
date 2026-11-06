@@ -1,32 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import ReactMarkdown from 'react-markdown';
-
-export default function URLMarkdownViewer({ markdownUrl }) {
-  const [content, setContent] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    setLoading(true);
-    axios
-      .get(markdownUrl)
-      .then(res => {
-        setContent(res.data);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, [markdownUrl]);
-
-  if (loading) return <div>Loading Markdown...</div>;
-  if (error) return <div>Error: {error}</div>;
-
-  return (
-    <div className="markdown">
-      <ReactMarkdown>{content}</ReactMarkdown>
-    </div>
-  );
-}
+// Moved to a shared component, as it renders a markdown file from any GitHub repository; this path is kept so
+// existing imports keep working. It now takes `repo`, `version` and `markdownPath` instead of a raw URL, so that
+// relative links and images in the file can be pointed at GitHub.
+export { default } from '@site/src/components/common/GitHubMarkdown/GitHubMarkdownViewer';
