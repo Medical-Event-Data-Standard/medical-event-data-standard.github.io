@@ -8,7 +8,7 @@ import {
   MEDS_DEV_NEW_ISSUE_URL,
   truncate,
 } from './buildIssueUrl';
-import { CollaborationRequest, FIELD_LIMITS } from './request';
+import { CollaborationRequest, FIELD_LIMITS, GOAL_LABELS, GOALS } from './request';
 
 const request: CollaborationRequest = {
   role: 'dataset',
@@ -79,6 +79,17 @@ describe('buildIssueBody', () => {
         '### Message',
         'We would like to add our dataset & its predicates.\n\nThanks!',
       ].join('\n\n')
+    );
+  });
+
+  it('includes the full wording of every goal, e.g. benchmarking to find the best model', () => {
+    for (const goal of GOALS) {
+      expect(buildIssueBody({ ...request, goal })).toContain(
+        `### What I would like to do\n\n${GOAL_LABELS[goal]}`
+      );
+    }
+    expect(buildIssueBody({ ...request, goal: 'find-best-model' })).toContain(
+      'Benchmark my data using MEDS-DEV to find the best model for my use case'
     );
   });
 

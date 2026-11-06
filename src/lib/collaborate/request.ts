@@ -10,10 +10,11 @@ export const ROLE_LABELS: Record<Role, string> = {
 };
 
 // Each goal maps to a path described in the MEDS-DEV README or its issue templates.
-export const GOALS = ['add', 'results', 'convert', 'task-feedback', 'other'] as const;
+export const GOALS = ['add', 'find-best-model', 'results', 'convert', 'task-feedback', 'other'] as const;
 export type Goal = (typeof GOALS)[number];
 export const GOAL_LABELS: Record<Goal, string> = {
   add: 'Add my dataset, task or model to MEDS-DEV',
+  'find-best-model': 'Benchmark my data using MEDS-DEV to find the best model for my use case',
   results: 'Run MEDS-DEV on my data and share the results',
   convert: 'Get help converting a dataset to MEDS',
   'task-feedback': 'Get feedback on a task definition',
