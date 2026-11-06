@@ -6,6 +6,22 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import CiCompatibilityMatrix from './CiCompatibilityMatrix';
 import { CI_ACTIONS_URL, CiReport, CiResult, countCiResults, loadCiReport } from '@site/src/lib/MEDS-DEV/ci';
 
+// `@docusaurus/Link` is a webpack alias that only exists inside a Docusaurus build. This stand-in renders a
+// plain anchor, marked so the tests can check that links are routed through Docusaurus' Link.
+jest.mock(
+  '@docusaurus/Link',
+  () => {
+    const { createElement, forwardRef } = jest.requireActual<typeof import('react')>('react');
+    return {
+      __esModule: true,
+      default: forwardRef<HTMLAnchorElement, { to?: string; href?: string }>(({ to, href, ...props }, ref) =>
+        createElement('a', { ...props, ref, href: to ?? href, 'data-docusaurus-link': true })
+      ),
+    };
+  },
+  { virtual: true }
+);
+
 jest.mock('@site/src/lib/MEDS-DEV/ci', () => ({
   ...jest.requireActual('@site/src/lib/MEDS-DEV/ci'),
   loadCiReport: jest.fn(),
@@ -57,10 +73,9 @@ it('shows loading then an Actions fallback for an unavailable report', async () 
   render(<CiCompatibilityMatrix />);
   expect(screen.getByRole('status')).toHaveTextContent('Loading CI compatibility report');
   expect(await screen.findByRole('alert')).toHaveTextContent('not available');
-  expect(screen.getByRole('link', { name: 'View MEDS-DEV GitHub Actions' })).toHaveAttribute(
-    'href',
-    CI_ACTIONS_URL
-  );
+  const actionsLink = screen.getByRole('link', { name: 'View MEDS-DEV GitHub Actions' });
+  expect(actionsLink).toHaveAttribute('href', CI_ACTIONS_URL);
+  expect(actionsLink).toHaveAttribute('data-docusaurus-link');
   expect(screen.queryByRole('table')).not.toBeInTheDocument();
 });
 
@@ -68,13 +83,16 @@ it('renders provenance, accessible job links, separate conclusions, and absent c
   mockLoad.mockResolvedValue(report);
   render(<CiCompatibilityMatrix />);
   const table = await screen.findByRole('table');
-  expect(screen.getByRole('link', { name: 'run 123' })).toHaveAttribute('href', report.run_url);
+  const runLink = screen.getByRole('link', { name: 'run 123' });
+  expect(runLink).toHaveAttribute('href', report.run_url);
+  expect(runLink).toHaveAttribute('data-docusaurus-link');
   expect(screen.getByText('abcdef1')).toBeInTheDocument();
   expect(screen.getByText('2026-10-28T12:00:00.000Z')).toBeInTheDocument();
   const failed = within(table).getByRole('link', {
     name: 'model-b, demo-a, mortality: Failed. View job logs',
   });
   expect(failed).toHaveAttribute('href', baseResult.job_url);
+  expect(failed).toHaveAttribute('data-docusaurus-link');
   expect(failed.closest('td')).toHaveTextContent('Job: failurePytest step: success');
   expect(within(table).getByLabelText('model-a, demo-b, mortality: Not run')).toBeInTheDocument();
   expect(within(table).getByLabelText('Not included in collection')).toHaveTextContent('—');

@@ -1,11 +1,12 @@
 import React, { useEffect, useId, useMemo, useState } from 'react';
+import Link from '@docusaurus/Link';
 import {
   Alert,
   Box,
   Chip,
   FormControl,
   InputLabel,
-  Link,
+  Link as MuiLink,
   MenuItem,
   Select,
   Table,
@@ -47,7 +48,7 @@ function ResultCell({ result }: { result: CiResult }) {
     <>
       {result.job_url ? (
         <Chip
-          component="a"
+          component={Link}
           href={result.job_url}
           clickable
           size="small"
@@ -92,15 +93,22 @@ export default function CiCompatibilityMatrix() {
     return (
       <Alert severity="info">
         The CI compatibility report is not available. It may not have been published yet, or could not be
-        loaded. <Link href={CI_ACTIONS_URL}>View MEDS-DEV GitHub Actions</Link> for run reports and logs. The
-        public feed appears after a qualifying full-integration run on main publishes it.
+        loaded.{' '}
+        <MuiLink component={Link} href={CI_ACTIONS_URL}>
+          View MEDS-DEV GitHub Actions
+        </MuiLink>{' '}
+        for run reports and logs. The public feed appears after a qualifying full-integration run on main
+        publishes it.
       </Alert>
     );
 
   return (
     <Box sx={{ minWidth: 0 }}>
       <Typography paragraph>
-        Latest published full-integration snapshot: <Link href={report.run_url}>run {report.run_id}</Link>{' '}
+        Latest published full-integration snapshot:{' '}
+        <MuiLink component={Link} href={report.run_url}>
+          run {report.run_id}
+        </MuiLink>{' '}
         (attempt {report.run_attempt}) · main · commit <code>{report.commit_sha.slice(0, 7)}</code>
         <br />
         Generated <time dateTime={report.generated_at}>{new Date(report.generated_at).toISOString()}</time>
