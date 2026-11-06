@@ -1,24 +1,24 @@
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import styles from './styles.module.css';
-
-import shockinglySimpleSvg from '@site/static/img/shockingly_simple.svg';
-import builtForAiSvg from '@site/static/img/built_for_AI.svg';
 
 import SchoolIcon from '@mui/icons-material/School';
 
 type FeatureItem = {
   title: string;
-  Svg?: React.ComponentType<React.ComponentProps<'svg'>>;
-  PNG?: string;
+  // Path of an image under static/. SVGs are deliberately loaded with <img> rather than imported as
+  // React components: Docusaurus' SVGO step renames every inlined SVG's ids to a, b, c, ..., so two
+  // inlined SVGs on one page resolve each other's `url(#a)` masks and parts of the artwork vanish.
+  image: string;
   description: React.JSX.Element;
 };
 
 const FeatureList: FeatureItem[] = [
   {
     title: 'Shockingly Simple',
-    Svg: shockinglySimpleSvg,
+    image: '/img/shockingly_simple.svg',
     description: (
       <>
         MEDS (Medical Event Data Standard) is the simplest possible standard for health AI, making it easy to
@@ -28,7 +28,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Health AI Ecosystem',
-    Svg: builtForAiSvg,
+    image: '/img/built_for_AI.svg',
     description: (
       <>
         MEDS empowers a high-performance and flexible health AI ecosystem to streamline your research via
@@ -38,7 +38,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Frictionless Reproducibility',
-    PNG: '/img/frictionless_reproducibility.png',
+    image: '/img/frictionless_reproducibility.png',
     description: (
       <>
         MEDS ensures that your models, tools, and pipelines are easily reproducible across data sites,
@@ -48,12 +48,11 @@ const FeatureList: FeatureItem[] = [
   },
 ];
 
-function Feature({ title, Svg, PNG, description }: FeatureItem) {
+function Feature({ title, image, description }: FeatureItem) {
   return (
     <div className={clsx('col col--4')}>
       <div className="text--center">
-        {PNG && <img src={PNG} className={styles.featurePng} alt={title} />}
-        {Svg && <Svg className={styles.featureSvg} />}
+        <img src={useBaseUrl(image)} className={styles.featureImage} alt={title} />
       </div>
       <div className="text--center padding-horiz--md">
         <Heading as="h3">{title}</Heading>

@@ -1,4 +1,4 @@
-<svg width="1127" height="1075" viewBox="0 0 1127 1075" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="1127" height="1075" viewBox="0 0 1127 1075" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <mask id="mask0_91_2" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="442" y="97" width="41" height="43">
 <path d="M482.644 97.7942H442.449V139.684H482.644V97.7942Z" fill="white"/>
 </mask>
@@ -197,4 +197,37 @@
 <path d="M482.393 902.82H457.103C457.103 907.335 453.328 910.666 452.045 910.864V915.009H465.146C466.553 915.009 468.823 913.158 468.823 911.554H472.746C474.646 911.554 476.2 909.531 476.2 907.853H478.717C480.592 907.853 482.393 905.806 482.393 904.424V902.82Z" fill="#1B303D" stroke="#1B303D" stroke-width="2"/>
 <path d="M628.141 991.335L613.141 982.675L613.141 999.995L628.141 991.335ZM572.974 992.835L614.641 992.835L614.641 989.835L572.974 989.835L572.974 992.835Z" fill="#1B303D"/>
 <path d="M501.338 949.753L486.338 941.093L486.338 958.414L501.338 949.753ZM467.167 951.253L487.838 951.253L487.838 948.253L467.167 948.253L467.167 951.253Z" fill="#1B303D"/>
+<!--
+  Click targets: one invisible area over each tool's logo + name, linking to its GitHub repo
+  (repos from static/data/ecosystem.yaml). The tool names above are outlined paths, so these areas
+  are drawn on top rather than wrapping the artwork. Notes for editors:
+  - Use xlink:href: Docusaurus' SVGO step strips a plain href from <a>.
+  - Keep fill="transparent" (not fill-opacity="0" or fill="none"): SVGO turns those into fill="none",
+    which is not clickable.
+  - The hover tint lives in src/css/custom.css (.ecosystem-figure-hotspot).
+-->
+<a xlink:href="https://github.com/justin13601/ACES" target="_blank">
+<title>ACES on GitHub</title>
+<path class="ecosystem-figure-hotspot" d="M419 75H532V94H644V142H532V189H419Z" fill="transparent" pointer-events="all"/>
+</a>
+<a xlink:href="https://github.com/mmcdermott/MEDS_Tabular_AutoML" target="_blank">
+<title>MEDS-Tab on GitHub</title>
+<path class="ecosystem-figure-hotspot" d="M540 222H638V250H826V290H638V322H540Z" fill="transparent" pointer-events="all"/>
+</a>
+<a xlink:href="https://github.com/Oufattole/meds-torch" target="_blank">
+<title>MEDS-Torch on GitHub</title>
+<path class="ecosystem-figure-hotspot" d="M597 382H684V418H905V458H684V486H597Z" fill="transparent" pointer-events="all"/>
+</a>
+<a xlink:href="https://github.com/som-shahlab/meds_reader" target="_blank">
+<title>MEDS-Reader on GitHub</title>
+<path class="ecosystem-figure-hotspot" d="M603 549H778V605H940V646H712V656H603Z" fill="transparent" pointer-events="all"/>
+</a>
+<a xlink:href="https://github.com/kamilest/meds-evaluation" target="_blank">
+<title>MEDS-Evaluation on GitHub</title>
+<path class="ecosystem-figure-hotspot" d="M542 712H792V774H851V821H542Z" fill="transparent" pointer-events="all"/>
+</a>
+<a xlink:href="https://github.com/mmcdermott/MEDS_transforms" target="_blank">
+<title>MEDS-Transforms on GitHub</title>
+<path class="ecosystem-figure-hotspot" d="M406 875H686V926H786V966H686V1024H406Z" fill="transparent" pointer-events="all"/>
+</a>
 </svg>
