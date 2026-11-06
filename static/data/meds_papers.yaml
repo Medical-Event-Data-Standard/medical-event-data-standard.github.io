@@ -35,6 +35,19 @@ papers:
     url: 'https://openreview.net/forum?id=uwnK2LZtjX'
     summary: 'A modelling pipeline for MEDS datasets, used to compare tokenization and transfer-learning methods.'
 
+  - label: 'MEDS-DEV'
+    # Peer-reviewed (single-blind), non-archival ML4H 2024 Demo Track paper, per its OpenReview record; the ML4H site
+    # (https://ahli.cc/ml4h/2024/call-for-demonstrations/) describes the track. The symposium was 15-16 Dec 2024.
+    # Its Semantic Scholar record has the right title but garbled authors, which is why static/data/papers.yaml
+    # excludes it as a citing paper.
+    title: 'MEDS Decentralized, Extensible Validation (MEDS-DEV) Benchmark: Establishing Reproducibility and Comparability in ML for Health'
+    venue: 'ML4H 2024 (demo track)'
+    year: 2024
+    month: 12
+    url: 'https://openreview.net/forum?id=DExp3tRRel'
+    summary: 'A community benchmark for reproducible, comparable evaluation of models across MEDS datasets and tasks.'
+    id: '7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf'
+
   - label: 'ACES'
     title: 'ACES: Automatic Cohort Extraction System for Event-Stream Datasets'
     venue: 'ICLR 2025'
