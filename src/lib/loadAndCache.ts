@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const CACHE_TTL_MS = 15 * 60 * 1000; // 0 mins — disabled cache
+const CACHE_TTL_MS = 15 * 60 * 1000;
 
 async function fetchUrl<T = unknown>(url: string): Promise<T | null> {
   try {
@@ -22,7 +22,7 @@ function readCache<T = unknown>(
   try {
     const { data, timestamp } = JSON.parse(cached);
     return {
-      data,
+      data: data ?? null,
       isFresh: Date.now() - timestamp < cacheLifetimeMs,
     };
   } catch (err) {
@@ -32,6 +32,23 @@ function readCache<T = unknown>(
   }
 }
 
+function writeCache(key: string, data: unknown): void {
+  try {
+    localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+  } catch (err) {
+    // Storage may be full or disabled; serving the fetched data still works.
+    console.warn(`Cache write for ${key} failed: ${err}`);
+  }
+}
+
+/**
+ * Return the cached value for `url` while it is fresh, otherwise fetch it.
+ *
+ * Only successful fetches are cached. A failed fetch (network error, 404 for a
+ * feed that is not published yet, ...) returns stale cached data when there is
+ * any and `null` otherwise, and the next call retries the request instead of
+ * serving the failure for the rest of the cache lifetime.
+ */
 export async function readOrFetchToCache<T = unknown>(
   url: string,
   cacheKey: string | null = null,
@@ -41,18 +58,17 @@ export async function readOrFetchToCache<T = unknown>(
 
   const { data, isFresh } = readCache<T>(localCacheKey, cacheLifetimeMs);
 
-  if (isFresh) return data;
+  if (isFresh && data !== null) return data;
 
-  try {
-    const result = await fetchUrl<T>(url);
-    localStorage.setItem(localCacheKey, JSON.stringify({ data: result, timestamp: Date.now() }));
-    return result;
-  } catch (err) {
-    console.warn(`Failed to fetch ${url}:`, err);
-    if (data) {
+  const result = await fetchUrl<T>(url);
+  if (result === null) {
+    if (data !== null) {
       console.warn(`Using stale cached data for ${localCacheKey}`);
       return data;
     }
-    throw new Error(`Failed to fetch ${url} and no cached data available.`);
+    return null;
   }
+
+  writeCache(localCacheKey, result);
+  return result;
 }
