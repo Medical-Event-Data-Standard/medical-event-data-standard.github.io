@@ -43,6 +43,26 @@ describe('parseCategoryMap', () => {
     expect(packages['A model'].medsDev).toEqual({ entityType: MedsEntityType.MODEL, name: 'a_model' });
   });
 
+  it('lists each category, then its subcategories, with its own packages and its (inherited) stage', () => {
+    const { categories } = parseCategoryMap({
+      etls: {
+        name: 'ETLs',
+        stage: 'convert',
+        packages: [{ name: 'template' }],
+        public: { name: 'Public', packages: [{ name: 'MIMIC' }] } as unknown as RawCategory,
+        tools: { name: 'Tools', stage: 'general', packages: [{ name: 'helper' }] } as unknown as RawCategory,
+      },
+      misc: { name: 'Misc', packages: [{ name: 'thing' }] },
+    });
+
+    expect(categories).toEqual([
+      { topic: 'ETLs', name: 'ETLs', stage: 'convert', packages: ['template'] },
+      { topic: 'ETLs/Public', name: 'Public', stage: 'convert', packages: ['MIMIC'] },
+      { topic: 'ETLs/Tools', name: 'Tools', stage: 'general', packages: ['helper'] },
+      { topic: 'Misc', name: 'Misc', stage: undefined, packages: ['thing'] },
+    ]);
+  });
+
   describe('rejects malformed entries instead of silently dropping them', () => {
     const parseWith = (category: Record<string, unknown>) => () =>
       parseCategoryMap({ cat: { name: 'Cat', ...category } as RawCategory });
@@ -58,6 +78,15 @@ describe('parseCategoryMap', () => {
     it('rejects category fields of the wrong type', () => {
       expect(parseWith({ packages: { name: 'not a list' } })).toThrow(
         'at cat: "packages" must be a list of packages'
+      );
+    });
+
+    it('rejects a stage that is not a workflow stage', () => {
+      expect(parseWith({ stage: 'modelling' })).toThrow(
+        'at cat: "stage" must be one of convert, explore, preprocess, task, model, evaluate, benchmark, general'
+      );
+      expect(parseWith({ child: { name: 'Child', stage: 3 } })).toThrow(
+        'at cat.child: "stage" must be one of'
       );
     });
 
@@ -98,10 +127,18 @@ describe('parseCategoryMap', () => {
 
 describe('static/data/ecosystem.yaml', () => {
   const yamlPath = path.join(__dirname, '..', '..', '..', 'static', 'data', 'ecosystem.yaml');
-  const { packages, topics, topicPackages } = parseCategoryMap(parse(fs.readFileSync(yamlPath, 'utf8')));
+  const { packages, topics, topicPackages, categories } = parseCategoryMap(
+    parse(fs.readFileSync(yamlPath, 'utf8'))
+  );
 
   it('parses without creating topics for non-category keys', () => {
     expect(Object.keys(topics).filter(topic => topic.includes('undefined'))).toEqual([]);
+  });
+
+  it('places every category that lists packages in a stage of the workflow flowchart (#31)', () => {
+    const withoutStage = categories.filter(category => category.packages.length > 0 && !category.stage);
+    // A category listed here would appear under "Other tools": give it a `stage` in ecosystem.yaml.
+    expect(withoutStage.map(category => category.topic)).toEqual([]);
   });
 
   it('includes the MIMIC-IV Demo dataset, linked to PhysioNet (#83)', () => {
@@ -130,5 +167,6 @@ describe('mergeParsedEcosystems', () => {
     expect(Object.keys(merged.topics)).toEqual(expect.arrayContaining(['Cat1', 'Cat2']));
     expect(merged.topicPackages['Cat1']).toEqual(['a']);
     expect(merged.topicPackages['Cat2']).toEqual(['b']);
+    expect(merged.categories.map(category => category.topic)).toEqual(['Cat1', 'Cat2']);
   });
 });
