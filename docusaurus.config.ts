@@ -124,6 +124,12 @@ const config: Config = {
           label: 'Get Started',
         },
         {
+          type: 'docSidebar',
+          sidebarId: 'tutorialsSidebar',
+          position: 'left',
+          label: 'Tutorials',
+        },
+        {
           type: 'doc',
           docId: 'intro_pages/ecosystem',
           position: 'left',
@@ -134,6 +140,12 @@ const config: Config = {
           sidebarId: 'medsDevSidebar',
           position: 'left',
           label: 'MEDS-DEV',
+        },
+        {
+          type: 'doc',
+          docId: 'intro_pages/contributing',
+          position: 'left',
+          label: 'Contribute',
         },
         //{to: '/blog', label: 'Blog', position: 'left'},
         {
@@ -151,7 +163,7 @@ const config: Config = {
           items: [
             {
               label: 'Tutorials',
-              to: '/docs/intro_pages/intro',
+              to: '/docs/tutorials/ml4h2025',
             },
             {
               label: 'Roadmap',
