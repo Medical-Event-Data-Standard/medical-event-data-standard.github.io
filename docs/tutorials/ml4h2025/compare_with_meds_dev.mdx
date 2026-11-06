@@ -1,0 +1,171 @@
+---
+sidebar_position: 6
+sidebar_label: Compare with MEDS-DEV
+description:
+  Relate the tutorial's models to MEDS-DEV baselines, run MEDS-DEV yourself, and contribute your task, model
+  or dataset.
+---
+
+# Compare with MEDS-DEV (Next Steps)
+
+By now you have converted the MIMIC-IV demo to MEDS, defined a task with ACES, and trained two models on it.
+The natural next question is how those models compare with established baselines. That is what
+[MEDS-DEV](../../MEDS-DEV/1_intro.mdx), the MEDS community benchmark, is for: it collects shared
+[datasets](../../MEDS-DEV/2_datasets.mdx), [tasks](../../MEDS-DEV/3_tasks.mdx) and
+[models](../../MEDS-DEV/4_models.mdx) with reproducible training recipes, and publishes
+[benchmark results](../../MEDS-DEV/5_benchmark.mdx) for them. This page relates the tutorial to MEDS-DEV,
+shows how to run MEDS-DEV baselines yourself, and points you to how to contribute.
+
+:::warning
+
+MEDS-DEV is a work in progress. Its published results are not yet finalized.
+
+:::
+
+## How the tutorial task relates to MEDS-DEV
+
+**MEDS-DEV does not have an ICU length-of-stay task (at the time of writing), so there is no published MEDS-DEV
+baseline for this tutorial's task.** The closest MEDS-DEV task is `mortality/in_icu/first_24h`, in-ICU
+mortality. It is the only MEDS-DEV task triggered by an ICU admission, and it predicts at the same time as the
+tutorial task, but it predicts a different outcome:
+
+|                 | Tutorial task (`short_LOS`, [step 3](./extracting_prediction_tasks.mdx))                                           | MEDS-DEV `mortality/in_icu/first_24h`                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| Trigger         | ICU admission                                                                                                      | ICU admission                                                              |
+| Prediction time | 24 h after ICU admission, using all data up to then                                                                | Same                                                                       |
+| Positive label  | ICU discharge within 3 days of ICU admission (a short stay)                                                        | Death in the ICU after hour 48, up to the end of the ICU stay              |
+| Excluded stays  | ICU discharge in the first 30 h, death in the first 3 days, or a comfort-measures-only or DNR order before hour 30 | ICU discharge, death, or another ICU admission in the first 48 h           |
+| Datasets        | MIMIC-IV demo                                                                                                      | MIMIC-IV and AUMCdb are supported; published results are for MIMIC-IV only |
+
+Both tasks recognize ICU admissions, ICU discharges and deaths in MIMIC-IV with the same codes
+(`ICU_ADMISSION//…`, `ICU_DISCHARGE//…` and `MEDS_DEATH…`). Select the task on the
+[tasks page](../../MEDS-DEV/3_tasks.mdx) for its description and results, and read its full
+[ACES configuration](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/blob/main/src/MEDS_DEV/tasks/mortality/in_icu/first_24h.yaml)
+next to the one you wrote in step 3.
+
+On the [benchmark page](../../MEDS-DEV/5_benchmark.mdx), `mortality/in_icu/first_24h` has MIMIC-IV results for
+three models from the [models page](../../MEDS-DEV/4_models.mdx): `cehrbert` (CEHR-BERT), `genhpf` (GenHPF),
+and `meds_tab/tiny`, a small XGBoost configuration of the MEDS-Tab tool mentioned in
+[step 4](./build_a_model_tabular.mdx). Use the **Per-Task Detail** view to see them. These numbers are a
+reference point for in-ICU mortality on MIMIC-IV, which needs credentialed PhysioNet access. They are not
+baselines for the length-of-stay task, and scores on the roughly 100-patient demo are not comparable to them.
+
+## Run it yourself
+
+MEDS-DEV runs on Linux and macOS (use WSL on Windows) and recommends Python 3.11 for running benchmarks.
+Install it from PyPI:
+
+```bash
+pip install MEDS-DEV
+```
+
+The MEDS-DEV README's section on
+[using existing datasets, tasks, and models](https://github.com/Medical-Event-Data-Standard/MEDS-DEV#using-existing-meds-dev-datasets-tasks-or-models)
+walks through four steps: build a dataset, extract a task, train a model and make predictions, and evaluate the
+predictions. The commands below come from it, with `meds_tab/tiny` as the baseline model. It has no
+pre-training stage, so its training command needs no `model_initialization_dir`.
+
+### Option 1: a MEDS-DEV baseline on the tutorial's own task
+
+This is the direct comparison. If your data or labels are already in MEDS format, the README says to skip the
+build and extract steps and pass their directories as `dataset_dir` and `labels_dir`. That holds for the files
+downloaded at the start of [step 4](./build_a_model_tabular.mdx):
+
+```bash
+DATASET_DIR=$PWD/MEDS_data
+LABELS_DIR=$PWD/MEDS_data/labels/short_LOS
+MODEL_NAME=meds_tab/tiny
+FINETUNED_MODEL_DIR=$PWD/meds_dev/short_LOS/train
+PREDICTIONS_DIR=$PWD/meds_dev/short_LOS/predict
+EVALUATION_DIR=$PWD/meds_dev/short_LOS/eval
+
+# Train the model on the train split
+meds-dev-model model=$MODEL_NAME dataset_dir=$DATASET_DIR labels_dir=$LABELS_DIR \
+    mode=train dataset_type=supervised output_dir=$FINETUNED_MODEL_DIR
+
+# Make predictions for the held-out split
+meds-dev-model model=$MODEL_NAME dataset_dir=$DATASET_DIR labels_dir=$LABELS_DIR \
+    mode=predict dataset_type=supervised split=held_out output_dir=$PREDICTIONS_DIR \
+    model_initialization_dir=$FINETUNED_MODEL_DIR
+
+# Evaluate the predictions with MEDS-Evaluation
+meds-dev-evaluation predictions_path=$PREDICTIONS_DIR/predictions.parquet \
+    output_dir=$EVALUATION_DIR
+```
+
+Pass the predictions file with `predictions_path`, not the directory with `predictions_dir`: the model's virtual
+environment lives in `$PREDICTIONS_DIR/.venv` by default, and `predictions_dir` reads every parquet file below
+the directory, including any inside `.venv`.
+
+The evaluation uses MEDS-Evaluation, as at the end of step 4, so you can put the two results side by side.
+Step 4 scores the logistic regression on the `tuning` split, while these commands predict for `held_out`, so
+score your own model on `held_out` before comparing. The demo's held-out split has only a handful of ICU stays:
+treat any difference as a check that the pipeline works, not as evidence that one model is better.
+
+### Option 2: your model on a MEDS-DEV task
+
+To compare with MEDS-DEV's published numbers, use a MEDS-DEV task and dataset. Build the dataset and extract
+the task's labels with MEDS-DEV:
+
+```bash
+DATASET_NAME=MIMIC-IV
+TASK_NAME=mortality/in_icu/first_24h
+DATASET_DIR=$PWD/meds_dev/MIMIC-IV
+LABELS_DIR=$PWD/meds_dev/in_icu_mortality/labels
+FINETUNED_MODEL_DIR=$PWD/meds_dev/in_icu_mortality/train
+PREDICTIONS_DIR=$PWD/meds_dev/in_icu_mortality/predict
+EVALUATION_DIR=$PWD/meds_dev/in_icu_mortality/eval
+
+# demo=True builds the open-access MIMIC-IV demo
+meds-dev-dataset dataset=$DATASET_NAME output_dir=$DATASET_DIR demo=True
+
+meds-dev-task task=$TASK_NAME dataset=$DATASET_NAME output_dir=$LABELS_DIR \
+    dataset_dir=$DATASET_DIR
+```
+
+The labels have the same format as the tutorial's `short_LOS` labels. Then:
+
+- **Baselines:** run the `meds-dev-model` and `meds-dev-evaluation` commands from option 1 again. Keep the new
+  output directories: MEDS-DEV skips a command whose `output_dir` already holds a finished run, even if other
+  arguments changed (pass `do_overwrite=True` to start over).
+- **Your model:** point your step 4 or step 5 code at `$DATASET_DIR` and `$LABELS_DIR`, save its held-out
+  predictions in the MEDS-Evaluation format from step 4, and score them with
+  `meds-dev-evaluation predictions_path=my_predictions.parquet output_dir=$PWD/meds_dev/in_icu_mortality/my_eval`.
+  MEDS-DEV builds MIMIC-IV with its own ETL, so some codes differ from the PhysioNet MEDS demo that the tutorial
+  downloads. For example, the `LAB//51301//K/uL` that step 4 selects by hand is `LAB//RESULT//51301//K/uL` in
+  MEDS-DEV's build, so update hand-picked codes before you reuse step 4's features.
+
+The demo build checks your pipeline end to end. To compare with the published results, build full MIMIC-IV
+instead: drop `demo=True` and pass your credentialed download as `raw_input_dir=/path/to/downloaded/data`.
+
+## Contribute to MEDS-DEV
+
+MEDS-DEV grows through community contributions. Each kind has a section in the MEDS-DEV README and a GitHub
+issue template to request or track it:
+
+- **Add the tutorial's task.** ICU length of stay is a gap in MEDS-DEV. A MEDS-DEV task is an ACES
+  configuration like the one you wrote in step 3, with the dataset-specific predicates left as placeholders
+  that each dataset fills in through its `predicates.yaml`. MEDS-DEV's MIMIC-IV predicates already define
+  `icu_admission` and `icu_discharge`; the comfort-measures and DNR predicates would need to be added. See
+  [Adding a task](https://github.com/Medical-Event-Data-Standard/MEDS-DEV#adding-a-task) and the
+  [Add a Task](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/issues/new?template=add-a-task.md)
+  template.
+- **Add your model.** A MEDS-DEV model is a directory with a `model.yaml` whose commands train the model from
+  scratch and predict on any MEDS dataset, plus a `requirements.txt` and a `README.md`. See
+  [Adding a model](https://github.com/Medical-Event-Data-Standard/MEDS-DEV#adding-a-model) and the
+  [Add a Model](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/issues/new?template=add-a-model.md)
+  template.
+- **Add a dataset.** A MEDS-DEV dataset is the command that builds it in MEDS (with an optional demo build)
+  plus its task predicates; the data itself is not shared. See
+  [Adding a dataset](https://github.com/Medical-Event-Data-Standard/MEDS-DEV#adding-a-dataset) and the
+  [Add a Dataset](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/issues/new?template=add-a-dataset.md)
+  template.
+- **Submit a result.** Package a `meds-dev-evaluation` output with the `meds-dev-pack-result` command and attach
+  it to a
+  [Benchmark Result Submission](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/issues/new?template=benchmark-result.yml)
+  issue; submitted results feed the [benchmark page](../../MEDS-DEV/5_benchmark.mdx). See
+  [Adding your result to MEDS-DEV](https://github.com/Medical-Event-Data-Standard/MEDS-DEV#adding-your-result-to-meds-dev).
+
+To contribute a task, model or dataset, fork MEDS-DEV and install your fork with `pip install -e .[dev,tests]`.
+The [templates folder](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/tree/main/templates) has
+starting READMEs for each.
