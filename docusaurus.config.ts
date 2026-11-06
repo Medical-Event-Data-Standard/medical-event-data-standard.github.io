@@ -130,8 +130,8 @@ const config: Config = {
           label: 'Tutorials',
         },
         {
-          type: 'doc',
-          docId: 'intro_pages/ecosystem',
+          type: 'docSidebar',
+          sidebarId: 'ecosystemSidebar',
           position: 'left',
           label: 'Ecosystem',
         },
