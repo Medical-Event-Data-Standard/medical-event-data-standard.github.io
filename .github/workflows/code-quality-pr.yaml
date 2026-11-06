@@ -63,3 +63,5 @@ jobs:
         env:
           # Used at build time to fetch GitHub stars/releases for the ecosystem page.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional (and unavailable to PRs from forks): avoids Semantic Scholar rate limits on the papers page.
+          SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
