@@ -19,10 +19,20 @@ Here, we show both the required organization of MEDS files on disk, as well as t
 metadata elements for MEDS datasets. In the rest of this document, we will explore these key concepts in more
 detail, in particular covering: 2. Requirements for a MEDS compliant dataset 3. MEDS dataset conventions and best practices 4. Future roadmap and how to contribute 5. And, finally, a glossary of some key terminology and concepts
 
+:::tip[Looking for the full specification?]
+
+This page introduces the concepts behind MEDS. The [MEDS Schema](/docs/intro_pages/meds_schema) page is the
+technical reference: it documents every schema component and its columns for each released version of the
+[`meds`](https://pypi.org/project/meds/) package, with examples of validating your data against them, and it
+is rendered directly from the documentation in the core `meds` repository.
+
+:::
+
 ## Requirements for a MEDS Compliant Dataset
 
 For a dataset to be compliant with the MEDS standard at a given version (versioning is given by the PyPi
-package version), it must satisfy several requirements:
+package version; the [MEDS Schema](/docs/intro_pages/meds_schema) page shows the specification for each
+version), it must satisfy several requirements:
 
 1. It must be stored in a directory structure that is compliant with the MEDS directory structure
    specification.
