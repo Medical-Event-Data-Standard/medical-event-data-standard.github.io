@@ -1,6 +1,7 @@
 import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import ecosystemMetadataPlugin from './plugins/ecosystemMetadata';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -56,6 +57,8 @@ const config: Config = {
         };
       },
     }),
+    // Fetches GitHub stars/releases for the ecosystem page at build time; set GITHUB_TOKEN to avoid rate limits.
+    ecosystemMetadataPlugin,
   ],
 
   presets: [

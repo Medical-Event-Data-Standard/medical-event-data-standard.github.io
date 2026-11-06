@@ -58,6 +58,15 @@ npm start
 This will open the local site in a browser window, and your changes will be reflected live. You may need to
 open additional terminals for things like package management, editing, modifying jupyter notebooks, etc.
 
+The [ecosystem page](https://medical-event-data-standard.github.io/docs/intro_pages/ecosystem) shows GitHub
+stars and latest releases, which are fetched from the GitHub API once when the site is built or the dev server
+starts (see `plugins/ecosystemMetadata.ts`). Without a token these requests are limited to 60/hour, which is
+not enough for every package, so set `GITHUB_TOKEN` to see them all locally:
+
+```bash
+GITHUB_TOKEN=$(gh auth token) npm start
+```
+
 ## Site Structure
 
 This repository has the following directory structure:

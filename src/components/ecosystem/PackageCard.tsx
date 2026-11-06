@@ -1,16 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Card, CardContent, Typography, CardActions, Button } from '@mui/material';
-import { Package, PackageWithMetadata } from '@site/src/lib/ecosystem/types';
-import { loadPackageMetadata } from '@site/src/lib/ecosystem/loadPackageMetadata';
+import { usePluginData } from '@docusaurus/useGlobalData';
+import { EcosystemMetadata, Package } from '@site/src/lib/ecosystem/types';
+import { ECOSYSTEM_METADATA_PLUGIN } from '@site/src/lib/ecosystem/githubMetadata';
+import { attachPackageMetadata } from '@site/src/lib/ecosystem/packageMetadata';
 
-export default function PackageCard({ pkg }: { pkg: Package }): React.JSX.Element | null {
-  const [data, setData] = useState<PackageWithMetadata | null>(null);
-
-  useEffect(() => {
-    loadPackageMetadata(pkg).then(setData);
-  }, [pkg]);
-
-  if (!data) return null;
+export default function PackageCard({ pkg }: { pkg: Package }): React.JSX.Element {
+  const metadata = usePluginData(ECOSYSTEM_METADATA_PLUGIN) as EcosystemMetadata | undefined;
+  const data = attachPackageMetadata(pkg, metadata);
 
   return (
     <Card variant="outlined">
