@@ -75,6 +75,10 @@ not enough for every package, so set `GITHUB_TOKEN` to see them all locally:
 GITHUB_TOKEN=$(gh auth token) npm start
 ```
 
+The [papers page](https://medical-event-data-standard.github.io/papers) is built the same way; see
+[The papers page](#the-papers-page) below. The dev server uses its committed snapshot rather than fetching, so
+it starts quickly.
+
 ## Site Structure
 
 This repository has the following directory structure:
@@ -130,6 +134,43 @@ import nb from './converting_to_MEDS.ipynb';
 <JupyterViewer rawIpynb={nb} />
 ```
 
+### The papers page
+
+The [papers page](https://medical-event-data-standard.github.io/papers) (`src/pages/papers.tsx`) lists the
+papers that cite one of the core MEDS papers ("seeds"), from
+[Semantic Scholar](https://www.semanticscholar.org/)'s citation graph. Citing MEDS doesn't always mean using
+it, so the page says so. The list is fetched at build time by `plugins/papers.ts`, so visitors make no API
+calls, and it is configured in [`static/data/papers.yaml`](static/data/papers.yaml):
+
+- `seeds`: the core MEDS papers, by Semantic Scholar paperId, with the short label shown on chips (and, where
+  Semantic Scholar has them wrong, corrected details).
+- `include`: papers that use MEDS without citing a seed.
+- `exclude`: papers that cite a seed but don't belong on the list.
+
+Semantic Scholar rate-limits unauthenticated requests heavily, so the plugin makes one request at a time,
+retries HTTP 429 and 5xx responses with exponential backoff (honouring `Retry-After`), and stops retrying after
+two minutes. Whatever it can't fetch is taken from the committed snapshot,
+[`static/data/papers.snapshot.json`](static/data/papers.snapshot.json), with a single warning in the build log;
+a failed fetch never fails the build. (An invalid `papers.yaml` does, so mistakes in it are caught in PRs.)
+
+Where the data comes from depends on `PAPERS_SOURCE`:
+
+| Command                         | Default source | Override                 |
+| ------------------------------- | -------------- | ------------------------ |
+| `npm run build`                 | live fetch     | `PAPERS_SOURCE=snapshot` |
+| `npm start` (dev server)        | snapshot       | `PAPERS_SOURCE=live`     |
+| `npm run papers:update` (below) | live fetch     | (always live)            |
+
+Set `SEMANTIC_SCHOLAR_API_KEY` (sent as the `x-api-key` header) to avoid most rate limiting; you can
+[request a key](https://www.semanticscholar.org/product/api#api-key-form) for free. In CI it comes from the
+optional repository secret of the same name.
+
+To refresh the snapshot, e.g. after changing the seeds or `include`, run the following and commit the result:
+
+```bash
+SEMANTIC_SCHOLAR_API_KEY=... npm run papers:update
+```
+
 ## Deployment
 
 The site auto-deploys to <https://medical-event-data-standard.github.io/> via the
@@ -145,6 +186,10 @@ Or create a GitHub Release in the UI with a new `v*` tag — that pushes the tag
 and triggers the same workflow.
 
 The workflow can also be re-run manually from the Actions tab via `Run workflow`.
+
+Every Monday the workflow also rebuilds and redeploys the **latest `v*` tag** (by version number, not `main`),
+so data fetched at build time (the papers citing MEDS, GitHub stars and releases) stays fresh while the site's
+content stays at the released version.
 
 ### Local build / preview
 

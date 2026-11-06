@@ -4,11 +4,17 @@ name: Deploy to GitHub Pages
 # `git tag` or from a GitHub Release). Also supports manual dispatch from the
 # Actions tab — useful for re-deploying the latest tag without cutting a new
 # release.
+#
+# Once a week it also rebuilds and redeploys the latest `v*` tag (not `main`),
+# so that data fetched at build time (the papers citing MEDS, GitHub stars and
+# releases) stays fresh while the site's content stays at the released version.
 on:
   push:
     tags:
       - 'v*'
   workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * 1' # Mondays at 04:17 UTC.
 
 # `id-token: write` + `pages: write` are required by actions/deploy-pages.
 permissions:
@@ -27,6 +33,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # All history and tags, so a scheduled run can find the latest release tag.
+          fetch-depth: 0
+
+      # Scheduled runs start from the default branch; build the latest release instead. Tag pushes and manual
+      # runs build the ref they were triggered on, as before. `versionsort.suffix=-` sorts pre-releases such as
+      # v1.0.0-rc1 before v1.0.0.
+      - name: Check out the latest release tag
+        if: github.event_name == 'schedule'
+        run: |
+          tag=$(git -c versionsort.suffix=- tag --list 'v*' --sort=-v:refname | head -n 1)
+          if [ -z "$tag" ]; then
+            echo "::error::No v* tag to rebuild."
+            exit 1
+          fi
+          echo "Rebuilding $tag ($(git rev-parse --short "refs/tags/$tag^{commit}"))."
+          git checkout --detach "refs/tags/$tag"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -42,6 +65,9 @@ jobs:
         env:
           # Used at build time to fetch GitHub stars/releases for the ecosystem page.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional: avoids Semantic Scholar rate limits when listing the papers citing MEDS. Without it the
+          # build still succeeds, falling back to static/data/papers.snapshot.json for whatever it can't fetch.
+          SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
