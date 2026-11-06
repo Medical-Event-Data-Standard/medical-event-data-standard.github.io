@@ -74,8 +74,10 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
+          // Docusaurus appends the doc's path relative to the site root (e.g. `docs/intro_pages/1_intro.mdx`),
+          // so this must point at the repository root, not at `docs/`.
           editUrl:
-            'https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/tree/main/docs',
+            'https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/tree/main/',
         },
         // blog: {
         //   showReadingTime: true,
