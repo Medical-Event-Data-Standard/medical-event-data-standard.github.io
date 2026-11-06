@@ -52,6 +52,8 @@ seeds:
     label: 'ACES'
   - id: 'f4b471a712d135aa606281e5061415657adb7085'
     label: 'MEDS-Tab'
+  - id: '96f609fa94bfdbb85f0be595c575d64865c0cf66'
+    label: 'meds_reader'
   - id: 'ce0eaffb67ef48c8309e97df05b33f6fc7294d5f'
     label: 'MEDS-Torch'
     note: "Semantic Scholar has no venue, year or link for this OpenReview-only paper; they're shown instead."
@@ -61,4 +63,9 @@ seeds:
 
 include: []
 
-exclude: []
+exclude:
+  - id: '7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf'
+    note: >-
+      The MEDS-DEV benchmark paper, but Semantic Scholar's record of it was parsed from the PDF: its "authors" are
+      names from its bibliography, and it has no venue, year or link. Listing it would credit the wrong people.
+      Once its details are confirmed, consider adding it as a seed with corrected `title`/`authors`/`venue`/`url`.
