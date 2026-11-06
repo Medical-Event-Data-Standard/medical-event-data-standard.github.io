@@ -232,6 +232,11 @@ dataset_etls:
         demo_available: false
         pypi_name: 'Zigong-MEDS'
         github_repo: 'rvandewater/Zigong_MEDS'
+      - name: 'MC-MED'
+        demo_available: false
+        pypi_name: 'MC-MED-MEDS'
+        github_repo: 'rvandewater/MC_MED_MEDS'
+        physionet_url: 'https://physionet.org/content/mc-med/1.0.1/'
       - name: 'EHRSHOT'
         demo_available: false
         paper_url: 'https://arxiv.org/abs/2307.02028'
