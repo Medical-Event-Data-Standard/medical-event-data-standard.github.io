@@ -1,0 +1,107 @@
+# Fields mirror the package entries in static/data/ecosystem.yaml; keep the category options in sync with it.
+name: Add to the MEDS ecosystem
+description: Suggest a tool, model, or dataset ETL to list on the MEDS ecosystem page.
+title: '[Ecosystem] Add '
+labels: ['Supported Tools/Models/Datasets']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an addition to the [MEDS ecosystem page](https://medical-event-data-standard.github.io/docs/intro_pages/ecosystem)!
+
+        Each entry on that page is generated from [`static/data/ecosystem.yaml`](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/blob/main/static/data/ecosystem.yaml), and the fields below mirror that file. A pull request that adds the entry to that file directly is also welcome.
+
+        To request that a dataset, task, or model be supported in the MEDS-DEV benchmark instead, open an issue on the [MEDS-DEV repository](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/issues/new/choose).
+
+  - type: input
+    id: name
+    attributes:
+      label: Name
+      description: 'The name to display (`name`). It must be unique on the ecosystem page.'
+      placeholder: MEDS-Reader
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: Which section of the ecosystem page should it be listed under?
+      options:
+        - 'Tools > MEDS Core'
+        - 'Tools > Preprocessing'
+        - 'Tools > Exploration and Visualization'
+        - 'Tools > Task Extraction'
+        - 'Tools > Modeling'
+        - 'Tools > Model Evaluation'
+        - 'Tools > Testing'
+        - 'Tools > Semantic Web'
+        - 'Dataset ETLs > ETL Templates/Tools'
+        - 'Dataset ETLs > Public Datasets'
+        - 'Dataset ETLs > Alternate Data Standards'
+        - 'Published Models'
+        - 'Other / not sure (please explain in the description)'
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What does it do, and how does it work with MEDS data? Mention which MEDS version(s) it supports, if you know.
+    validations:
+      required: true
+
+  - type: input
+    id: github_repo
+    attributes:
+      label: GitHub repository
+      description: 'In `owner/repo` form (`github_repo`). If the code is hosted elsewhere, link to it in the description instead.'
+      placeholder: som-shahlab/meds_reader
+
+  - type: input
+    id: pypi_name
+    attributes:
+      label: PyPI package name
+      description: 'Optional (`pypi_name`).'
+      placeholder: meds-reader
+
+  - type: input
+    id: docs_url
+    attributes:
+      label: Documentation URL
+      description: 'Optional (`docs_url`).'
+      placeholder: https://meds-reader.readthedocs.io
+
+  - type: input
+    id: paper_url
+    attributes:
+      label: Paper URL
+      description: 'Optional (`paper_url`). A link to a paper describing it.'
+      placeholder: https://arxiv.org/abs/...
+
+  - type: dropdown
+    id: demo_available
+    attributes:
+      label: Demo available?
+      description: 'Dataset ETLs only (`demo_available`). Can the ETL be run on an openly downloadable demo version of the dataset?'
+      options:
+        - 'Not applicable'
+        - 'Yes'
+        - 'No'
+      default: 0
+
+  - type: textarea
+    id: warn
+    attributes:
+      label: Caveats
+      description: 'Optional (`warn`). Anything users should know up front, shown as a warning on its card. For example: deprecated, gated weights, or a non-commercial license.'
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: It is publicly available and works with MEDS-formatted data.
+          required: true
+        - label: I am an author or maintainer of it.

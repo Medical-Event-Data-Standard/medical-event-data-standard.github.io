@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Link from '@docusaurus/Link';
 import {
   Typography,
   Box,
@@ -9,7 +10,7 @@ import {
   Tooltip,
   Paper,
   Divider,
-  Link,
+  Link as MuiLink,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ContentCopy from '@mui/icons-material/ContentCopy';
@@ -67,9 +68,9 @@ export const LinksBlock: React.FC<{ links?: string[] }> = ({ links }) =>
       <ul>
         {links.map((url, i) => (
           <li key={i}>
-            <Link href={url} target="_blank" rel="noopener noreferrer">
+            <MuiLink component={Link} href={url}>
               {url}
-            </Link>
+            </MuiLink>
           </li>
         ))}
       </ul>
