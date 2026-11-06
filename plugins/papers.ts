@@ -10,6 +10,7 @@ import {
   type LiveFetch,
   type PapersConfig,
   type S2Paper,
+  type SeedOverrides,
 } from '../src/lib/papers/normalize';
 
 // This runs in Node.js at build time. It lists the papers that cite the core MEDS papers ("seeds") configured in
@@ -31,7 +32,7 @@ export const S2_FIELDS =
 const CITATIONS_PAGE_SIZE = 1000;
 const REQUEST_TIMEOUT_MS = 30_000;
 const PAPER_ID = /^[0-9a-f]{40}$/;
-const IDENTIFIER = /^([0-9a-f]{40}|(doi|arxiv):\S+)$/i;
+const IDENTIFIER = /^(?:([0-9a-f]{40})|(doi|arxiv):(\S+))$/i;
 
 type FetchFn = (url: string, init?: RequestInit) => Promise<Response>;
 
@@ -177,14 +178,44 @@ const identifierList = (value: unknown, key: string): string[] => {
   if (!Array.isArray(value)) throw new Error(`\`${key}\` must be a list`);
   return value.map((entry, i) => {
     const id = typeof entry === 'string' ? entry : (entry as { id?: unknown } | null)?.id;
-    if (typeof id !== 'string' || !IDENTIFIER.test(id.trim())) {
+    const match = typeof id === 'string' ? IDENTIFIER.exec(id.trim()) : null;
+    if (!match) {
       throw new Error(
         `\`${key}[${i}]\` must have an \`id\`: a Semantic Scholar paperId, \`DOI:<doi>\` or \`ARXIV:<id>\``
       );
     }
-    return id.trim();
+    // Semantic Scholar expects upper-case prefixes and arXiv ids without a version.
+    const [, paperId, prefix, value] = match;
+    if (paperId) return paperId.toLowerCase();
+    return prefix.toUpperCase() === 'DOI' ? `DOI:${value}` : `ARXIV:${value.replace(/v\d+$/, '')}`;
   });
 };
+
+/**
+ * Parses a seed's optional `title`, `authors`, `venue`, `year` and `url`, shown instead of Semantic Scholar's, and
+ * allows a `note` for reviewers.
+ */
+function parseSeedOverrides(fields: Record<string, unknown>, where: string): SeedOverrides | undefined {
+  const overrides: SeedOverrides = {};
+  for (const [key, value] of Object.entries(fields)) {
+    const invalid = (expected: string) => new Error(`\`${where}.${key}\` must be ${expected}`);
+    if (key === 'title' || key === 'venue' || key === 'url') {
+      if (typeof value !== 'string' || !value.trim()) throw invalid('a non-empty string');
+      overrides[key] = value.trim();
+    } else if (key === 'year') {
+      if (!Number.isInteger(value)) throw invalid('a whole number');
+      overrides.year = value as number;
+    } else if (key === 'authors') {
+      if (!Array.isArray(value) || !value.every(name => typeof name === 'string' && name.trim())) {
+        throw invalid('a list of names');
+      }
+      overrides.authors = value.map(name => name.trim());
+    } else if (key !== 'note') {
+      throw new Error(`\`${where}\` has an unknown field \`${key}\``);
+    }
+  }
+  return Object.keys(overrides).length > 0 ? overrides : undefined;
+}
 
 /** Validates the parsed papers.yaml. A malformed file is a mistake in the repository, so this throws. */
 export function parsePapersConfig(raw: unknown): PapersConfig {
@@ -193,12 +224,13 @@ export function parsePapersConfig(raw: unknown): PapersConfig {
     if (!Array.isArray(seeds) || seeds.length === 0) throw new Error('`seeds` must be a non-empty list');
     return {
       seeds: seeds.map((seed, i) => {
-        const { id, label } = (seed ?? {}) as Record<string, unknown>;
+        const { id, label, ...rest } = (seed ?? {}) as Record<string, unknown>;
         if (typeof id !== 'string' || !PAPER_ID.test(id.trim())) {
           throw new Error(`\`seeds[${i}].id\` must be a Semantic Scholar paperId (40 hex characters)`);
         }
         if (typeof label !== 'string' || !label.trim()) throw new Error(`\`seeds[${i}].label\` must be set`);
-        return { id: id.trim(), label: label.trim() };
+        const overrides = parseSeedOverrides(rest, `seeds[${i}]`);
+        return { id: id.trim(), label: label.trim(), ...(overrides ? { overrides } : {}) };
       }),
       include: identifierList(include, 'include'),
       exclude: identifierList(exclude, 'exclude'),

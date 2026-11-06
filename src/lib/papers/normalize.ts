@@ -23,7 +23,11 @@ export interface SeedConfig {
   /** Semantic Scholar paperId. */
   id: string;
   label: string;
+  /** Details shown instead of Semantic Scholar's, for seeds whose record there is wrong (e.g. a garbled title). */
+  overrides?: SeedOverrides;
 }
+
+export type SeedOverrides = Partial<Pick<Paper, 'title' | 'authors' | 'venue' | 'year' | 'url'>>;
 
 /** The parsed contents of static/data/papers.yaml. */
 export interface PapersConfig {
@@ -148,13 +152,13 @@ export function buildPapersData(
   const fromSnapshot: string[] = [];
   const missing: string[] = [];
 
-  const seeds: SeedPaper[] = config.seeds.map(({ id, label }) => {
+  const seeds: SeedPaper[] = config.seeds.map(({ id, label, overrides }) => {
     const fetched = normalizePaper(live.seeds.get(id));
-    if (fetched) return { ...fetched, id, label };
+    if (fetched) return { ...fetched, ...overrides, id, label };
     const saved = snapshot?.seeds.find(seed => seed.id === id);
     if (saved) {
       fromSnapshot.push(`details of ${label}`);
-      return { ...paperDetails(saved), label };
+      return { ...paperDetails(saved), ...overrides, label };
     }
     missing.push(`details of ${label}`);
     return {
@@ -169,6 +173,7 @@ export function buildPapersData(
       arxivId: null,
       url: semanticScholarUrl(id),
       citationCount: null,
+      ...overrides,
     };
   });
 

@@ -254,6 +254,25 @@ describe('buildPapersData', () => {
     expect(result.missing).toEqual(['details of Seed B', 'papers citing Seed B']);
   });
 
+  it("applies a seed's overrides to live, snapshot and placeholder details alike", () => {
+    const overrides = { title: 'Corrected', year: 2024, url: 'https://openreview.net/forum?id=x' };
+    const withOverrides: PapersConfig = {
+      ...config,
+      seeds: [
+        { id: SEED_A, label: 'Seed A', overrides },
+        { id: SEED_B, label: 'Seed B', overrides },
+      ],
+    };
+    const live = liveWith({ seeds: new Map([[SEED_B, s2(SEED_B, { title: 'G A R B L E D', year: null })]]) });
+
+    const fromLive = buildPapersData(withOverrides, live, null).seeds;
+    expect(fromLive[0]).toMatchObject({ id: SEED_A, label: 'Seed A', authors: [], ...overrides });
+    expect(fromLive[1]).toMatchObject({ id: SEED_B, authors: ['Author'], ...overrides });
+
+    const fromSnapshot = buildPapersData(withOverrides, emptyLiveFetch(), snapshot).seeds;
+    expect(fromSnapshot[0]).toMatchObject({ id: SEED_A, label: 'Seed A', ...overrides });
+  });
+
   it('falls back to placeholders when there is neither live data nor a snapshot', () => {
     const result = buildPapersData({ ...config, include: ['DOI:10.1/missing'] }, emptyLiveFetch(), null);
     expect(result.seeds[1]).toEqual({

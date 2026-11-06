@@ -5,7 +5,9 @@
 #
 #   seeds:   the core MEDS papers. Every paper citing at least one of them is listed. `id` is the paper's
 #            Semantic Scholar paperId (the 40-character hash at the end of its semanticscholar.org URL);
-#            `label` is the short name shown on the chips of the papers that cite it.
+#            `label` is the short name shown on the chips of the papers that cite it. If Semantic Scholar's
+#            details of a seed are wrong, set any of `title`, `authors`, `venue`, `year` and `url` to show
+#            those instead.
 #   include: papers that use MEDS but cite none of the seeds, so would otherwise be missing.
 #   exclude: papers that cite a seed but are not about using MEDS, e.g. ones mentioning it only in passing.
 #
@@ -22,12 +24,40 @@
 # After changing the seeds or `include`, refresh the committed fallback snapshot with `npm run papers:update`.
 
 seeds:
+  - id: '50846012e25acae4aebf1d2b2953655a19fe2e93'
+    label: 'MEDS (NEJM AI 2026)'
   - id: '2619008e94a623872a48eeb05da7e0a4a97e2ed5'
     label: 'MEDS (KDD 2025)'
+  - id: '5c9dd4ea7e027ada78e0567a78bba86cecee68d0'
+    label: 'MEDS (ICLR 2024 workshop)'
+    note: >-
+      Semantic Scholar's record of this paper was parsed from the PDF: its title is garbled ("M EDICAL E VENT D ATA
+      S TANDARD ...") and it has no venue, year or link. These fields are shown instead.
+    title: 'Medical Event Data Standard (MEDS): Facilitating Machine Learning for Health'
+    authors:
+      - 'Bert Arnrich'
+      - 'Edward Choi'
+      - 'Jason Fries'
+      - 'Matthew McDermott'
+      - 'Jungwoo Oh'
+      - 'Tom Pollard'
+      - 'Nigam Shah'
+      - 'Ethan Steinberg'
+      - 'Michael Wornow'
+      - 'Robin van de Water'
+    venue: 'ICLR 2024 Workshop on Learning from Time Series for Health'
+    year: 2024
+    url: 'https://openreview.net/forum?id=IsHy2ebjIG'
   - id: '27689dd149c473d24cdf22124c2a29d187c960b8'
     label: 'ACES'
   - id: 'f4b471a712d135aa606281e5061415657adb7085'
     label: 'MEDS-Tab'
+  - id: 'ce0eaffb67ef48c8309e97df05b33f6fc7294d5f'
+    label: 'MEDS-Torch'
+    note: "Semantic Scholar has no venue, year or link for this OpenReview-only paper; they're shown instead."
+    venue: 'NeurIPS 2024 Workshop on Time Series in the Age of Large Models'
+    year: 2024
+    url: 'https://openreview.net/forum?id=uwnK2LZtjX'
 
 include: []
 

@@ -210,18 +210,57 @@ describe('fetchFromSemanticScholar', () => {
 });
 
 describe('parsePapersConfig', () => {
-  it('parses seeds and identifier lists given as strings or objects', () => {
+  it('parses seeds and identifier lists given as strings or objects, normalising the identifiers', () => {
     expect(
       parsePapersConfig({
         seeds: [{ id: ` ${SEED} `, label: ' Seed ' }],
-        include: [{ id: 'doi:10.1/x', note: 'why' }, 'ARXIV:2401.00001'],
+        include: [{ id: 'doi:10.1/X', note: 'why' }, ' arXiv:2401.00001v2 ', OTHER_SEED.toUpperCase()],
         exclude: null,
       })
     ).toEqual({
       seeds: [{ id: SEED, label: 'Seed' }],
-      include: ['doi:10.1/x', 'ARXIV:2401.00001'],
+      include: ['DOI:10.1/X', 'ARXIV:2401.00001', OTHER_SEED],
       exclude: [],
     });
+  });
+
+  it("parses a seed's overrides of Semantic Scholar's details", () => {
+    const seed = {
+      id: SEED,
+      label: 'Seed',
+      note: 'Semantic Scholar garbled this one.',
+      title: ' Real Title ',
+      authors: [' Ada Lovelace ', 'Alan Turing'],
+      venue: 'ICLR 2024 Workshop',
+      year: 2024,
+      url: 'https://openreview.net/forum?id=x',
+    };
+    expect(parsePapersConfig({ seeds: [seed] }).seeds).toEqual([
+      {
+        id: SEED,
+        label: 'Seed',
+        overrides: {
+          title: 'Real Title',
+          authors: ['Ada Lovelace', 'Alan Turing'],
+          venue: 'ICLR 2024 Workshop',
+          year: 2024,
+          url: 'https://openreview.net/forum?id=x',
+        },
+      },
+    ]);
+  });
+
+  const seedWith = (fields: Record<string, unknown>) => ({ seeds: [{ id: SEED, label: 'S', ...fields }] });
+
+  it.each([
+    [seedWith({ title: ' ' }), '`seeds[0].title` must be a non-empty string'],
+    [seedWith({ url: 5 }), '`seeds[0].url` must be a non-empty string'],
+    [seedWith({ year: '2024' }), '`seeds[0].year` must be a whole number'],
+    [seedWith({ authors: 'Ada' }), '`seeds[0].authors` must be a list of names'],
+    [seedWith({ authors: ['Ada', ''] }), '`seeds[0].authors` must be a list of names'],
+    [seedWith({ titel: 'typo' }), '`seeds[0]` has an unknown field `titel`'],
+  ])('rejects invalid seed overrides %j', (raw, error) => {
+    expect(() => parsePapersConfig(raw)).toThrow(`Invalid static/data/papers.yaml: ${error}`);
   });
 
   it.each([

@@ -142,7 +142,8 @@ papers that cite one of the core MEDS papers ("seeds"), from
 it, so the page says so. The list is fetched at build time by `plugins/papers.ts`, so visitors make no API
 calls, and it is configured in [`static/data/papers.yaml`](static/data/papers.yaml):
 
-- `seeds`: the core MEDS papers, by Semantic Scholar paperId, with the short label shown on chips.
+- `seeds`: the core MEDS papers, by Semantic Scholar paperId, with the short label shown on chips (and, where
+  Semantic Scholar has them wrong, corrected details).
 - `include`: papers that use MEDS without citing a seed.
 - `exclude`: papers that cite a seed but don't belong on the list.
 
