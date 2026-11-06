@@ -1,0 +1,97 @@
+---
+sidebar_position: 5
+---
+
+# How to Contribute
+
+MEDS is open source and community-driven, and we welcome contributions of every size: questions, bug reports,
+documentation fixes, new tools, datasets, models, and benchmark results. Almost all work on MEDS happens on
+GitHub, in the [Medical-Event-Data-Standard organization](https://github.com/Medical-Event-Data-Standard) and
+in the repositories of the individual tools in the [MEDS ecosystem](/docs/intro_pages/ecosystem).
+
+The organization's
+[contribution guidelines](https://github.com/Medical-Event-Data-Standard/.github/blob/main/CONTRIBUTING.md)
+apply to all of its repositories. This page summarizes them and shows where each kind of contribution goes.
+
+## Ask a question or report a problem
+
+Questions, bug reports, and suggestions all go in GitHub issues. Before you open a new issue, search the open
+and closed issues of the repository to see whether it has already been discussed.
+
+- **The MEDS standard, schema, or the `meds` Python package**: open an issue in the
+  [`meds` repository](https://github.com/Medical-Event-Data-Standard/meds/issues). This is also the place to
+  propose changes to the standard itself.
+- **A specific tool, ETL, or model**: open an issue in that project's own repository. Most ecosystem tools are
+  maintained by their authors in separate repositories, and the [ecosystem page](/docs/intro_pages/ecosystem)
+  links to each one.
+- **MEDS-DEV**: open an issue in the
+  [MEDS-DEV repository](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/issues).
+- **This website**, including its tutorials and documentation: open an issue in the
+  [website repository](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/issues/new/choose).
+
+When you report a bug, describe how to reproduce it and what you expected to happen instead.
+
+## Contribute code
+
+Pull requests are welcome in every repository of the organization. In short, the
+[contribution guidelines](https://github.com/Medical-Event-Data-Standard/.github/blob/main/CONTRIBUTING.md)
+ask you to:
+
+1. Fork the repository and create a branch for your change. In the core repositories, such as
+   [`meds`](https://github.com/Medical-Event-Data-Standard/meds) and
+   [MEDS-DEV](https://github.com/Medical-Event-Data-Standard/MEDS-DEV), branch from `dev` and open your pull
+   request against `dev`, not `main`.
+2. Install the development dependencies (for example, `pip install -e .[dev]`) and set up the pre-commit hooks
+   with `pre-commit install`.
+3. Follow the existing code style (PEP 8 and Google-style docstrings with doctests) and update the
+   documentation along with your change.
+4. Check that the automated tests and code style checks pass, then push to your fork and open a pull request.
+
+Maintainers review every pull request and may ask for changes. See the full
+[contribution guidelines](https://github.com/Medical-Event-Data-Standard/.github/blob/main/CONTRIBUTING.md)
+for details.
+
+## Add your tool, dataset, or model to the ecosystem page
+
+The [ecosystem page](/docs/intro_pages/ecosystem) lists the tools, dataset ETLs, and models that support MEDS.
+It is generated from a single file in the website repository,
+[`static/data/ecosystem.yaml`](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/blob/main/static/data/ecosystem.yaml).
+
+- To add or update an entry yourself, open a pull request that edits this file. Put your project in the
+  category that fits it best, with its `name` and `github_repo`, and its `pypi_name`, `docs_url`, and
+  `paper_url` if it has them. The existing entries show the format.
+- If you'd rather not edit the file, open an issue in the
+  [website repository](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/issues/new/choose)
+  with a link to your project and a short description of what it does.
+
+## Contribute to MEDS-DEV
+
+[MEDS-DEV](/docs/MEDS-DEV/intro) is the community benchmark for health AI models on MEDS data. It accepts new
+datasets, prediction tasks, models, and benchmark results.
+
+- **Datasets, tasks, and models** are added with pull requests to the
+  [MEDS-DEV repository](https://github.com/Medical-Event-Data-Standard/MEDS-DEV). The "Contributing New Things
+  to MEDS-DEV" section of its README lists the files each one needs, and its
+  [`templates`](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/tree/main/templates) folder has README
+  templates for them.
+- **Benchmark results** are submitted with the "Benchmark Result Submission" issue form, together with a
+  result file made by the `meds-dev-pack-result` command.
+
+The [MEDS-DEV issue chooser](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/issues/new/choose) has
+the result submission form and templates for requesting or tracking the addition of a dataset, task, or model.
+
+## Improve this website and its documentation
+
+This website is built from the
+[medical-event-data-standard.github.io repository](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io).
+Each documentation page has an "Edit this page" link at the bottom that opens its source file on GitHub, and
+the repository's
+[README](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io#readme) explains
+how to run the site locally.
+
+## Help with the roadmap
+
+The [roadmap](/docs/intro_pages/roadmap) describes where the project is heading, such as multi-modal data
+support and tools for data visualization, and links to the GitHub issues where several of these efforts are
+being discussed. To help with one of them, join the linked discussion or open an issue in the
+[`meds` repository](https://github.com/Medical-Event-Data-Standard/meds/issues).

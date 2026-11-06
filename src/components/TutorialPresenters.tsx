@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from '@docusaurus/Link';
 import { Grid, Card, CardHeader, CardMedia, CardContent, Typography } from '@mui/material';
 
 export function TutorialPresenter({
@@ -11,10 +12,10 @@ export function TutorialPresenter({
   name: string;
   affiliation: string;
   bio?: string;
-  url: string;
+  url?: string;
   photoUrl: string;
 }): React.JSX.Element {
-  const title: React.JSX.Element = url ? <a href={url}>{name}</a> : <span>{name}</span>;
+  const title: React.JSX.Element = url ? <Link href={url}>{name}</Link> : <span>{name}</span>;
   return (
     <Card style={{ margin: '2em', maxWidth: '300px' }}>
       <CardMedia

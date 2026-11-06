@@ -28,6 +28,14 @@ This website is built using
 
 The rest of this README provides instructions for developing the website.
 
+## Contributing
+
+Contributions are welcome! See
+[How to Contribute](https://medical-event-data-standard.github.io/docs/intro_pages/contributing) on the
+website for the ways to contribute to MEDS. To add a tool, dataset, or model to the
+[ecosystem page](https://medical-event-data-standard.github.io/docs/intro_pages/ecosystem), edit
+[`static/data/ecosystem.yaml`](static/data/ecosystem.yaml) and open a pull request.
+
 ## Set-up
 
 ### Clone the repository
