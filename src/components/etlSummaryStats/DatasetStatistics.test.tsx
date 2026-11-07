@@ -125,9 +125,7 @@ describe('DatasetStatistics', () => {
         '3 more years suppressed (fewer than 20 subjects each).'
       )
     ).toBeInTheDocument();
-    expect(
-      within(sectionOf('Train, tuning and held-out splits')).getByText(/2 splits had fewer than 20 subjects/)
-    ).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 2, name: 'Train, tuning and held-out splits' })).toBeNull();
     expect(figuresIn('Record coverage')[0].data[0].y).toEqual(['Big', 'Demo']);
     expect(figuresIn('Code concentration')).toHaveLength(1);
     expect(figuresIn('Mapping to standard vocabularies')[0].data[0].y).toEqual(['Demo']);

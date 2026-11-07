@@ -509,93 +509,7 @@ export function yearPanels(
   return { panels, skipped, table };
 }
 
-// ─── 4. Splits ──────────────────────────────────────────────────
-
-/** The MEDS split names, in order; other names are pooled as "other". */
-const KNOWN_SPLITS = ['train', 'tuning', 'held_out'];
-
-/**
- * A 100% stacked bar per dataset of its subjects' shares in train / tuning / held_out (any other split names are
- * pooled as "other"). Shares are of the subjects in the reported splits. A dataset with a suppressed split is
- * left out: its share can't be shown without back-computing the suppressed split's size.
- */
-export function splitChart(entries: EtlStatsEntry[]): ChartModel {
-  const { drawn, skipped } = partition<{ totals: Record<string, number>; total: number }>(
-    orderDatasets(entries),
-    (stats, entry) => {
-      const splits = stats.splits;
-      if (!splits || (splits.cells.length === 0 && !splits.suppressed)) {
-        return { skip: 'Its stats file has no subject splits.' };
-      }
-      if (splits.suppressed) {
-        const count = splits.suppressed.cells;
-        const which =
-          count === 1
-            ? `1 split had ${floorPhrase(entry)}`
-            : `${count !== null ? formatCount(count) : 'some'} splits had ${floorPhrase(entry)} each`;
-        return {
-          skip: `Suppressed: ${which}, and showing shares would mean back-computing ${count === 1 ? 'its' : 'their'} size.`,
-        };
-      }
-      const totals: Record<string, number> = {};
-      for (const cell of splits.cells) {
-        const key = KNOWN_SPLITS.includes(cell.split) ? cell.split : 'other';
-        totals[key] = (totals[key] ?? 0) + cell.subjects;
-      }
-      const total = Object.values(totals).reduce((sum, n) => sum + n, 0);
-      if (total === 0) return { skip: 'Its splits have no subjects.' };
-      return { totals, total };
-    }
-  );
-
-  const keys = [...KNOWN_SPLITS, 'other'].filter(key => drawn.some(d => d.value.totals[key] !== undefined));
-  const table: TableView = {
-    columns: ['Dataset', ...keys.map(key => `${key} subjects`)],
-    rows: drawn.map(({ entry, value }) => [
-      entry.label,
-      ...keys.map(key => {
-        const n = value.totals[key];
-        return n === undefined ? '—' : `${formatCount(n)} (${formatPercent(n / value.total)})`;
-      }),
-    ]),
-  };
-  if (drawn.length === 0) return { figure: null, skipped, table };
-
-  return {
-    figure: {
-      data: keys.map((key, i) => {
-        const shares = drawn.map(d => (d.value.totals[key] ?? 0) / d.value.total);
-        return trace({
-          type: 'bar',
-          orientation: 'h',
-          name: key,
-          y: drawn.map(d => d.entry.label),
-          x: shares,
-          text: shares.map(share => (share > 0 ? formatPercent(share) : '')),
-          textposition: 'inside',
-          insidetextanchor: 'middle',
-          textfont: { color: SERIES_COLORS[i] === '#eda100' ? INK.onYellow : INK.onFill },
-          marker: { color: SERIES_COLORS[i], line: { color: '#ffffff', width: 2 } },
-          customdata: drawn.map(d => formatCount(d.value.totals[key] ?? 0)),
-          hovertemplate: `%{y}<br>${key}: %{customdata} subjects (%{text})<extra></extra>`,
-        });
-      }),
-      layout: baseLayout(drawn.length, {
-        ...TOP_LEGEND,
-        barmode: 'stack',
-        bargap: 0.35,
-        margin: { ...MARGIN, t: 32 },
-        // Hides a share that doesn't fit inside its segment; the hover and the table still give it.
-        uniformtext: { minsize: 10, mode: 'hide' },
-        xaxis: { title: { text: 'Share of subjects' }, tickformat: '.0%', range: [0, 1] },
-      } as Partial<Layout>),
-    },
-    skipped,
-    table,
-  };
-}
-
-// ─── 5. Record coverage ─────────────────────────────────────────
+// ─── 4. Record coverage ─────────────────────────────────────────
 
 const COVERAGE_COLUMNS: {
   label: string;
@@ -685,7 +599,7 @@ export function coverageChart(entries: EtlStatsEntry[]): ChartModel {
   };
 }
 
-// ─── 6. Code concentration ──────────────────────────────────────
+// ─── 5. Code concentration ──────────────────────────────────────
 
 const CONCENTRATION_LEVELS = [
   { key: 'top10', label: 'Top 10 codes' },
@@ -764,7 +678,7 @@ export function concentrationChart(entries: EtlStatsEntry[]): ChartModel {
   };
 }
 
-// ─── 7. Ontology coverage ───────────────────────────────────────
+// ─── 6. Ontology coverage ───────────────────────────────────────
 
 const ONTOLOGY_MEASURES = [
   { key: 'measurementsMapped', label: 'Measurements mapped' },

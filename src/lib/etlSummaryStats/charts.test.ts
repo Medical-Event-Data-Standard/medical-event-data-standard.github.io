@@ -22,7 +22,6 @@ import {
   sizeChart,
   sortBySize,
   sortDirectionOptions,
-  splitChart,
   statsFileUrl,
   valueAxis,
   yearPanels,
@@ -404,92 +403,6 @@ describe('yearPanels', () => {
       ],
       table: { columns: expect.any(Array), rows: [] },
     });
-  });
-});
-
-describe('splitChart', () => {
-  it('stacks subject shares per split, pooling unknown split names as "other"', () => {
-    const custom = statsEntry('Custom', {
-      stats: etlStats(200, {
-        splits: {
-          cells: [
-            { split: 'train', subjects: 150, measurements: 1 },
-            { split: 'test', subjects: 30, measurements: 1 },
-            { split: 'extra', subjects: 20, measurements: 1 },
-          ],
-          suppressed: null,
-        },
-      }),
-    });
-    const model = splitChart([custom, big]);
-    const traces = (model.figure?.data ?? []).map(attrs);
-    expect(traces.map(t => t.name)).toEqual(['train', 'tuning', 'held_out', 'other']);
-    expect(traces[0]).toMatchObject({ y: ['Big', 'Custom'], x: [0.8, 0.75], text: ['80%', '75%'] });
-    expect(traces[1]).toMatchObject({ x: [0.1, 0], text: ['10%', ''] });
-    expect(traces[3]).toMatchObject({ x: [0, 0.25], customdata: ['0', '50'] });
-    // Text inside the yellow "other" segment is dark; inside the others, white.
-    expect(traces[3].textfont).toEqual({ color: '#0b0b0b' });
-    expect(traces[0].textfont).toEqual({ color: '#ffffff' });
-    expect(model.figure?.layout).toMatchObject({ barmode: 'stack', legend: { traceorder: 'normal' } });
-    expect(model.table).toEqual({
-      columns: ['Dataset', 'train subjects', 'tuning subjects', 'held_out subjects', 'other subjects'],
-      rows: [
-        ['Big', '4,000 (80%)', '500 (10%)', '500 (10%)', '—'],
-        ['Custom', '150 (75%)', '—', '—', '50 (25%)'],
-      ],
-    });
-  });
-
-  it('leaves out datasets with a suppressed split rather than back-computing it', () => {
-    const demo = statsEntry('Demo', {
-      stats: etlStats(100, {
-        splits: {
-          cells: [{ split: 'train', subjects: 80, measurements: 800 }],
-          suppressed: { cells: 2, measurements: 200 },
-        },
-      }),
-    });
-    const oneSuppressed = statsEntry('One', {
-      stats: etlStats(90, {
-        splits: { cells: [], suppressed: { cells: 1, measurements: null } },
-      }),
-    });
-    const unknownCount = statsEntry('Unknown', {
-      stats: etlStats(80, { splits: { cells: [], suppressed: { cells: null, measurements: null } } }),
-    });
-    const noSplits = statsEntry('No splits', { stats: etlStats(70, { splits: null }) });
-    const emptySplits = statsEntry('Empty', {
-      stats: etlStats(60, { splits: { cells: [], suppressed: null } }),
-    });
-    const zero = statsEntry('Zero', {
-      stats: etlStats(50, {
-        splits: { cells: [{ split: 'train', subjects: 0, measurements: 0 }], suppressed: null },
-      }),
-    });
-    const model = splitChart([demo, oneSuppressed, unknownCount, noSplits, emptySplits, zero]);
-    expect(model.figure).toBeNull();
-    expect(model.skipped).toEqual([
-      {
-        label: 'Demo',
-        reason:
-          'Suppressed: 2 splits had fewer than 20 subjects each, and showing shares would mean back-computing their size.',
-      },
-      {
-        label: 'One',
-        reason:
-          'Suppressed: 1 split had fewer than 20 subjects, and showing shares would mean back-computing its size.',
-      },
-      {
-        label: 'Unknown',
-        reason:
-          'Suppressed: some splits had fewer than 20 subjects each, and showing shares would mean back-computing their size.',
-      },
-      { label: 'No splits', reason: 'Its stats file has no subject splits.' },
-      { label: 'Empty', reason: 'Its stats file has no subject splits.' },
-      { label: 'Zero', reason: 'Its splits have no subjects.' },
-    ]);
-    // A suppressed split's share is never shown, so no number in the output can reveal its size.
-    expect(JSON.stringify(model)).not.toContain('20%');
   });
 });
 

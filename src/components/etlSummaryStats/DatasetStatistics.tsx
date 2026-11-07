@@ -21,7 +21,6 @@ import {
   schemaDescription,
   sizeChart,
   sortDirectionOptions,
-  splitChart,
   statsFileUrl,
   yearPanels,
 } from '@site/src/lib/etlSummaryStats/charts';
@@ -101,7 +100,6 @@ export default function DatasetStatistics(): React.JSX.Element {
     .label;
   const perSubject = useMemo(() => perSubjectChart(entries, perSubjectMetric), [entries, perSubjectMetric]);
   const years = useMemo(() => yearPanels(entries, yearMetric), [entries, yearMetric]);
-  const splits = useMemo(() => splitChart(entries), [entries]);
   const coverage = useMemo(() => coverageChart(entries), [entries]);
   const concentration = useMemo(() => concentrationChart(entries), [entries]);
   const ontology = useMemo(() => ontologyChart(entries), [entries]);
@@ -257,16 +255,6 @@ export default function DatasetStatistics(): React.JSX.Element {
             </div>
           ))}
         </Box>
-      </ChartSection>
-
-      <ChartSection
-        id="splits"
-        title="Train, tuning and held-out splits"
-        description="How each dataset's subjects are divided between the MEDS splits, as a share of the subjects in its splits."
-        skipped={splits.skipped}
-        table={splits.table}
-      >
-        {splits.figure && <Plot figure={splits.figure} label="Share of subjects per split, stacked bars" />}
       </ChartSection>
 
       <ChartSection
