@@ -65,6 +65,13 @@ describe('parseMedsPapers', () => {
     ]);
     expect(papers[1]).not.toHaveProperty('month');
     expect(papers[1]).not.toHaveProperty('id');
+    expect(papers[1]).not.toHaveProperty('authors');
+  });
+
+  it('keeps the authors in order, collapsing the whitespace of their names', () => {
+    const [paper] = parseMedsPapers({ papers: [rawPaper({ authors: ['Ada  Lovelace', ' Alan\nTuring '] })] });
+
+    expect(paper.authors).toEqual(['Ada Lovelace', 'Alan Turing']);
   });
 
   it.each([
@@ -97,6 +104,18 @@ describe('parseMedsPapers', () => {
       rawPaper({ url: 'ftp://example.org/paper' }),
       '"url" must be an http(s) URL',
     ],
+    [
+      'authors that are not a list',
+      rawPaper({ authors: 'Ada Lovelace' }),
+      '"authors" must be a non-empty list',
+    ],
+    ['an empty list of authors', rawPaper({ authors: [] }), '"authors" must be a non-empty list'],
+    [
+      'an author with no name',
+      rawPaper({ authors: ['Ada Lovelace', ' '] }),
+      '"authors" must be a non-empty list',
+    ],
+    ['an author that is not a name', rawPaper({ authors: [42] }), '"authors" must be a non-empty list'],
   ])('rejects %s, naming the paper', (_, raw, message) => {
     const parseSecond = () => parseMedsPapers({ papers: [rawPaper(), raw] });
     expect(parseSecond).toThrow('Invalid entry in static/data/meds_papers.yaml at papers[1]: ');
