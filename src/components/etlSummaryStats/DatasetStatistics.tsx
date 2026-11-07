@@ -4,12 +4,15 @@ import { usePluginData } from '@docusaurus/useGlobalData';
 import {
   type PerSubjectMetric,
   PER_SUBJECT_METRICS,
-  type SizeMetric,
-  SIZE_METRICS,
+  SIZE_SORT_OPTIONS,
+  type SizeOrder,
+  type SizeSortKey,
+  type SortDirection,
   type YearMetric,
   concentrationChart,
   coverageChart,
   datasetName,
+  defaultDirection,
   formatDate,
   githubRepoUrl,
   ontologyChart,
@@ -17,6 +20,7 @@ import {
   perSubjectChart,
   schemaDescription,
   sizeChart,
+  sortDirectionOptions,
   splitChart,
   statsFileUrl,
   yearPanels,
@@ -26,7 +30,7 @@ import {
   type EtlStatsData,
   type EtlStatsEntry,
 } from '@site/src/lib/etlSummaryStats/types';
-import { COMPACT_TABLE, ChartSection, ExternalLink, MetricToggle, Plot } from './parts';
+import { COMPACT_TABLE, ChartSection, ExternalLink, LabelledToggle, MetricToggle, Plot } from './parts';
 
 // The "Dataset statistics" page: charts of the `meds_summary_stats` files that dataset ETLs publish, collected at
 // build time by plugins/etlSummaryStats.ts. One filter (include demo datasets) above everything it scopes, then a
@@ -83,7 +87,7 @@ function SummaryTable({ entries }: { entries: EtlStatsEntry[] }): React.JSX.Elem
 export default function DatasetStatistics(): React.JSX.Element {
   const data = usePluginData(ETL_SUMMARY_STATS_PLUGIN) as EtlStatsData | undefined;
   const [includeDemo, setIncludeDemo] = useState(true);
-  const [sizeMetric, setSizeMetric] = useState<SizeMetric>('subjects');
+  const [sizeOrder, setSizeOrder] = useState<SizeOrder>({ key: 'measurements', direction: 'desc' });
   const [perSubjectMetric, setPerSubjectMetric] = useState<PerSubjectMetric>('measurements');
   const [yearMetric, setYearMetric] = useState<YearMetric>('measurements');
 
@@ -92,7 +96,9 @@ export default function DatasetStatistics(): React.JSX.Element {
     () => allEntries.filter(entry => includeDemo || entry.variant !== 'demo'),
     [allEntries, includeDemo]
   );
-  const size = useMemo(() => sizeChart(entries, sizeMetric), [entries, sizeMetric]);
+  const size = useMemo(() => sizeChart(entries, sizeOrder), [entries, sizeOrder]);
+  const sortLabel = (SIZE_SORT_OPTIONS.find(option => option.key === sizeOrder.key) as { label: string })
+    .label;
   const perSubject = useMemo(() => perSubjectChart(entries, perSubjectMetric), [entries, perSubjectMetric]);
   const years = useMemo(() => yearPanels(entries, yearMetric), [entries, yearMetric]);
   const splits = useMemo(() => splitChart(entries), [entries]);
@@ -163,19 +169,36 @@ export default function DatasetStatistics(): React.JSX.Element {
       <ChartSection
         id="dataset-size"
         title="Dataset size"
-        description="Subjects, events (distinct subject and time pairs), measurements (rows) and distinct codes in each dataset. The axis is logarithmic: each gridline is ten times the last."
+        description="Events (distinct subject and time pairs), measurements (rows) and distinct codes in each dataset, side by side. The axis is logarithmic: each gridline is ten times the last. Sort the datasets by any count or by name; the table below also lists each dataset's subjects."
         controls={
-          <MetricToggle
-            label="Size measure"
-            options={SIZE_METRICS}
-            value={sizeMetric}
-            onChange={setSizeMetric}
-          />
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', columnGap: 3, rowGap: 0.5 }}>
+            <LabelledToggle label="Sort by">
+              <MetricToggle
+                label="Sort by"
+                options={SIZE_SORT_OPTIONS}
+                value={sizeOrder.key}
+                onChange={(key: SizeSortKey) => setSizeOrder({ key, direction: defaultDirection(key) })}
+              />
+            </LabelledToggle>
+            <LabelledToggle label="Order">
+              <MetricToggle
+                label="Order"
+                options={sortDirectionOptions(sizeOrder.key)}
+                value={sizeOrder.direction}
+                onChange={(direction: SortDirection) => setSizeOrder({ ...sizeOrder, direction })}
+              />
+            </LabelledToggle>
+          </Box>
         }
         skipped={size.skipped}
         table={size.table}
       >
-        {size.figure && <Plot figure={size.figure} label={`${sizeMetric} per dataset, bar chart`} />}
+        {size.figure && (
+          <Plot
+            figure={size.figure}
+            label={`Events, measurements and unique codes per dataset, grouped bars, sorted by ${sortLabel.toLowerCase()}`}
+          />
+        )}
       </ChartSection>
 
       <ChartSection
@@ -251,7 +274,6 @@ export default function DatasetStatistics(): React.JSX.Element {
         title="Record coverage"
         description="Birth, Death and Static: the share of subjects with a birth record, a death record and static (time-less) data. Numeric: the share of measurements that carry a numeric value. Darker cells are higher shares."
         skipped={coverage.skipped}
-        table={coverage.table}
       >
         {coverage.figure && <Plot figure={coverage.figure} label="Record coverage per dataset, heatmap" />}
       </ChartSection>

@@ -4,6 +4,7 @@ import {
   concentrationChart,
   coverageChart,
   datasetName,
+  defaultDirection,
   formatCompact,
   formatCount,
   formatDate,
@@ -16,7 +17,11 @@ import {
   perSubjectChart,
   ratio,
   schemaDescription,
+  SERIES_COLORS,
+  SIZE_SORT_OPTIONS,
   sizeChart,
+  sortBySize,
+  sortDirectionOptions,
   splitChart,
   statsFileUrl,
   valueAxis,
@@ -123,31 +128,148 @@ describe('shared helpers', () => {
   });
 });
 
-describe('sizeChart', () => {
-  it('ranks datasets by the chosen measure on a log axis, and tables every measure', () => {
-    const noEvents = statsEntry('No events', {
-      stats: etlStats(300, { counts: { ...etlStats(300).counts, events: null } }),
+describe('size ordering', () => {
+  const withCodes = (label: string, subjects: number, uniqueCodes: number) =>
+    statsEntry(label, {
+      stats: etlStats(subjects, { counts: { ...etlStats(subjects).counts, uniqueCodes } }),
     });
-    const model = sizeChart([small, big, noEvents, unreadable], 'events');
-    const [bars] = model.figure?.data ?? [];
-    expect(attrs(bars).y).toEqual(['Big', 'Small']);
-    expect(attrs(bars).x).toEqual([50000, 1000]);
-    expect(attrs(bars).text).toEqual(['50K', '1K']);
-    expect(model.figure?.layout.xaxis).toMatchObject({ type: 'log', title: { text: 'Events (log scale)' } });
-    expect(model.skipped).toEqual([
-      { label: 'No events', reason: 'Its stats file has no events count.' },
-      { label: 'Future', reason: unreadable.problem },
+  const alpha = withCodes('Alpha', 300, 900);
+  const beta = withCodes('Beta', 300, 20);
+  const gamma = withCodes('Gamma', 5000, 400);
+  const noCodes = statsEntry('No codes', {
+    stats: etlStats(9000, { counts: { ...etlStats(9000).counts, uniqueCodes: null } }),
+  });
+  const labels = (items: EtlStatsEntry[]) => items.map(item => item.label);
+
+  it('sorts by a count either way, breaking ties by name and putting missing counts last', () => {
+    expect(
+      labels(sortBySize([beta, noCodes, alpha, gamma], { key: 'measurements', direction: 'desc' }))
+    ).toEqual(['No codes', 'Gamma', 'Alpha', 'Beta']);
+    expect(
+      labels(sortBySize([beta, noCodes, alpha, gamma], { key: 'uniqueCodes', direction: 'desc' }))
+    ).toEqual(['Alpha', 'Gamma', 'Beta', 'No codes']);
+    expect(
+      labels(sortBySize([beta, noCodes, alpha, gamma], { key: 'uniqueCodes', direction: 'asc' }))
+    ).toEqual(['Beta', 'Gamma', 'Alpha', 'No codes']);
+    // Two datasets missing the count stay in name order at the end.
+    const alsoNoCodes = statsEntry('Also no codes', {
+      stats: etlStats(10, { counts: { ...etlStats(10).counts, uniqueCodes: null } }),
+    });
+    expect(
+      labels(sortBySize([noCodes, beta, alsoNoCodes], { key: 'uniqueCodes', direction: 'asc' }))
+    ).toEqual(['Beta', 'Also no codes', 'No codes']);
+  });
+
+  it('puts datasets whose file could not be read last, whatever the input order', () => {
+    for (const items of [
+      [unreadable, beta, alpha],
+      [alpha, beta, unreadable],
+    ]) {
+      expect(labels(sortBySize(items, { key: 'subjects', direction: 'asc' }))).toEqual([
+        'Alpha',
+        'Beta',
+        'Future',
+      ]);
+    }
+  });
+
+  it('sorts by name A–Z or Z–A', () => {
+    expect(labels(sortBySize([gamma, alpha, beta], { key: 'name', direction: 'asc' }))).toEqual([
+      'Alpha',
+      'Beta',
+      'Gamma',
     ]);
+    expect(labels(sortBySize([gamma, alpha, beta], { key: 'name', direction: 'desc' }))).toEqual([
+      'Gamma',
+      'Beta',
+      'Alpha',
+    ]);
+  });
+
+  it('labels the directions for the sort key and starts counts largest first, names A–Z', () => {
+    expect(sortDirectionOptions('events').map(o => o.label)).toEqual(['Largest first', 'Smallest first']);
+    expect(sortDirectionOptions('name').map(o => o.label)).toEqual(['A–Z', 'Z–A']);
+    expect(defaultDirection('subjects')).toBe('desc');
+    expect(defaultDirection('name')).toBe('asc');
+    expect(SIZE_SORT_OPTIONS.map(o => o.key)).toEqual([
+      'measurements',
+      'events',
+      'uniqueCodes',
+      'subjects',
+      'name',
+    ]);
+  });
+});
+
+describe('sizeChart', () => {
+  it('draws events, measurements and unique codes as grouped bars on one log axis, in the chosen order', () => {
+    const model = sizeChart([small, big, unreadable], { key: 'measurements', direction: 'desc' });
+    const traces = (model.figure?.data ?? []).map(attrs);
+    expect(traces.map(t => t.name)).toEqual(['Events', 'Measurements', 'Unique codes']);
+    expect(traces.map(t => t.y)).toEqual([
+      ['Big', 'Small'],
+      ['Big', 'Small'],
+      ['Big', 'Small'],
+    ]);
+    expect(traces.map(t => t.x)).toEqual([
+      [50000, 1000],
+      [500000, 10000],
+      [50, 50],
+    ]);
+    expect(traces[0].text).toEqual(['50K', '1K']);
+    expect(traces[1].customdata).toEqual(['500,000', '10,000']);
+    expect(traces.map(t => (t.marker as { color: string }).color)).toEqual([
+      SERIES_COLORS[0],
+      SERIES_COLORS[1],
+      SERIES_COLORS[2],
+    ]);
+    expect(model.figure?.layout).toMatchObject({ barmode: 'group', showlegend: true });
+    expect(model.figure?.layout.xaxis).toMatchObject({ type: 'log', title: { text: 'Count (log scale)' } });
+    expect(model.skipped).toEqual([{ label: 'Future', reason: unreadable.problem }]);
     expect(model.table.columns).toEqual(['Dataset', 'Subjects', 'Events', 'Measurements', 'Unique codes']);
     expect(model.table.rows).toEqual([
       ['Big', '5,000', '50,000', '500,000', '50'],
-      ['No events', '300', '—', '30,000', '50'],
       ['Small', '100', '1,000', '10,000', '50'],
+    ]);
+
+    // The table follows the chart's order.
+    const ascending = sizeChart([small, big], { key: 'events', direction: 'asc' });
+    expect(attrs(ascending.figure?.data[0]).y).toEqual(['Small', 'Big']);
+    expect(ascending.table.rows.map(([label]) => label)).toEqual(['Small', 'Big']);
+  });
+
+  it('keeps a dataset with some counts, noting the missing bars, and leaves out one with none', () => {
+    const noEvents = statsEntry('No events', {
+      stats: etlStats(300, { counts: { ...etlStats(300).counts, events: null, uniqueCodes: null } }),
+    });
+    const noCounts = statsEntry('No counts', {
+      stats: etlStats(300, {
+        counts: { ...etlStats(300).counts, events: null, measurements: null, uniqueCodes: null },
+      }),
+    });
+    const model = sizeChart([noEvents, noCounts, small], { key: 'events', direction: 'desc' });
+    const [events, measurements] = (model.figure?.data ?? []).map(attrs);
+    expect(events.y).toEqual(['Small', 'No events']);
+    expect(events.x).toEqual([1000, null]);
+    expect(events.text).toEqual(['1K', '']);
+    expect(events.customdata).toEqual(['1,000', '—']);
+    expect(measurements.x).toEqual([10000, 30000]);
+    expect(model.skipped).toEqual([
+      { label: 'No counts', reason: 'Its stats file has no event, measurement or unique-code counts.' },
+      {
+        label: 'No events',
+        reason: 'Its stats file has no events or unique codes count, so that bar is missing.',
+      },
+    ]);
+    expect(model.table.rows).toEqual([
+      ['Small', '100', '1,000', '10,000', '50'],
+      ['No counts', '300', '—', '—', '—'],
+      ['No events', '300', '—', '30,000', '—'],
     ]);
   });
 
   it('has no figure when nothing can be drawn', () => {
-    expect(sizeChart([unreadable], 'subjects')).toEqual({
+    expect(sizeChart([unreadable], { key: 'subjects', direction: 'desc' })).toEqual({
       figure: null,
       skipped: [{ label: 'Future', reason: unreadable.problem }],
       table: { columns: ['Dataset', 'Subjects', 'Events', 'Measurements', 'Unique codes'], rows: [] },

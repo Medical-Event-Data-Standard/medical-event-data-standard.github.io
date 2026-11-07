@@ -150,7 +150,25 @@ export function MetricToggle<T extends string>({
   );
 }
 
-/** A titled chart section: description, optional controls, the chart, what it leaves out, and its numbers. */
+/** A control with a short visible label in front of it, e.g. "Sort by". */
+export function LabelledToggle({
+  label,
+  children,
+}: React.PropsWithChildren<{ label: string }>): React.JSX.Element {
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, flexWrap: 'wrap' }}>
+      <Typography variant="body2" component="span" sx={{ color: 'text.secondary' }} aria-hidden="true">
+        {label}
+      </Typography>
+      {children}
+    </Box>
+  );
+}
+
+/**
+ * A titled chart section: description, optional controls, the chart, what it leaves out, and (unless the chart
+ * already prints every number, like a labelled heatmap) its numbers as a table.
+ */
 export function ChartSection({
   id,
   title,
@@ -165,7 +183,7 @@ export function ChartSection({
   description: React.ReactNode;
   controls?: React.ReactNode;
   skipped: Skipped[];
-  table: TableView;
+  table?: TableView;
 }>): React.JSX.Element {
   return (
     <Box component="section" aria-labelledby={id} sx={{ mb: 5 }}>
@@ -176,7 +194,7 @@ export function ChartSection({
         {children}
       </Paper>
       <SkippedNote skipped={skipped} />
-      <TableDetails table={table} caption={`${title}: the numbers`} />
+      {table && <TableDetails table={table} caption={`${title}: the numbers`} />}
     </Box>
   );
 }

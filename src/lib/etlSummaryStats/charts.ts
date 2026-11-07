@@ -206,54 +206,139 @@ export const SIZE_METRICS: { key: SizeMetric; label: string }[] = [
   { key: 'uniqueCodes', label: 'Unique codes' },
 ];
 
-/** Ranked bars (largest on top) of one size metric, on a log axis. The table lists all four metrics. */
-export function sizeChart(entries: EtlStatsEntry[], metric: SizeMetric): ChartModel {
-  const meta = SIZE_METRICS.find(m => m.key === metric) as (typeof SIZE_METRICS)[number];
-  const { drawn, skipped } = partition(entries, stats => {
-    const value = stats.counts[metric];
-    return value === null ? { skip: `Its stats file has no ${meta.label.toLowerCase()} count.` } : value;
+/** The measures drawn side by side for each dataset, in legend (and colour) order. */
+export const SIZE_BAR_METRICS: SizeMetric[] = ['events', 'measurements', 'uniqueCodes'];
+
+/** What the datasets can be sorted by: any of the four counts, or the dataset's name. */
+export type SizeSortKey = SizeMetric | 'name';
+
+export const SIZE_SORT_OPTIONS: { key: SizeSortKey; label: string }[] = [
+  { key: 'measurements', label: 'Measurements' },
+  { key: 'events', label: 'Events' },
+  { key: 'uniqueCodes', label: 'Unique codes' },
+  { key: 'subjects', label: 'Subjects' },
+  { key: 'name', label: 'Name' },
+];
+
+export type SortDirection = 'desc' | 'asc';
+
+export interface SizeOrder {
+  key: SizeSortKey;
+  direction: SortDirection;
+}
+
+/** The direction each sort key starts with: largest first for counts, A–Z for names. */
+export const defaultDirection = (key: SizeSortKey): SortDirection => (key === 'name' ? 'asc' : 'desc');
+
+/** The two directions, labelled for the sort key: "Largest first"/"Smallest first", or "A–Z"/"Z–A". */
+export function sortDirectionOptions(key: SizeSortKey): { key: SortDirection; label: string }[] {
+  return key === 'name'
+    ? [
+        { key: 'asc', label: 'A–Z' },
+        { key: 'desc', label: 'Z–A' },
+      ]
+    : [
+        { key: 'desc', label: 'Largest first' },
+        { key: 'asc', label: 'Smallest first' },
+      ];
+}
+
+/**
+ * Sorts datasets for the size chart. A dataset whose file lacks the chosen count goes last, whichever the
+ * direction; ties (and the name sort) fall back to the name, A–Z.
+ */
+export function sortBySize<T extends Pick<EtlStatsEntry, 'label' | 'stats'>>(
+  items: T[],
+  order: SizeOrder
+): T[] {
+  const byName = (a: T, b: T) => a.label.localeCompare(b.label);
+  const sign = order.direction === 'asc' ? 1 : -1;
+  if (order.key === 'name') return [...items].sort((a, b) => sign * byName(a, b));
+  const key = order.key;
+  return [...items].sort((a, b) => {
+    const x = a.stats?.counts[key] ?? null;
+    const y = b.stats?.counts[key] ?? null;
+    if (x === null || y === null) return (x === null ? 1 : 0) - (y === null ? 1 : 0) || byName(a, b);
+    return sign * (x - y) || byName(a, b);
   });
-  drawn.sort((a, b) => b.value - a.value);
+}
+
+const lowerLabel = (metric: SizeMetric): string =>
+  (SIZE_METRICS.find(m => m.key === metric) as (typeof SIZE_METRICS)[number]).label.toLowerCase();
+
+/**
+ * Events, measurements and unique codes per dataset as grouped bars on one log axis, in the chosen order. A
+ * dataset missing one of the counts keeps its other bars and is noted; one missing all three is left out. The
+ * table lists all four counts, subjects included, in the same order as the chart.
+ */
+export function sizeChart(entries: EtlStatsEntry[], order: SizeOrder): ChartModel {
+  const { drawn, skipped } = partition<{ stats: EtlStats; missing: SizeMetric[] }>(entries, stats => {
+    const missing = SIZE_BAR_METRICS.filter(metric => stats.counts[metric] === null);
+    if (missing.length === SIZE_BAR_METRICS.length) {
+      return { skip: 'Its stats file has no event, measurement or unique-code counts.' };
+    }
+    return { stats, missing };
+  });
+  const sorted = sortBySize(
+    drawn.map(d => ({ label: d.entry.label, ...d.value })),
+    order
+  );
+  for (const { label, missing } of sorted) {
+    if (missing.length > 0) {
+      skipped.push({
+        label,
+        reason: `Its stats file has no ${missing.map(lowerLabel).join(' or ')} count, so that bar is missing.`,
+      });
+    }
+  }
 
   const table: TableView = {
     columns: ['Dataset', ...SIZE_METRICS.map(m => m.label)],
-    rows: orderDatasets(entries).flatMap(({ label, stats }) =>
-      stats
-        ? [
-            [
-              label,
-              ...SIZE_METRICS.map(m =>
-                stats.counts[m.key] === null ? '—' : formatCount(stats.counts[m.key] as number)
-              ),
-            ],
-          ]
-        : []
-    ),
+    rows: sortBySize(
+      entries.filter((entry): entry is EtlStatsEntry & { stats: EtlStats } => entry.stats !== null),
+      order
+    ).map(({ label, stats }) => [
+      label,
+      ...SIZE_METRICS.map(m => {
+        const value = stats.counts[m.key];
+        return value === null ? '—' : formatCount(value);
+      }),
+    ]),
   };
-  if (drawn.length === 0) return { figure: null, skipped, table };
+  if (sorted.length === 0) return { figure: null, skipped, table };
 
-  const values = drawn.map(d => d.value);
+  const labels = sorted.map(entry => entry.label);
+  const allValues: number[] = [];
+  const data = SIZE_BAR_METRICS.map((metric, i) => {
+    const meta = SIZE_METRICS.find(m => m.key === metric) as (typeof SIZE_METRICS)[number];
+    const values = sorted.map(entry => entry.stats.counts[metric]);
+    allValues.push(...values.filter((value): value is number => value !== null));
+    return trace({
+      type: 'bar',
+      orientation: 'h',
+      name: meta.label,
+      y: labels,
+      x: values,
+      text: values.map(value => (value === null ? '' : formatCompact(value))),
+      textposition: 'outside',
+      textfont: { color: INK.primary, size: 11 },
+      cliponaxis: false,
+      marker: { color: SERIES_COLORS[i], cornerradius: 3 },
+      customdata: values.map(value => (value === null ? '—' : formatCount(value))),
+      hovertemplate: `%{y}<br>${meta.label}: %{customdata}<extra></extra>`,
+    });
+  });
+
   return {
     figure: {
-      data: [
-        trace({
-          type: 'bar',
-          orientation: 'h',
-          y: drawn.map(d => d.entry.label),
-          x: values,
-          text: values.map(formatCompact),
-          textposition: 'outside',
-          textfont: { color: INK.primary },
-          cliponaxis: false,
-          marker: { color: SERIES_COLORS[0], cornerradius: 4 },
-          customdata: values.map(formatCount),
-          hovertemplate: `%{y}<br>${meta.label}: %{customdata}<extra></extra>`,
-        }),
-      ],
-      layout: baseLayout(drawn.length, {
-        bargap: 0.35,
-        margin: { ...MARGIN, r: 56 },
-        xaxis: valueAxis(values, meta.label),
+      data,
+      layout: baseLayout(sorted.length * 2.2, {
+        ...TOP_LEGEND,
+        barmode: 'group',
+        bargap: 0.25,
+        bargroupgap: 0.08,
+        margin: { ...MARGIN, t: 32, r: 56 },
+        xaxis: valueAxis(allValues, 'Count'),
       }),
     },
     skipped,

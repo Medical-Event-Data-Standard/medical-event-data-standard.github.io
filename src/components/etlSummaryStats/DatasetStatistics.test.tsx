@@ -136,23 +136,49 @@ describe('DatasetStatistics', () => {
     ).toBeInTheDocument();
     expect(within(sectionOf('Dataset size')).getByText('Future')).toBeInTheDocument();
 
-    // Every chart has its numbers as a table.
+    // Charts have their numbers as a table, except the record-coverage heatmap, which prints every number.
     expect(within(sectionOf('Dataset size')).getByText('Show the numbers')).toBeInTheDocument();
+    expect(within(sectionOf('Record coverage')).queryByText('Show the numbers')).not.toBeInTheDocument();
+
+    // Dataset size: events, measurements and unique codes side by side, largest measurements first.
+    expect(figuresIn('Dataset size')[0].data.map(trace => trace.name)).toEqual([
+      'Events',
+      'Measurements',
+      'Unique codes',
+    ]);
   });
 
   it('switches measures and can leave out demo datasets', () => {
     mockUsePluginData.mockReturnValue(data);
     render(<DatasetStatistics />);
 
-    fireEvent.click(
-      within(screen.getByRole('group', { name: 'Size measure' })).getByRole('button', { name: 'Events' })
+    const sortBy = () => within(screen.getByRole('group', { name: 'Sort by' }));
+    const order = () => within(screen.getByRole('group', { name: 'Order' }));
+    const sizeOrder = () => figuresIn('Dataset size')[0].data[0].y;
+
+    // Counts sort largest first by default, and can flip.
+    fireEvent.click(sortBy().getByRole('button', { name: 'Events' }));
+    expect(sizeOrder()).toEqual(['Big', 'Demo']);
+    expect(order().getByRole('button', { name: 'Largest first' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(order().getByRole('button', { name: 'Smallest first' }));
+    expect(sizeOrder()).toEqual(['Demo', 'Big']);
+    expect(within(sectionOf('Dataset size')).getByRole('img')).toHaveAccessibleName(
+      'Events, measurements and unique codes per dataset, grouped bars, sorted by events'
     );
-    expect(figuresIn('Dataset size')[0].data[0].x).toEqual([50000, 1000]);
     // Clicking the selected button again keeps it selected.
-    fireEvent.click(
-      within(screen.getByRole('group', { name: 'Size measure' })).getByRole('button', { name: 'Events' })
-    );
-    expect(figuresIn('Dataset size')[0].data[0].x).toEqual([50000, 1000]);
+    fireEvent.click(order().getByRole('button', { name: 'Smallest first' }));
+    expect(sizeOrder()).toEqual(['Demo', 'Big']);
+
+    // Names start A–Z, with the order buttons relabelled.
+    fireEvent.click(sortBy().getByRole('button', { name: 'Name' }));
+    expect(sizeOrder()).toEqual(['Big', 'Demo']);
+    expect(order().getByRole('button', { name: 'A–Z' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(order().getByRole('button', { name: 'Z–A' }));
+    expect(sizeOrder()).toEqual(['Demo', 'Big']);
+
+    // Switching back to a count starts largest first again.
+    fireEvent.click(sortBy().getByRole('button', { name: 'Subjects' }));
+    expect(sizeOrder()).toEqual(['Big', 'Demo']);
 
     fireEvent.click(
       within(screen.getByRole('group', { name: 'Per-subject measure' })).getByRole('button', {
