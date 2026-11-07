@@ -95,11 +95,14 @@ export function DatasetSelect({
   options,
   value,
   onChange,
+  emptyOption,
 }: {
   label: string;
   options: string[];
   value: string;
   onChange: (value: string) => void;
+  /** If given, a first choice with this text and the value '' (e.g. "None"). */
+  emptyOption?: string;
 }): React.JSX.Element {
   return (
     <TextField
@@ -108,9 +111,11 @@ export function DatasetSelect({
       label={label}
       value={value}
       onChange={event => onChange(event.target.value)}
-      slotProps={{ select: { native: true } }}
+      // Keep the label above the field even when the value is empty ("None"), so the two never overlap.
+      slotProps={{ select: { native: true }, inputLabel: { shrink: true } }}
       sx={{ mb: 1.5, minWidth: 220 }}
     >
+      {emptyOption !== undefined && <option value="">{emptyOption}</option>}
       {options.map(option => (
         <option key={option} value={option}>
           {option}

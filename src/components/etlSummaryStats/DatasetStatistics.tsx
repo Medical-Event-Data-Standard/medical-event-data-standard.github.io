@@ -119,7 +119,11 @@ export default function DatasetStatistics(): React.JSX.Element {
   const perSubject = useMemo(() => perSubjectChart(entries, perSubjectMetric), [entries, perSubjectMetric]);
   const pace = useMemo(() => paceChart(entries, paceMetric), [entries, paceMetric]);
   const coverage = useMemo(() => coverageChart(entries), [entries]);
-  const codeCoverage = useMemo(() => codeCoverageChart(entries, highlight), [entries, highlight]);
+  const datasetLabels = useMemo(() => allEntries.map(entry => entry.label), [allEntries]);
+  const codeCoverage = useMemo(
+    () => codeCoverageChart(entries, highlight, datasetLabels),
+    [entries, highlight, datasetLabels]
+  );
   const vocabularies = useMemo(() => vocabularyChart(entries), [entries]);
   const ontology = useMemo(() => ontologyChart(entries), [entries]);
   const health = useMemo(() => healthCheck(entries), [entries]);
@@ -302,14 +306,15 @@ export default function DatasetStatistics(): React.JSX.Element {
       <ChartSection
         id="code-coverage"
         title="Coverage of the most common codes"
-        description="The share of all measurements (up) that a dataset's most frequent codes cover, against how many of them are taken (across, logarithmic). A curve that climbs steeply means that a few codes, often high-frequency vitals, make up most of the data; one that climbs slowly means the data is spread over many codes. Each curve ends where all of the dataset's codes cover 100%. The points are the published figures (the shares of the top 10, 100 and 1,000 codes, and how many codes cover 50%, 90% and 99%), joined by lines. Choose the dataset to highlight; the others stay grey for comparison."
+        description="The share of all measurements (up) that a dataset's most frequent codes cover, against how many of them are taken (across, logarithmic). A curve that climbs steeply means that a few codes, often high-frequency vitals, make up most of the data; one that climbs slowly means the data is spread over many codes. Each curve ends where all of the dataset's codes cover 100%. The points are the published figures (the shares of the top 10, 100 and 1,000 codes, and how many codes cover 50%, 90% and 99%), joined by lines. Each dataset has its own colour, line style and marker (see the legend); click a legend entry to hide that dataset, or double-click it to show only that one. To compare one dataset against the rest, highlight it."
         controls={
-          codeCoverage.highlighted && (
+          codeCoverage.options.length > 0 && (
             <DatasetSelect
               label="Highlight"
+              emptyOption="None"
               options={codeCoverage.options}
-              value={codeCoverage.highlighted}
-              onChange={setHighlight}
+              value={codeCoverage.highlighted ?? ''}
+              onChange={value => setHighlight(value || null)}
             />
           )
         }
@@ -319,7 +324,11 @@ export default function DatasetStatistics(): React.JSX.Element {
         {codeCoverage.figure && (
           <Plot
             figure={codeCoverage.figure}
-            label={`Share of measurements covered by the most frequent codes, one curve per dataset, ${codeCoverage.highlighted} highlighted`}
+            label={`Share of measurements covered by the most frequent codes, one curve per dataset${
+              codeCoverage.highlighted
+                ? `, ${codeCoverage.highlighted} highlighted`
+                : ', each in its own colour and line style'
+            }`}
           />
         )}
       </ChartSection>

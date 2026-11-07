@@ -10,8 +10,46 @@ import type { Distribution, EtlStats, EtlStatsEntry, VocabularyCell } from './ty
 
 // ─── Look ───────────────────────────────────────────────────────
 
-/** Categorical slots, in fixed order; validated for colour-vision deficiencies on a white surface. */
-export const SERIES_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100'] as const;
+/**
+ * The categorical palette, in its fixed order: eight hues validated (dataviz `validate_palette.js`, light mode) for
+ * colour-vision deficiencies between neighbouring series, as in bar and line charts. Charts with more series than
+ * slots add a second encoding (line dash and marker shape, see `seriesStyle`) rather than inventing new hues.
+ */
+export const CATEGORICAL_COLORS = [
+  '#2a78d6',
+  '#eb6834',
+  '#1baf7a',
+  '#eda100',
+  '#e87ba4',
+  '#008300',
+  '#6250d6',
+  '#e34948',
+] as const;
+/** The first four categorical slots, for charts with at most four series. */
+export const SERIES_COLORS = CATEGORICAL_COLORS.slice(0, 4) as unknown as readonly [
+  string,
+  string,
+  string,
+  string,
+];
+
+const LINE_DASHES = ['solid', 'dash', 'dot'] as const;
+const MARKER_SYMBOLS = ['circle', 'square', 'diamond'] as const;
+
+/**
+ * The colour, line dash and marker of the series at `index` in a stable identity order: the eight palette colours
+ * with solid lines and round markers, then the same colours dashed with square markers, then dotted with diamonds.
+ * Past the eighth series colour is therefore never the only cue, and since the index comes from the series'
+ * identity (not its rank), a series keeps its style when others are filtered out.
+ */
+export function seriesStyle(index: number): { color: string; dash: string; symbol: string } {
+  const tier = Math.min(Math.floor(index / CATEGORICAL_COLORS.length), LINE_DASHES.length - 1);
+  return {
+    color: CATEGORICAL_COLORS[index % CATEGORICAL_COLORS.length],
+    dash: LINE_DASHES[tier],
+    symbol: MARKER_SYMBOLS[tier],
+  };
+}
 /** Text and chrome. Text never takes a series colour. */
 export const INK = {
   primary: '#1c1e21',
@@ -27,8 +65,6 @@ export const INK = {
 export const BUBBLE_FILL = 'rgba(42, 120, 214, 0.75)';
 /** Fill of an empty heatmap cell (no data), one step off the surface, so the grid's columns stay traceable. */
 export const EMPTY_CELL = '#f3f2ee';
-/** De-emphasis grey for context marks, such as the datasets a chart is not highlighting. */
-export const CONTEXT_GREY = '#b4b3ad';
 /** Status colours, reserved for pass/warning and always shown with an icon and text. */
 export const STATUS_COLORS = { pass: '#0ca30c', warn: '#fab219' } as const;
 /** Single-hue sequential ramp (light to dark) for magnitude. */
@@ -1018,16 +1054,22 @@ export function codeCoveragePoints(
 export interface CodeCoverageModel extends ChartModel {
   /** The datasets that can be highlighted, in the page's order. */
   options: string[];
-  /** The dataset drawn in colour; null if none is drawn. */
+  /** The dataset drawn emphasised, with the others faded; null when none is (every curve drawn alike). */
   highlighted: string | null;
 }
 
 /**
  * One curve per dataset of the share of measurements covered by its N most frequent codes, against N on a log
  * axis. A steep curve that reaches 90% within a few dozen codes means a few codes (often vitals) dominate the data.
- * With a dozen or more datasets, one is highlighted in colour and the rest are drawn in grey for context.
+ * Every dataset has its own colour, line dash and marker (`seriesStyle`), assigned alphabetically over
+ * `identityLabels` (pass every dataset's label, including ones filtered out) so that toggling datasets never repaints
+ * the others. Optionally one dataset is highlighted: drawn thicker and on top, with the others faded.
  */
-export function codeCoverageChart(entries: EtlStatsEntry[], highlight: string | null): CodeCoverageModel {
+export function codeCoverageChart(
+  entries: EtlStatsEntry[],
+  highlight: string | null,
+  identityLabels: string[] = []
+): CodeCoverageModel {
   type Curve = {
     points: CodeCoveragePoint[];
     concentration: NonNullable<EtlStats['concentration']>;
@@ -1082,44 +1124,47 @@ export function codeCoverageChart(entries: EtlStatsEntry[], highlight: string | 
   const options = drawn.map(d => d.entry.label);
   if (drawn.length === 0) return { figure: null, skipped, table, options, highlighted: null };
 
-  const highlighted = drawn.find(d => d.entry.label === highlight) ?? drawn[0];
-  const others = drawn.filter(d => d !== highlighted);
-  const line = ({ entry, value }: (typeof drawn)[number], style: Record<string, unknown>): Data =>
-    trace({
-      type: 'scatter',
-      x: value.points.map(p => p.codes),
-      y: value.points.map(p => p.share),
-      text: value.points.map(() => entry.label),
-      customdata: value.points.map(p => p.text),
-      hovertemplate: '%{text}<br>%{customdata}<extra></extra>',
-      ...style,
-    });
+  const highlighted = highlight !== null && options.includes(highlight) ? highlight : null;
+  const identity = [...new Set([...identityLabels, ...options])].sort((a, b) => a.localeCompare(b));
+  const curves = drawn
+    .map(d => ({ ...d, index: identity.indexOf(d.entry.label) }))
+    .sort((a, b) => a.index - b.index);
+  // The highlighted curve is drawn last, so it sits on top; legend ranks keep the legend in identity order.
+  const drawOrder = highlighted
+    ? [
+        ...curves.filter(c => c.entry.label !== highlighted),
+        ...curves.filter(c => c.entry.label === highlighted),
+      ]
+    : curves;
   const allCodes = drawn.flatMap(d => d.value.points.map(p => p.codes));
   return {
     figure: {
-      data: [
-        // Grey context lines first, so the highlighted one is drawn on top.
-        ...others.map((d, i) =>
-          line(d, {
-            mode: 'lines',
-            name: 'Other datasets',
-            legendgroup: 'others',
-            showlegend: i === 0,
-            legendrank: 2,
-            line: { color: CONTEXT_GREY, width: 1.5 },
-          })
-        ),
-        line(highlighted, {
+      data: drawOrder.map(({ entry, value, index }) => {
+        const style = seriesStyle(index);
+        const emphasised = entry.label === highlighted;
+        return trace({
+          type: 'scatter',
           mode: 'lines+markers',
-          name: highlighted.entry.label,
-          legendrank: 1,
-          line: { color: SERIES_COLORS[0], width: 2.5 },
-          marker: { color: SERIES_COLORS[0], size: 9, line: { color: '#ffffff', width: 2 } },
-        }),
-      ],
+          name: entry.label,
+          legendrank: index + 1,
+          x: value.points.map(p => p.codes),
+          y: value.points.map(p => p.share),
+          text: value.points.map(() => entry.label),
+          customdata: value.points.map(p => p.text),
+          hovertemplate: '%{text}<br>%{customdata}<extra></extra>',
+          opacity: highlighted && !emphasised ? 0.25 : 1,
+          line: { color: style.color, width: emphasised ? 3.5 : 2, dash: style.dash },
+          marker: {
+            color: style.color,
+            symbol: style.symbol,
+            size: emphasised ? 10 : 8,
+            line: { color: '#ffffff', width: 1.5 },
+          },
+        });
+      }),
       layout: baseLayout(0, {
         ...TOP_LEGEND,
-        height: 420,
+        height: 460,
         margin: { ...MARGIN, t: 32, b: 48 },
         hovermode: 'closest',
         xaxis: {
@@ -1141,7 +1186,7 @@ export function codeCoverageChart(entries: EtlStatsEntry[], highlight: string | 
     skipped,
     table,
     options,
-    highlighted: highlighted.entry.label,
+    highlighted,
   };
 }
 

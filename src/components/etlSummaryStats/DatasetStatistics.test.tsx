@@ -147,13 +147,16 @@ describe('DatasetStatistics', () => {
       within(sectionOf('Pace of measurements')).getByText(/per-subject record span summary rests on/)
     ).toBeInTheDocument();
     expect(figuresIn('Record coverage')[0].data[0].y).toEqual(['Big', 'Demo']);
-    // The largest dataset is highlighted; the rest are grey.
+    // Every dataset has its own curve and legend entry; none is highlighted at first.
     expect(figuresIn('Coverage of the most common codes')[0].data.map(trace => trace.name)).toEqual([
-      'Other datasets',
       'Big',
+      'Demo',
     ]);
     expect(within(sectionOf('Coverage of the most common codes')).getByLabelText('Highlight')).toHaveValue(
-      'Big'
+      ''
+    );
+    expect(within(sectionOf('Coverage of the most common codes')).getByRole('img')).toHaveAccessibleName(
+      'Share of measurements covered by the most frequent codes, one curve per dataset, each in its own colour and line style'
     );
     expect(figuresIn('Vocabularies used')[0].data[0].y).toEqual(['Demo']);
     expect(
@@ -252,17 +255,31 @@ describe('DatasetStatistics', () => {
     );
 
     fireEvent.change(screen.getByLabelText('Highlight'), { target: { value: 'Demo' } });
-    expect(figuresIn('Coverage of the most common codes')[0].data.map(trace => trace.name)).toEqual([
-      'Other datasets',
-      'Demo',
-    ]);
+    // The highlighted curve is drawn last, on top; the other keeps its colour but fades.
+    const highlighted = figuresIn('Coverage of the most common codes')[0].data;
+    expect(highlighted.map(trace => trace.name)).toEqual(['Big', 'Demo']);
+    expect(highlighted.map(trace => trace.opacity)).toEqual([0.25, 1]);
+    expect(within(sectionOf('Coverage of the most common codes')).getByRole('img')).toHaveAccessibleName(
+      'Share of measurements covered by the most frequent codes, one curve per dataset, Demo highlighted'
+    );
 
     fireEvent.click(screen.getByLabelText(/Include demo datasets/));
     expect(figuresIn('Dataset size')[0].data[0].y).toEqual(['Big']);
     expect(screen.queryByText('demo_summary_stats.json')).not.toBeInTheDocument();
     expect(figuresIn('Mapping to standard vocabularies')).toHaveLength(0);
-    // The highlighted demo dataset is gone, so the largest remaining one is highlighted.
-    expect(screen.getByLabelText('Highlight')).toHaveValue('Big');
+    // The highlighted demo dataset is gone, so nothing is highlighted, and Big keeps its colour.
+    expect(screen.getByLabelText('Highlight')).toHaveValue('');
+    const remaining = figuresIn('Coverage of the most common codes')[0].data;
+    expect(remaining.map(trace => trace.name)).toEqual(['Big']);
+    expect((remaining[0].line as { color: string }).color).toBe(
+      (highlighted[0].line as { color: string }).color
+    );
+
+    // Highlighting a dataset and then choosing "None" clears the highlight.
+    fireEvent.change(screen.getByLabelText('Highlight'), { target: { value: 'Big' } });
+    expect(figuresIn('Coverage of the most common codes')[0].data[0].opacity).toBe(1);
+    fireEvent.change(screen.getByLabelText('Highlight'), { target: { value: '' } });
+    expect(screen.getByLabelText('Highlight')).toHaveValue('');
   });
 
   it('adapts its notes to what the files state', () => {

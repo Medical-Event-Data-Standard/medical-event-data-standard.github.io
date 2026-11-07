@@ -2,8 +2,8 @@ import { describe, expect, it } from '@jest/globals';
 import {
   baseLayout,
   codeCoverageChart,
+  CATEGORICAL_COLORS,
   codeCoveragePoints,
-  CONTEXT_GREY,
   coverageChart,
   datasetName,
   defaultDirection,
@@ -27,6 +27,7 @@ import {
   ratio,
   schemaDescription,
   SERIES_COLORS,
+  seriesStyle,
   SIZE_SORT_OPTIONS,
   sizeChart,
   sortBySize,
@@ -727,37 +728,68 @@ describe('codeCoveragePoints', () => {
   });
 });
 
+describe('seriesStyle', () => {
+  it('uses the eight palette colours, then repeats them with a dashed line and square markers, then dotted', () => {
+    expect(CATEGORICAL_COLORS.slice(0, 4)).toEqual([...SERIES_COLORS]);
+    expect(seriesStyle(0)).toEqual({ color: CATEGORICAL_COLORS[0], dash: 'solid', symbol: 'circle' });
+    expect(seriesStyle(7)).toEqual({ color: CATEGORICAL_COLORS[7], dash: 'solid', symbol: 'circle' });
+    expect(seriesStyle(8)).toEqual({ color: CATEGORICAL_COLORS[0], dash: 'dash', symbol: 'square' });
+    expect(seriesStyle(17)).toEqual({ color: CATEGORICAL_COLORS[1], dash: 'dot', symbol: 'diamond' });
+    // Past 24 series the third tier repeats rather than inventing a style.
+    expect(seriesStyle(30)).toEqual({ color: CATEGORICAL_COLORS[6], dash: 'dot', symbol: 'diamond' });
+  });
+});
+
 describe('codeCoverageChart', () => {
-  it('highlights the largest dataset by default, with the others in grey and one legend entry for them', () => {
+  const style = (t: Record<string, unknown>) => ({
+    color: (t.line as { color: string }).color,
+    dash: (t.line as { dash: string }).dash,
+    symbol: (t.marker as { symbol: string }).symbol,
+  });
+
+  it('draws every dataset in its own colour and style, in alphabetical identity order', () => {
     const other = statsEntry('Other', { stats: etlStats(10) });
     const model = codeCoverageChart([small, other, big], null);
     expect(model.options).toEqual(['Big', 'Small', 'Other']);
-    expect(model.highlighted).toBe('Big');
+    expect(model.highlighted).toBeNull();
     const traces = (model.figure?.data ?? []).map(attrs);
-    expect(traces.map(t => t.name)).toEqual(['Other datasets', 'Other datasets', 'Big']);
-    expect(traces.map(t => t.showlegend)).toEqual([true, false, undefined]);
-    expect(traces.map(t => (t.line as { color: string }).color)).toEqual([
-      CONTEXT_GREY,
-      CONTEXT_GREY,
-      SERIES_COLORS[0],
-    ]);
-    expect(traces[2]).toMatchObject({
+    expect(traces.map(t => t.name)).toEqual(['Big', 'Other', 'Small']);
+    expect(traces.map(t => t.legendrank)).toEqual([1, 2, 3]);
+    expect(traces.map(style)).toEqual([seriesStyle(0), seriesStyle(1), seriesStyle(2)]);
+    expect(traces.map(t => t.opacity)).toEqual([1, 1, 1]);
+    expect(traces.map(t => (t.line as { width: number }).width)).toEqual([2, 2, 2]);
+    expect(traces[0]).toMatchObject({
       mode: 'lines+markers',
       x: [4, 10, 20, 45, 50],
       y: [0.5, 0.3, 0.9, 0.99, 1],
       text: ['Big', 'Big', 'Big', 'Big', 'Big'],
     });
+    expect(model.figure?.layout).toMatchObject({ showlegend: true });
     expect(model.figure?.layout.xaxis).toMatchObject({ type: 'log', ticktext: ['1', '10', '100'] });
     expect(model.figure?.layout.yaxis).toMatchObject({ range: [0, 1.04], tickformat: '.0%' });
     expect(model.table.rows[0]).toEqual(['Big', '30%', '80%', '99%', '4', '20', '45', '50']);
   });
 
-  it('highlights the chosen dataset, or falls back to the first if it is not drawn', () => {
-    expect(codeCoverageChart([big, small], 'Small').figure?.data.map(t => attrs(t).name)).toEqual([
-      'Other datasets',
-      'Small',
-    ]);
-    expect(codeCoverageChart([big, small], 'Gone').highlighted).toBe('Big');
+  it("keeps each dataset's style when others are filtered out", () => {
+    // "Alpha" is filtered out of this view but still holds the first style, so "Big" keeps the second.
+    const traces = (codeCoverageChart([small, big], null, ['Alpha', 'Big', 'Small']).figure?.data ?? []).map(
+      attrs
+    );
+    expect(traces.map(t => t.name)).toEqual(['Big', 'Small']);
+    expect(traces.map(style)).toEqual([seriesStyle(1), seriesStyle(2)]);
+  });
+
+  it('highlights the chosen dataset on top, fading the others, and ignores a dataset that is not drawn', () => {
+    const model = codeCoverageChart([big, small], 'Big');
+    expect(model.highlighted).toBe('Big');
+    const traces = (model.figure?.data ?? []).map(attrs);
+    // Drawn last so it sits on top, while the legend keeps its alphabetical order.
+    expect(traces.map(t => t.name)).toEqual(['Small', 'Big']);
+    expect(traces.map(t => t.legendrank)).toEqual([2, 1]);
+    expect(traces.map(t => t.opacity)).toEqual([0.25, 1]);
+    expect(traces.map(t => (t.line as { width: number }).width)).toEqual([2, 3.5]);
+    expect(traces.map(t => (t.marker as { size: number }).size)).toEqual([8, 10]);
+    expect(codeCoverageChart([big, small], 'Gone').highlighted).toBeNull();
   });
 
   it('notes a curve without a code count, and skips datasets without concentration figures', () => {
