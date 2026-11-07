@@ -39,7 +39,8 @@ export function statsDocument(overrides: Record<string, unknown> = {}): Record<s
       n_subjects_with_birth: 500,
       n_subjects_with_death: 50,
       n_subjects_with_static: 450,
-      numeric: { n_present: 30000, mean: 1, std: 2 },
+      numeric: { n_present: 30000, n_nan: 2, n_infinite: 1, mean: 1, std: 2 },
+      quality: { n_empty_code: 0, n_null_code: 3, n_null_subject_id: 0 },
     },
     per_subject: {
       n_measurements: dist(10),
@@ -70,16 +71,24 @@ export function statsDocument(overrides: Record<string, unknown> = {}): Record<s
         frac_measurements_in_top_100: 0.9,
         frac_measurements_in_top_1000: 1,
         n_codes_covering_50pct: 10,
+        n_codes_covering_90pct: 100,
+        n_codes_covering_99pct: 250,
       },
+      n_codes_below_min_cell_size: 40,
     },
     code_metadata: {
       present: true,
+      n_codes: 320,
+      n_with_description: 300,
+      n_data_codes_missing_from_metadata: 0,
+      n_metadata_codes_absent_from_data: 20,
+      description_length: { n: 300, mean: 40, std: 9 },
       ontology: {
         present: true,
         coverage: { frac_measurements_mapped: 0.4, frac_observed_codes_with_parents: 0.2 },
         by_vocabulary: {
-          LOINC: { n_measurements: 10, n_subjects: 30, keys_digest: 'sha256:def' },
-          ICD10CM: { n_measurements: 5, n_subjects: 25 },
+          LOINC: { n_measurements: 10, n_subjects: 30, recognized: true, keys_digest: 'sha256:def' },
+          ICD10CM: { n_measurements: 5, n_subjects: 25, recognized: 'yes' },
           '<no-vocabulary>': { n_measurements: 2, n_subjects: 21 },
           '<suppressed>': { n_measurements: 3, n_child_codes: 1, n_vocabularies: 2 },
         },
@@ -94,6 +103,7 @@ export function statsDocument(overrides: Record<string, unknown> = {}): Record<s
 const quantiles = (scale: number) => ({
   suppressed: false as const,
   n: 100,
+  mean: 4 * scale,
   p5: scale,
   p25: 2 * scale,
   p50: 3 * scale,
@@ -114,23 +124,27 @@ export function etlStats(subjects: number, overrides: Partial<EtlStats> = {}): E
       subjectsWithStatic: subjects / 2,
       numericValues: subjects * 25,
     },
+    checks: { emptyCodes: 0, nullCodes: 0, nullSubjectIds: 0, nanValues: 0, infiniteValues: 0 },
     perSubject: {
       measurements: quantiles(10),
       events: quantiles(2),
       uniqueCodes: quantiles(1),
       spanDays: quantiles(30),
     },
-    byYear: { years: [2100, 2102], measurements: [1000, 3000], subjects: [100, 300], suppressed: null },
-    splits: {
-      cells: [
-        { split: 'train', subjects: subjects * 0.8, measurements: 80 },
-        { split: 'tuning', subjects: subjects * 0.1, measurements: 10 },
-        { split: 'held_out', subjects: subjects * 0.1, measurements: 10 },
-      ],
+    codeMetadata: {
+      present: true,
+      codes: 50,
+      withDescription: 50,
+      dataCodesMissing: 0,
+      metadataCodesUnused: 0,
+    },
+    concentration: { top10: 0.3, top100: 0.8, top1000: 0.99, codesFor50: 4, codesFor90: 20, codesFor99: 45 },
+    ontology: {
+      measurementsMapped: 0.6,
+      codesWithParents: 0.25,
+      vocabularies: [{ name: 'LOINC', measurements: subjects * 50, recognized: true }],
       suppressed: null,
     },
-    concentration: { top10: 0.3, top100: 0.8, top1000: 0.99 },
-    ontology: { measurementsMapped: 0.6, codesWithParents: 0.25, vocabularies: ['LOINC'], suppressed: null },
     ...overrides,
   };
 }

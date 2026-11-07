@@ -1,44 +1,59 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, Box, FormControlLabel, Paper, Switch, Typography } from '@mui/material';
+import { Alert, Box, FormControlLabel, Paper, Switch, Typography, useMediaQuery } from '@mui/material';
 import { usePluginData } from '@docusaurus/useGlobalData';
 import {
+  DESCRIPTION_THRESHOLD,
+  OMOP_MARK,
+  PACE_METRICS,
+  type PaceMetric,
   type PerSubjectMetric,
   PER_SUBJECT_METRICS,
   SIZE_SORT_OPTIONS,
   type SizeOrder,
   type SizeSortKey,
   type SortDirection,
-  type YearMetric,
-  concentrationChart,
+  codeCoverageChart,
   coverageChart,
   datasetName,
   defaultDirection,
+  depthBreadthChart,
   formatDate,
+  formatPercent,
   githubRepoUrl,
+  healthCheck,
   ontologyChart,
   orderDatasets,
+  paceChart,
   perSubjectChart,
   schemaDescription,
   sizeChart,
   sortDirectionOptions,
   statsFileUrl,
-  yearPanels,
+  vocabularyChart,
 } from '@site/src/lib/etlSummaryStats/charts';
 import {
   ETL_SUMMARY_STATS_PLUGIN,
   type EtlStatsData,
   type EtlStatsEntry,
 } from '@site/src/lib/etlSummaryStats/types';
-import { COMPACT_TABLE, ChartSection, ExternalLink, LabelledToggle, MetricToggle, Plot } from './parts';
+import {
+  BubbleKey,
+  COMPACT_TABLE,
+  ChartSection,
+  DatasetSelect,
+  ExternalLink,
+  HealthTable,
+  LabelledToggle,
+  MetricToggle,
+  Plot,
+} from './parts';
 
 // The "Dataset statistics" page: charts of the `meds_summary_stats` files that dataset ETLs publish, collected at
 // build time by plugins/etlSummaryStats.ts. One filter (include demo datasets) above everything it scopes, then a
 // summary table with each file's provenance, then one section per chart.
 
-const YEAR_METRICS: { key: YearMetric; label: string }[] = [
-  { key: 'measurements', label: 'Measurements' },
-  { key: 'subjects', label: 'Subjects' },
-];
+/** Screens up to this width get the bubble chart's phone layout (smaller bubbles, labels for a narrow plot). */
+const NARROW_SCREEN = '(max-width: 760px)';
 
 /** Which ETL and file each dataset's numbers come from, and when they were extracted. */
 function SummaryTable({ entries }: { entries: EtlStatsEntry[] }): React.JSX.Element {
@@ -88,7 +103,9 @@ export default function DatasetStatistics(): React.JSX.Element {
   const [includeDemo, setIncludeDemo] = useState(true);
   const [sizeOrder, setSizeOrder] = useState<SizeOrder>({ key: 'measurements', direction: 'desc' });
   const [perSubjectMetric, setPerSubjectMetric] = useState<PerSubjectMetric>('measurements');
-  const [yearMetric, setYearMetric] = useState<YearMetric>('measurements');
+  const [paceMetric, setPaceMetric] = useState<PaceMetric>('perDay');
+  const [highlight, setHighlight] = useState<string | null>(null);
+  const narrow = useMediaQuery(NARROW_SCREEN);
 
   const allEntries = useMemo(() => orderDatasets(data?.datasets ?? []), [data]);
   const entries = useMemo(
@@ -98,11 +115,14 @@ export default function DatasetStatistics(): React.JSX.Element {
   const size = useMemo(() => sizeChart(entries, sizeOrder), [entries, sizeOrder]);
   const sortLabel = (SIZE_SORT_OPTIONS.find(option => option.key === sizeOrder.key) as { label: string })
     .label;
+  const depth = useMemo(() => depthBreadthChart(entries, { narrow }), [entries, narrow]);
   const perSubject = useMemo(() => perSubjectChart(entries, perSubjectMetric), [entries, perSubjectMetric]);
-  const years = useMemo(() => yearPanels(entries, yearMetric), [entries, yearMetric]);
+  const pace = useMemo(() => paceChart(entries, paceMetric), [entries, paceMetric]);
   const coverage = useMemo(() => coverageChart(entries), [entries]);
-  const concentration = useMemo(() => concentrationChart(entries), [entries]);
+  const codeCoverage = useMemo(() => codeCoverageChart(entries, highlight), [entries, highlight]);
+  const vocabularies = useMemo(() => vocabularyChart(entries), [entries]);
   const ontology = useMemo(() => ontologyChart(entries), [entries]);
+  const health = useMemo(() => healthCheck(entries), [entries]);
 
   if (!data || data.datasets.length === 0) {
     return (
@@ -200,6 +220,24 @@ export default function DatasetStatistics(): React.JSX.Element {
       </ChartSection>
 
       <ChartSection
+        id="depth-breadth"
+        title="Depth vs. breadth"
+        description="One bubble per dataset: how many subjects it covers (across) against how much data a typical subject has, the median number of measurements per subject (up). The bubble's area shows how many distinct codes the dataset uses. Both axes are logarithmic. Datasets further right are broader, and those higher up are deeper."
+        skipped={depth.skipped}
+        table={depth.table}
+      >
+        {depth.figure && (
+          <>
+            <Plot
+              figure={depth.figure}
+              label="Subjects against median measurements per subject, one bubble per dataset, sized by unique codes"
+            />
+            <BubbleKey model={depth} />
+          </>
+        )}
+      </ChartSection>
+
+      <ChartSection
         id="per-subject"
         title="How much data each subject has"
         description="The spread across subjects: each box runs from the 25th to the 75th percentile with the median marked inside, and the whiskers reach the 5th and 95th percentiles. The stats files publish no minimum or maximum, by design. Logarithmic axis."
@@ -220,41 +258,36 @@ export default function DatasetStatistics(): React.JSX.Element {
       </ChartSection>
 
       <ChartSection
-        id="calendar-years"
-        title="Data over calendar years"
-        description="Measurements (or subjects with data) in each calendar year. Many datasets shift dates to de-identify them, so these are often not real years: MIMIC-IV's lie in the 22nd century, for example. Birth records reach back decades. A year that isn't reported, because it has no data or was suppressed, has no column. Each chart has its own axes."
+        id="pace"
+        title="Pace of measurements"
+        description={
+          <>
+            <strong>Measurements per day of record</strong>: the mean number of measurements per subject
+            divided by the mean record span in days. This is a ratio of two averages, not the rate of a
+            typical subject. A record spans a subject&apos;s first to last event, including a birth record
+            where there is one, so for datasets that record births the span covers most of a lifetime and the
+            ratio is low. Logarithmic axis. <strong>Measurements per event</strong>: all measurements divided
+            by all events (distinct subject and time pairs), an exact figure for the whole dataset. Largest
+            first.
+          </>
+        }
         controls={
           <MetricToggle
-            label="Yearly measure"
-            options={YEAR_METRICS}
-            value={yearMetric}
-            onChange={setYearMetric}
+            label="Pace measure"
+            options={PACE_METRICS}
+            value={paceMetric}
+            onChange={setPaceMetric}
           />
         }
-        skipped={years.skipped}
-        table={years.table}
+        skipped={pace.skipped}
+        table={pace.table}
       >
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))',
-            gap: 2,
-          }}
-        >
-          {years.panels.map(panel => (
-            <div key={panel.label}>
-              <Typography variant="subtitle2" component="h3" sx={{ m: 0 }}>
-                {panel.label}
-              </Typography>
-              <Plot figure={panel.figure} label={`${yearMetric} per calendar year in ${panel.label}`} />
-              {panel.note && (
-                <Typography variant="caption" color="text.secondary" component="p" sx={{ m: 0 }}>
-                  {panel.note}
-                </Typography>
-              )}
-            </div>
-          ))}
-        </Box>
+        {pace.figure && (
+          <Plot
+            figure={pace.figure}
+            label={`${(PACE_METRICS.find(m => m.key === paceMetric) as { full: string }).full}, one bar per dataset`}
+          />
+        )}
       </ChartSection>
 
       <ChartSection
@@ -267,30 +300,79 @@ export default function DatasetStatistics(): React.JSX.Element {
       </ChartSection>
 
       <ChartSection
-        id="code-concentration"
-        title="Code concentration"
-        description="The share of all measurements whose code is among the dataset's 10, 100 and 1,000 most frequent codes. Dots far to the right mean that a few codes, often high-frequency vitals, make up most of the data."
-        skipped={concentration.skipped}
-        table={concentration.table}
+        id="code-coverage"
+        title="Coverage of the most common codes"
+        description="The share of all measurements (up) that a dataset's most frequent codes cover, against how many of them are taken (across, logarithmic). A curve that climbs steeply means that a few codes, often high-frequency vitals, make up most of the data; one that climbs slowly means the data is spread over many codes. Each curve ends where all of the dataset's codes cover 100%. The points are the published figures (the shares of the top 10, 100 and 1,000 codes, and how many codes cover 50%, 90% and 99%), joined by lines. Choose the dataset to highlight; the others stay grey for comparison."
+        controls={
+          codeCoverage.highlighted && (
+            <DatasetSelect
+              label="Highlight"
+              options={codeCoverage.options}
+              value={codeCoverage.highlighted}
+              onChange={setHighlight}
+            />
+          )
+        }
+        skipped={codeCoverage.skipped}
+        table={codeCoverage.table}
       >
-        {concentration.figure && (
+        {codeCoverage.figure && (
           <Plot
-            figure={concentration.figure}
-            label="Share of measurements in the most frequent codes, dot plot"
+            figure={codeCoverage.figure}
+            label={`Share of measurements covered by the most frequent codes, one curve per dataset, ${codeCoverage.highlighted} highlighted`}
           />
+        )}
+      </ChartSection>
+
+      <ChartSection
+        id="vocabularies-used"
+        title="Vocabularies used"
+        description="The share of each dataset's measurements whose code has a parent code in each vocabulary, through the parent codes in its code metadata. A code can map into several vocabularies, so a row's shares can add up to more than the share of measurements that are mapped at all (next chart). Vocabularies used by the most datasets come first. Darker cells are larger shares, shaded on a logarithmic scale so that small vocabularies still show; a blank grey cell means the dataset doesn't use that vocabulary."
+        skipped={vocabularies.skipped}
+      >
+        {vocabularies.figure && (
+          <>
+            <Plot
+              figure={vocabularies.figure}
+              minWidth={vocabularies.minWidth}
+              label="Share of measurements per vocabulary and dataset, heatmap"
+            />
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              component="p"
+              sx={{ mt: 1, mb: 0, display: { xs: 'block', md: 'none' } }}
+            >
+              Swipe sideways to see every vocabulary.
+            </Typography>
+            {vocabularies.anyRecognized && (
+              <Typography variant="body2" color="text.secondary" component="p" sx={{ mt: 1, mb: 0 }}>
+                {OMOP_MARK} A standard OMOP CDM vocabulary, as recognised by <code>meds_summary_stats</code>.
+              </Typography>
+            )}
+          </>
         )}
       </ChartSection>
 
       <ChartSection
         id="vocabularies"
         title="Mapping to standard vocabularies"
-        description="Where the code metadata links codes to parent codes in standard vocabularies such as LOINC or ICD-10: the share of measurements whose code is mapped, and the share of the distinct codes in the data that are. The table lists the vocabularies."
+        description="Where the code metadata links codes to parent codes in standard vocabularies such as LOINC or ICD-10: the share of measurements whose code is mapped to any vocabulary, and the share of the distinct codes in the data that are. Unlike the shares above, each measurement and code counts once."
         skipped={ontology.skipped}
         table={ontology.table}
       >
         {ontology.figure && (
           <Plot figure={ontology.figure} label="Vocabulary mapping coverage, grouped bars" />
         )}
+      </ChartSection>
+
+      <ChartSection
+        id="health-check"
+        title="Health check"
+        description={`Invariants every MEDS dataset should meet, from each stats file. A check mark means the check passes, a warning sign that it needs a look, and a question mark that the stats file doesn't report it. Codes with a description pass at ${formatPercent(DESCRIPTION_THRESHOLD)} or more. The versions, and codes listed in codes.parquet but not used, are information without a verdict.`}
+        skipped={health.skipped}
+      >
+        <HealthTable model={health} />
       </ChartSection>
     </div>
   );

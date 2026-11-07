@@ -40,10 +40,18 @@ const demo = statsEntry('Demo', {
   path: 'tests/demo_summary_stats.json',
   variant: 'demo',
   stats: etlStats(100, {
-    byYear: { years: [], measurements: [], subjects: [], suppressed: { cells: 12, measurements: 50 } },
-    splits: {
-      cells: [{ split: 'train', subjects: 80, measurements: 800 }],
-      suppressed: { cells: 2, measurements: 200 },
+    codeMetadata: {
+      present: true,
+      codes: 50,
+      withDescription: 20,
+      dataCodesMissing: 0,
+      metadataCodesUnused: 0,
+    },
+    ontology: {
+      measurementsMapped: 0.6,
+      codesWithParents: 0.25,
+      vocabularies: [{ name: 'LOINC', measurements: 5000, recognized: true }],
+      suppressed: { cells: 2, measurements: 9 },
     },
   }),
 });
@@ -51,12 +59,8 @@ const big = statsEntry('Big', {
   githubRepo: 'org/Big',
   stats: etlStats(5000, {
     ontology: null,
-    byYear: {
-      years: [2100, 2102],
-      measurements: [1000, 3000],
-      subjects: [100, 300],
-      suppressed: { cells: 3, measurements: 9 },
-    },
+    checks: { emptyCodes: null, nullCodes: null, nullSubjectIds: null, nanValues: 0, infiniteValues: 0 },
+    perSubject: { ...etlStats(5000).perSubject, spanDays: { suppressed: true, n: 12 } },
   }),
 });
 const future = statsEntry('Future', {
@@ -114,29 +118,82 @@ describe('DatasetStatistics', () => {
       'https://github.com/org/AUMCdb_MEDS'
     );
 
+    // The sections, in order; the calendar-year, split and code-concentration charts are gone.
+    expect(screen.getAllByRole('heading', { level: 2 }).map(heading => heading.textContent)).toEqual([
+      'Datasets and their stats files',
+      'Dataset size',
+      'Depth vs. breadth',
+      'How much data each subject has',
+      'Pace of measurements',
+      'Record coverage',
+      'Coverage of the most common codes',
+      'Vocabularies used',
+      'Mapping to standard vocabularies',
+      'Health check',
+    ]);
+
     expect(figuresIn('Dataset size')[0].data[0].y).toEqual(['Big', 'Demo']);
-    expect(figuresIn('How much data each subject has')[0].data[0].y).toEqual(['Big', 'Demo']);
-    expect(figuresIn('Data over calendar years')).toHaveLength(1);
+    expect(figuresIn('Depth vs. breadth')[0].data[0].text).toEqual(['Big', 'Demo']);
     expect(
-      within(sectionOf('Data over calendar years')).getByText(/all 12 years had fewer than 20 subjects/)
-    ).toBeInTheDocument();
-    expect(
-      within(sectionOf('Data over calendar years')).getByText(
-        '3 more years suppressed (fewer than 20 subjects each).'
+      within(sectionOf('Depth vs. breadth')).getByText(
+        'Bubble area is proportional to the number of unique codes.'
       )
     ).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { level: 2, name: 'Train, tuning and held-out splits' })).toBeNull();
+    expect(within(sectionOf('Depth vs. breadth')).queryByText(/Left unlabelled/)).not.toBeInTheDocument();
+    expect(figuresIn('How much data each subject has')[0].data[0].y).toEqual(['Big', 'Demo']);
+    // The pace per day of record needs the mean record span, which Big's file suppresses.
+    expect(figuresIn('Pace of measurements')[0].data[0].y).toEqual(['Demo']);
+    expect(
+      within(sectionOf('Pace of measurements')).getByText(/per-subject record span summary rests on/)
+    ).toBeInTheDocument();
     expect(figuresIn('Record coverage')[0].data[0].y).toEqual(['Big', 'Demo']);
-    expect(figuresIn('Code concentration')).toHaveLength(1);
+    // The largest dataset is highlighted; the rest are grey.
+    expect(figuresIn('Coverage of the most common codes')[0].data.map(trace => trace.name)).toEqual([
+      'Other datasets',
+      'Big',
+    ]);
+    expect(within(sectionOf('Coverage of the most common codes')).getByLabelText('Highlight')).toHaveValue(
+      'Big'
+    );
+    expect(figuresIn('Vocabularies used')[0].data[0].y).toEqual(['Demo']);
+    expect(
+      within(sectionOf('Vocabularies used')).getByText(/A standard OMOP CDM vocabulary/)
+    ).toBeInTheDocument();
+    expect(
+      within(sectionOf('Vocabularies used')).getByText(/2 more vocabularies are suppressed/)
+    ).toBeInTheDocument();
     expect(figuresIn('Mapping to standard vocabularies')[0].data[0].y).toEqual(['Demo']);
     expect(
       within(sectionOf('Mapping to standard vocabularies')).getByText(/maps no codes to parent codes/)
     ).toBeInTheDocument();
     expect(within(sectionOf('Dataset size')).getByText('Future')).toBeInTheDocument();
 
-    // Charts have their numbers as a table, except the record-coverage heatmap, which prints every number.
-    expect(within(sectionOf('Dataset size')).getByText('Show the numbers')).toBeInTheDocument();
-    expect(within(sectionOf('Record coverage')).queryByText('Show the numbers')).not.toBeInTheDocument();
+    // Charts have their numbers as a table, except those that print every number: the heatmaps and the
+    // health check.
+    for (const heading of [
+      'Dataset size',
+      'Depth vs. breadth',
+      'How much data each subject has',
+      'Pace of measurements',
+      'Coverage of the most common codes',
+      'Mapping to standard vocabularies',
+    ]) {
+      expect(within(sectionOf(heading)).getByText('Show the numbers')).toBeInTheDocument();
+    }
+    for (const heading of ['Record coverage', 'Vocabularies used', 'Health check']) {
+      expect(within(sectionOf(heading)).queryByText('Show the numbers')).not.toBeInTheDocument();
+    }
+
+    // The health check: one row per readable dataset, each status an icon with a name plus text.
+    const health = within(sectionOf('Health check'));
+    const scorecard = health.getByRole('table', { name: 'Health check of each dataset' });
+    expect(within(scorecard).getAllByRole('row')).toHaveLength(3);
+    expect(within(scorecard).getByRole('row', { name: /^Demo/ })).toHaveTextContent('40.0%');
+    expect(within(scorecard).getAllByRole('img', { name: 'Warning' })).toHaveLength(1);
+    expect(within(scorecard).getAllByRole('img', { name: 'Not known' })).toHaveLength(1);
+    expect(within(scorecard).getAllByRole('img', { name: 'Passes' })).toHaveLength(6);
+    expect(health.getByText(/It passes at 90% or more/)).toBeInTheDocument();
+    expect(health.getByText('Future')).toBeInTheDocument();
 
     // Dataset size: events, measurements and unique codes side by side, largest measurements first.
     expect(figuresIn('Dataset size')[0].data.map(trace => trace.name)).toEqual([
@@ -183,23 +240,46 @@ describe('DatasetStatistics', () => {
         name: 'Record span',
       })
     );
-    expect(figuresIn('How much data each subject has')[0].data[0].median).toEqual([90, 90]);
+    // Big's file suppresses its record-span quantiles.
+    expect(figuresIn('How much data each subject has')[0].data[0].median).toEqual([90]);
 
     fireEvent.click(
-      within(screen.getByRole('group', { name: 'Yearly measure' })).getByRole('button', { name: 'Subjects' })
+      within(screen.getByRole('group', { name: 'Pace measure' })).getByRole('button', { name: 'Per event' })
     );
-    expect(figuresIn('Data over calendar years')[0].data[0].y).toEqual([100, 300]);
+    expect(figuresIn('Pace of measurements')[0].data[0].y).toEqual(['Big', 'Demo']);
+    expect(within(sectionOf('Pace of measurements')).getByRole('img')).toHaveAccessibleName(
+      'Measurements per event, one bar per dataset'
+    );
+
+    fireEvent.change(screen.getByLabelText('Highlight'), { target: { value: 'Demo' } });
+    expect(figuresIn('Coverage of the most common codes')[0].data.map(trace => trace.name)).toEqual([
+      'Other datasets',
+      'Demo',
+    ]);
 
     fireEvent.click(screen.getByLabelText(/Include demo datasets/));
     expect(figuresIn('Dataset size')[0].data[0].y).toEqual(['Big']);
     expect(screen.queryByText('demo_summary_stats.json')).not.toBeInTheDocument();
     expect(figuresIn('Mapping to standard vocabularies')).toHaveLength(0);
+    // The highlighted demo dataset is gone, so the largest remaining one is highlighted.
+    expect(screen.getByLabelText('Highlight')).toHaveValue('Big');
   });
 
   it('adapts its notes to what the files state', () => {
+    const local = statsEntry('Other', {
+      minCellSize: 10,
+      stats: etlStats(1000, {
+        ontology: {
+          measurementsMapped: 0.1,
+          codesWithParents: 0.1,
+          vocabularies: [{ name: 'LOCAL', measurements: 50, recognized: false }],
+          suppressed: null,
+        },
+      }),
+    });
     mockUsePluginData.mockReturnValue({
       updatedAt: null,
-      datasets: [big, statsEntry('Other', { minCellSize: 10 })],
+      datasets: [big, local],
       reposWithoutStats: [{ githubRepo: 'org/Solo', name: 'Solo' }],
     });
     render(<DatasetStatistics />);
@@ -207,6 +287,18 @@ describe('DatasetStatistics', () => {
     expect(screen.getByText(/too few subjects are suppressed/)).toBeInTheDocument();
     expect(screen.queryByLabelText(/Include demo datasets/)).not.toBeInTheDocument();
     expect(screen.getByText(/No stats file yet in this ETL repository/)).toBeInTheDocument();
+    // No vocabulary is a recognised OMOP one, so none is marked.
+    expect(figuresIn('Vocabularies used')).toHaveLength(1);
+    expect(screen.queryByText(/A standard OMOP CDM vocabulary/)).not.toBeInTheDocument();
+  });
+
+  it('leaves off bubble labels that would overlap, and says which', () => {
+    const crowd = Array.from({ length: 40 }, (_, i) => statsEntry(`Dataset ${i}`));
+    mockUsePluginData.mockReturnValue({ updatedAt: null, datasets: crowd, reposWithoutStats: [] });
+    render(<DatasetStatistics />);
+    expect(
+      within(sectionOf('Depth vs. breadth')).getByText(/Left unlabelled to avoid overlaps/)
+    ).toBeInTheDocument();
   });
 
   it('says so when no stats were collected', () => {
@@ -224,5 +316,7 @@ describe('DatasetStatistics', () => {
     render(<DatasetStatistics />);
     expect(screen.queryAllByTestId('plot')).toHaveLength(0);
     expect(within(sectionOf('Dataset size')).getByText('Future')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Highlight')).not.toBeInTheDocument();
+    expect(within(sectionOf('Health check')).getAllByRole('row')).toHaveLength(1);
   });
 });

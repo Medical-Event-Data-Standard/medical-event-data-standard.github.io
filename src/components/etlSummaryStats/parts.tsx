@@ -1,25 +1,186 @@
 import React from 'react';
-import { Box, Link, Paper, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Box, Link, Paper, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import WarningIcon from '@mui/icons-material/Warning';
 import PlotlyWrapper from '@site/src/components/MEDS-DEV/plots/PlotlyWrapper';
-import type { Figure, Skipped, TableView } from '@site/src/lib/etlSummaryStats/charts';
+import {
+  BUBBLE_FILL,
+  type BubbleChartModel,
+  type CheckCell,
+  type CheckStatus,
+  type Figure,
+  HEALTH_CHECKS,
+  type HealthCheckModel,
+  INK,
+  STATUS_COLORS,
+  type Skipped,
+  type TableView,
+} from '@site/src/lib/etlSummaryStats/charts';
 
 // Building blocks of the dataset statistics page: a chart section, its Plotly figure, the note listing the
 // datasets a chart leaves out, and the table view every chart has.
 
 const PLOT_CONFIG = { displayModeBar: false, responsive: true };
 
-/** A Plotly figure that fills its container's width. Plotly itself is only loaded in the browser. */
-export function Plot({ figure, label }: { figure: Figure; label: string }): React.JSX.Element {
+/**
+ * A Plotly figure that fills its container's width. Plotly itself is only loaded in the browser. With `minWidth`, a
+ * narrower screen scrolls the figure sideways rather than squeezing it.
+ */
+export function Plot({
+  figure,
+  label,
+  minWidth,
+}: {
+  figure: Figure;
+  label: string;
+  minWidth?: number;
+}): React.JSX.Element {
   return (
-    <Box role="img" aria-label={label} sx={{ minHeight: figure.layout.height }}>
-      <PlotlyWrapper
-        data={figure.data}
-        layout={figure.layout}
-        config={PLOT_CONFIG}
-        useResizeHandler
-        style={{ width: '100%', height: figure.layout.height }}
-      />
+    <Box sx={minWidth ? { overflowX: 'auto' } : undefined}>
+      <Box role="img" aria-label={label} sx={{ minHeight: figure.layout.height, minWidth }}>
+        <PlotlyWrapper
+          data={figure.data}
+          layout={figure.layout}
+          config={PLOT_CONFIG}
+          useResizeHandler
+          style={{ width: '100%', height: figure.layout.height }}
+        />
+      </Box>
     </Box>
+  );
+}
+
+/** Below a bubble chart: reference bubbles for its size scale, how size maps to codes, and unlabelled bubbles. */
+export function BubbleKey({
+  model,
+}: {
+  model: Pick<BubbleChartModel, 'sizeKey' | 'sizeNote' | 'unlabelled'>;
+}): React.JSX.Element {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        columnGap: 2,
+        rowGap: 1,
+        mt: 1,
+        color: 'text.secondary',
+        fontSize: '0.8125rem',
+      }}
+    >
+      {model.sizeKey.map(({ label, diameter }) => (
+        <Box key={label} component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
+          <svg width={diameter} height={diameter} aria-hidden="true">
+            <circle cx={diameter / 2} cy={diameter / 2} r={diameter / 2 - 0.75} fill={BUBBLE_FILL} />
+          </svg>
+          {label}
+        </Box>
+      ))}
+      <span>{model.sizeNote}</span>
+      {model.unlabelled.length > 0 && (
+        <span>
+          Left unlabelled to avoid overlaps: {model.unlabelled.join(', ')}. Hover over a bubble, or see the
+          numbers below.
+        </span>
+      )}
+    </Box>
+  );
+}
+
+/** A drop-down choosing one of the datasets, e.g. the one a chart highlights. */
+export function DatasetSelect({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: string[];
+  value: string;
+  onChange: (value: string) => void;
+}): React.JSX.Element {
+  return (
+    <TextField
+      select
+      size="small"
+      label={label}
+      value={value}
+      onChange={event => onChange(event.target.value)}
+      slotProps={{ select: { native: true } }}
+      sx={{ mb: 1.5, minWidth: 220 }}
+    >
+      {options.map(option => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </TextField>
+  );
+}
+
+const STATUS_ICONS: Record<
+  Exclude<CheckStatus, 'info'>,
+  { Icon: typeof CheckCircleIcon; color: string; title: string }
+> = {
+  pass: { Icon: CheckCircleIcon, color: STATUS_COLORS.pass, title: 'Passes' },
+  warn: { Icon: WarningIcon, color: STATUS_COLORS.warn, title: 'Warning' },
+  unknown: { Icon: HelpOutlineIcon, color: INK.muted, title: 'Not known' },
+};
+
+/** One scorecard cell: an icon naming its status (none for information) and its text, never colour alone. */
+function CheckCellView({ cell }: { cell: CheckCell }): React.JSX.Element {
+  const icon = cell.status === 'info' ? null : STATUS_ICONS[cell.status];
+  return (
+    <Box
+      component="span"
+      sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, verticalAlign: 'middle' }}
+    >
+      {icon && <icon.Icon titleAccess={icon.title} sx={{ fontSize: 18, color: icon.color }} />}
+      {cell.text}
+    </Box>
+  );
+}
+
+/** The health-check scorecard: one row per dataset, one column per check, then what each check means. */
+export function HealthTable({ model }: { model: HealthCheckModel }): React.JSX.Element {
+  return (
+    <>
+      <Box sx={COMPACT_TABLE}>
+        <table aria-label="Health check of each dataset">
+          <thead>
+            <tr>
+              <th scope="col">Dataset</th>
+              {HEALTH_CHECKS.map(check => (
+                <th key={check.key} scope="col" style={{ whiteSpace: 'normal', minWidth: '7.5em' }}>
+                  {check.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {model.rows.map(row => (
+              <tr key={row.label}>
+                <th scope="row">{row.label}</th>
+                {HEALTH_CHECKS.map(check => (
+                  <td key={check.key}>
+                    <CheckCellView cell={row.cells[check.key]} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Box>
+      <Box component="ul" sx={{ mt: 1.5, mb: 0, pl: 3, color: 'text.secondary', fontSize: '0.875rem' }}>
+        {HEALTH_CHECKS.map(check => (
+          <li key={check.key}>
+            <strong>{check.label}</strong>: {check.help}
+          </li>
+        ))}
+      </Box>
+    </>
   );
 }
 

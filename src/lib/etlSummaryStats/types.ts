@@ -3,7 +3,9 @@
 //
 // The shapes below are a compact subset of a `meds_summary_stats` document
 // (https://github.com/Medical-Event-Data-Standard/meds_summary_stats): only the numbers the page charts. Digests,
-// `layout`, `config` (apart from the suppression floor) and per-vocabulary moments are deliberately dropped.
+// `time` (calendar years, which de-identified datasets shift), `splits`, `layout`, `config` (apart from the
+// suppression floor) and per-vocabulary moments are deliberately dropped, since this is global data that every page
+// of the site loads.
 
 /** Name of the build-time plugin that collects the ETLs' published `meds_summary_stats` files. */
 export const ETL_SUMMARY_STATS_PLUGIN = 'etl-summary-stats';
@@ -22,10 +24,20 @@ export type StatsVariant = 'full' | 'demo';
  * withholds the quantiles below a minimum number of values, in which case only `n` is published.
  */
 export type Distribution =
-  | { suppressed: false; n: number; p5: number; p25: number; p50: number; p75: number; p95: number }
+  | {
+      suppressed: false;
+      n: number;
+      /** Null if the file doesn't state it. */
+      mean: number | null;
+      p5: number;
+      p25: number;
+      p50: number;
+      p75: number;
+      p95: number;
+    }
   | { suppressed: true; n: number };
 
-/** A rollup of keyed cells (years, splits, vocabularies) that were withheld because too few subjects backed each. */
+/** A rollup of keyed cells (here: vocabularies) that were withheld because too few subjects backed each. */
 export interface SuppressedRollup {
   /** How many cells were withheld, where published. */
   cells: number | null;
@@ -33,10 +45,14 @@ export interface SuppressedRollup {
   measurements: number | null;
 }
 
-export interface SplitCell {
-  split: string;
-  subjects: number;
-  measurements: number;
+/** One vocabulary that codes reach through `parent_codes` in the code metadata. */
+export interface VocabularyCell {
+  /** A published terminology's name, such as LOINC; never one of the dataset's own codes. */
+  name: string;
+  /** Measurements whose code has a parent in this vocabulary; null if the file doesn't state it. */
+  measurements: number | null;
+  /** Whether `meds_summary_stats` recognises the name as an OMOP CDM `vocabulary_id`; null if not stated. */
+  recognized: boolean | null;
 }
 
 export interface EtlStats {
@@ -57,28 +73,47 @@ export interface EtlStats {
     uniqueCodes: Distribution | null;
     spanDays: Distribution | null;
   };
-  /**
-   * Measurements and subjects per reported calendar year, as parallel arrays sorted by year (which keeps the
-   * global data, loaded on every page, small); null if the file has no usable `time.by_year`.
-   */
-  byYear: {
-    years: number[];
-    measurements: number[];
-    subjects: number[];
-    suppressed: SuppressedRollup | null;
+  /** Counts that are zero in a valid MEDS dataset (`counts.quality`, and the non-finite numeric values). */
+  checks: {
+    emptyCodes: number | null;
+    nullCodes: number | null;
+    nullSubjectIds: number | null;
+    nanValues: number | null;
+    infiniteValues: number | null;
+  };
+  /** What `metadata/codes.parquet` holds; null if the file doesn't report on it. */
+  codeMetadata: {
+    /** False if the dataset has no `metadata/codes.parquet`. */
+    present: boolean;
+    codes: number | null;
+    /** Null if codes.parquet has no description column. */
+    withDescription: number | null;
+    /** Codes in the data that codes.parquet lacks (MEDS requires none). */
+    dataCodesMissing: number | null;
+    /** Codes in codes.parquet that never occur in the data. */
+    metadataCodesUnused: number | null;
   } | null;
-  /** Subjects and measurements per split; null if the dataset has no splits file or the block is unusable. */
-  splits: { cells: SplitCell[]; suppressed: SuppressedRollup | null } | null;
-  /** Share of all measurements whose code is among the 10, 100 and 1000 most frequent codes. */
-  concentration: { top10: number | null; top100: number | null; top1000: number | null } | null;
+  /**
+   * How concentrated the data is in its most frequent codes: the share of all measurements whose code is among
+   * the 10, 100 and 1000 most frequent, and how many of the most frequent codes it takes to cover 50%, 90% and 99%.
+   */
+  concentration: {
+    top10: number | null;
+    top100: number | null;
+    top1000: number | null;
+    codesFor50: number | null;
+    codesFor90: number | null;
+    codesFor99: number | null;
+  } | null;
   /** Mapping of codes to external vocabularies via `parent_codes`; null if the code metadata has none. */
   ontology: {
     /** Share of measurements whose code has a parent code in some vocabulary. */
     measurementsMapped: number | null;
     /** Share of the codes observed in the data that have a parent code. */
     codesWithParents: number | null;
-    /** Names of the reported vocabularies (published terminologies such as LOINC; never dataset codes). */
-    vocabularies: string[];
+    /** The reported vocabularies, sorted by name. */
+    vocabularies: VocabularyCell[];
+    /** Vocabularies withheld because fewer than the suppression floor of subjects reach each. */
     suppressed: SuppressedRollup | null;
   } | null;
 }
