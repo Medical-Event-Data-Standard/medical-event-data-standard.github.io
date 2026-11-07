@@ -1,10 +1,10 @@
-// Parses, sorts and lays out the main MEDS papers of static/data/meds_papers.yaml for the timeline on the homepage
-// (src/components/HomepageTimeline). The homepage is rendered at build time, so the errors thrown below for
-// malformed entries fail the build instead of silently dropping a paper.
+// Parses, sorts and lays out the main MEDS papers of static/data/meds_papers.yaml for the timeline on the "Welcome
+// to MEDS" page (src/components/MedsPapersTimeline). The page is rendered at build time, so the errors thrown below
+// for malformed entries fail the build instead of silently dropping a paper.
 
 /** One of the main MEDS papers. The field names follow the seeds of static/data/papers.yaml where they overlap. */
 export interface MedsPaper {
-  /** Short name shown on the timeline, e.g. "ACES". */
+  /** Short name shown on the timeline, e.g. "MEDS-DEV". */
   label: string;
   /** Full title, as published. */
   title: string;
@@ -130,7 +130,7 @@ export function paperDateTime({ year, month }: Pick<MedsPaper, 'year' | 'month'>
 /** A paper's place on the timeline. */
 export interface TimelineEntry {
   paper: MedsPaper;
-  /** Side of the axis the paper's card is on in the horizontal (desktop) timeline; alternates to avoid overlap. */
+  /** Side of the axis the paper's card is on in the horizontal (wide) timeline; alternates to avoid overlap. */
   side: 'above' | 'below';
   /** CSS `grid-column` of the paper's card in the horizontal timeline. */
   gridColumn: string;

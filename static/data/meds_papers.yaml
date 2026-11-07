@@ -1,10 +1,12 @@
-# The main MEDS papers, shown on a timeline on the homepage (src/components/HomepageTimeline).
+# The main MEDS papers, shown on a timeline on the "Welcome to MEDS" page (docs/intro_pages/1_intro.mdx), drawn by
+# src/components/MedsPapersTimeline.
 #
 # List the papers on the standard itself and on its core tools and benchmark once they are published at a venue: a
-# journal, conference or workshop. Papers that are only preprints (e.g. on arXiv) are left out until then. The
-# homepage sorts the papers by date, so they can be listed in any order. Each paper has:
+# journal, conference or workshop. Papers that are only preprints (e.g. on arXiv) are left out until then. ACES
+# (ICLR 2025) is left out on purpose. The timeline sorts the papers by date, so they can be listed in any order.
+# Each paper has:
 #
-#   label:   short name shown on the timeline, e.g. 'ACES'
+#   label:   short name shown on the timeline, e.g. 'MEDS-DEV'
 #   title:   full title, as published
 #   venue:   where it was published
 #   year:    when it was published: for a journal, the date of publication; for a conference or workshop, the
@@ -47,15 +49,6 @@ papers:
     url: 'https://openreview.net/forum?id=DExp3tRRel'
     summary: 'A community benchmark for reproducible, comparable evaluation of models across MEDS datasets and tasks.'
     id: '7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf'
-
-  - label: 'ACES'
-    title: 'ACES: Automatic Cohort Extraction System for Event-Stream Datasets'
-    venue: 'ICLR 2025'
-    year: 2025
-    month: 4
-    url: 'https://proceedings.iclr.cc/paper_files/paper/2025/hash/d8542126cd3e0dd6c0a44e0aa1957072-Abstract-Conference.html'
-    summary: 'A configuration language and library to define prediction tasks and extract their cohorts reproducibly.'
-    id: '27689dd149c473d24cdf22124c2a29d187c960b8'
 
   - label: 'MEDS tutorial'
     title: 'MEDS: Building Models and Tools in a Reproducible Health AI Ecosystem'

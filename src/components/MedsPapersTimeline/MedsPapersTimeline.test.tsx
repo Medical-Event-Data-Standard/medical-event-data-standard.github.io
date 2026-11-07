@@ -6,7 +6,7 @@ import { parse } from 'yaml';
 import '@testing-library/jest-dom';
 import { render, screen, within } from '@testing-library/react';
 
-import HomepageTimeline from '.';
+import MedsPapersTimeline from '.';
 import { formatPaperDate, parseMedsPapers, sortPapersByDate } from '@site/src/lib/medsPapers/timeline';
 
 // Jest cannot load CSS: give each class its own name, so the tests can check which classes are applied.
@@ -21,11 +21,14 @@ const medsPapersYaml: unknown = parse(fs.readFileSync(yamlPath, 'utf8'));
 const listItems = () =>
   within(screen.getByRole('list', { name: 'Key MEDS papers, oldest first' })).getAllByRole('listitem');
 
-describe('HomepageTimeline', () => {
+describe('MedsPapersTimeline', () => {
   it('lists every paper of static/data/meds_papers.yaml in date order, linking to the paper', () => {
-    render(<HomepageTimeline data={medsPapersYaml} />);
+    const { container } = render(<MedsPapersTimeline data={medsPapersYaml} />);
 
-    expect(screen.getByRole('heading', { level: 2, name: 'Key MEDS papers' })).toBeInTheDocument();
+    // The page around the timeline gives it its heading, so it appears in the page's table of contents.
+    expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
+    // The layout follows the width of this wrapper, the container its styles query.
+    expect(container.firstElementChild).toHaveClass('wrapper');
     const expected = sortPapersByDate(parseMedsPapers(medsPapersYaml));
     const items = listItems();
     expect(items).toHaveLength(expected.length);
@@ -53,12 +56,14 @@ describe('HomepageTimeline', () => {
       venue: 'A Venue',
       year,
       month,
-      url: `https://example.org/${label}`,
+      url: `https://example.org/${label.toLowerCase().replace(/ /g, '-')}`,
       summary: `What ${label} is.`,
     });
     const { container } = render(
-      <HomepageTimeline
-        data={{ papers: [paper('ACES', 2025, 4), paper('MEDS', 2024, 5), paper('MEDS-Torch', 2024, 12)] }}
+      <MedsPapersTimeline
+        data={{
+          papers: [paper('MEDS tutorial', 2025, 8), paper('MEDS', 2024, 5), paper('MEDS-Torch', 2024, 12)],
+        }}
       />
     );
 
@@ -66,17 +71,17 @@ describe('HomepageTimeline', () => {
     expect(items.map(item => within(item).getByRole('heading').textContent)).toEqual([
       'MEDS',
       'MEDS-Torch',
-      'ACES',
+      'MEDS tutorial',
     ]);
     expect(items.map(item => within(item).getByRole('link').getAttribute('href'))).toEqual([
-      'https://example.org/MEDS',
-      'https://example.org/MEDS-Torch',
-      'https://example.org/ACES',
+      'https://example.org/meds',
+      'https://example.org/meds-torch',
+      'https://example.org/meds-tutorial',
     ]);
     expect(items.map(item => item.querySelector('time')?.getAttribute('datetime'))).toEqual([
       '2024-05',
       '2024-12',
-      '2025-04',
+      '2025-08',
     ]);
     expect(items.map(item => item.className)).toEqual(['entry above', 'entry below', 'entry above']);
     expect(items.map(item => item.style.gridColumn)).toEqual(['1 / span 4', '3 / span 4', '5 / span 4']);
@@ -91,7 +96,7 @@ describe('HomepageTimeline', () => {
   it('fails, naming the paper, when the data is invalid', () => {
     // React logs the error thrown while rendering; keep it out of the test output.
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => render(<HomepageTimeline data={{ papers: [{ label: 'MEDS' }] }} />)).toThrow(
+    expect(() => render(<MedsPapersTimeline data={{ papers: [{ label: 'MEDS' }] }} />)).toThrow(
       'Invalid entry in static/data/meds_papers.yaml at papers[0]'
     );
     consoleError.mockRestore();

@@ -10,8 +10,9 @@ import {
 } from '@site/src/lib/medsPapers/timeline';
 import styles from './styles.module.css';
 
-// A timeline of the main MEDS papers (static/data/meds_papers.yaml), oldest first. On wide screens the papers are
-// evenly spaced markers on a horizontal axis, with their cards alternately above and below it; on narrow screens
+// A timeline of the main MEDS papers (static/data/meds_papers.yaml), oldest first, shown on the "Welcome to MEDS"
+// page (docs/intro_pages/1_intro.mdx), which gives it its heading. Where the timeline has room, the papers are
+// evenly spaced markers on a horizontal axis, with their cards alternately above and below it; where it is narrow,
 // the axis turns vertical, with the cards stacked beside it. Either way the papers are an ordered list, so screen
 // readers and keyboards meet them in date order. The year labels and markers only repeat the cards' dates, so
 // they are hidden from assistive technology.
@@ -48,25 +49,20 @@ function PaperCard({ entry }: { entry: TimelineEntry }): React.JSX.Element {
   );
 }
 
-export default function HomepageTimeline({ data }: { data: unknown }): React.JSX.Element {
+export default function MedsPapersTimeline({ data }: { data: unknown }): React.JSX.Element {
   const entries = layoutTimeline(parseMedsPapers(data));
   return (
-    <section className={styles.section} aria-labelledby="meds-papers-heading">
-      <div className="container">
-        <h2 id="meds-papers-heading" className={styles.heading}>
-          Key MEDS papers
-        </h2>
-        <p className={styles.intro}>Peer-reviewed papers on the MEDS standard and its core tools.</p>
-        <ol
-          className={styles.timeline}
-          aria-label="Key MEDS papers, oldest first"
-          style={{ '--timeline-columns': timelineColumnCount(entries.length) } as React.CSSProperties}
-        >
-          {entries.map(entry => (
-            <PaperCard key={entry.paper.url} entry={entry} />
-          ))}
-        </ol>
-      </div>
-    </section>
+    // The wrapper is the container the layout queries: the timeline adapts to its own width, not the viewport's.
+    <div className={styles.wrapper}>
+      <ol
+        className={styles.timeline}
+        aria-label="Key MEDS papers, oldest first"
+        style={{ '--timeline-columns': timelineColumnCount(entries.length) } as React.CSSProperties}
+      >
+        {entries.map(entry => (
+          <PaperCard key={entry.paper.url} entry={entry} />
+        ))}
+      </ol>
+    </div>
   );
 }
