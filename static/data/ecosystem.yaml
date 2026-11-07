@@ -1,9 +1,18 @@
-# The packages listed on the ecosystem page (https://medical-event-data-standard.github.io/docs/intro_pages/ecosystem).
+# The packages listed on the "All tools" ecosystem page
+# (https://medical-event-data-standard.github.io/docs/intro_pages/ecosystem).
 #
-# Each category's `stage` places its packages in the "Which tool do I use for what?" flowchart at the top of that
-# page; a subcategory without a `stage` uses its parent's. The stages are: convert, explore, preprocess, task,
-# model, evaluate, benchmark (the steps of the MEDS workflow) and general (useful at any step). They are described
-# in src/lib/ecosystem/workflow.ts. The packages of a category with no stage are listed under "Other tools".
+# Each package has a `name` and a `description`: one plain sentence, ending in a full stop and at most about 20
+# words, saying what it does. For a dataset ETL, say which dataset it converts and what kind of data that is. The
+# description is shown under the name on the package's card, and the search box matches it as well as the name.
+# A dataset's `data_repository_url` links to the page that distributes it: its PhysioNet project, at the version the
+# ETL targets, or wherever else it is hosted. The other package fields are those of `RawPackage` in
+# src/lib/ecosystem/types.ts; any other key fails the build.
+#
+# Each category's `stage` places its packages in the flowchart on the "Which tool do I use for what?" page
+# (https://medical-event-data-standard.github.io/docs/intro_pages/ecosystem_workflow); a subcategory without a
+# `stage` uses its parent's. The stages are: convert, explore, preprocess, task, model, evaluate, benchmark (the
+# steps of the MEDS workflow) and general (useful at any step). They are described in src/lib/ecosystem/workflow.ts.
+# The packages of a category with no stage are listed under "Other tools".
 
 tools:
   name: 'Tools'
@@ -16,6 +25,7 @@ tools:
     stage: 'general'
     packages:
       - name: 'MEDS Schema'
+        description: 'Defines the MEDS schemas for events, dataset and code metadata, subject splits and labels, with matching Python types.'
         pypi_name: 'meds'
         github_repo: 'Medical-Event-Data-Standard/meds'
 
@@ -25,14 +35,17 @@ tools:
     stage: 'preprocess'
     packages:
       - name: 'MEDS-Reader'
+        description: 'Converts a MEDS dataset into a fast database and reads its subjects as Python objects, to process with plain Python.'
         pypi_name: 'meds-reader'
         github_repo: 'som-shahlab/meds_reader'
         docs_url: 'https://meds-reader.readthedocs.io'
       - name: 'MEDS Transforms'
+        description: 'Builds and runs pre-processing pipelines over MEDS datasets from reusable stages, such as filtering, normalization and outlier detection.'
         pypi_name: 'MEDS-Transforms'
         github_repo: 'mmcdermott/MEDS_transforms'
         docs_url: 'https://meds-transforms.readthedocs.io'
       - name: 'MEDS TorchData'
+        description: 'Pre-processes a MEDS dataset into tensors and loads it as a PyTorch dataset for training models.'
         pypi_name: 'meds-torch-data'
         github_repo: 'mmcdermott/meds-torch-data'
         docs_url: 'https://meds-torch-data.readthedocs.io'
@@ -43,16 +56,20 @@ tools:
     stage: 'explore'
     packages:
       - name: 'MEDS-Inspect'
+        description: 'An interactive web app for visually exploring the codes and contents of a MEDS dataset, for example to check an ETL.'
         pypi_name: 'MEDS-Inspect'
         github_repo: 'rvandewater/MEDS-Inspect'
       - name: 'suMEDS'
+        description: 'Summarizes a MEDS dataset into a compact code catalog with descriptions, related codes and counts, masking or removing rare codes.'
         pypi_name: 'suMEDS'
         github_repo: 'rvandewater/suMEDS'
         docs_url: 'https://www.rpvandewater.com/suMEDS/'
       - name: 'MEDS Summary Stats'
+        description: 'Computes privacy-safe summary statistics of MEDS datasets and compares them, to validate ETLs and catch regressions between versions.'
         pypi_name: 'meds_summary_stats'
         github_repo: 'Medical-Event-Data-Standard/meds_summary_stats'
       - name: 'MEDS Visualizations'
+        description: 'Plots data extracted from MEDS datasets, such as code frequencies, in Jupyter notebooks.'
         github_repo: 'mmcdermott/MEDS_visualizations'
 
   task_extraction:
@@ -61,14 +78,17 @@ tools:
     stage: 'task'
     packages:
       - name: 'ACES'
+        description: "Extracts task-specific cohorts from MEDS datasets, using a configuration file that defines the task's predicates and criteria."
         paper_url: 'https://openreview.net/forum?id=P4XmKjXTrM'
         pypi_name: 'es-aces'
         github_repo: 'justin13601/ACES'
         docs_url: 'https://eventstreamaces.readthedocs.io'
       - name: 'MEDS Random Task Sampler'
+        description: 'Generates reproducible, model-independent task rows from MEDS datasets by pairing codes and time horizons with sampled patient prediction times.'
         pypi_name: 'meds-random-task-sampler'
         github_repo: 'florian6973/meds-random-task-sampler'
       - name: 'ehrlint'
+        description: 'Audits a prediction task on a MEDS or OMOP dataset for leakage, such as post-index features or patient overlap across splits.'
         github_repo: 'DanPalBCM/ehrlint'
 
   modeling:
@@ -77,19 +97,24 @@ tools:
     stage: 'model'
     packages:
       - name: 'MEDS-Torch'
+        description: 'Trains deep learning models on MEDS data, either supervised or pretrained and fine-tuned, with several ways to tokenize events.'
         paper_url: 'https://openreview.net/forum?id=uwnK2LZtjX'
         pypi_name: 'meds-torch'
         github_repo: 'Oufattole/meds-torch'
         docs_url: 'https://meds-torch.readthedocs.io'
       - name: 'FEMR'
+        description: 'Supports machine learning on MEDS data with ontology tools, labeling, tabular featurization and training of MOTOR foundation models.'
         pypi_name: 'femr'
         github_repo: 'som-shahlab/femr'
       - name: 'MEDS to CEHR'
+        description: "Converts MEDS datasets into CEHR-GPT's visit-based patient sequences, without depending on the CEHR-GPT model itself."
         github_repo: 'knatarajan-lab/meds_to_cehr'
       - name: 'meds2text'
+        description: 'Transforms MEDS data extracted from OMOP CDM sources into textual representations of patient records.'
         paper_url: 'https://arxiv.org/abs/2503.04176'
         github_repo: 'VISTA-Stanford/meds2text'
       - name: 'TwinWeaver'
+        description: 'Turns patient histories, including MEDS data, into text prompts so that LLMs can forecast biomarkers and predict clinical events.'
         paper_url: 'https://arxiv.org/abs/2601.20906'
         pypi_name: 'twinweaver'
         github_repo: 'MendenLab/TwinWeaver'
@@ -101,6 +126,7 @@ tools:
     stage: 'evaluate'
     packages:
       - name: 'meds-evaluation'
+        description: 'Evaluates the predictions of models built in the MEDS ecosystem on binary classification tasks, and writes the results to JSON.'
         pypi_name: 'meds-evaluation'
         github_repo: 'kamilest/meds-evaluation'
 
@@ -110,6 +136,7 @@ tools:
     stage: 'benchmark'
     packages:
       - name: 'MEDS-DEV'
+        description: 'A decentralized benchmark in which data owners run shared ACES tasks and model training recipes on their own MEDS datasets.'
         pypi_name: 'MEDS-DEV'
         github_repo: 'Medical-Event-Data-Standard/MEDS-DEV'
         docs_url: 'https://medical-event-data-standard.github.io/docs/MEDS-DEV/intro'
@@ -120,6 +147,7 @@ tools:
     stage: 'general'
     packages:
       - name: 'MEDS Testing Helpers'
+        description: 'Provides pytest fixtures, sample MEDS datasets and generated larger datasets for testing and benchmarking MEDS tools and pipelines.'
         pypi_name: 'meds_testing_helpers'
         github_repo: 'Medical-Event-Data-Standard/meds_testing_helpers'
         docs_url: 'https://meds-testing-helpers.readthedocs.io'
@@ -130,9 +158,11 @@ tools:
     stage: 'general'
     packages:
       - name: 'MEDS Ontology'
+        description: 'An OWL ontology and SHACL shapes that formally encode the MEDS schemas, from subjects and measurements to splits and labels.'
         github_repo: 'TeamHeKA/meds-ontology'
         docs_url: 'https://teamheka.github.io/meds-ontology'
       - name: 'MEDS2RDF'
+        description: 'Converts MEDS datasets into RDF knowledge graphs based on the MEDS Ontology, streaming the triples to memory or to files.'
         github_repo: 'TeamHeKA/meds2rdf'
 
 dataset_etls:
@@ -147,23 +177,30 @@ dataset_etls:
 
     packages:
       - name: 'ETL Template'
+        description: 'A Copier template for creating a config-only MEDS-Extract ETL package that converts a new dataset into MEDS.'
         github_repo: 'Medical-Event-Data-Standard/ETL_MEDS_Template'
       - name: 'MEDS-ETL'
+        description: 'A collection of ETLs that convert MIMIC-IV 2.2 and OMOP CDM 5.3 and 5.4 data into MEDS 0.3.3.'
         github_repo: 'Medical-Event-Data-Standard/meds_etl'
         warn: '_Use for the MIMIC dataset is deprecated_!'
       - name: 'MEDS Extract'
+        description: 'Converts raw EHR data into MEDS using ETL pipelines that are declared in a configuration file and built on MEDS-Transforms.'
         pypi_name: 'MEDS-extract'
         github_repo: 'mmcdermott/MEDS_extract'
       - name: 'EHR2Trace'
+        description: 'Converts hospital EHR exports into OMOP CDM 5.4 and MEDS 0.4, linking every output row to its source rows.'
         paper_url: 'https://arxiv.org/abs/2609.38193'
         github_repo: 'Yangxinyee/ehr2trace'
       - name: 'WeavEHR'
+        description: 'Extracts and harmonizes ICU data from sources such as MIMIC-IV, eICU and OMOP exports into MEDS, using declarative YAML configurations.'
         pypi_name: 'weavehr'
         github_repo: 'aidh-ms/WeavEHR'
         docs_url: 'https://github.com/aidh-ms/WeavEHR/wiki'
       - name: 'EHR2MEDS'
+        description: 'Formats raw EHR data dumps and converts them to MEDS, via an intermediate format called preMEDS.'
         github_repo: 'FGA-DIKU/ehr2meds'
       - name: 'MESSY Synth'
+        description: 'Generates synthetic raw data matching a MEDS-Extract config, so an ETL can be demoed or smoke-tested without the real dataset.'
         github_repo: 'mmcdermott/MESSY_synth'
 
   publicly_available_datasets:
@@ -172,75 +209,106 @@ dataset_etls:
 
     packages:
       - name: 'MIMIC-IV'
+        description: 'Converts MIMIC-IV, a dataset of emergency department and ICU patients at Beth Israel Deaconess Medical Center in Boston, into MEDS.'
         demo_available: true
         pypi_name: 'MIMIC-IV-MEDS'
         github_repo: 'Medical-Event-Data-Standard/MIMIC_IV_MEDS'
+        data_repository_url: 'https://physionet.org/content/mimiciv/3.1/'
         meds_dev:
           entity_type: 'dataset'
           name: 'MIMIC-IV'
       - name: 'MIMIC-IV Demo'
-        physionet_url: 'https://physionet.org/content/mimic-iv-demo-meds/0.0.1/'
+        description: 'The MIMIC-IV Clinical Database Demo, with 100 critical care patients, already converted into MEDS and openly downloadable.'
+        data_repository_url: 'https://physionet.org/content/mimic-iv-demo-meds/0.0.1/'
       - name: 'AUMCdb'
+        description: 'Converts AmsterdamUMCdb, a de-identified ICU database from Amsterdam University Medical Centers, into MEDS.'
         demo_available: false
         pypi_name: 'AUMCdb_MEDS'
         github_repo: 'prockenschaub/AUMCdb_MEDS'
+        data_repository_url: 'https://amsterdammedicaldatascience.nl/#access'
         meds_dev:
           entity_type: 'dataset'
           name: 'AUMCdb'
       - name: 'NWICU'
+        description: 'Converts NWICU, the Northwestern ICU database from a network of hospitals in Chicago, into MEDS.'
         demo_available: false
         pypi_name: 'NWICU_MEDS'
         github_repo: 'rvandewater/NWICU_MEDS'
+        data_repository_url: 'https://physionet.org/content/nwicu-northwestern-icu/0.1.0/'
         meds_dev:
           entity_type: 'dataset'
           name: 'NWICU'
       - name: 'SICdb'
+        description: 'Converts SICdb, the Salzburg Intensive Care database of admissions to four ICUs at University Hospital Salzburg, into MEDS.'
         demo_available: false
         pypi_name: 'SICdb_MEDS'
         github_repo: 'rvandewater/SICdb_MEDS'
+        data_repository_url: 'https://physionet.org/content/sicdb/1.0.8/'
       - name: 'INSPIRE'
+        description: 'Converts INSPIRE, a perioperative dataset of about 130,000 surgical cases from an academic institution in South Korea, into MEDS.'
         demo_available: false
         pypi_name: 'INSPIRE_MEDS'
         github_repo: 'rvandewater/INSPIRE_MEDS'
+        data_repository_url: 'https://physionet.org/content/inspire/1.4.2/'
         meds_dev:
           entity_type: 'dataset'
           name: 'INSPIRE'
       - name: 'eICU'
+        description: 'Converts the eICU Collaborative Research Database, a multi-center database of ICU admissions across the United States, into MEDS.'
         demo_available: true
         pypi_name: 'eICU_MEDS'
         github_repo: 'Medical-Event-Data-Standard/eICU_MEDS'
+        data_repository_url: 'https://physionet.org/content/eicu-crd/2.0/'
         meds_dev:
           entity_type: 'dataset'
           name: 'eICU'
       - name: 'HiRID'
+        description: 'Converts HiRID, a high time-resolution ICU dataset from Bern University Hospital in Switzerland, into MEDS.'
         demo_available: false
         pypi_name: 'HiRID_MEDS'
         github_repo: 'rvandewater/HIRID_MEDS'
+        data_repository_url: 'https://physionet.org/content/hirid/1.1.1/'
       - name: 'CDSL'
+        description: "Converts the tabular data of CDSL, on patients hospitalized with confirmed or suspected COVID-19 at Spain's HM Hospitales, into MEDS."
         demo_available: false
         pypi_name: 'CDSL-MEDS'
         github_repo: 'rvandewater/CDSL_MEDS'
+        data_repository_url: 'https://physionet.org/content/covid-data-shared-learning/1.0.0/'
       - name: 'ALOTT'
+        description: 'Converts the EMR tables of ALOTT, a database pairing bedside telemetry with EMR data from two hospitals, into MEDS.'
         demo_available: false
         pypi_name: 'ALOTT-MEDS'
         github_repo: 'rvandewater/ALOTT_MEDS'
+        data_repository_url: 'https://physionet.org/content/alott/1.0.0/'
       - name: 'PIC'
+        description: "Converts the Paediatric Intensive Care (PIC) database, from the Children's Hospital of Zhejiang University School of Medicine, into MEDS."
         demo_available: false
         pypi_name: 'PICdb-MEDS'
         github_repo: 'rvandewater/PICdb_MEDS'
+        data_repository_url: 'https://physionet.org/content/picdb/1.1.0/'
       - name: 'Zigong'
+        description: "Converts a database of ICU patients with infection at Zigong Fourth People's Hospital in Sichuan, China, into MEDS."
         demo_available: false
         pypi_name: 'Zigong-MEDS'
         github_repo: 'rvandewater/Zigong_MEDS'
+        data_repository_url: 'https://physionet.org/content/icu-infection-zigong-fourth/1.1/'
       - name: 'MC-MED'
+        description: 'Converts MC-MED, clinical and monitoring data from adult emergency department visits at Stanford Health Care, into MEDS.'
         demo_available: false
         pypi_name: 'MC-MED-MEDS'
         github_repo: 'rvandewater/MC_MED_MEDS'
-        physionet_url: 'https://physionet.org/content/mc-med/1.0.1/'
+        data_repository_url: 'https://physionet.org/content/mc-med/1.0.1/'
+      - name: 'K-MIMIC (synthetic)'
+        description: 'Converts Synthetic K-MIMIC (SYN-ICU), synthetic ICU data generated from Seoul National University Hospital records, into MEDS.'
+        demo_available: false
+        github_repo: 'ji-ch01/K-MIMIC-MEDS'
+        data_repository_url: 'https://khdp.net/database/data-search-detail/SYN-ICU'
       - name: 'EHRSHOT'
+        description: 'A benchmark for few-shot evaluation of EHR foundation models, with the full records of 6,739 Stanford Medicine patients and 15 tasks.'
         demo_available: false
         paper_url: 'https://arxiv.org/abs/2307.02028'
         github_repo: 'som-shahlab/ehrshot-benchmark'
+        data_repository_url: 'https://redivis.com/datasets/53gc-8rhx41kgt'
         docs_url: 'https://som-shahlab.github.io/ehrshot-website/'
         warn: '_Distributed natively in MEDS (`EHRSHOT_MEDS.zip` on Redivis); no ETL needed._'
 
@@ -249,12 +317,15 @@ dataset_etls:
     description: 'ETLs for converting from other EHR data standards (e.g., OMOP).'
     packages:
       - name: 'OMOP (via MEDS-ETL)'
+        description: 'Converts OMOP CDM 5.3 and 5.4 datasets into MEDS 0.3.3 with the OMOP ETL of MEDS-ETL.'
         github_repo: 'Medical-Event-Data-Standard/meds_etl'
         pypi_name: 'meds-etl'
       - name: 'OMOP (via dedicated OMOP_MEDS)'
+        description: 'Converts OMOP CDM 5.3, 5.4 and 5.5 datasets into MEDS with a pipeline built on MEDS-Extract.'
         github_repo: 'rvandewater/OMOP_MEDS'
         pypi_name: 'OMOP-MEDS'
       - name: 'FHIR'
+        description: 'Converts HL7 FHIR R4 and R5 resources, from bulk-export NDJSON files or patient bundles, into MEDS.'
         github_repo: 'rvandewater/FHIR_MEDS'
         pypi_name: 'fhir2meds'
 
@@ -266,6 +337,7 @@ models:
 
   packages:
     - name: 'CEHR-BERT'
+      description: 'Pretrains a BERT-style model on MEDS or OMOP data, using temporal information, then fine-tunes it for clinical prediction tasks.'
       paper_url: 'https://proceedings.mlr.press/v158/pang21a.html'
       github_repo: 'cumc-dbmi/cehrbert'
       pypi_name: 'cehrbert'
@@ -273,6 +345,7 @@ models:
         entity_type: 'model'
         name: 'cehrbert'
     - name: 'MEDS-Tab'
+      description: 'Tabularizes MEDS data into sparse features aggregated over time windows and trains baseline models, mainly XGBoost, on them.'
       paper_url: 'https://arxiv.org/abs/2411.00200'
       github_repo: 'mmcdermott/MEDS_Tabular_AutoML'
       pypi_name: 'meds-tab'
@@ -280,6 +353,7 @@ models:
         entity_type: 'model'
         name: 'meds_tab'
     - name: 'GenHPF'
+      description: 'A general healthcare prediction model that embeds EHR data from any system, including MEDS, without code mapping or feature selection.'
       paper_url: 'https://ieeexplore.ieee.org/document/10298642'
       github_repo: 'hoon9405/GenHPF'
       pypi_name: 'genhpf'
@@ -287,39 +361,48 @@ models:
         entity_type: 'model'
         name: 'genhpf'
     - name: 'EHR-RAGp'
+      description: "A retrieval-augmented clinical prediction model that retrieves relevant segments of a patient's own EHR history, using MEDS-based preprocessing."
       paper_url: 'https://arxiv.org/abs/2605.12335'
       github_repo: 'nyuad-cai/EHR-RAGp'
     - name: 'CEHR-GPT'
+      description: 'A GPT-style foundation model for structured EHR data, including MEDS, for patient representations, zero-shot prediction and synthetic data generation.'
       paper_url: 'https://arxiv.org/abs/2402.04400'
       github_repo: 'knatarajan-lab/cehrgpt'
       pypi_name: 'cehrgpt'
     - name: 'MOTOR'
+      description: 'A time-to-event foundation model, pretrained on Stanford Medicine EHRs, that produces patient representations for predicting when clinical events occur.'
       paper_url: 'https://arxiv.org/abs/2301.03150'
       github_repo: 'som-shahlab/femr'
       pypi_name: 'femr'
       docs_url: 'https://huggingface.co/StanfordShahLab/motor-t-base'
       warn: '_Reads MEDS v0.3; pretrained weights are gated (CC-BY-NC 4.0)._'
     - name: 'CLMBR-T-base'
+      description: 'A 141-million-parameter autoregressive foundation model, pretrained on Stanford Medicine EHRs, that turns MEDS patient records into representations for prediction.'
       paper_url: 'https://arxiv.org/abs/2307.02028'
       github_repo: 'som-shahlab/ehrshot-benchmark'
       docs_url: 'https://huggingface.co/StanfordShahLab/clmbr-t-base'
       warn: '_Pretrained weights are gated (CC-BY-NC 4.0)._'
     - name: 'Context Clues'
+      description: 'Pretrained long-context EHR foundation models (GPT, Llama, Mamba and Hyena), with code for training Hugging Face models on MEDS data.'
       paper_url: 'https://arxiv.org/abs/2412.16178'
       github_repo: 'som-shahlab/hf_ehr'
       pypi_name: 'hf-ehr'
       docs_url: 'https://huggingface.co/collections/StanfordShahLab/context-clues-6757f893f6a2918c7ab809f1'
       warn: '_Pretrained weights are gated (CC-BY-NC 4.0)._'
     - name: 'ETHOS'
+      description: 'A GPT-2-based EHR foundation model that tokenizes MEDS data and makes zero-shot predictions by generating future patient health trajectories.'
       paper_url: 'https://arxiv.org/abs/2502.06124'
       github_repo: 'ipolharvard/ethos-ares'
     - name: 'MEDS-EIC-AR'
+      description: 'An "everything-is-code" autoregressive generative model for MEDS data, capable of zero-shot inference.'
       github_repo: 'mmcdermott/MEDS_EIC_AR'
       pypi_name: 'MEDS-EIC-AR'
     - name: 'EveryQuery'
+      description: 'A promptable foundation model trained on MEDS data that answers whether a code will occur in a future time window.'
       paper_url: 'https://arxiv.org/abs/2603.07900'
       github_repo: 'payalchandak/EveryQuery'
       pypi_name: 'EveryQuery'
     - name: 'BONSAI'
+      description: 'Turns MEDS records into tokenized patient histories, pretrains a GPT- or BERT-style transformer on them and fine-tunes it for outcome prediction.'
       paper_url: 'https://doi.org/10.21105/joss.08869'
       github_repo: 'FGA-DIKU/BONSAI'

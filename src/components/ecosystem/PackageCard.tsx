@@ -15,9 +15,15 @@ export default function PackageCard({ pkg }: { pkg: Package }): React.JSX.Elemen
   const data = attachPackageMetadata(pkg, metadata);
 
   return (
-    <Card variant="outlined">
-      <CardContent>
+    // As tall as the other cards in its row of the grid, with the buttons at the bottom.
+    <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flexGrow: 1 }}>
         <Typography variant="h6">{data.name}</Typography>
+        {data.description && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1.5 }}>
+            {data.description}
+          </Typography>
+        )}
         {data.warn && <Typography color="warning.main">{data.warn}</Typography>}
         {data.demoAvailable && <Typography variant="body2">🚀 Demo Available</Typography>}
         {data.stars !== null && <Typography variant="body2">⭐ {data.stars} stars</Typography>}
@@ -45,9 +51,9 @@ export default function PackageCard({ pkg }: { pkg: Package }): React.JSX.Elemen
             PyPI
           </Button>
         )}
-        {data.physionetUrl && (
-          <Button href={data.physionetUrl} {...EXTERNAL_LINK}>
-            PhysioNet
+        {data.dataRepositoryUrl && (
+          <Button href={data.dataRepositoryUrl} {...EXTERNAL_LINK}>
+            Data repository
           </Button>
         )}
         {data.medsDev && (

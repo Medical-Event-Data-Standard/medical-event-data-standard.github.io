@@ -49,7 +49,7 @@ body:
     id: description
     attributes:
       label: Description
-      description: What does it do, and how does it work with MEDS data? Mention which MEDS version(s) it supports, if you know.
+      description: 'What does it do, and how does it work with MEDS data? Mention which MEDS version(s) it supports, if you know. We summarize it in one plain sentence (`description`) that is shown on its card; for a dataset ETL, say which dataset it converts and what kind of data that is.'
     validations:
       required: true
 
@@ -80,6 +80,13 @@ body:
       label: Paper URL
       description: 'Optional (`paper_url`). A link to a paper describing it.'
       placeholder: https://arxiv.org/abs/...
+
+  - type: input
+    id: data_repository_url
+    attributes:
+      label: Data repository URL
+      description: 'Datasets only (`data_repository_url`). Optional. The page that distributes the dataset, such as its PhysioNet project (at the version the ETL targets), Redivis page or official access page.'
+      placeholder: https://physionet.org/content/mimiciv/3.1/
 
   - type: dropdown
     id: demo_available

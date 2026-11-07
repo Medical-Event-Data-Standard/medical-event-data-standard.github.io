@@ -27,19 +27,26 @@ describe('parseCategoryMap', () => {
     expect(topicPackages['extra']).toEqual(['pkg3']);
   });
 
-  it('parses the PhysioNet URL and the MEDS-DEV entity of a package', () => {
+  it('parses the description, data repository URL and MEDS-DEV entity of a package', () => {
     const { packages } = parseCategoryMap({
       cat: {
         name: 'Cat',
         packages: [
-          { name: 'Demo data', physionet_url: 'https://physionet.org/content/demo/1.0/' },
+          {
+            name: 'Demo data',
+            description: 'A demo dataset.',
+            data_repository_url: 'https://physionet.org/content/demo/1.0/',
+          },
           { name: 'A model', meds_dev: { entity_type: 'model', name: 'a_model' } },
         ],
       },
     });
 
-    expect(packages['Demo data'].physionetUrl).toBe('https://physionet.org/content/demo/1.0/');
+    expect(packages['Demo data'].description).toBe('A demo dataset.');
+    expect(packages['Demo data'].dataRepositoryUrl).toBe('https://physionet.org/content/demo/1.0/');
     expect(packages['Demo data'].medsDev).toBeUndefined();
+    expect(packages['A model'].description).toBeUndefined();
+    expect(packages['A model'].dataRepositoryUrl).toBeUndefined();
     expect(packages['A model'].medsDev).toEqual({ entityType: MedsEntityType.MODEL, name: 'a_model' });
   });
 
@@ -68,7 +75,7 @@ describe('parseCategoryMap', () => {
       parseCategoryMap({ cat: { name: 'Cat', ...category } as RawCategory });
 
     it('rejects category keys that are not subcategories, such as a `datasets` list (#83)', () => {
-      expect(parseWith({ datasets: [{ name: 'MIMIC-IV Demo', physionet_url: 'https://x' }] })).toThrow(
+      expect(parseWith({ datasets: [{ name: 'MIMIC-IV Demo', data_repository_url: 'https://x' }] })).toThrow(
         'at cat.datasets: expected a category'
       );
       expect(parseWith({ descripton: 'typo' })).toThrow('at cat.descripton: expected a category');
@@ -98,6 +105,12 @@ describe('parseCategoryMap', () => {
       expect(parseWith({ packages: [{ name: 'p', constructor: 'x' }] })).toThrow('unknown package key');
     });
 
+    it('rejects the old `physionet_url`, which `data_repository_url` replaced', () => {
+      expect(parseWith({ packages: [{ name: 'MC-MED', physionet_url: 'https://physionet.org/' }] })).toThrow(
+        'unknown package key "physionet_url"; expected one of name, description,'
+      );
+    });
+
     it('rejects packages without a name', () => {
       expect(parseWith({ packages: [{ github_repo: 'org/repo' }] })).toThrow(
         'at cat.packages[0]: expected a package'
@@ -108,6 +121,12 @@ describe('parseCategoryMap', () => {
     it('rejects package fields of the wrong type', () => {
       expect(parseWith({ packages: [{ name: 'p', demo_available: 'yes' }] })).toThrow(
         '"demo_available" must be true or false, got "yes"'
+      );
+      expect(parseWith({ packages: [{ name: 'p', description: ['Two', 'sentences.'] }] })).toThrow(
+        'at cat.packages[0] ("p"): "description" must be a string, got ["Two","sentences."]'
+      );
+      expect(parseWith({ packages: [{ name: 'p', data_repository_url: 42 }] })).toThrow(
+        '"data_repository_url" must be a string, got 42'
       );
       expect(parseWith({ packages: [{ name: 'p', topics: 'one' }] })).toThrow(
         '"topics" must be a list of strings'
@@ -142,10 +161,42 @@ describe('static/data/ecosystem.yaml', () => {
   });
 
   it('includes the MIMIC-IV Demo dataset, linked to PhysioNet (#83)', () => {
-    expect(packages['MIMIC-IV Demo'].physionetUrl).toBe(
+    expect(packages['MIMIC-IV Demo'].dataRepositoryUrl).toBe(
       'https://physionet.org/content/mimic-iv-demo-meds/0.0.1/'
     );
     expect(topicPackages['Dataset ETLs/Public Datasets']).toContain('MIMIC-IV Demo');
+  });
+
+  it('describes every package in one plain sentence', () => {
+    const problems = Object.values(packages).flatMap(({ name, description = '' }) => {
+      const words = description.split(/\s+/).filter(word => word).length;
+      const sentenceEnds = description.match(/[.!?](\s|$)/g)?.length ?? 0;
+      if (!description.trim()) return [`${name}: no description`];
+      if (!description.endsWith('.')) return [`${name}: does not end with a full stop`];
+      if (sentenceEnds !== 1) return [`${name}: more than one sentence`];
+      if (words < 8 || words > 22) return [`${name}: ${words} words, not 8 to 22`];
+      return [];
+    });
+    expect(problems).toEqual([]);
+  });
+
+  it('links every public dataset to the https page that distributes it', () => {
+    const datasets = topicPackages['Dataset ETLs/Public Datasets'].map(name => packages[name]);
+    expect(datasets.filter(dataset => !dataset.dataRepositoryUrl).map(dataset => dataset.name)).toEqual([]);
+
+    for (const { dataRepositoryUrl } of Object.values(packages)) {
+      if (dataRepositoryUrl) {
+        expect(new URL(dataRepositoryUrl).protocol).toBe('https:');
+      }
+    }
+    // A PhysioNet link names the project's version (the one the ETL targets), so that it doesn't change under us.
+    const physioNetUrls = datasets
+      .map(dataset => dataset.dataRepositoryUrl as string)
+      .filter(url => url.startsWith('https://physionet.org/'));
+    expect(physioNetUrls.length).toBeGreaterThan(0);
+    for (const url of physioNetUrls) {
+      expect(url).toMatch(/^https:\/\/physionet\.org\/content\/[a-z0-9-]+\/\d+(\.\d+)*\/$/);
+    }
   });
 
   it('links the models and datasets in the MEDS-DEV registry to their MEDS-DEV entities (#82)', () => {

@@ -16,9 +16,6 @@
 # After editing this file, refresh the committed snapshot, which the dev server uses (see the plugin's comments).
 
 repos:
-  - github_repo: ji-ch01/K-MIMIC-MEDS
-    label: K-MIMIC (synthetic)
-    note: Synthetic K-MIMIC (SYN-ICU); not (yet) listed in ecosystem.yaml.
   - github_repo: Medical-Event-Data-Standard/MIMIC_IV_MEDS
     files:
       tests/regression/full_summary_stats.json:
