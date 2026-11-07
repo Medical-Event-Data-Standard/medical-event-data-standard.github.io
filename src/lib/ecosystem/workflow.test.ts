@@ -8,9 +8,12 @@ import {
   STAGES,
   STAGE_IDS,
   StageGroup,
+  WorkflowSection,
   groupByStage,
   isStageId,
-  packageLink,
+  tileSections,
+  toolAnchorIds,
+  workflowSections,
 } from '@site/src/lib/ecosystem/workflow';
 
 /** Maps each stage id to the names of the packages grouped under it. */
@@ -124,39 +127,109 @@ describe('static/data/ecosystem.yaml in the workflow flowchart', () => {
     expect(byStage.benchmark).toContain('MEDS-DEV');
     expect(byStage.general).toContain('MEDS Schema');
   });
+
+  it('gives every tool one tile, with a unique id', () => {
+    const sections = workflowSections(groups);
+    const ids = toolAnchorIds(sections);
+    const tiled = tileSections(sections).flatMap(({ categories }) =>
+      categories.flatMap(({ packages }) => packages.map(pkg => pkg.name))
+    );
+
+    expect(new Set(tiled).size).toBe(tiled.length);
+    expect(tiled.sort()).toEqual([...ids.keys()].sort());
+    expect(new Set(ids.values()).size).toBe(ids.size);
+    expect(ids.get('ACES')).toBe('tool-aces');
+  });
 });
 
-describe('packageLink', () => {
-  const all = {
-    name: 'Pkg',
-    githubRepo: 'org/repo',
-    docsUrl: 'https://docs.example.org',
-    physionetUrl: 'https://physionet.org/content/pkg/',
-    pypiName: 'pkg',
-    paperUrl: 'https://paper.example.org',
-  };
+describe('workflowSections', () => {
+  it('numbers every step, even without tools, then adds the other groups that have tools', () => {
+    const sections = workflowSections(
+      groupByStage(
+        parseCategoryMap({
+          tasks: { name: 'Tasks', stage: 'task', packages: [{ name: 'ACES' }] },
+          misc: { name: 'Misc', packages: [{ name: 'newcomer' }] },
+        })
+      )
+    );
 
-  it('prefers the GitHub repository, then documentation, PhysioNet, PyPI and a paper', () => {
-    expect(packageLink(all)).toEqual({ href: 'https://github.com/org/repo', label: 'GitHub' });
-    expect(packageLink({ ...all, githubRepo: undefined })).toEqual({
-      href: 'https://docs.example.org',
-      label: 'documentation',
-    });
-    expect(packageLink({ ...all, githubRepo: undefined, docsUrl: undefined })).toEqual({
-      href: 'https://physionet.org/content/pkg/',
-      label: 'PhysioNet',
-    });
-    expect(packageLink({ name: 'Pkg', pypiName: 'pkg', paperUrl: all.paperUrl })).toEqual({
-      href: 'https://pypi.org/project/pkg',
-      label: 'PyPI',
-    });
-    expect(packageLink({ name: 'Pkg', paperUrl: all.paperUrl })).toEqual({
-      href: 'https://paper.example.org',
-      label: 'paper',
-    });
+    expect(sections.map(({ stage, step }) => [stage.id, step])).toEqual([
+      ['convert', 1],
+      ['explore', 2],
+      ['preprocess', 3],
+      ['task', 4],
+      ['model', 5],
+      ['evaluate', 6],
+      ['benchmark', 7],
+      // "general" has no tools here.
+      ['other', undefined],
+    ]);
+    expect(sections[3].categories[0].packages).toEqual([expect.objectContaining({ name: 'ACES' })]);
+  });
+});
+
+/** A section of the flowchart with the given categories, each listing packages with the given names. */
+function section(
+  stageId: WorkflowSection['stage']['id'],
+  categories: Record<string, string[]>
+): WorkflowSection {
+  const stage = [...STAGES, OTHER_STAGE].find(({ id }) => id === stageId)!;
+  return {
+    stage,
+    step: stage.step ? STAGES.indexOf(stage) + 1 : undefined,
+    categories: Object.entries(categories).map(([name, names]) => ({
+      category: { topic: name, name, packages: names },
+      packages: names.map(pkgName => ({ name: pkgName })),
+    })),
+  };
+}
+
+describe('tool tiles', () => {
+  // "MEDS-ETL" is listed at two steps, and every tool of the "task" step at an earlier one.
+  const sections = [
+    section('convert', { ETLs: ['MEDS-ETL', 'MEDS ETL'], Datasets: ['MIMIC'] }),
+    section('preprocess', { Preprocessing: ['Reader', 'MEDS-ETL'], Loading: ['MEDS-ETL'] }),
+    section('task', { Tasks: ['MIMIC'] }),
+    section('general', { Core: ['OMOP (via MEDS-ETL)', '🚀', '✨', 'Ünïcode'] }),
+  ];
+
+  it('gives each tool one unique id, made from its name', () => {
+    expect([...toolAnchorIds(sections)]).toEqual([
+      ['MEDS-ETL', 'tool-meds-etl'],
+      // Names that give the same id are told apart by a number.
+      ['MEDS ETL', 'tool-meds-etl-2'],
+      ['MIMIC', 'tool-mimic'],
+      ['Reader', 'tool-reader'],
+      ['OMOP (via MEDS-ETL)', 'tool-omop-via-meds-etl'],
+      // Names without letters or digits (from a-z and 0-9) still get one.
+      ['🚀', 'tool'],
+      ['✨', 'tool-2'],
+      ['Ünïcode', 'tool-n-code'],
+    ]);
   });
 
-  it('returns undefined for a package without links', () => {
-    expect(packageLink({ name: 'Pkg' })).toBeUndefined();
+  it('places each tool at the first section that lists it, leaving out the sections left empty', () => {
+    const tiles = tileSections(sections);
+
+    expect(
+      tiles.map(({ stage, step, categories }) => [
+        stage.id,
+        step,
+        categories.map(({ category, packages }) => [category.name, packages.map(pkg => pkg.name)]),
+      ])
+    ).toEqual([
+      [
+        'convert',
+        1,
+        [
+          ['ETLs', ['MEDS-ETL', 'MEDS ETL']],
+          ['Datasets', ['MIMIC']],
+        ],
+      ],
+      ['preprocess', 3, [['Preprocessing', ['Reader']]]],
+      ['general', undefined, [['Core', ['OMOP (via MEDS-ETL)', '🚀', '✨', 'Ünïcode']]]],
+    ]);
+    // The flowchart's sections are left as they were.
+    expect(sections[1].categories[0].packages).toHaveLength(2);
   });
 });

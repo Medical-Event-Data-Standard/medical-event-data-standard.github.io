@@ -1,20 +1,51 @@
 import React from 'react';
 import { Box, Chip, Paper, Typography } from '@mui/material';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import { parseCategoryMap } from '@site/src/lib/ecosystem/utils';
-import { Package, RawCategory } from '@site/src/lib/ecosystem/types';
-import { StageGroup, groupByStage, packageLink } from '@site/src/lib/ecosystem/workflow';
+import { Package } from '@site/src/lib/ecosystem/types';
+import { WorkflowSection } from '@site/src/lib/ecosystem/workflow';
 
-// A "Which tool do I use for what?" flowchart: the steps of the MEDS workflow, top to bottom, each listing the
-// packages of the static/data/ecosystem.yaml categories whose `stage` is that step (see
-// src/lib/ecosystem/workflow.ts). Stacking the steps keeps it readable at any width; on wide screens each step's
-// description sits beside its tools.
+// The flowchart of the "Which tool do I use for what?" page (see EcosystemWorkflow.tsx): the steps of the MEDS
+// workflow, top to bottom, each listing the packages of the static/data/ecosystem.yaml categories whose `stage` is
+// that step (see src/lib/ecosystem/workflow.ts) as chips that link to the packages' tiles. Stacking the steps
+// keeps it readable at any width; where the flowchart is wide enough, each step's description sits beside its
+// tools.
 
 /**
  * Removes the list styling that the surrounding Markdown page gives `ol`, `ul` and `li` elements. `&&` outranks
  * its `.markdown li + li { margin-top }` rule, which would otherwise push all but the first item down.
  */
-const UNSTYLED_LIST = { listStyle: 'none', m: 0, p: 0, '&& > li': { m: 0 } } as const;
+export const UNSTYLED_LIST = { listStyle: 'none', m: 0, p: 0, '&& > li': { m: 0 } } as const;
+
+/**
+ * Applies its styles where the flowchart is wide enough to put each step's description beside its tools. The
+ * flowchart is a CSS container, so this follows its own width, which beside the tool tiles is well below the
+ * window's.
+ */
+const WIDE_FLOWCHART = '@container ecosystem-flowchart (min-width: 36rem)';
+
+/** The number of a step of the workflow, in a circle. */
+export function StepNumber({ step, size = 28 }: { step: number; size?: number }): React.JSX.Element {
+  return (
+    <Box
+      aria-hidden
+      sx={{
+        flexShrink: 0,
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        bgcolor: 'primary.main',
+        color: 'primary.contrastText',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        typography: 'subtitle2',
+        fontSize: size < 28 ? '0.75rem' : undefined,
+      }}
+    >
+      {step}
+    </Box>
+  );
+}
 
 function Arrow(): React.JSX.Element {
   return (
@@ -24,30 +55,46 @@ function Arrow(): React.JSX.Element {
   );
 }
 
-function ToolChip({ pkg }: { pkg: Package }): React.JSX.Element {
-  const link = packageLink(pkg);
-  if (!link) {
-    return <Chip label={pkg.name} size="small" variant="outlined" />;
-  }
+interface ToolSelection {
+  /** The id of each package's tile, by package name (see `toolAnchorIds`). */
+  toolIds: Map<string, string>;
+  /** The id of the selected package's tile, if any. */
+  selectedId?: string;
+  /** Called when a package's chip is clicked, with the id of the package's tile. */
+  onSelectTool: (id: string, event: React.MouseEvent<HTMLAnchorElement>) => void;
+}
+
+function ToolChip({
+  pkg,
+  toolIds,
+  selectedId,
+  onSelectTool,
+}: ToolSelection & { pkg: Package }): React.JSX.Element {
+  const id = toolIds.get(pkg.name)!;
+  const selected = id === selectedId;
+  // The chip's text, kept from turning into the page's link color (and underlined) on hover.
+  const color = selected ? 'primary.contrastText' : 'text.primary';
   return (
     <Chip
       component="a"
-      href={link.href}
-      target="_blank"
-      rel="noopener noreferrer"
-      title={`${pkg.name} (${link.label})`}
+      href={`#${id}`}
+      onClick={(event: React.MouseEvent<HTMLAnchorElement>) => onSelectTool(id, event)}
+      aria-current={selected ? 'true' : undefined}
       label={pkg.name}
       size="small"
-      variant="outlined"
+      variant={selected ? 'filled' : 'outlined'}
+      color={selected ? 'primary' : 'default'}
       clickable
-      // Keep the page's link styles (color and underline on hover) off the chip.
-      sx={{ color: 'text.primary', '&:hover': { color: 'text.primary', textDecoration: 'none' } }}
+      sx={{ color, '&:hover': { color, textDecoration: 'none' } }}
     />
   );
 }
 
-function StageBox({ group, step }: { group: StageGroup; step?: number }): React.JSX.Element {
-  const { stage, categories } = group;
+function StageBox({
+  section,
+  ...selection
+}: ToolSelection & { section: WorkflowSection }): React.JSX.Element {
+  const { stage, step, categories } = section;
   // Name the categories only where a stage has more than one, e.g. "Public Datasets" among the dataset ETLs.
   const showCategoryNames = categories.length > 1;
   return (
@@ -56,31 +103,14 @@ function StageBox({ group, step }: { group: StageGroup; step?: number }): React.
       sx={{
         p: 2,
         display: 'grid',
-        gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 2fr) minmax(0, 3fr)' },
-        gap: { xs: 1.5, md: 3 },
+        gridTemplateColumns: 'minmax(0, 1fr)',
+        gap: 1.5,
+        [WIDE_FLOWCHART]: { gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 3fr)', gap: 3 },
         borderStyle: step ? 'solid' : 'dashed',
       }}
     >
       <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-        {step && (
-          <Box
-            aria-hidden
-            sx={{
-              flexShrink: 0,
-              width: 28,
-              height: 28,
-              borderRadius: '50%',
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              typography: 'subtitle2',
-            }}
-          >
-            {step}
-          </Box>
-        )}
+        {step && <StepNumber step={step} />}
         <Box>
           <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600, lineHeight: 1.4, m: 0 }}>
             {stage.title}
@@ -111,7 +141,7 @@ function StageBox({ group, step }: { group: StageGroup; step?: number }): React.
             >
               {packages.map(pkg => (
                 <li key={pkg.name}>
-                  <ToolChip pkg={pkg} />
+                  <ToolChip pkg={pkg} {...selection} />
                 </li>
               ))}
             </Box>
@@ -122,18 +152,17 @@ function StageBox({ group, step }: { group: StageGroup; step?: number }): React.
   );
 }
 
+/** The flowchart of the MEDS workflow: its `sections` (see `workflowSections`), with each tool as a chip. */
 export default function EcosystemFlowchart({
-  data,
-}: {
-  data: Record<string, RawCategory>;
-}): React.JSX.Element {
-  const groups = groupByStage(parseCategoryMap(data));
-  const steps = groups.filter(group => group.stage.step);
+  sections,
+  ...selection
+}: ToolSelection & { sections: WorkflowSection[] }): React.JSX.Element {
+  const steps = sections.filter(section => section.step);
   // Tools used at any step, and those in categories without a stage, are shown apart from the steps.
-  const others = groups.filter(group => !group.stage.step && group.categories.length > 0);
+  const others = sections.filter(section => !section.step);
 
   return (
-    <Box sx={{ mb: 4 }}>
+    <Box sx={{ container: 'ecosystem-flowchart / inline-size' }}>
       <Box sx={{ display: 'flex', justifyContent: 'center' }}>
         <Typography
           variant="body2"
@@ -143,16 +172,16 @@ export default function EcosystemFlowchart({
         </Typography>
       </Box>
       <Box component="ol" aria-label="Steps of the MEDS workflow" sx={UNSTYLED_LIST}>
-        {steps.map((group, index) => (
-          <li key={group.stage.id}>
+        {steps.map(section => (
+          <li key={section.stage.id}>
             <Arrow />
-            <StageBox group={group} step={index + 1} />
+            <StageBox section={section} {...selection} />
           </li>
         ))}
       </Box>
-      {others.map(group => (
-        <Box key={group.stage.id} sx={{ mt: 3 }}>
-          <StageBox group={group} />
+      {others.map(section => (
+        <Box key={section.stage.id} sx={{ mt: 3 }}>
+          <StageBox section={section} {...selection} />
         </Box>
       ))}
     </Box>
