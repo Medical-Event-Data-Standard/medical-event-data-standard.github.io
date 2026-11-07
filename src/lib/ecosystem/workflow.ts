@@ -1,7 +1,7 @@
 import type { Category, Package, ParsedEcosystem, StageId } from './types';
 
-// The stages of the MEDS workflow, as shown by the "Which tool do I use for what?" flowchart on the ecosystem page
-// (src/components/ecosystem/EcosystemFlowchart.tsx). Which packages each stage lists is not decided here: every
+// The stages of the MEDS workflow, as shown by the flowchart on the "Which tool do I use for what?" page
+// (src/components/ecosystem/EcosystemWorkflow.tsx). Which packages each stage lists is not decided here: every
 // category in static/data/ecosystem.yaml names its stage with a `stage` key (or inherits its parent's), so a
 // package added to a category shows up in that category's stage automatically.
 
@@ -113,18 +113,69 @@ export function groupByStage({
   return [...groups.values()];
 }
 
-export interface PackageLink {
-  href: string;
-  /** What the link points to, e.g. "GitHub". */
-  label: string;
+/** A group of tools as the flowchart shows it: a numbered step of the workflow, or a group apart from the steps. */
+export interface WorkflowSection extends StageGroup {
+  /** The step's number, counting from 1; undefined for a group shown apart from the steps. */
+  step?: number;
 }
 
-/** The page the flowchart links a package to: its GitHub repository if it has one, or else its best other link. */
-export function packageLink(pkg: Package): PackageLink | undefined {
-  if (pkg.githubRepo) return { href: `https://github.com/${pkg.githubRepo}`, label: 'GitHub' };
-  if (pkg.docsUrl) return { href: pkg.docsUrl, label: 'documentation' };
-  if (pkg.physionetUrl) return { href: pkg.physionetUrl, label: 'PhysioNet' };
-  if (pkg.pypiName) return { href: `https://pypi.org/project/${pkg.pypiName}`, label: 'PyPI' };
-  if (pkg.paperUrl) return { href: pkg.paperUrl, label: 'paper' };
-  return undefined;
+/**
+ * The sections of the flowchart, in order: every step of the workflow, numbered, even if it has no tools, and
+ * then the groups apart from the steps (tools used at any step, and those of categories without a stage) that
+ * have tools.
+ */
+export function workflowSections(groups: StageGroup[]): WorkflowSection[] {
+  const steps = groups
+    .filter(group => group.stage.step)
+    .map((group, index) => ({ ...group, step: index + 1 }));
+  const others = groups.filter(group => !group.stage.step && group.categories.length > 0);
+  return [...steps, ...others];
+}
+
+/**
+ * Gives every tool in the flowchart the id of its tile, which the tool's chips link to as `#<id>`: "tool-" and its
+ * name in lower case, with each run of characters other than letters and digits replaced by a dash, e.g.
+ * `tool-aces` or `tool-omop-via-meds-etl`. A tool listed at several steps gets one id, and tools whose names give
+ * the same id are told apart by a number, e.g. `tool-meds-etl-2`.
+ *
+ * Returns a map from package name to id.
+ */
+export function toolAnchorIds(sections: WorkflowSection[]): Map<string, string> {
+  const ids = new Map<string, string>();
+  const used = new Set<string>();
+  for (const pkg of sections.flatMap(({ categories }) => categories.flatMap(({ packages }) => packages))) {
+    if (ids.has(pkg.name)) continue;
+    const slug = pkg.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    const base = slug ? `tool-${slug}` : 'tool';
+    let id = base;
+    for (let n = 2; used.has(id); n++) id = `${base}-${n}`;
+    used.add(id);
+    ids.set(pkg.name, id);
+  }
+  return ids;
+}
+
+/**
+ * The sections of the tool tiles shown beside the flowchart: those of the flowchart, but with each tool only in
+ * the first section that lists it, so that every tool has one tile. Categories and sections left without tools
+ * (such as steps without any) are left out.
+ */
+export function tileSections(sections: WorkflowSection[]): WorkflowSection[] {
+  const placed = new Set<string>();
+  const isFirst = (pkg: Package): boolean => {
+    if (placed.has(pkg.name)) return false;
+    placed.add(pkg.name);
+    return true;
+  };
+  return sections
+    .map(section => ({
+      ...section,
+      categories: section.categories
+        .map(({ category, packages }) => ({ category, packages: packages.filter(isFirst) }))
+        .filter(({ packages }) => packages.length > 0),
+    }))
+    .filter(({ categories }) => categories.length > 0);
 }

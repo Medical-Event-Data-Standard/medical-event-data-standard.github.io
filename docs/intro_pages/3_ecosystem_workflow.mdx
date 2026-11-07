@@ -1,14 +1,15 @@
 ---
 sidebar_label: Which tool do I use for what?
+hide_table_of_contents: true
 ---
 
 # Which tool do I use for what?
 
-import EcosystemFlowchart from '@site/src/components/ecosystem/EcosystemFlowchart';
+import EcosystemWorkflow from '@site/src/components/ecosystem/EcosystemWorkflow';
 import Data from '@site/static/data/ecosystem.yaml';
 
 Going from raw EHR data to a shared benchmark result, each step of the MEDS workflow has tools built for it.
-Click a tool to open it on GitHub, or browse [all tools](./3_ecosystem.mdx) to search them and see their docs,
-papers, and stars.
+Click a tool in the flowchart to jump to its card, with its GitHub stars and links to its code, documentation and
+paper. To search the tools by name or topic, browse [all tools](./3_ecosystem.mdx).
 
-<EcosystemFlowchart data={Data} />
+<EcosystemWorkflow data={Data} />
