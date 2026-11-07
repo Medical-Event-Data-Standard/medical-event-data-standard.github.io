@@ -11,16 +11,28 @@ import { statsDocument } from './testFixtures';
 describe('normalizeDistribution', () => {
   it('keeps the quantiles the page draws', () => {
     expect(
-      normalizeDistribution({ n: 30, quantiles: { p5: 1, p25: 2, p50: 3, p75: 4, p95: 5, p99: 9 } })
+      normalizeDistribution({
+        n: 30,
+        mean: 3.5,
+        std: 1,
+        quantiles: { p5: 1, p25: 2, p50: 3, p75: 4, p95: 5, p99: 9 },
+      })
     ).toEqual({
       suppressed: false,
       n: 30,
+      mean: 3.5,
       p5: 1,
       p25: 2,
       p50: 3,
       p75: 4,
       p95: 5,
     });
+  });
+
+  it('keeps the quantiles of a distribution without a usable mean', () => {
+    expect(
+      normalizeDistribution({ n: 30, mean: 'x', quantiles: { p5: 1, p25: 2, p50: 3, p75: 4, p95: 5 } })
+    ).toMatchObject({ suppressed: false, mean: null, p50: 3 });
   });
 
   it('keeps a suppressed distribution as suppressed, with only its count', () => {
@@ -74,100 +86,124 @@ describe('normalizeStats', () => {
       subjectsWithStatic: 450,
       numericValues: 30000,
     });
+    expect(stats.checks).toEqual({
+      emptyCodes: 0,
+      nullCodes: 3,
+      nullSubjectIds: 0,
+      nanValues: 2,
+      infiniteValues: 1,
+    });
     expect(stats.perSubject.spanDays).toEqual({
       suppressed: false,
       n: 500,
+      mean: 300,
       p5: 100,
       p25: 200,
       p50: 300,
       p75: 400,
       p95: 500,
     });
-    // Sorted by year; the suppressed years stay a rollup.
-    expect(stats.byYear).toEqual({
-      years: [2099, 2101],
-      measurements: [200, 100],
-      subjects: [40, 30],
-      suppressed: { cells: 3, measurements: 7 },
+    expect(stats.codeMetadata).toEqual({
+      present: true,
+      codes: 320,
+      withDescription: 300,
+      dataCodesMissing: 0,
+      metadataCodesUnused: 20,
     });
-    expect(stats.splits).toEqual({
-      cells: [
-        { split: 'train', subjects: 400, measurements: 30000 },
-        { split: 'tuning', subjects: 50, measurements: 5000 },
-        { split: 'held_out', subjects: 50, measurements: 5000 },
-      ],
-      suppressed: null,
+    expect(stats.concentration).toEqual({
+      top10: 0.5,
+      top100: 0.9,
+      top1000: 1,
+      codesFor50: 10,
+      codesFor90: 100,
+      codesFor99: 250,
     });
-    expect(stats.concentration).toEqual({ top10: 0.5, top100: 0.9, top1000: 1 });
+    // Sorted by name; `<no-vocabulary>` is not a vocabulary, and a mistyped `recognized` is unknown.
     expect(stats.ontology).toEqual({
       measurementsMapped: 0.4,
       codesWithParents: 0.2,
-      vocabularies: ['ICD10CM', 'LOINC'],
+      vocabularies: [
+        { name: 'ICD10CM', measurements: 5, recognized: null },
+        { name: 'LOINC', measurements: 10, recognized: true },
+      ],
       suppressed: { cells: 2, measurements: 3 },
     });
   });
 
-  it('drops digests, layout, config and dataset_digest', () => {
-    const json = JSON.stringify(normalizeStats(statsDocument()));
+  it('drops calendar years, splits, digests, layout, config and dataset_digest', () => {
+    const stats = normalizeStats(statsDocument());
+    expect(Object.keys(stats).sort()).toEqual([
+      'checks',
+      'codeMetadata',
+      'concentration',
+      'counts',
+      'ontology',
+      'perSubject',
+    ]);
+    const json = JSON.stringify(stats);
     expect(json).not.toContain('sha256');
     expect(json).not.toContain('String');
+    expect(json).not.toContain('2101');
+    expect(json).not.toContain('train');
   });
 
   it('turns missing or mistyped fields into nulls rather than failing', () => {
     const stats = normalizeStats({
-      counts: { n_subjects: '500', n_events: null },
+      counts: { n_subjects: '500', n_events: null, quality: { n_empty_code: 'none' } },
       per_subject: { n_measurements: { n: 10, suppressed: true } },
-      time: { by_year: { notayear: { n_measurements: 1, n_subjects: 1 }, '2000': { n_measurements: 1 } } },
-      splits: { present: false },
       codes: {},
-      code_metadata: { ontology: { present: false } },
+      code_metadata: { present: false, ontology: { present: false } },
     });
     expect(stats.counts.subjects).toBeNull();
     expect(stats.counts.events).toBeNull();
     expect(stats.counts.numericValues).toBeNull();
+    expect(stats.checks).toEqual({
+      emptyCodes: null,
+      nullCodes: null,
+      nullSubjectIds: null,
+      nanValues: null,
+      infiniteValues: null,
+    });
     expect(stats.perSubject).toEqual({
       measurements: { suppressed: true, n: 10 },
       events: null,
       uniqueCodes: null,
       spanDays: null,
     });
-    expect(stats.byYear).toEqual({ years: [], measurements: [], subjects: [], suppressed: null });
-    expect(stats.splits).toBeNull();
+    // A dataset without codes.parquet says so; its counts are unknown.
+    expect(stats.codeMetadata).toEqual({
+      present: false,
+      codes: null,
+      withDescription: null,
+      dataCodesMissing: null,
+      metadataCodesUnused: null,
+    });
     expect(stats.concentration).toBeNull();
     expect(stats.ontology).toBeNull();
   });
 
   it('handles an entirely empty document', () => {
     const stats = normalizeStats({});
-    expect(stats.byYear).toBeNull();
-    expect(stats.splits).toBeNull();
+    expect(stats.codeMetadata).toBeNull();
+    expect(stats.concentration).toBeNull();
     expect(stats.ontology).toBeNull();
   });
 
-  it('keeps a split rollup and the coverage of an ontology without a by_vocabulary block', () => {
-    const stats = normalizeStats(
-      statsDocument({
-        splits: {
-          present: true,
-          by_split: {
-            train: { n_subjects: 80, n_measurements: 900 },
-            noSubjects: { n_measurements: 5 },
-            noMeasurements: { n_subjects: 5 },
-            '<suppressed>': { n_measurements: 99, n_splits: 2 },
-          },
-        },
-        code_metadata: { ontology: { present: true, coverage: { frac_measurements_mapped: null } } },
-      })
-    );
-    expect(stats.splits?.suppressed).toEqual({ cells: 2, measurements: 99 });
-    // Splits missing a count are dropped.
-    expect(stats.splits?.cells.map(cell => cell.split)).toEqual(['train']);
-    expect(stats.ontology).toEqual({
-      measurementsMapped: null,
-      codesWithParents: null,
-      vocabularies: [],
-      suppressed: null,
-    });
+  it('keeps the coverage of an ontology without a by_vocabulary block, and unknown vocabulary sizes', () => {
+    expect(
+      normalizeStats(
+        statsDocument({
+          code_metadata: { ontology: { present: true, coverage: { frac_measurements_mapped: null } } },
+        })
+      ).ontology
+    ).toEqual({ measurementsMapped: null, codesWithParents: null, vocabularies: [], suppressed: null });
+    expect(
+      normalizeStats(
+        statsDocument({
+          code_metadata: { ontology: { present: true, by_vocabulary: { SNOMED: { recognized: false } } } },
+        })
+      ).ontology?.vocabularies
+    ).toEqual([{ name: 'SNOMED', measurements: null, recognized: false }]);
   });
 });
 

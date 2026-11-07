@@ -16,7 +16,8 @@ files each time the site is built and charts them side by side.
 The files are safe to publish by design: `meds_summary_stats` never writes out a code, reports no minimum or
 maximum value (only percentiles), and suppresses every split, calendar year or vocabulary that fewer than 20
 subjects contribute to, keeping only a pooled `<suppressed>` total. This page shows such cells as suppressed and
-never estimates them.
+never estimates them. It does not chart calendar years, because most datasets shift their dates to de-identify
+them.
 
 <DatasetStatistics />
 

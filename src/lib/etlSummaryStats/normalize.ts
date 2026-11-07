@@ -4,8 +4,8 @@ import {
   type EtlStats,
   type EtlStatsData,
   type EtlStatsEntry,
-  type SplitCell,
   type SuppressedRollup,
+  type VocabularyCell,
   SUPPORTED_SCHEMA_VERSIONS,
   SUPPRESSED_KEY,
 } from './types';
@@ -47,11 +47,11 @@ export function normalizeDistribution(value: unknown): Distribution | null {
   const q = value.quantiles;
   const [p5, p25, p50, p75, p95] = ['p5', 'p25', 'p50', 'p75', 'p95'].map(key => num(dig(q, key)));
   if (p5 === null || p25 === null || p50 === null || p75 === null || p95 === null) return null;
-  return { suppressed: false, n, p5, p25, p50, p75, p95 };
+  return { suppressed: false, n, mean: num(value.mean), p5, p25, p50, p75, p95 };
 }
 
 /**
- * Reads a keyed block such as `time.by_year`, whose entries backed by too few subjects were replaced by a
+ * Reads a keyed block such as `ontology.by_vocabulary`, whose entries backed by too few subjects were replaced by a
  * `<suppressed>` rollup. Entries that `parse` rejects are left out.
  */
 export function normalizeKeyed<T>(
@@ -73,27 +73,19 @@ export function normalizeKeyed<T>(
   return { cells, suppressed };
 }
 
-interface YearCell {
-  year: number;
-  measurements: number;
-  subjects: number;
-}
-
-const parseYear = (key: string, cell: unknown): YearCell | null => {
-  const measurements = num(dig(cell, 'n_measurements'));
-  const subjects = num(dig(cell, 'n_subjects'));
-  if (!/^-?\d+$/.test(key) || measurements === null || subjects === null) return null;
-  return { year: Number(key), measurements, subjects };
+// Vocabulary names are those of published terminologies (LOINC, ICD10CM, ...), never the dataset's own codes.
+// `<no-vocabulary>` pools parent codes that name no vocabulary; it is not a vocabulary, so it is not listed.
+const parseVocabulary = (key: string, cell: unknown): VocabularyCell | null => {
+  if (key.startsWith('<')) return null;
+  const recognized = dig(cell, 'recognized');
+  return {
+    name: key,
+    measurements: num(dig(cell, 'n_measurements')),
+    recognized: typeof recognized === 'boolean' ? recognized : null,
+  };
 };
 
-const parseSplit = (key: string, cell: unknown): SplitCell | null => {
-  const measurements = num(dig(cell, 'n_measurements'));
-  const subjects = num(dig(cell, 'n_subjects'));
-  if (measurements === null || subjects === null) return null;
-  return { split: key, subjects, measurements };
-};
-
-/** A block that the document marks `present: false` (e.g. a dataset without a splits file) is absent. */
+/** A block that the document marks `present: false` (e.g. a dataset without a dataset.json) is absent. */
 const presentBlock = (value: unknown): JsonObject | null =>
   isObject(value) && value.present !== false ? value : null;
 
@@ -102,41 +94,37 @@ export function normalizeStats(doc: JsonObject): EtlStats {
   const counts = doc.counts;
   const perSubject = doc.per_subject;
 
-  const years = normalizeKeyed(dig(doc, 'time', 'by_year'), parseYear, 'n_years');
-  const yearCells = (years?.cells ?? []).sort((a, b) => a.year - b.year);
-  const byYear = years && {
-    years: yearCells.map(cell => cell.year),
-    measurements: yearCells.map(cell => cell.measurements),
-    subjects: yearCells.map(cell => cell.subjects),
-    suppressed: years.suppressed,
-  };
-
-  const splitsBlock = presentBlock(doc.splits);
-  const splits = splitsBlock ? normalizeKeyed(splitsBlock.by_split, parseSplit, 'n_splits') : null;
-
   const concentrationBlock = dig(doc, 'codes', 'concentration');
   const concentration = isObject(concentrationBlock)
     ? {
         top10: num(concentrationBlock.frac_measurements_in_top_10),
         top100: num(concentrationBlock.frac_measurements_in_top_100),
         top1000: num(concentrationBlock.frac_measurements_in_top_1000),
+        codesFor50: num(concentrationBlock.n_codes_covering_50pct),
+        codesFor90: num(concentrationBlock.n_codes_covering_90pct),
+        codesFor99: num(concentrationBlock.n_codes_covering_99pct),
       }
     : null;
 
-  const ontologyBlock = dig(doc, 'code_metadata', 'ontology');
+  const codeMetadataBlock = doc.code_metadata;
+  const codeMetadata = isObject(codeMetadataBlock)
+    ? {
+        present: codeMetadataBlock.present !== false,
+        codes: num(codeMetadataBlock.n_codes),
+        withDescription: num(codeMetadataBlock.n_with_description),
+        dataCodesMissing: num(codeMetadataBlock.n_data_codes_missing_from_metadata),
+        metadataCodesUnused: num(codeMetadataBlock.n_metadata_codes_absent_from_data),
+      }
+    : null;
+
+  const ontologyBlock = dig(codeMetadataBlock, 'ontology');
   let ontology: EtlStats['ontology'] = null;
   if (isObject(ontologyBlock) && ontologyBlock.present === true) {
-    // Vocabulary names are those of published terminologies (LOINC, ICD10CM, ...), never the dataset's own codes.
-    // `<no-vocabulary>` pools parent codes that name no vocabulary; it is not a vocabulary, so it is not listed.
-    const vocabularies = normalizeKeyed(
-      ontologyBlock.by_vocabulary,
-      key => (key.startsWith('<') ? null : key),
-      'n_vocabularies'
-    );
+    const vocabularies = normalizeKeyed(ontologyBlock.by_vocabulary, parseVocabulary, 'n_vocabularies');
     ontology = {
       measurementsMapped: num(dig(ontologyBlock, 'coverage', 'frac_measurements_mapped')),
       codesWithParents: num(dig(ontologyBlock, 'coverage', 'frac_observed_codes_with_parents')),
-      vocabularies: (vocabularies?.cells ?? []).sort(),
+      vocabularies: (vocabularies?.cells ?? []).sort((a, b) => a.name.localeCompare(b.name)),
       suppressed: vocabularies?.suppressed ?? null,
     };
   }
@@ -152,14 +140,20 @@ export function normalizeStats(doc: JsonObject): EtlStats {
       subjectsWithStatic: num(dig(counts, 'n_subjects_with_static')),
       numericValues: num(dig(counts, 'numeric', 'n_present')),
     },
+    checks: {
+      emptyCodes: num(dig(counts, 'quality', 'n_empty_code')),
+      nullCodes: num(dig(counts, 'quality', 'n_null_code')),
+      nullSubjectIds: num(dig(counts, 'quality', 'n_null_subject_id')),
+      nanValues: num(dig(counts, 'numeric', 'n_nan')),
+      infiniteValues: num(dig(counts, 'numeric', 'n_infinite')),
+    },
     perSubject: {
       measurements: normalizeDistribution(dig(perSubject, 'n_measurements')),
       events: normalizeDistribution(dig(perSubject, 'n_events')),
       uniqueCodes: normalizeDistribution(dig(perSubject, 'n_unique_codes')),
       spanDays: normalizeDistribution(dig(perSubject, 'span_days')),
     },
-    byYear,
-    splits,
+    codeMetadata,
     concentration,
     ontology,
   };
