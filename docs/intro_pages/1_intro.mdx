@@ -3,6 +3,8 @@ sidebar_position: 1
 ---
 
 import EcosystemFigure from '@site/static/img/ecosystem_figure.svg';
+import MedsPapersTimeline from '@site/src/components/MedsPapersTimeline';
+import MedsPapers from '@site/static/data/meds_papers.yaml';
 
 # Welcome to MEDS
 
@@ -65,6 +67,12 @@ results or your task definitions to MEDS-DEV is easy, as is reproducing prior mo
 local data. Check out the [MEDS-DEV GitHub repository](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/) to get
 started!
 
+## Key MEDS papers
+
+Peer-reviewed papers on the MEDS standard and its core tools, oldest first.
+
+<MedsPapersTimeline data={MedsPapers} />
+
 ## Where to go from here?
 
 1. If you're new to MEDS and want to learn more about the nuts and bolts, check out the
@@ -73,8 +81,8 @@ started!
    check out the [public research resources](/docs/intro_pages/ecosystem) that support MEDS!
 3. If you're looking to help build a shared understanding of the science of health AI, check out the
    [MEDS-DEV](https://github.com/Medical-Event-Data-Standard/MEDS-DEV) repository and see how you can contribute!
-4. If you're looking to read academic papers about MEDS, check out
-   [our workshop paper](https://openreview.net/forum?id=IsHy2ebjIG)!
+4. If you're looking to read academic papers about MEDS, check out the
+   [key MEDS papers](#key-meds-papers) above!
 5. If you want to know where MEDS is heading and where help is needed, read the
    [roadmap](/docs/intro_pages/roadmap)!
 6. If you'd like to contribute a tool, dataset, model, benchmark result, or documentation fix, see

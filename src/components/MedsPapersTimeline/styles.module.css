@@ -1,30 +1,26 @@
 /*
- * Narrow screens (the default here): a vertical timeline, with the axis on the left and the cards beside it.
- * Wide screens (min-width: 997px, where Infima's mobile layout ends): a horizontal timeline. Its grid has
- * --timeline-columns columns (set by the component); each card spans the four columns centred on its marker and
- * sits above or below the axis, which is the middle grid row.
+ * The layout follows the width the timeline has, not the viewport's: in the docs column, next to the sidebar and
+ * the table of contents, it is much narrower than the window.
+ * Narrow (the default here): a vertical timeline, with the axis on the left and the cards beside it.
+ * Wide (a wrapper at least 44rem wide): a horizontal timeline. Its grid has --timeline-columns columns (set by the
+ * component); each card spans the four columns centred on its marker and sits above or below the axis, which is
+ * the middle grid row.
  */
 
-.section {
-  --timeline-bg: var(--ifm-color-emphasis-100);
+.wrapper {
+  container: meds-papers / inline-size;
+  /* The page's background, which rings the markers and hides the end of the vertical axis. */
+  --timeline-bg: var(--ifm-background-surface-color);
   --timeline-rail: var(--ifm-color-emphasis-400);
   --timeline-axis-height: 2.5rem;
   --timeline-stem-height: 1.5rem;
   --timeline-dot-size: 0.875rem;
-  background: var(--timeline-bg);
-  padding: 3rem 0 3.5rem;
+  margin: 1.5rem 0 var(--ifm-leading);
 }
 
-.heading {
-  text-align: center;
-  margin-bottom: 0.5rem;
-}
-
-.intro {
-  text-align: center;
-  color: var(--ifm-color-emphasis-700);
-  max-width: 40rem;
-  margin: 0 auto 2rem;
+/* In the light theme the body is transparent over a white canvas; the dark theme gives it a colour. */
+:global([data-theme='dark']) .wrapper {
+  --timeline-bg: var(--ifm-background-color);
 }
 
 .timeline {
@@ -153,7 +149,7 @@
   vertical-align: -0.125em;
 }
 
-@media screen and (min-width: 997px) {
+@container meds-papers (min-width: 44rem) {
   .timeline {
     display: grid;
     grid-template-columns: repeat(var(--timeline-columns), minmax(0, 1fr));
