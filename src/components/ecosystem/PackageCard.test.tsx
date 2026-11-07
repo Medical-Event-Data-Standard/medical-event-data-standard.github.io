@@ -45,6 +45,7 @@ describe('PackageCard', () => {
       <PackageCard
         pkg={{
           name: 'My Package',
+          description: 'Does one useful thing with MEDS data.',
           githubRepo: 'Org/Repo',
           warn: 'Experimental',
           demoAvailable: true,
@@ -56,7 +57,8 @@ describe('PackageCard', () => {
     );
 
     expect(mockUsePluginData).toHaveBeenCalledWith('ecosystem-metadata');
-    expect(screen.getByText('My Package')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'My Package' })).toBeInTheDocument();
+    expect(screen.getByText('Does one useful thing with MEDS data.')).toBeInTheDocument();
     expect(screen.getByText('Experimental')).toBeInTheDocument();
     expect(screen.getByText(/Demo Available/)).toBeInTheDocument();
     expect(screen.getByText(/42 stars/)).toBeInTheDocument();
@@ -81,26 +83,29 @@ describe('PackageCard', () => {
     mockUsePluginData.mockReturnValue(undefined);
     render(<PackageCard pkg={{ name: 'Bare Package', githubRepo: 'org/other' }} />);
 
-    expect(screen.getByText('Bare Package')).toBeInTheDocument();
+    // Nothing but the name: no description, stars or release.
+    expect(screen.getByRole('heading', { name: 'Bare Package' }).parentElement).toHaveTextContent(
+      /^Bare Package$/
+    );
     expect(screen.queryByText(/stars/)).not.toBeInTheDocument();
     expect(screen.queryByText(/📦/)).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Docs' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'PhysioNet' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Data repository' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'MEDS-DEV' })).not.toBeInTheDocument();
   });
 
-  it('links a dataset to its PhysioNet page', () => {
+  it('links a dataset to the page that distributes it, such as its PhysioNet project', () => {
     mockUsePluginData.mockReturnValue(metadata);
     render(
       <PackageCard
         pkg={{
           name: 'MIMIC-IV Demo',
-          physionetUrl: 'https://physionet.org/content/mimic-iv-demo-meds/0.0.1/',
+          dataRepositoryUrl: 'https://physionet.org/content/mimic-iv-demo-meds/0.0.1/',
         }}
       />
     );
 
-    const link = screen.getByRole('link', { name: 'PhysioNet' });
+    const link = screen.getByRole('link', { name: 'Data repository' });
     expect(link).toHaveAttribute('href', 'https://physionet.org/content/mimic-iv-demo-meds/0.0.1/');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Grid, TextField, Chip, Box } from '@mui/material';
 import { useHistory, useLocation } from '@docusaurus/router';
 import { Package, Topic } from '@site/src/lib/ecosystem/types';
+import { packageMatchesSearch } from '@site/src/lib/ecosystem/search';
 import PackageCard from './PackageCard';
 
 export default function PackageGrid({
@@ -55,7 +56,7 @@ export default function PackageGrid({
   const packageList = Object.values(packages);
 
   const filtered = packageList.filter(pkg => {
-    const matchesSearch = pkg.name.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = packageMatchesSearch(pkg, search);
     if (selectedTopics.size === 0) {
       return matchesSearch;
     }
@@ -66,7 +67,7 @@ export default function PackageGrid({
   return (
     <Box>
       <TextField
-        label="Search packages"
+        label="Search by name or description"
         variant="outlined"
         fullWidth
         sx={{ mb: 2 }}

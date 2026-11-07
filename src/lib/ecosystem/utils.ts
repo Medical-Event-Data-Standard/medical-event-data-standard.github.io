@@ -42,13 +42,14 @@ const CATEGORY_FIELDS: Record<'name' | 'description' | 'icon' | 'stage' | 'packa
 
 const PACKAGE_FIELDS: Record<keyof RawPackage, FieldSpec> = {
   name: STRING,
+  description: STRING,
   github_repo: STRING,
   warn: STRING,
   demo_available: { isValid: value => typeof value === 'boolean', expected: 'true or false' },
   docs_url: STRING,
   paper_url: STRING,
   pypi_name: STRING,
-  physionet_url: STRING,
+  data_repository_url: STRING,
   topics: { isValid: value => Array.isArray(value) && value.every(isString), expected: 'a list of strings' },
   meds_dev: {
     isValid: value =>
@@ -217,13 +218,14 @@ function parseCategory(
     const { topics: pkgTopics = [] } = rawPkg;
     const pkg: Package = {
       name: rawPkg.name,
+      description: rawPkg.description,
       githubRepo: rawPkg.github_repo,
       warn: rawPkg.warn,
       demoAvailable: rawPkg.demo_available,
       docsUrl: rawPkg.docs_url,
       paperUrl: rawPkg.paper_url,
       pypiName: rawPkg.pypi_name,
-      physionetUrl: rawPkg.physionet_url,
+      dataRepositoryUrl: rawPkg.data_repository_url,
       topics: [categoryRichTopicName],
       medsDev: rawPkg.meds_dev
         ? {

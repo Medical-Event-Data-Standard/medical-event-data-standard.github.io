@@ -23,13 +23,16 @@ export interface RawMedsDevInfo {
 
 export interface RawPackage {
   name: string;
+  /** One plain sentence saying what the package does, shown on its card and matched by the search box. */
+  description?: string;
   github_repo?: string;
   warn?: string;
   demo_available?: boolean;
   docs_url?: string;
   paper_url?: string;
   pypi_name?: string;
-  physionet_url?: string;
+  /** The page that distributes the dataset, such as its PhysioNet project. */
+  data_repository_url?: string;
   topics?: string[];
   meds_dev?: RawMedsDevInfo;
 }
@@ -72,13 +75,14 @@ export interface MedsDevInfo {
 
 export interface Package {
   name: string;
+  description?: string;
   githubRepo?: string;
   warn?: string;
   demoAvailable?: boolean;
   docsUrl?: string;
   paperUrl?: string;
   pypiName?: string;
-  physionetUrl?: string;
+  dataRepositoryUrl?: string;
   topics?: RichTopicName[];
   medsDev?: MedsDevInfo;
 }
