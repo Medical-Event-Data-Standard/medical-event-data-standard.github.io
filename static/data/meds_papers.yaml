@@ -1,5 +1,6 @@
 # The main MEDS papers, shown on a timeline on the "Welcome to MEDS" page (docs/intro_pages/1_intro.mdx), drawn by
-# src/components/MedsPapersTimeline.
+# src/components/MedsPapersTimeline. The home page (src/pages/index.tsx) also features one of them, picked by its
+# label in src/components/FeaturedPaper.
 #
 # List the papers on the standard itself and on its core tools and benchmark once they are published at a venue: a
 # journal, conference or workshop. Papers that are only preprints (e.g. on arXiv) are left out until then. ACES
@@ -15,8 +16,11 @@
 #   url:     link to the paper: its DOI, the publisher's page or, for papers published there, its OpenReview page
 #   summary: one line on what the paper is
 #   id:      optional; the paper's Semantic Scholar paperId
+#   authors: optional; the authors' full names, in order, as published (e.g. as Crossref lists them for a DOI);
+#            the paper featured on the home page needs them, as it names its first authors
 #
-# `label`, `title`, `venue`, `year`, `url` and `id` mean the same as in the seeds of static/data/papers.yaml.
+# `label`, `title`, `authors`, `venue`, `year`, `url` and `id` mean the same as in the seeds of
+# static/data/papers.yaml.
 
 papers:
   - label: 'MEDS'
@@ -60,7 +64,37 @@ papers:
     id: '2619008e94a623872a48eeb05da7e0a4a97e2ed5'
 
   - label: 'MEDS review'
+    # Featured on the home page. Title, venue, date and authors as Crossref has them for the DOI (vol. 3, no. 6).
     title: 'MEDS — An Emerging Data Standard and Ecosystem for Health AI Research'
+    authors:
+      - 'Matthew B. A. McDermott'
+      - 'Ethan Steinberg'
+      - 'Jason A. Fries'
+      - 'Robin P. van de Water'
+      - 'Chao Pang'
+      - 'Patrick Rockenschaub'
+      - 'Pawel Renc'
+      - 'Jungwoo Oh'
+      - 'Kamilė Stankevičiūtė'
+      - 'Justin Xu'
+      - 'Tom J. Pollard'
+      - 'Nassim Oufattole'
+      - 'Michael Wornow'
+      - 'Teya S. Bergamaschi'
+      - 'Hyewon Jeong'
+      - 'Simon A. Lee'
+      - 'Vincent Jeanselme'
+      - 'Kiril V. Klein'
+      - 'Mikkel Odgaard'
+      - 'Maria E. Montgomery'
+      - 'Arkadiusz Sitek'
+      - 'Mads Nielsen'
+      - 'Jeffrey N. Chiang'
+      - 'Noa Dagan'
+      - 'Isaac Kohane'
+      - 'Shalmali Joshi'
+      - 'Edward Choi'
+      - 'Nigam H. Shah'
     venue: 'NEJM AI'
     year: 2026
     month: 5

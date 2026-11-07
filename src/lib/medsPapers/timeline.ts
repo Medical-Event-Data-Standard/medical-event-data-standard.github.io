@@ -1,6 +1,7 @@
 // Parses, sorts and lays out the main MEDS papers of static/data/meds_papers.yaml for the timeline on the "Welcome
-// to MEDS" page (src/components/MedsPapersTimeline). The page is rendered at build time, so the errors thrown below
-// for malformed entries fail the build instead of silently dropping a paper.
+// to MEDS" page (src/components/MedsPapersTimeline); the home page's featured paper (src/components/FeaturedPaper)
+// is parsed here too. The pages are rendered at build time, so the errors thrown below for malformed entries fail
+// the build instead of silently dropping a paper.
 
 /** One of the main MEDS papers. The field names follow the seeds of static/data/papers.yaml where they overlap. */
 export interface MedsPaper {
@@ -19,21 +20,28 @@ export interface MedsPaper {
   summary: string;
   /** Semantic Scholar paperId, as in static/data/papers.yaml. */
   id?: string;
+  /** The authors' full names, in order, as published. */
+  authors?: string[];
 }
 
-const SOURCE = 'static/data/meds_papers.yaml';
+/** The file the papers are read from, for error messages. */
+export const MEDS_PAPERS_SOURCE = 'static/data/meds_papers.yaml';
 
 const STRING_FIELDS = ['label', 'title', 'venue', 'url', 'summary', 'id'] as const;
 const REQUIRED_FIELDS = ['label', 'title', 'venue', 'year', 'url', 'summary'] as const;
-const KNOWN_FIELDS: ReadonlySet<string> = new Set([...STRING_FIELDS, 'year', 'month']);
+const KNOWN_FIELDS: ReadonlySet<string> = new Set([...STRING_FIELDS, 'year', 'month', 'authors']);
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const isMapping = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+// Folded YAML strings can span several lines: collapse their whitespace. Anything but a string becomes ''.
+const collapseWhitespace = (value: unknown): string =>
+  typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+
 function fail(path: string, message: string): never {
-  throw new Error(`Invalid entry in ${SOURCE} at ${path}: ${message}`);
+  throw new Error(`Invalid entry in ${MEDS_PAPERS_SOURCE} at ${path}: ${message}`);
 }
 
 function isHttpUrl(value: string): boolean {
@@ -64,8 +72,7 @@ function parsePaper(raw: unknown, path: string): MedsPaper {
   for (const key of STRING_FIELDS) {
     const value = raw[key];
     if (value === undefined) continue;
-    // Folded YAML strings can span several lines: collapse their whitespace.
-    const text = typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+    const text = collapseWhitespace(value);
     if (!text) {
       fail(path, `"${key}" must be a non-empty string, got ${JSON.stringify(value)}.`);
     }
@@ -82,6 +89,7 @@ function parsePaper(raw: unknown, path: string): MedsPaper {
   if (!isHttpUrl(strings.url as string)) {
     fail(path, `"url" must be an http(s) URL, got ${JSON.stringify(strings.url)}.`);
   }
+  const authors = raw.authors === undefined ? undefined : parseAuthors(raw.authors, path);
 
   const paper: MedsPaper = {
     label: strings.label as string,
@@ -93,13 +101,22 @@ function parsePaper(raw: unknown, path: string): MedsPaper {
   };
   if (month !== undefined) paper.month = month as number;
   if (strings.id !== undefined) paper.id = strings.id;
+  if (authors !== undefined) paper.authors = authors;
   return paper;
+}
+
+function parseAuthors(raw: unknown, path: string): string[] {
+  const authors = Array.isArray(raw) ? raw.map(collapseWhitespace) : [];
+  if (authors.length === 0 || authors.includes('')) {
+    fail(path, `"authors" must be a non-empty list of names, got ${JSON.stringify(raw)}.`);
+  }
+  return authors;
 }
 
 /** Parses the contents of static/data/meds_papers.yaml: a mapping with a non-empty list of `papers`. */
 export function parseMedsPapers(raw: unknown): MedsPaper[] {
   if (!isMapping(raw) || !Array.isArray(raw.papers) || raw.papers.length === 0) {
-    throw new Error(`Invalid ${SOURCE}: expected a mapping with a non-empty list of "papers".`);
+    throw new Error(`Invalid ${MEDS_PAPERS_SOURCE}: expected a mapping with a non-empty list of "papers".`);
   }
   return raw.papers.map((paper, index) => parsePaper(paper, `papers[${index}]`));
 }
