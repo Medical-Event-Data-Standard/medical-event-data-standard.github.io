@@ -1,10 +1,13 @@
-# The main MEDS papers, shown on a timeline on the homepage (src/components/HomepageTimeline).
+# The main MEDS papers, shown on a timeline on the "Welcome to MEDS" page (docs/intro_pages/1_intro.mdx), drawn by
+# src/components/MedsPapersTimeline. The home page (src/pages/index.tsx) also features one of them, picked by its
+# label in src/components/FeaturedPaper.
 #
 # List the papers on the standard itself and on its core tools and benchmark once they are published at a venue: a
-# journal, conference or workshop. Papers that are only preprints (e.g. on arXiv) are left out until then. The
-# homepage sorts the papers by date, so they can be listed in any order. Each paper has:
+# journal, conference or workshop. Papers that are only preprints (e.g. on arXiv) are left out until then. ACES
+# (ICLR 2025) is left out on purpose. The timeline sorts the papers by date, so they can be listed in any order.
+# Each paper has:
 #
-#   label:   short name shown on the timeline, e.g. 'ACES'
+#   label:   short name shown on the timeline, e.g. 'MEDS-DEV'
 #   title:   full title, as published
 #   venue:   where it was published
 #   year:    when it was published: for a journal, the date of publication; for a conference or workshop, the
@@ -13,8 +16,11 @@
 #   url:     link to the paper: its DOI, the publisher's page or, for papers published there, its OpenReview page
 #   summary: one line on what the paper is
 #   id:      optional; the paper's Semantic Scholar paperId
+#   authors: optional; the authors' full names, in order, as published (e.g. as Crossref lists them for a DOI);
+#            the paper featured on the home page needs them, as it names its first authors
 #
-# `label`, `title`, `venue`, `year`, `url` and `id` mean the same as in the seeds of static/data/papers.yaml.
+# `label`, `title`, `authors`, `venue`, `year`, `url` and `id` mean the same as in the seeds of
+# static/data/papers.yaml.
 
 papers:
   - label: 'MEDS'
@@ -48,15 +54,6 @@ papers:
     summary: 'A community benchmark for reproducible, comparable evaluation of models across MEDS datasets and tasks.'
     id: '7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf'
 
-  - label: 'ACES'
-    title: 'ACES: Automatic Cohort Extraction System for Event-Stream Datasets'
-    venue: 'ICLR 2025'
-    year: 2025
-    month: 4
-    url: 'https://proceedings.iclr.cc/paper_files/paper/2025/hash/d8542126cd3e0dd6c0a44e0aa1957072-Abstract-Conference.html'
-    summary: 'A configuration language and library to define prediction tasks and extract their cohorts reproducibly.'
-    id: '27689dd149c473d24cdf22124c2a29d187c960b8'
-
   - label: 'MEDS tutorial'
     title: 'MEDS: Building Models and Tools in a Reproducible Health AI Ecosystem'
     venue: 'KDD 2025 (tutorial)'
@@ -67,7 +64,37 @@ papers:
     id: '2619008e94a623872a48eeb05da7e0a4a97e2ed5'
 
   - label: 'MEDS review'
+    # Featured on the home page. Title, venue, date and authors as Crossref has them for the DOI (vol. 3, no. 6).
     title: 'MEDS — An Emerging Data Standard and Ecosystem for Health AI Research'
+    authors:
+      - 'Matthew B. A. McDermott'
+      - 'Ethan Steinberg'
+      - 'Jason A. Fries'
+      - 'Robin P. van de Water'
+      - 'Chao Pang'
+      - 'Patrick Rockenschaub'
+      - 'Pawel Renc'
+      - 'Jungwoo Oh'
+      - 'Kamilė Stankevičiūtė'
+      - 'Justin Xu'
+      - 'Tom J. Pollard'
+      - 'Nassim Oufattole'
+      - 'Michael Wornow'
+      - 'Teya S. Bergamaschi'
+      - 'Hyewon Jeong'
+      - 'Simon A. Lee'
+      - 'Vincent Jeanselme'
+      - 'Kiril V. Klein'
+      - 'Mikkel Odgaard'
+      - 'Maria E. Montgomery'
+      - 'Arkadiusz Sitek'
+      - 'Mads Nielsen'
+      - 'Jeffrey N. Chiang'
+      - 'Noa Dagan'
+      - 'Isaac Kohane'
+      - 'Shalmali Joshi'
+      - 'Edward Choi'
+      - 'Nigam H. Shah'
     venue: 'NEJM AI'
     year: 2026
     month: 5

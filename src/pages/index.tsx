@@ -3,8 +3,8 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
-import HomepageTimeline from '@site/src/components/HomepageTimeline';
-import medsPapers from '@site/static/data/meds_papers.yaml';
+import FeaturedPaper from '@site/src/components/FeaturedPaper';
+import MedsPapers from '@site/static/data/meds_papers.yaml';
 import Heading from '@theme/Heading';
 
 import styles from './index.module.css';
@@ -41,7 +41,7 @@ export default function Home(): React.JSX.Element {
       <HomepageHeader />
       <main>
         <HomepageFeatures />
-        <HomepageTimeline data={medsPapers} />
+        <FeaturedPaper data={MedsPapers} />
       </main>
     </Layout>
   );
