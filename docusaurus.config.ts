@@ -3,6 +3,7 @@ import etlSummaryStatsPlugin from './plugins/etlSummaryStats';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import ecosystemMetadataPlugin from './plugins/ecosystemMetadata';
+import papersPlugin from './plugins/papers';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -68,6 +69,9 @@ const config: Config = {
     }),
     // Fetches GitHub stars/releases for the ecosystem page at build time; set GITHUB_TOKEN to avoid rate limits.
     ecosystemMetadataPlugin,
+    // Lists the papers citing MEDS on /papers, from Semantic Scholar at build time (falling back to
+    // static/data/papers.snapshot.json); set SEMANTIC_SCHOLAR_API_KEY to avoid rate limits.
+    papersPlugin,
   ],
 
   presets: [
@@ -145,6 +149,7 @@ const config: Config = {
           position: 'left',
           label: 'MEDS-DEV',
         },
+        { to: '/papers', label: 'Papers', position: 'left' },
         {
           type: 'doc',
           docId: 'intro_pages/contributing',
