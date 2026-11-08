@@ -1,4 +1,4 @@
-import { findMedsPaper, shortAuthorList } from './featured';
+import { findMedsPaper } from './featured';
 import { MedsPaper } from './timeline';
 
 const paper = (label: string): MedsPaper => ({
@@ -22,23 +22,5 @@ describe('findMedsPaper', () => {
     expect(() => findMedsPaper(papers, 'MEDS-Tab')).toThrow(
       'No paper labelled "MEDS-Tab" in static/data/meds_papers.yaml; its labels are "MEDS", "MEDS review".'
     );
-  });
-});
-
-describe('shortAuthorList', () => {
-  const authors = ['Ada Lovelace', 'Alan Turing', 'Grace Hopper', 'Edsger Dijkstra'];
-
-  it('names every author when there are at most three', () => {
-    expect(shortAuthorList(authors.slice(0, 1))).toBe('Ada Lovelace');
-    expect(shortAuthorList(authors.slice(0, 3))).toBe('Ada Lovelace, Alan Turing, Grace Hopper');
-  });
-
-  it('names the first three authors and "et al." when there are more', () => {
-    expect(shortAuthorList(authors)).toBe('Ada Lovelace, Alan Turing, Grace Hopper, et al.');
-  });
-
-  it('names as many authors as asked for', () => {
-    expect(shortAuthorList(authors, 1)).toBe('Ada Lovelace, et al.');
-    expect(shortAuthorList(authors, 4)).toBe(authors.join(', '));
   });
 });

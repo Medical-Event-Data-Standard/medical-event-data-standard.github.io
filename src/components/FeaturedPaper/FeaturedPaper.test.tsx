@@ -47,9 +47,15 @@ describe('FeaturedPaper', () => {
     expect(date.tagName).toBe('TIME');
     expect(date).toHaveAttribute('dateTime', '2026-05');
     expect(date.parentElement).toHaveTextContent(/^NEJM AI · May 2026$/);
-    expect(
-      box.getByText('Matthew B. A. McDermott, Ethan Steinberg, Jason A. Fries, et al.')
-    ).toBeInTheDocument();
+    // Every author is listed, in order, without "et al.", each name kept whole on one line.
+    const firstAuthor = box.getByText('Matthew B. A. McDermott');
+    const authors = firstAuthor.parentElement as HTMLElement;
+    expect(authors).toHaveTextContent(
+      /^Matthew B\. A\. McDermott, Ethan Steinberg, Jason A\. Fries, .*, Nigam H\. Shah$/
+    );
+    expect(authors.querySelectorAll('span')).toHaveLength(28);
+    expect(authors.textContent?.split(', ')).toHaveLength(28);
+    expect(authors).not.toHaveTextContent('et al.');
     expect(
       box.getByText(
         'Describes MEDS in detail and reviews its adoption across institutions, datasets and models.'
