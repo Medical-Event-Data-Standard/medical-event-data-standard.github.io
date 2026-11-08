@@ -4,6 +4,7 @@ import {
   emptyLiveFetch,
   isPapersData,
   normalizePaper,
+  paperFromDetails,
   paperMatchesId,
   semanticScholarUrl,
   type LiveFetch,
@@ -117,6 +118,38 @@ describe('paperMatchesId', () => {
   });
 });
 
+describe('paperFromDetails', () => {
+  it('makes a paper from the details in papers.yaml, identified and linked by its identifier', () => {
+    expect(
+      paperFromDetails('DOI:10.1/a:b', { title: 'T', authors: ['Ada'], venue: 'Thesis', year: 2026 })
+    ).toEqual({
+      id: 'DOI:10.1/a:b',
+      title: 'T',
+      authors: ['Ada'],
+      venue: 'Thesis',
+      year: 2026,
+      publicationDate: null,
+      doi: '10.1/a:b',
+      arxivId: null,
+      url: 'https://doi.org/10.1/a:b',
+      citationCount: null,
+    });
+    expect(paperFromDetails('ARXIV:2401.00001', { title: 'T' })).toMatchObject({
+      authors: [],
+      doi: null,
+      arxivId: '2401.00001',
+      url: 'https://arxiv.org/abs/2401.00001',
+    });
+    expect(paperFromDetails(SEED_A, { title: 'T' })).toMatchObject({
+      doi: null,
+      url: semanticScholarUrl(SEED_A),
+    });
+    expect(paperFromDetails('DOI:10.1/a', { title: 'T', url: 'https://example.org' }).url).toBe(
+      'https://example.org'
+    );
+  });
+});
+
 describe('buildPapersData', () => {
   const config: PapersConfig = {
     seeds: [
@@ -154,7 +187,7 @@ describe('buildPapersData', () => {
     });
 
     const result = buildPapersData(
-      { ...config, include: ['ARXIV:2401.00001', 'only-b'], exclude: ['doi:10.1/x'] },
+      { ...config, include: [{ id: 'ARXIV:2401.00001' }, { id: 'only-b' }], exclude: ['doi:10.1/x'] },
       live,
       null
     );
@@ -207,7 +240,7 @@ describe('buildPapersData', () => {
       incompleteSeeds: new Set([SEED_A]),
     });
 
-    const result = buildPapersData({ ...config, include: ['DOI:10.1/MANUAL'] }, live, snapshot);
+    const result = buildPapersData({ ...config, include: [{ id: 'DOI:10.1/MANUAL' }] }, live, snapshot);
 
     expect(result.seeds[0]).toMatchObject({ id: SEED_A, title: 'Saved seed A', label: 'Seed A' });
     expect(result.seeds[0]).not.toHaveProperty('cites');
@@ -274,7 +307,11 @@ describe('buildPapersData', () => {
   });
 
   it('falls back to placeholders when there is neither live data nor a snapshot', () => {
-    const result = buildPapersData({ ...config, include: ['DOI:10.1/missing'] }, emptyLiveFetch(), null);
+    const result = buildPapersData(
+      { ...config, include: [{ id: 'DOI:10.1/missing' }] },
+      emptyLiveFetch(),
+      null
+    );
     expect(result.seeds[1]).toEqual({
       id: SEED_B,
       label: 'Seed B',
@@ -297,6 +334,88 @@ describe('buildPapersData', () => {
       'papers citing Seed B',
       'included paper DOI:10.1/missing',
     ]);
+  });
+
+  describe('with details of included papers in papers.yaml', () => {
+    const own = { title: 'Own title', authors: ['Ada'], venue: 'Thesis', year: 2026 };
+    const liveSeeds = new Map([
+      [SEED_A, s2(SEED_A)],
+      [SEED_B, s2(SEED_B)],
+    ]);
+
+    it("lists a paper Semantic Scholar doesn't have from its details, and applies details over Semantic Scholar's", () => {
+      const withIncludes: PapersConfig = {
+        ...config,
+        include: [
+          { id: 'DOI:10.1/not-on-s2', overrides: own },
+          { id: 'DOI:10.1/on-s2', overrides: { venue: 'Corrected venue' } },
+          // Also cites a seed: the details apply to the merged entry.
+          { id: 'DOI:10.1/cites', overrides: { year: 2024 } },
+          // Not on Semantic Scholar, and without a title they can't be listed.
+          { id: 'DOI:10.1/no-title', overrides: { venue: 'V' } },
+          { id: 'DOI:10.1/bare' },
+        ],
+      };
+      const cites = s2('cites', { externalIds: { DOI: '10.1/cites' } });
+      const live = liveWith({
+        seeds: liveSeeds,
+        citations: new Map([
+          [SEED_A, [cites]],
+          [SEED_B, [s2('b')]],
+        ]),
+        included: new Map([
+          ['DOI:10.1/not-on-s2', null],
+          ['DOI:10.1/on-s2', s2('on-s2', { venue: 'Wrong', externalIds: { DOI: '10.1/on-s2' } })],
+          ['DOI:10.1/cites', cites],
+          ['DOI:10.1/no-title', null],
+          ['DOI:10.1/bare', null],
+        ]),
+      });
+
+      const result = buildPapersData(withIncludes, live, null);
+
+      const byId = Object.fromEntries(result.papers.map(p => [p.id, p]));
+      expect(Object.keys(byId).sort()).toEqual(['DOI:10.1/not-on-s2', 'b', 'cites', 'on-s2']);
+      expect(byId['DOI:10.1/not-on-s2']).toEqual({
+        ...paperFromDetails('DOI:10.1/not-on-s2', own),
+        cites: [],
+        manual: true,
+      });
+      expect(byId['on-s2']).toMatchObject({ venue: 'Corrected venue', manual: true });
+      expect(byId.cites).toMatchObject({ year: 2024, cites: [SEED_A], manual: true });
+      expect(result.fromSnapshot).toEqual([]);
+      expect(result.missing).toEqual(['included paper DOI:10.1/no-title', 'included paper DOI:10.1/bare']);
+    });
+
+    it("uses the snapshot's copy with the details applied when the fetch failed, else the details alone", () => {
+      const withIncludes: PapersConfig = {
+        ...config,
+        include: [
+          { id: 'DOI:10.1/saved', overrides: own },
+          { id: 'DOI:10.1/unsaved', overrides: { title: 'Unsaved' } },
+        ],
+      };
+      // The seeds and their citations were fetched, but not the included papers.
+      const live = liveWith({
+        seeds: liveSeeds,
+        citations: new Map([
+          [SEED_A, [s2('a')]],
+          [SEED_B, [s2('b')]],
+        ]),
+      });
+      const saved = paper('saved', { doi: '10.1/saved', citationCount: 5, cites: [], manual: true });
+
+      const result = buildPapersData(withIncludes, live, { ...snapshot, papers: [saved] });
+
+      const byId = Object.fromEntries(result.papers.map(p => [p.id, p]));
+      expect(byId.saved).toMatchObject({ ...own, citationCount: 5, cites: [], manual: true });
+      expect(byId['DOI:10.1/unsaved']).toMatchObject({
+        title: 'Unsaved',
+        url: 'https://doi.org/10.1/unsaved',
+      });
+      expect(result.fromSnapshot).toEqual(['included paper DOI:10.1/saved']);
+      expect(result.missing).toEqual([]);
+    });
   });
 });
 

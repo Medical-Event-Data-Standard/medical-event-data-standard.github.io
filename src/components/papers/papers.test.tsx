@@ -94,7 +94,7 @@ const data: PapersData = { updatedAt: '2026-11-02T03:04:05.000Z', seeds, papers 
 
 /** Titles of the listed citing papers, in order. */
 const listedTitles = () =>
-  within(screen.getByRole('region', { name: 'Papers citing MEDS' }))
+  within(screen.getByRole('region', { name: 'Papers citing or using MEDS' }))
     .getAllByRole('heading', { level: 3 })
     .map(heading => heading.textContent);
 
@@ -109,6 +109,7 @@ describe('Papers page', () => {
     expect(screen.getByTestId('layout')).toHaveAttribute('data-title', 'Papers');
     expect(screen.getByRole('heading', { level: 1, name: 'Papers using MEDS' })).toBeInTheDocument();
     expect(screen.getByText('2 November 2026')).toBeInTheDocument();
+    expect(screen.getByText(/papers that use MEDS without citing them, added by hand/)).toBeInTheDocument();
     expect(screen.getByText(/doesn’t always mean using it/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'static/data/papers.yaml' })).toHaveAttribute(
       'href',
@@ -145,7 +146,7 @@ describe('Papers page', () => {
       'An Older Paper About Foundation Models',
     ]);
 
-    const list = within(screen.getByRole('region', { name: 'Papers citing MEDS' }));
+    const list = within(screen.getByRole('region', { name: 'Papers citing or using MEDS' }));
     expect(list.getByRole('link', { name: 'A Newer Paper' })).toHaveAttribute(
       'href',
       'https://arxiv.org/abs/2601.00001'

@@ -26,8 +26,9 @@ export default function Papers(): React.JSX.Element {
         <h1>Papers using MEDS</h1>
         <p>
           These are the research papers that cite one of the core MEDS papers below, found through{' '}
-          <Link href="https://www.semanticscholar.org/">Semantic Scholar</Link>&rsquo;s citation graph. The
-          list is updated automatically whenever the site is rebuilt
+          <Link href="https://www.semanticscholar.org/">Semantic Scholar</Link>&rsquo;s citation graph, and
+          papers that use MEDS without citing them, added by hand. The list is updated automatically whenever
+          the site is rebuilt
           {updated && (
             <>
               ; it was last updated on <strong>{updated}</strong>
@@ -60,7 +61,7 @@ export default function Papers(): React.JSX.Element {
         </section>
 
         <section aria-labelledby="citing-papers">
-          <h2 id="citing-papers">Papers citing MEDS</h2>
+          <h2 id="citing-papers">Papers citing or using MEDS</h2>
           <PaperBrowser papers={papers} seeds={seeds} />
         </section>
       </main>

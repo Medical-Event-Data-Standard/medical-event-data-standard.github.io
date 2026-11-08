@@ -5,7 +5,7 @@ export const PAPERS_PLUGIN = 'papers';
 
 /** A paper's bibliographic details, normalised from Semantic Scholar. */
 export interface Paper {
-  /** Semantic Scholar paperId. */
+  /** Semantic Scholar paperId; for an included paper that Semantic Scholar lacks, its identifier in papers.yaml. */
   id: string;
   title: string;
   authors: string[];
@@ -15,7 +15,10 @@ export interface Paper {
   publicationDate: string | null;
   doi: string | null;
   arxivId: string | null;
-  /** Where the title links to: the DOI if there is one, else arXiv, else the Semantic Scholar page. */
+  /**
+   * Where the title links to: the DOI if there is one, else arXiv, else the Semantic Scholar page; or a URL set in
+   * papers.yaml.
+   */
   url: string;
   citationCount: number | null;
 }
