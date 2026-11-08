@@ -1,6 +1,6 @@
 import React from 'react';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { findMedsPaper, shortAuthorList } from '@site/src/lib/medsPapers/featured';
+import { findMedsPaper } from '@site/src/lib/medsPapers/featured';
 import { formatPaperDate, paperDateTime, parseMedsPapers } from '@site/src/lib/medsPapers/timeline';
 import styles from './styles.module.css';
 
@@ -34,7 +34,17 @@ export default function FeaturedPaper({
             {' · '}
             <time dateTime={paperDateTime(paper)}>{formatPaperDate(paper)}</time>
           </p>
-          {paper.authors && <p className={styles.authors}>{shortAuthorList(paper.authors)}</p>}
+          {paper.authors && (
+            <p className={styles.authors}>
+              {/* Each name stays on one line; the list only wraps between names. */}
+              {paper.authors.map((author, i) => (
+                <React.Fragment key={author}>
+                  {i > 0 && ', '}
+                  <span className={styles.author}>{author}</span>
+                </React.Fragment>
+              ))}
+            </p>
+          )}
           <p className={styles.summary}>{paper.summary}</p>
           <a
             className={`button button--primary button--lg ${styles.cta}`}

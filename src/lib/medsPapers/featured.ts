@@ -15,8 +15,3 @@ export function findMedsPaper(papers: readonly MedsPaper[], label: string): Meds
   }
   return paper;
 }
-
-/** A short author line: all the names if there are at most `shown`, else the first `shown` and "et al.". */
-export function shortAuthorList(authors: readonly string[], shown = 3): string {
-  return authors.length <= shown ? authors.join(', ') : `${authors.slice(0, shown).join(', ')}, et al.`;
-}

@@ -37,10 +37,18 @@
   color: var(--ifm-color-emphasis-800);
 }
 
+/* The full author list: kept to a readable measure and wrapped evenly, since it can run to several lines. */
 .authors {
-  margin: 0;
-  font-size: 0.9375rem;
+  max-width: 44rem;
+  margin: 0 auto;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  text-wrap: pretty;
   color: var(--ifm-color-emphasis-700);
+}
+
+.author {
+  white-space: nowrap;
 }
 
 .summary {
