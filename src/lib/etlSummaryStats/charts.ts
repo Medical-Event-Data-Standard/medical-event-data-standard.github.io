@@ -1,12 +1,13 @@
 import type { Data, Layout } from 'plotly.js';
-import type { Distribution, EtlStats, EtlStatsEntry, VocabularyCell } from './types';
+import type { Distribution, EtlStats, EtlStatsEntry } from './types';
 
 // Pure functions that turn the collected stats into Plotly figures, a table view of each chart, and the list of
 // datasets each chart had to leave out (with the reason, which the page shows). No React and no Plotly runtime
 // here, so all of it is unit-tested.
 //
-// Every number plotted is one the ETL's stats file states, or a ratio of two it states. Suppressed cells are
-// never filled in or back-computed: a chart that would need them leaves the dataset out with a note.
+// Every number plotted is one the ETL's stats file states, a ratio of two it states, or one minus a share it
+// states. Suppressed cells are never filled in or back-computed: a chart that would need them leaves the dataset
+// out with a note.
 
 // ─── Look ───────────────────────────────────────────────────────
 
@@ -107,6 +108,10 @@ export function formatPercent(fraction: number): string {
   // Round before choosing the precision, so 9.97% reads "10%" rather than "10.0%".
   return Math.round(percent * 10) / 10 < 10 ? `${percent.toFixed(1)}%` : `${percent.toFixed(0)}%`;
 }
+
+/** A share as a percentage to two significant digits, however small, for log axes: 50%, 6.1%, 0.13%, 0.0042%. */
+export const formatPercentSignificant = (fraction: number): string =>
+  `${Number((fraction * 100).toPrecision(2))}%`;
 
 /** A share rounded down to one decimal, so that a share short of 100% never reads "100%": 55.4%, 99.9%, 100%. */
 export const formatPercentDown = (fraction: number): string =>
@@ -277,69 +282,25 @@ export const SIZE_METRICS: { key: SizeMetric; label: string }[] = [
 /** The measures drawn side by side for each dataset, in legend (and colour) order. */
 export const SIZE_BAR_METRICS: SizeMetric[] = ['events', 'measurements', 'uniqueCodes'];
 
-/** What the datasets can be sorted by: any of the four counts, or the dataset's name. */
-export type SizeSortKey = SizeMetric | 'name';
-
-export const SIZE_SORT_OPTIONS: { key: SizeSortKey; label: string }[] = [
-  { key: 'measurements', label: 'Measurements' },
-  { key: 'events', label: 'Events' },
-  { key: 'uniqueCodes', label: 'Unique codes' },
-  { key: 'subjects', label: 'Subjects' },
-  { key: 'name', label: 'Name' },
-];
-
-export type SortDirection = 'desc' | 'asc';
-
-export interface SizeOrder {
-  key: SizeSortKey;
-  direction: SortDirection;
-}
-
-/** The direction each sort key starts with: largest first for counts, A–Z for names. */
-export const defaultDirection = (key: SizeSortKey): SortDirection => (key === 'name' ? 'asc' : 'desc');
-
-/** The two directions, labelled for the sort key: "Largest first"/"Smallest first", or "A–Z"/"Z–A". */
-export function sortDirectionOptions(key: SizeSortKey): { key: SortDirection; label: string }[] {
-  return key === 'name'
-    ? [
-        { key: 'asc', label: 'A–Z' },
-        { key: 'desc', label: 'Z–A' },
-      ]
-    : [
-        { key: 'desc', label: 'Largest first' },
-        { key: 'asc', label: 'Smallest first' },
-      ];
-}
-
 /**
- * Sorts datasets for the size chart. A dataset whose file lacks the chosen count goes last, whichever the
- * direction; ties (and the name sort) fall back to the name, A–Z.
+ * The size chart's order: the most measurements first. A dataset whose file lacks the count (or can't be read)
+ * goes last; ties go by name, A–Z.
  */
-export function sortBySize<T extends Pick<EtlStatsEntry, 'label' | 'stats'>>(
-  items: T[],
-  order: SizeOrder
-): T[] {
-  const byName = (a: T, b: T) => a.label.localeCompare(b.label);
-  const sign = order.direction === 'asc' ? 1 : -1;
-  if (order.key === 'name') return [...items].sort((a, b) => sign * byName(a, b));
-  const key = order.key;
-  return [...items].sort((a, b) => {
-    const x = a.stats?.counts[key] ?? null;
-    const y = b.stats?.counts[key] ?? null;
-    if (x === null || y === null) return (x === null ? 1 : 0) - (y === null ? 1 : 0) || byName(a, b);
-    return sign * (x - y) || byName(a, b);
-  });
+export function sortByMeasurements<T extends Pick<EtlStatsEntry, 'label' | 'stats'>>(items: T[]): T[] {
+  // Counts are never negative, so -1 puts a missing count last.
+  const count = (item: T) => item.stats?.counts.measurements ?? -1;
+  return [...items].sort((a, b) => count(b) - count(a) || a.label.localeCompare(b.label));
 }
 
 const lowerLabel = (metric: SizeMetric): string =>
   (SIZE_METRICS.find(m => m.key === metric) as (typeof SIZE_METRICS)[number]).label.toLowerCase();
 
 /**
- * Events, measurements and unique codes per dataset as grouped bars on one log axis, in the chosen order. A
- * dataset missing one of the counts keeps its other bars and is noted; one missing all three is left out. The
+ * Events, measurements and unique codes per dataset as grouped bars on one log axis, the most measurements first.
+ * A dataset missing one of the counts keeps its other bars and is noted; one missing all three is left out. The
  * table lists all four counts, subjects included, in the same order as the chart.
  */
-export function sizeChart(entries: EtlStatsEntry[], order: SizeOrder): ChartModel {
+export function sizeChart(entries: EtlStatsEntry[]): ChartModel {
   const { drawn, skipped } = partition<{ stats: EtlStats; missing: SizeMetric[] }>(entries, stats => {
     const missing = SIZE_BAR_METRICS.filter(metric => stats.counts[metric] === null);
     if (missing.length === SIZE_BAR_METRICS.length) {
@@ -347,10 +308,7 @@ export function sizeChart(entries: EtlStatsEntry[], order: SizeOrder): ChartMode
     }
     return { stats, missing };
   });
-  const sorted = sortBySize(
-    drawn.map(d => ({ label: d.entry.label, ...d.value })),
-    order
-  );
+  const sorted = sortByMeasurements(drawn.map(d => ({ label: d.entry.label, ...d.value })));
   for (const { label, missing } of sorted) {
     if (missing.length > 0) {
       skipped.push({
@@ -362,9 +320,8 @@ export function sizeChart(entries: EtlStatsEntry[], order: SizeOrder): ChartMode
 
   const table: TableView = {
     columns: ['Dataset', ...SIZE_METRICS.map(m => m.label)],
-    rows: sortBySize(
-      entries.filter((entry): entry is EtlStatsEntry & { stats: EtlStats } => entry.stats !== null),
-      order
+    rows: sortByMeasurements(
+      entries.filter((entry): entry is EtlStatsEntry & { stats: EtlStats } => entry.stats !== null)
     ).map(({ label, stats }) => [
       label,
       ...SIZE_METRICS.map(m => {
@@ -745,27 +702,49 @@ export const PER_SUBJECT_METRICS: { key: PerSubjectMetric; label: string; axis: 
   { key: 'spanDays', label: 'Record span', axis: 'Days from first to last event per subject' },
 ];
 
+/** Which per-subject distribution a box chart draws, and how. */
+interface DistributionSpec {
+  pick: (stats: EtlStats) => Distribution | null | undefined;
+  /** Why a dataset whose file lacks the distribution is left out. */
+  missing: string;
+  /** Why a dataset whose quantiles are withheld is left out, if not the file's general suppression floor. */
+  suppressed?: string;
+  /** Who `n` counts, for the table and hover: "Subjects", or e.g. only the subjects with a rate. */
+  subjects: string;
+  axis: string;
+  /** Formats its values: counts in full, rates to three significant digits. */
+  format: (value: number) => string;
+  /** Whether datasets are ranked by their median, largest first, rather than listed largest dataset first. */
+  ranked: boolean;
+}
+
 /**
  * Box-style summaries drawn from the published quantiles: the box spans the 25th to 75th percentile, the line
  * inside it is the median, and the whiskers reach the 5th and 95th percentiles (there are no minima or maxima:
  * `meds_summary_stats` never publishes extremes).
  */
-export function perSubjectChart(entries: EtlStatsEntry[], metric: PerSubjectMetric): ChartModel {
-  const meta = PER_SUBJECT_METRICS.find(m => m.key === metric) as (typeof PER_SUBJECT_METRICS)[number];
+function distributionChart(entries: EtlStatsEntry[], spec: DistributionSpec): ChartModel {
   const { drawn, skipped } = partition(orderDatasets(entries), (stats, entry) => {
-    const dist: Distribution | null = stats.perSubject[metric];
-    if (!dist) return { skip: `Its stats file has no per-subject ${meta.label.toLowerCase()} distribution.` };
+    const dist = spec.pick(stats);
+    if (!dist) return { skip: spec.missing };
     if (dist.suppressed) {
-      return { skip: `Suppressed: the quantiles are withheld because they rest on ${floorPhrase(entry)}.` };
+      return {
+        skip:
+          spec.suppressed ??
+          `Suppressed: the quantiles are withheld because they rest on ${floorPhrase(entry)}.`,
+      };
     }
     return dist;
   });
+  // A stable sort, so datasets with the same median stay largest first.
+  if (spec.ranked) drawn.sort((a, b) => b.value.p50 - a.value.p50);
+  const { format } = spec;
   const table: TableView = {
-    columns: ['Dataset', 'Subjects', '5th pct.', '25th pct.', 'Median', '75th pct.', '95th pct.'],
+    columns: ['Dataset', spec.subjects, '5th pct.', '25th pct.', 'Median', '75th pct.', '95th pct.'],
     rows: drawn.map(({ entry, value }) => [
       entry.label,
       formatCount(value.n),
-      ...[value.p5, value.p25, value.p50, value.p75, value.p95].map(formatCount),
+      ...[value.p5, value.p25, value.p50, value.p75, value.p95].map(format),
     ]),
   };
   if (drawn.length === 0) return { figure: null, skipped, table };
@@ -797,14 +776,15 @@ export function perSubjectChart(entries: EtlStatsEntry[], metric: PerSubjectMetr
           y: labels,
           x: pick('p50'),
           marker: { size: 18, color: 'rgba(0,0,0,0)' },
-          customdata: dists.map(d => [d.p5, d.p25, d.p50, d.p75, d.p95, d.n].map(formatCount)),
+          customdata: dists.map(d => [...[d.p5, d.p25, d.p50, d.p75, d.p95].map(format), formatCount(d.n)]),
           hovertemplate:
             '%{y}<br>Median: %{customdata[2]}<br>25th–75th percentile: %{customdata[1]}–%{customdata[3]}' +
-            '<br>5th–95th percentile: %{customdata[0]}–%{customdata[4]}<br>Subjects: %{customdata[5]}<extra></extra>',
+            '<br>5th–95th percentile: %{customdata[0]}–%{customdata[4]}<br>' +
+            `${spec.subjects}: %{customdata[5]}<extra></extra>`,
         }),
       ],
       layout: baseLayout(drawn.length, {
-        xaxis: valueAxis([...pick('p5'), ...pick('p95')], meta.axis),
+        xaxis: valueAxis([...pick('p5'), ...pick('p95')], spec.axis),
       }),
     },
     skipped,
@@ -812,60 +792,79 @@ export function perSubjectChart(entries: EtlStatsEntry[], metric: PerSubjectMetr
   };
 }
 
+/** How much data each subject has, as one box per dataset, largest dataset first. */
+export function perSubjectChart(entries: EtlStatsEntry[], metric: PerSubjectMetric): ChartModel {
+  const meta = PER_SUBJECT_METRICS.find(m => m.key === metric) as (typeof PER_SUBJECT_METRICS)[number];
+  return distributionChart(entries, {
+    pick: stats => stats.perSubject[metric],
+    missing: `Its stats file has no per-subject ${meta.label.toLowerCase()} distribution.`,
+    axis: meta.axis,
+    subjects: 'Subjects',
+    format: formatCount,
+    ranked: false,
+  });
+}
+
 // ─── 4. Pace of measurements ────────────────────────────────────
 
 export type PaceMetric = 'perDay' | 'perEvent';
 
-/** `label` for the toggle, `full` for the table and hover, `axis` (short enough for a phone) for the axis. */
-export const PACE_METRICS: { key: PaceMetric; label: string; full: string; axis: string }[] = [
-  {
-    key: 'perDay',
-    label: 'Per day of record',
-    full: 'Measurements per day of record',
-    axis: 'Measurements per day',
-  },
-  { key: 'perEvent', label: 'Per event', full: 'Measurements per event', axis: 'Measurements per event' },
+/** `label` for the toggle; `full` for the table, the hover and the axis. */
+export const PACE_METRICS: { key: PaceMetric; label: string; full: string }[] = [
+  { key: 'perDay', label: 'Per day, per subject', full: 'Measurements per day, per subject' },
+  { key: 'perEvent', label: 'Per event', full: 'Measurements per event' },
 ];
 
-/** The mean of a per-subject distribution, or why there is none. */
-function meanOf(dist: Distribution | null, what: string, entry: EtlStatsEntry): number | { skip: string } {
-  if (!dist) return { skip: `Its stats file has no per-subject ${what} distribution.` };
-  if (dist.suppressed)
-    return { skip: `Suppressed: its per-subject ${what} summary rests on ${floorPhrase(entry)}.` };
-  if (dist.mean === null) return { skip: `Its stats file has no mean ${what} per subject.` };
-  return dist.mean;
-}
-
 /**
- * How densely each dataset records data, as one bar per dataset, largest first. "Per day of record" divides the
- * mean measurements per subject by the mean record span in days: a ratio of two averages, not an average of each
- * subject's rate. "Per event" divides the dataset's measurements by its events, which is exact.
+ * How densely each dataset records data, largest first. "Per day, per subject" is the spread of each subject's own
+ * rate, `per_subject.measurements_per_day`, drawn as boxes from its published quantiles like `perSubjectChart`
+ * (older stats files don't have it). Very short records give very large rates, which skew the mean, so the mean is
+ * never drawn. Only subjects with a rate (two or more distinct timestamps) are counted, and their quantiles are
+ * withheld below `min_numeric_cell_size`, which the page doesn't read, so that note names no number. "Per event"
+ * divides the dataset's measurements by its events, which is exact, as one bar per dataset.
  */
 export function paceChart(entries: EtlStatsEntry[], metric: PaceMetric): ChartModel {
   const meta = PACE_METRICS.find(m => m.key === metric) as (typeof PACE_METRICS)[number];
+  if (metric === 'perDay') {
+    const missing =
+      'Its stats file has no per-subject measurements per day, which newer versions of meds_summary_stats publish.';
+    const model = distributionChart(entries, {
+      pick: stats => stats.perSubject.measurementsPerDay,
+      missing,
+      suppressed: 'Suppressed: too few subjects have a rate, so its quantiles are withheld.',
+      subjects: 'Subjects with a rate',
+      // Short enough for a phone; the boxes and the toggle say it is per subject.
+      axis: 'Measurements per day',
+      format: formatRatio,
+      ranked: true,
+    });
+    // Until every ETL re-runs a newer meds_summary_stats, many files lack the rate: one note for all of them.
+    const older = model.skipped.filter(s => s.reason === missing);
+    if (older.length < 2) return model;
+    return {
+      ...model,
+      skipped: [
+        {
+          label: older.map(s => s.label).join(', '),
+          reason:
+            'Their stats files have no per-subject measurements per day, which newer versions of meds_summary_stats publish.',
+        },
+        ...model.skipped.filter(s => s.reason !== missing),
+      ],
+    };
+  }
   const { drawn, skipped } = partition<{ value: number; inputs: [number, number] }>(
     orderDatasets(entries),
-    (stats, entry) => {
-      if (metric === 'perEvent') {
-        const { measurements, events } = stats.counts;
-        const value = ratio(measurements, events);
-        if (value === null) return { skip: 'Its stats file has no measurement or event count.' };
-        return { value, inputs: [measurements as number, events as number] };
-      }
-      const measurements = meanOf(stats.perSubject.measurements, 'measurement', entry);
-      if (typeof measurements !== 'number') return measurements;
-      const span = meanOf(stats.perSubject.spanDays, 'record span', entry);
-      if (typeof span !== 'number') return span;
-      if (span === 0) return { skip: 'Its mean record span is zero days, so it has no daily rate.' };
-      return { value: measurements / span, inputs: [measurements, span] };
+    stats => {
+      const { measurements, events } = stats.counts;
+      const value = ratio(measurements, events);
+      if (value === null) return { skip: 'Its stats file has no measurement or event count.' };
+      return { value, inputs: [measurements as number, events as number] };
     }
   );
   const ranked = [...drawn].sort((a, b) => b.value.value - a.value.value);
   const table: TableView = {
-    columns:
-      metric === 'perDay'
-        ? ['Dataset', 'Mean measurements per subject', 'Mean record span (days)', meta.full]
-        : ['Dataset', 'Measurements', 'Events', meta.full],
+    columns: ['Dataset', 'Measurements', 'Events', meta.full],
     rows: ranked.map(({ entry, value }) => [
       entry.label,
       ...value.inputs.map(formatCount),
@@ -894,10 +893,7 @@ export function paceChart(entries: EtlStatsEntry[], metric: PaceMetric): ChartMo
       layout: baseLayout(ranked.length, {
         bargap: 0.35,
         margin: { ...MARGIN, r: 48 },
-        xaxis:
-          metric === 'perDay'
-            ? valueAxis(values, meta.axis)
-            : { title: { text: meta.axis }, rangemode: 'tozero' },
+        xaxis: { title: { text: meta.full }, rangemode: 'tozero' },
       }),
     },
     skipped,
@@ -995,42 +991,47 @@ export function coverageChart(entries: EtlStatsEntry[]): ChartModel {
   };
 }
 
-// ─── 6. Coverage of the most common codes ───────────────────────
+// ─── 6. The tail of codes ───────────────────────────────────────
 
-export interface CodeCoveragePoint {
-  /** The number of most frequent codes. */
+export interface CodeTailPoint {
+  /** The number of most frequent codes, N. */
   codes: number;
-  /** The share of all measurements they cover. */
-  share: number;
+  /** The share of all measurements whose code is not among the N most frequent: one minus the share they cover. */
+  remaining: number;
   /** What the point says, for the hover label. */
   text: string;
 }
 
+/** One minus a share, rounded to 12 significant digits so that 1 - 0.9 is 0.1 rather than 0.09999999999999998. */
+const complement = (share: number): number => Number((1 - share).toPrecision(12));
+
 /**
- * The points of a dataset's code-coverage curve, by number of codes: the shares covered by its 10, 100 and 1,000
- * most frequent codes; how many codes it takes to cover 50%, 90% and 99% of measurements; and all its codes,
- * which cover 100%. Points beyond the dataset's number of codes are dropped (its 1,000 most frequent codes are
- * all its codes if it has fewer).
+ * The points of a dataset's code-tail curve, by number of codes N, each with the share of measurements left outside
+ * the N most frequent codes: from the shares its 10, 100 and 1,000 most frequent codes cover, and from how many
+ * codes it takes to cover 50%, 90% and 99% (which leave 50%, 10% and 1% outside). Points that leave nothing
+ * outside have no place on a logarithmic axis and are dropped, as are points beyond the dataset's number of codes
+ * (its 1,000 most frequent codes are all its codes if it has fewer).
  */
-export function codeCoveragePoints(
+export function codeTailPoints(
   concentration: NonNullable<EtlStats['concentration']>,
   uniqueCodes: number | null
-): CodeCoveragePoint[] {
-  type Candidate = {
-    codes: number | null;
-    share: number | null;
-    text: (codes: number, share: number) => string;
+): CodeTailPoint[] {
+  type Candidate = { codes: number | null; remaining: number | null; text: (codes: number) => string };
+  const top = (codes: number, share: number | null): Candidate => {
+    const remaining = share === null ? null : complement(share);
+    return {
+      codes,
+      remaining,
+      text: n =>
+        `${formatPercentSignificant(remaining as number)} of measurements fall outside the ${formatCount(n)} most frequent codes`,
+    };
   };
-  const top = (codes: number, share: number | null): Candidate => ({
-    codes,
-    share,
-    text: (n, s) => `The ${formatCount(n)} most frequent codes cover ${formatPercent(s)} of measurements`,
-  });
   const covering = (codes: number | null, share: number): Candidate => ({
     codes,
-    share,
-    text: (n, s) =>
-      `It takes the ${formatCount(n)} most frequent codes to cover ${formatPercent(s)} of measurements`,
+    remaining: complement(share),
+    text: n =>
+      `It takes the ${formatCount(n)} most frequent codes to cover ${formatPercent(share)} of measurements, ` +
+      `leaving ${formatPercentSignificant(complement(share))} outside them`,
   });
   const c = concentration;
   const candidates: Candidate[] = [
@@ -1040,18 +1041,20 @@ export function codeCoveragePoints(
     covering(c.codesFor50, 0.5),
     covering(c.codesFor90, 0.9),
     covering(c.codesFor99, 0.99),
-    { codes: uniqueCodes, share: 1, text: n => `All ${formatCount(n)} codes cover 100% of measurements` },
   ];
-  const points: CodeCoveragePoint[] = [];
-  for (const { codes, share, text } of candidates) {
-    if (codes === null || share === null || codes <= 0) continue;
+  const points: CodeTailPoint[] = [];
+  for (const { codes, remaining, text } of candidates) {
+    if (codes === null || remaining === null || codes <= 0 || remaining <= 0) continue;
     if (uniqueCodes !== null && codes > uniqueCodes) continue;
-    points.push({ codes, share, text: text(codes, share) });
+    points.push({ codes, remaining, text: text(codes) });
   }
-  return points.sort((a, b) => a.codes - b.codes || a.share - b.share);
+  return points.sort((a, b) => a.codes - b.codes || b.remaining - a.remaining);
 }
 
-export interface CodeCoverageModel extends ChartModel {
+/** Heights of the tail plot, in pixels. */
+const CODE_TAIL_HEIGHT = { wide: 460, narrow: 700 };
+
+export interface CodeTailModel extends ChartModel {
   /** The datasets that can be highlighted, in the page's order. */
   options: string[];
   /** The dataset drawn emphasised, with the others faded; null when none is (every curve drawn alike). */
@@ -1059,62 +1062,58 @@ export interface CodeCoverageModel extends ChartModel {
 }
 
 /**
- * One curve per dataset of the share of measurements covered by its N most frequent codes, against N on a log
- * axis. A steep curve that reaches 90% within a few dozen codes means a few codes (often vitals) dominate the data.
+ * A tail plot: one curve per dataset of the share of measurements outside its N most frequent codes, against N,
+ * both on log axes, as in a plot of a power law. A straight, falling line means code frequencies fall off as a power
+ * of their rank, as in Zipf's law (a slope of -a means a frequency proportional to rank^-(a+1)); the steeper it falls,
+ * the more the data concentrates in its most frequent codes. No line is fitted, and no reference slope is drawn: on
+ * these axes classic Zipf (rank^-1) is not a straight line, and a slope-only guide would add a line to 15 curves.
  * Every dataset has its own colour, line dash and marker (`seriesStyle`), assigned alphabetically over
  * `identityLabels` (pass every dataset's label, including ones filtered out) so that toggling datasets never repaints
  * the others. Optionally one dataset is highlighted: drawn thicker and on top, with the others faded.
  */
-export function codeCoverageChart(
+export function codeTailChart(
   entries: EtlStatsEntry[],
   highlight: string | null,
-  identityLabels: string[] = []
-): CodeCoverageModel {
+  identityLabels: string[] = [],
+  { narrow }: ScreenOptions = { narrow: false }
+): CodeTailModel {
   type Curve = {
-    points: CodeCoveragePoint[];
+    points: CodeTailPoint[];
     concentration: NonNullable<EtlStats['concentration']>;
     uniqueCodes: number | null;
   };
   const { drawn, skipped } = partition<Curve>(orderDatasets(entries), stats => {
     const c = stats.concentration;
-    // Without any concentration figure, the curve would be a lone point at 100%.
-    const points =
-      c && Object.values(c).some(value => value !== null)
-        ? codeCoveragePoints(c, stats.counts.uniqueCodes)
-        : [];
-    if (points.length === 0) return { skip: 'Its stats file has no code-concentration figures.' };
-    return {
-      points,
-      concentration: c as NonNullable<EtlStats['concentration']>,
-      uniqueCodes: stats.counts.uniqueCodes,
-    };
-  });
-  for (const { entry, value } of drawn) {
-    if (value.uniqueCodes === null) {
-      skipped.push({
-        label: entry.label,
-        reason: 'Its stats file has no unique-code count, so its curve stops short of 100%.',
-      });
+    if (!c || Object.values(c).every(value => value === null)) {
+      return { skip: 'Its stats file has no code-concentration figures.' };
     }
-  }
-  const share = (value: number | null) => (value === null ? '—' : formatPercent(value));
+    const points = codeTailPoints(c, stats.counts.uniqueCodes);
+    if (points.length === 0) {
+      return {
+        skip: 'Its most frequent codes leave no measurements outside them, which a logarithmic axis cannot show.',
+      };
+    }
+    return { points, concentration: c, uniqueCodes: stats.counts.uniqueCodes };
+  });
+  const outside = (share: number | null) =>
+    share === null ? '—' : formatPercentSignificant(complement(share));
   const count = (value: number | null) => (value === null ? '—' : formatCount(value));
   const table: TableView = {
     columns: [
       'Dataset',
-      'Top 10 codes',
-      'Top 100 codes',
-      'Top 1,000 codes',
-      'Codes for 50%',
-      'Codes for 90%',
-      'Codes for 99%',
+      'Outside the top 10 codes',
+      'Outside the top 100',
+      'Outside the top 1,000',
+      'Codes to cover 50%',
+      'Codes to cover 90%',
+      'Codes to cover 99%',
       'Unique codes',
     ],
     rows: drawn.map(({ entry, value: { concentration: c, uniqueCodes } }) => [
       entry.label,
-      share(c.top10),
-      share(c.top100),
-      share(c.top1000),
+      outside(c.top10),
+      outside(c.top100),
+      outside(c.top1000),
       count(c.codesFor50),
       count(c.codesFor90),
       count(c.codesFor99),
@@ -1137,6 +1136,11 @@ export function codeCoverageChart(
       ]
     : curves;
   const allCodes = drawn.flatMap(d => d.value.points.map(p => p.codes));
+  const allRemaining = drawn.flatMap(d => d.value.points.map(p => p.remaining));
+  // Powers of ten from just below the smallest share left outside up to 100%, the share outside no codes at all.
+  const yLow = Math.log10(Math.min(...allRemaining)) - 0.15;
+  const yTicks: number[] = [];
+  for (let exp = Math.ceil(yLow); exp <= 0; exp++) yTicks.push(10 ** exp);
   return {
     figure: {
       data: drawOrder.map(({ entry, value, index }) => {
@@ -1148,7 +1152,7 @@ export function codeCoverageChart(
           name: entry.label,
           legendrank: index + 1,
           x: value.points.map(p => p.codes),
-          y: value.points.map(p => p.share),
+          y: value.points.map(p => p.remaining),
           text: value.points.map(() => entry.label),
           customdata: value.points.map(p => p.text),
           hovertemplate: '%{text}<br>%{customdata}<extra></extra>',
@@ -1164,22 +1168,25 @@ export function codeCoverageChart(
       }),
       layout: baseLayout(0, {
         ...TOP_LEGEND,
-        height: 460,
+        // On a phone the legend takes a line per dataset, and Plotly lets a legend above the plot take up to half
+        // the figure before it scrolls: a taller figure keeps both the legend and the plot whole.
+        height: narrow ? CODE_TAIL_HEIGHT.narrow : CODE_TAIL_HEIGHT.wide,
         margin: { ...MARGIN, t: 32, b: 48 },
         hovermode: 'closest',
         xaxis: {
           type: 'log',
           ...logTicks(Math.min(...allCodes), Math.max(...allCodes)),
-          title: { text: 'Number of most frequent codes (log scale)' },
+          title: { text: 'Number of most frequent codes, N (log scale)' },
         },
         yaxis: {
+          type: 'log',
           autorange: false,
-          range: [0, 1.04],
-          tickvals: [0, 0.25, 0.5, 0.75, 1],
-          tickformat: '.0%',
+          range: [yLow, 0.05],
+          tickvals: yTicks,
+          ticktext: yTicks.map(formatPercentSignificant),
           gridcolor: INK.grid,
           tickfont: { color: INK.muted },
-          title: { text: 'Share of measurements covered' },
+          title: { text: 'Share outside the top N (log scale)' },
         },
       }),
     },
@@ -1190,10 +1197,14 @@ export function codeCoverageChart(
   };
 }
 
-// ─── 7. Vocabularies used ───────────────────────────────────────
+// ─── 7. Mapping to vocabularies ─────────────────────────────────
 
 /** Shares are shaded on a log scale from this share (0.01%) to 100%, so that small vocabularies still show. */
 const VOCABULARY_SHADE_FLOOR = 1e-4;
+/** The narrowest a heatmap column can be with its share legible, in pixels. */
+const VOCABULARY_COLUMN_WIDTH = 44;
+/** The empty column that sets the mapping columns apart from the vocabularies. */
+const VOCABULARY_SPACER = ' ';
 
 /** The vocabulary heatmap prints every share in its cells, so it has no separate table. */
 export interface VocabularyModel {
@@ -1209,45 +1220,86 @@ export interface VocabularyModel {
 export const OMOP_MARK = '*';
 
 /**
- * A dataset x vocabulary grid of the share of each dataset's measurements whose code has a parent code in that
- * vocabulary. A code with parents in several vocabularies counts in each, so a row's shares can add up to more than
- * the share of measurements that are mapped at all. Columns are ordered by how many datasets use the vocabulary.
+ * The columns before the vocabularies: how much of a dataset maps into any vocabulary at all. Each measurement and
+ * code counts once here, however many vocabularies it maps into.
+ */
+export const MAPPING_COLUMNS = [
+  { key: 'measurementsMapped', label: 'Any vocabulary', of: 'of measurements map to a vocabulary' },
+  { key: 'codesWithParents', label: 'Codes with a parent', of: 'of the distinct codes have a parent code' },
+] as const;
+
+/** A row's text in place of vocabulary cells, when it has none. */
+export const NO_MAPPING = 'No vocabulary mapping';
+
+/**
+ * Every dataset's mapping of codes to external vocabularies, through the parent codes in its code metadata, as one
+ * heatmap. The first columns give the share of measurements mapped to any vocabulary and the share of distinct
+ * codes with a parent code, each counted once. Then, after a gap, one column per vocabulary gives the share of
+ * measurements whose code has a parent in it. A code can map into several vocabularies, so a row's vocabulary
+ * shares can add up to more than its share mapped to any. Vocabularies used by the most datasets come first. A
+ * dataset whose code metadata maps no codes is a row of 0% with a note in place of vocabulary cells.
  */
 export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
-  type Row = { vocabularies: VocabularyCell[]; measurements: number; suppressed: number | null | undefined };
-  const { drawn, skipped } = partition<Row>(orderDatasets(entries), (stats, entry) => {
-    const ontology = stats.ontology;
-    if (!ontology) return { skip: 'Its code metadata maps no codes to parent codes in a vocabulary.' };
-    const { measurements } = stats.counts;
-    if (!measurements) return { skip: 'Its stats file has no measurement count to take shares of.' };
+  type Row = { ontology: EtlStats['ontology']; measurements: number | null };
+  const { drawn, skipped } = partition<Row>(orderDatasets(entries), stats =>
+    stats.codeMetadata
+      ? { ontology: stats.ontology, measurements: stats.counts.measurements }
+      : { skip: 'Its stats file does not report on its code metadata.' }
+  );
+
+  // What each row shows in place of vocabulary cells, if it has none, and notes on what is missing.
+  const markers = new Map<string, string>();
+  for (const { entry, value } of drawn) {
+    const { ontology, measurements } = value;
+    if (!ontology) {
+      markers.set(entry.label, NO_MAPPING);
+      continue;
+    }
     const suppressed = ontology.suppressed?.cells;
     if (ontology.vocabularies.length === 0) {
-      if (suppressed === undefined) return { skip: 'Its code metadata names no vocabulary.' };
-      return {
-        skip: `Suppressed: all ${suppressed === null ? 'its' : formatCount(suppressed)} vocabularies are reached by ${floorPhrase(entry)} each.`,
-      };
+      if (suppressed === undefined) {
+        markers.set(entry.label, 'No named vocabulary');
+        skipped.push({ label: entry.label, reason: 'Its code metadata names no vocabulary.' });
+        continue;
+      }
+      const all =
+        suppressed === null
+          ? 'all its vocabularies are'
+          : suppressed === 1
+            ? 'its only vocabulary is'
+            : `all ${formatCount(suppressed)} vocabularies are`;
+      markers.set(entry.label, 'Vocabularies suppressed');
+      skipped.push({
+        label: entry.label,
+        reason: `Suppressed: ${all} reached by ${floorPhrase(entry)}${suppressed === 1 ? '' : ' each'}.`,
+      });
+      continue;
     }
-    return { vocabularies: ontology.vocabularies, measurements, suppressed };
-  });
-  for (const { entry, value } of drawn) {
-    if (value.suppressed === undefined) continue;
-    const which =
-      value.suppressed === null
-        ? 'Some vocabularies are'
-        : value.suppressed === 1
-          ? '1 more vocabulary is'
-          : `${formatCount(value.suppressed)} more vocabularies are`;
-    skipped.push({
-      label: entry.label,
-      reason: `${which} suppressed, as each is reached by ${floorPhrase(entry)}, so they have no column.`,
-    });
+    if (!measurements) {
+      skipped.push({
+        label: entry.label,
+        reason: 'Its stats file has no measurement count, so its vocabulary shares are unknown.',
+      });
+    }
+    if (suppressed !== undefined) {
+      const which =
+        suppressed === null
+          ? 'Some vocabularies are'
+          : suppressed === 1
+            ? '1 more vocabulary is'
+            : `${formatCount(suppressed)} more vocabularies are`;
+      skipped.push({
+        label: entry.label,
+        reason: `${which} suppressed, as each is reached by ${floorPhrase(entry)}, so they have no column.`,
+      });
+    }
   }
   if (drawn.length === 0) return { figure: null, skipped, minWidth: 0, anyRecognized: false };
 
-  // Columns: every vocabulary any dataset uses, the most widely used first, then by name.
+  // Vocabulary columns: every vocabulary any dataset uses, the most widely used first, then by name.
   const used = new Map<string, { datasets: number; recognized: boolean }>();
   for (const { value } of drawn) {
-    for (const vocabulary of value.vocabularies) {
+    for (const vocabulary of value.ontology?.vocabularies ?? []) {
       const seen = used.get(vocabulary.name) ?? { datasets: 0, recognized: false };
       used.set(vocabulary.name, {
         datasets: seen.datasets + 1,
@@ -1255,28 +1307,61 @@ export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
       });
     }
   }
-  const columns = [...used.entries()]
+  const vocabularies = [...used.entries()]
     .sort(([a, x], [b, y]) => y.datasets - x.datasets || a.localeCompare(b))
     .map(([name, { recognized }]) => ({ name, recognized }));
-  const cells = drawn.map(({ value }) =>
-    columns.map(column => {
-      const vocabulary = value.vocabularies.find(v => v.name === column.name);
-      return vocabulary ? vocabularyShare(vocabulary, value.measurements) : undefined;
-    })
-  );
+
+  type Cell = { share: number | null; hover: string } | null;
+  const shareText = (share: number | null) => (share === null ? 'n/a' : formatPercent(share));
+  const rows: Cell[][] = drawn.map(({ value: { ontology, measurements } }) => [
+    ...MAPPING_COLUMNS.map(column => {
+      // Code metadata without a mapping maps nothing: 0%.
+      const share = ontology ? ontology[column.key] : 0;
+      return { share, hover: `${column.label}: ${shareText(share)} ${column.of}` };
+    }),
+    ...(vocabularies.length > 0 ? [null] : []),
+    ...vocabularies.map(column => {
+      const vocabulary = ontology?.vocabularies.find(v => v.name === column.name);
+      if (!vocabulary) return null;
+      const share =
+        vocabulary.measurements === null || !measurements ? null : vocabulary.measurements / measurements;
+      const name = column.recognized ? `${column.name} (a standard OMOP vocabulary)` : column.name;
+      return { share, hover: `${name}: ${shareText(share)} of measurements` };
+    }),
+  ]);
+
+  const x = [
+    ...MAPPING_COLUMNS.map(column => column.label),
+    ...(vocabularies.length > 0 ? [VOCABULARY_SPACER] : []),
+    ...vocabularies.map(column => column.name),
+  ];
+  const y = drawn.map(d => d.entry.label);
+  const tickLabels = [
+    ...MAPPING_COLUMNS.map(column => `<b>${column.label}</b>`),
+    ...vocabularies.map(c => (c.recognized ? `${c.name}${OMOP_MARK}` : c.name)),
+  ];
   const longest = (labels: string[]) => Math.max(...labels.map(label => label.length));
-  const columnLabels = columns.map(c => (c.recognized ? `${c.name}${OMOP_MARK}` : c.name));
   // Column labels are slanted at 45°, so they need about 0.7 of their length in height.
-  const top = Math.ceil(longest(columnLabels) * 7 * 0.72) + 16;
+  const top =
+    Math.ceil(longest([...MAPPING_COLUMNS.map(c => c.label), ...vocabularies.map(c => c.name)]) * 7 * 0.72) +
+    16;
+  // A row's marker starts at the first vocabulary column; if those can't hold it, the plot gets room on the right.
+  const markerTexts = [...markers.values()];
+  const right =
+    8 +
+    (markerTexts.length > 0
+      ? Math.max(0, longest(markerTexts) * 7 + 12 - vocabularies.length * VOCABULARY_COLUMN_WIDTH)
+      : 0);
+  const firstVocabulary = (x.length - vocabularies.length) / x.length;
   return {
     figure: {
       data: [
-        // A faint cell under every dataset and vocabulary, so that empty cells still show the grid.
+        // A faint cell under every dataset and column but the gap, so that empty cells still show the grid.
         trace({
           type: 'heatmap',
-          x: columns.map(c => c.name),
-          y: drawn.map(d => d.entry.label),
-          z: drawn.map(() => columns.map(() => 0)),
+          x,
+          y,
+          z: drawn.map(() => x.map(column => (column === VOCABULARY_SPACER ? null : 0))),
           colorscale: [
             [0, EMPTY_CELL],
             [1, EMPTY_CELL],
@@ -1288,13 +1373,13 @@ export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
         }),
         trace({
           type: 'heatmap',
-          x: columns.map(c => c.name),
-          y: drawn.map(d => d.entry.label),
-          z: cells.map(row =>
-            row.map(share =>
-              share === undefined || share === null
+          x,
+          y,
+          z: rows.map(row =>
+            row.map(cell =>
+              cell === null || cell.share === null
                 ? null
-                : Math.log10(Math.max(share, VOCABULARY_SHADE_FLOOR))
+                : Math.log10(Math.max(cell.share, VOCABULARY_SHADE_FLOOR))
             )
           ),
           zmin: Math.log10(VOCABULARY_SHADE_FLOOR),
@@ -1304,109 +1389,47 @@ export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
           hoverongaps: false,
           xgap: 2,
           ygap: 2,
-          text: cells.map(row =>
-            row.map(share => (share === undefined ? '' : share === null ? 'n/a' : formatPercent(share)))
-          ),
+          text: rows.map(row => row.map(cell => (cell === null ? '' : shareText(cell.share)))),
           texttemplate: '%{text}',
-          customdata: drawn.map(() =>
-            columns.map(c => (c.recognized ? `${c.name} (a standard OMOP vocabulary)` : c.name))
-          ),
-          hovertemplate: '%{y}<br>%{customdata}: %{text} of measurements<extra></extra>',
+          customdata: rows.map(row => row.map(cell => (cell === null ? '' : cell.hover))),
+          hovertemplate: '%{y}<br>%{customdata}<extra></extra>',
         }),
       ],
       layout: baseLayout(drawn.length, {
         height: drawn.length * ROW_HEIGHT + top + 8,
-        margin: { l: 8, r: 8, t: top, b: 8 },
+        margin: { l: 8, r: right, t: top, b: 8 },
+        annotations: [...markers].map(([label, text]) => ({
+          xref: 'paper',
+          x: firstVocabulary,
+          xanchor: 'left',
+          xshift: 6,
+          yref: 'y',
+          y: label,
+          text: `<i>${text}</i>`,
+          showarrow: false,
+          font: { color: INK.secondary, size: 12 },
+        })),
         xaxis: {
           type: 'category',
           side: 'top',
           ticks: '',
           tickangle: -45,
-          tickvals: columns.map(c => c.name),
-          ticktext: columnLabels,
+          tickvals: x.filter(column => column !== VOCABULARY_SPACER),
+          ticktext: tickLabels,
           gridcolor: 'rgba(0,0,0,0)',
           linecolor: 'rgba(0,0,0,0)',
           tickfont: { color: INK.primary },
         },
         yaxis: { ticks: '', linecolor: 'rgba(0,0,0,0)' },
-      }),
+      } as Partial<Layout>),
     },
     skipped,
-    minWidth: longest(drawn.map(d => d.entry.label)) * 7 + 24 + columns.length * 44,
-    anyRecognized: columns.some(c => c.recognized),
+    minWidth: longest(y) * 7 + 24 + x.length * VOCABULARY_COLUMN_WIDTH + right - 8,
+    anyRecognized: vocabularies.some(c => c.recognized),
   };
 }
 
-/** A vocabulary's measurements as a share of the dataset's, or null if the file doesn't state them. */
-const vocabularyShare = (vocabulary: VocabularyCell, measurements: number): number | null =>
-  vocabulary.measurements === null ? null : vocabulary.measurements / measurements;
-
-// ─── 8. Mapping to standard vocabularies ────────────────────────
-
-const ONTOLOGY_MEASURES = [
-  { key: 'measurementsMapped', label: 'Measurements mapped' },
-  { key: 'codesWithParents', label: 'Observed codes with a parent' },
-] as const;
-
-/**
- * Grouped bars of how much of each dataset reaches an external vocabulary through `parent_codes` in its code
- * metadata: the share of measurements, and the share of distinct observed codes. Unlike the per-vocabulary shares
- * of `vocabularyChart`, these count each measurement and code once, however many vocabularies it maps into.
- */
-export function ontologyChart(entries: EtlStatsEntry[]): ChartModel {
-  const { drawn, skipped } = partition(orderDatasets(entries), stats => {
-    const ontology = stats.ontology;
-    if (!ontology) return { skip: 'Its code metadata maps no codes to parent codes in a vocabulary.' };
-    if (ONTOLOGY_MEASURES.every(measure => ontology[measure.key] === null)) {
-      return { skip: 'Its stats file has no mapping-coverage figures.' };
-    }
-    return ontology;
-  });
-  const table: TableView = {
-    columns: ['Dataset', ...ONTOLOGY_MEASURES.map(measure => measure.label)],
-    rows: drawn.map(({ entry, value }) => [
-      entry.label,
-      ...ONTOLOGY_MEASURES.map(measure => {
-        const share = value[measure.key];
-        return share === null ? '—' : formatPercent(share);
-      }),
-    ]),
-  };
-  if (drawn.length === 0) return { figure: null, skipped, table };
-
-  return {
-    figure: {
-      data: ONTOLOGY_MEASURES.map((measure, i) => {
-        const shares = drawn.map(d => d.value[measure.key]);
-        return trace({
-          type: 'bar',
-          orientation: 'h',
-          name: measure.label,
-          y: drawn.map(d => d.entry.label),
-          x: shares,
-          text: shares.map(share => (share === null ? '' : formatPercent(share))),
-          textposition: 'outside',
-          textfont: { color: INK.primary },
-          cliponaxis: false,
-          marker: { color: SERIES_COLORS[i], cornerradius: 4 },
-          hovertemplate: `%{y}<br>${measure.label}: %{text}<extra></extra>`,
-        });
-      }),
-      layout: baseLayout(drawn.length * 1.6, {
-        ...TOP_LEGEND,
-        barmode: 'group',
-        bargap: 0.3,
-        bargroupgap: 0.1,
-        margin: { ...MARGIN, t: 32, r: 48 },
-        xaxis: { title: { text: 'Share' }, tickformat: '.0%', range: [0, 1] },
-      }),
-    },
-    skipped,
-    table,
-  };
-}
-
-// ─── 9. Health check ────────────────────────────────────────────
+// ─── 8. Health check ────────────────────────────────────────────
 
 /** `pass` and `warn` are checks; `info` is a fact without a verdict; `unknown` is a check the file can't answer. */
 export type CheckStatus = 'pass' | 'warn' | 'info' | 'unknown';

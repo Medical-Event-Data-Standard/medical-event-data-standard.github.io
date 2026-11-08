@@ -72,6 +72,13 @@ export interface EtlStats {
     events: Distribution | null;
     uniqueCodes: Distribution | null;
     spanDays: Distribution | null;
+    /**
+     * Each subject's measurements per day: their rows with a time, other than MEDS birth and death, divided by the
+     * days from the earliest to the latest of those rows. `n` counts only the subjects with a rate (two or more
+     * distinct timestamps). Newer `meds_summary_stats` versions publish it; it is absent (not just null) in stats
+     * collected before the page read it, such as an older snapshot.
+     */
+    measurementsPerDay?: Distribution | null;
   };
   /** Counts that are zero in a valid MEDS dataset (`counts.quality`, and the non-finite numeric values). */
   checks: {

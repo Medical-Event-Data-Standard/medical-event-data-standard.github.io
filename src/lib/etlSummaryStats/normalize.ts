@@ -152,6 +152,7 @@ export function normalizeStats(doc: JsonObject): EtlStats {
       events: normalizeDistribution(dig(perSubject, 'n_events')),
       uniqueCodes: normalizeDistribution(dig(perSubject, 'n_unique_codes')),
       spanDays: normalizeDistribution(dig(perSubject, 'span_days')),
+      measurementsPerDay: normalizeDistribution(dig(perSubject, 'measurements_per_day')),
     },
     codeMetadata,
     concentration,

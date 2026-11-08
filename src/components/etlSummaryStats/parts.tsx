@@ -316,21 +316,6 @@ export function MetricToggle<T extends string>({
   );
 }
 
-/** A control with a short visible label in front of it, e.g. "Sort by". */
-export function LabelledToggle({
-  label,
-  children,
-}: React.PropsWithChildren<{ label: string }>): React.JSX.Element {
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, flexWrap: 'wrap' }}>
-      <Typography variant="body2" component="span" sx={{ color: 'text.secondary' }} aria-hidden="true">
-        {label}
-      </Typography>
-      {children}
-    </Box>
-  );
-}
-
 /**
  * A titled chart section: description, optional controls, the chart, what it leaves out, and (unless the chart
  * already prints every number, like a labelled heatmap) its numbers as a table.

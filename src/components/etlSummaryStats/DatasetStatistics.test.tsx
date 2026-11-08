@@ -6,7 +6,7 @@ import { usePluginData } from '@docusaurus/useGlobalData';
 
 import DatasetStatistics from './DatasetStatistics';
 import { etlStats, statsEntry } from '@site/src/lib/etlSummaryStats/testFixtures';
-import type { EtlStatsData } from '@site/src/lib/etlSummaryStats/types';
+import type { EtlStats, EtlStatsData } from '@site/src/lib/etlSummaryStats/types';
 
 // `@docusaurus/*` modules are webpack aliases that only exist inside a Docusaurus build, and Plotly needs a real
 // browser, so the wrapper is replaced by a stub that exposes the figure it was given.
@@ -118,7 +118,8 @@ describe('DatasetStatistics', () => {
       'https://github.com/org/AUMCdb_MEDS'
     );
 
-    // The sections, in order; the calendar-year, split and code-concentration charts are gone.
+    // The sections, in order; the calendar-year, split and code-concentration charts are gone, and the vocabulary
+    // heatmap and mapping bars are one section.
     expect(screen.getAllByRole('heading', { level: 2 }).map(heading => heading.textContent)).toEqual([
       'Datasets and their stats files',
       'Dataset size',
@@ -126,13 +127,17 @@ describe('DatasetStatistics', () => {
       'How much data each subject has',
       'Pace of measurements',
       'Record coverage',
-      'Coverage of the most common codes',
-      'Vocabularies used',
-      'Mapping to standard vocabularies',
+      'How long the tail of codes is',
+      'Mapping to vocabularies',
       'Health check',
     ]);
 
+    // Dataset size has a fixed order, the most measurements first, and no sort controls.
     expect(figuresIn('Dataset size')[0].data[0].y).toEqual(['Big', 'Demo']);
+    expect(screen.queryByRole('group', { name: /Sort by|Order/ })).not.toBeInTheDocument();
+    expect(within(sectionOf('Dataset size')).getByRole('img')).toHaveAccessibleName(
+      'Events, measurements and unique codes per dataset, grouped bars, most measurements first'
+    );
     expect(figuresIn('Depth vs. breadth')[0].data[0].text).toEqual(['Big', 'Demo']);
     expect(
       within(sectionOf('Depth vs. breadth')).getByText(
@@ -141,34 +146,39 @@ describe('DatasetStatistics', () => {
     ).toBeInTheDocument();
     expect(within(sectionOf('Depth vs. breadth')).queryByText(/Left unlabelled/)).not.toBeInTheDocument();
     expect(figuresIn('How much data each subject has')[0].data[0].y).toEqual(['Big', 'Demo']);
-    // The pace per day of record needs the mean record span, which Big's file suppresses.
-    expect(figuresIn('Pace of measurements')[0].data[0].y).toEqual(['Demo']);
-    expect(
-      within(sectionOf('Pace of measurements')).getByText(/per-subject record span summary rests on/)
-    ).toBeInTheDocument();
+    // No file has the per-subject rate yet: only the exact ratio per event, with a note and no toggle.
+    const pace = within(sectionOf('Pace of measurements'));
+    expect(figuresIn('Pace of measurements')[0].data[0].y).toEqual(['Big', 'Demo']);
+    expect(pace.getByRole('img')).toHaveAccessibleName('Measurements per event, one bar per dataset');
+    expect(pace.queryByRole('group', { name: 'Pace measure' })).not.toBeInTheDocument();
+    expect(pace.getByText(/will appear here once the ETLs publish it/)).toBeInTheDocument();
+    expect(pace.queryByText(/average/)).not.toBeInTheDocument();
     expect(figuresIn('Record coverage')[0].data[0].y).toEqual(['Big', 'Demo']);
     // Every dataset has its own curve and legend entry; none is highlighted at first.
-    expect(figuresIn('Coverage of the most common codes')[0].data.map(trace => trace.name)).toEqual([
+    const tail = within(sectionOf('How long the tail of codes is'));
+    expect(figuresIn('How long the tail of codes is')[0].data.map(trace => trace.name)).toEqual([
       'Big',
       'Demo',
     ]);
-    expect(within(sectionOf('Coverage of the most common codes')).getByLabelText('Highlight')).toHaveValue(
-      ''
+    expect(figuresIn('How long the tail of codes is')[0].layout.yaxis).toMatchObject({ type: 'log' });
+    expect(tail.getByLabelText('Highlight')).toHaveValue('');
+    expect(tail.getByRole('img')).toHaveAccessibleName(
+      'Share of measurements outside the most frequent codes against the number of codes, both logarithmic, one curve per dataset, each in its own colour and line style'
     );
-    expect(within(sectionOf('Coverage of the most common codes')).getByRole('img')).toHaveAccessibleName(
-      'Share of measurements covered by the most frequent codes, one curve per dataset, each in its own colour and line style'
-    );
-    expect(figuresIn('Vocabularies used')[0].data[0].y).toEqual(['Demo']);
+    // Every dataset has a row, Big's without a mapping marked as such.
+    const mapping = within(sectionOf('Mapping to vocabularies'));
+    const [, vocabularyCells] = figuresIn('Mapping to vocabularies')[0].data;
+    expect(vocabularyCells.y).toEqual(['Big', 'Demo']);
+    expect((vocabularyCells.x as string[]).slice(0, 2)).toEqual(['Any vocabulary', 'Codes with a parent']);
     expect(
-      within(sectionOf('Vocabularies used')).getByText(/A standard OMOP CDM vocabulary/)
-    ).toBeInTheDocument();
-    expect(
-      within(sectionOf('Vocabularies used')).getByText(/2 more vocabularies are suppressed/)
-    ).toBeInTheDocument();
-    expect(figuresIn('Mapping to standard vocabularies')[0].data[0].y).toEqual(['Demo']);
-    expect(
-      within(sectionOf('Mapping to standard vocabularies')).getByText(/maps no codes to parent codes/)
-    ).toBeInTheDocument();
+      (figuresIn('Mapping to vocabularies')[0].layout.annotations as { y: string; text: string }[]).map(a => [
+        a.y,
+        a.text,
+      ])
+    ).toEqual([['Big', '<i>No vocabulary mapping</i>']]);
+    expect(mapping.getByText(/A standard OMOP CDM vocabulary/)).toBeInTheDocument();
+    expect(mapping.getByText(/2 more vocabularies are suppressed/)).toBeInTheDocument();
+    expect(mapping.getByText(/de-duplicated/)).toBeInTheDocument();
     expect(within(sectionOf('Dataset size')).getByText('Future')).toBeInTheDocument();
 
     // Charts have their numbers as a table, except those that print every number: the heatmaps and the
@@ -178,12 +188,11 @@ describe('DatasetStatistics', () => {
       'Depth vs. breadth',
       'How much data each subject has',
       'Pace of measurements',
-      'Coverage of the most common codes',
-      'Mapping to standard vocabularies',
+      'How long the tail of codes is',
     ]) {
       expect(within(sectionOf(heading)).getByText('Show the numbers')).toBeInTheDocument();
     }
-    for (const heading of ['Record coverage', 'Vocabularies used', 'Health check']) {
+    for (const heading of ['Record coverage', 'Mapping to vocabularies', 'Health check']) {
       expect(within(sectionOf(heading)).queryByText('Show the numbers')).not.toBeInTheDocument();
     }
 
@@ -207,36 +216,24 @@ describe('DatasetStatistics', () => {
   });
 
   it('switches measures and can leave out demo datasets', () => {
-    mockUsePluginData.mockReturnValue(data);
+    // Only the demo's file has each subject's measurements per day.
+    const demoStats = demo.stats as EtlStats;
+    const rate = {
+      suppressed: false as const,
+      n: 100,
+      mean: null,
+      p5: 0.1,
+      p25: 0.5,
+      p50: 2,
+      p75: 6,
+      p95: 20,
+    };
+    const demoWithRate = {
+      ...demo,
+      stats: { ...demoStats, perSubject: { ...demoStats.perSubject, measurementsPerDay: rate } },
+    };
+    mockUsePluginData.mockReturnValue({ ...data, datasets: [big, demoWithRate, future] });
     render(<DatasetStatistics />);
-
-    const sortBy = () => within(screen.getByRole('group', { name: 'Sort by' }));
-    const order = () => within(screen.getByRole('group', { name: 'Order' }));
-    const sizeOrder = () => figuresIn('Dataset size')[0].data[0].y;
-
-    // Counts sort largest first by default, and can flip.
-    fireEvent.click(sortBy().getByRole('button', { name: 'Events' }));
-    expect(sizeOrder()).toEqual(['Big', 'Demo']);
-    expect(order().getByRole('button', { name: 'Largest first' })).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(order().getByRole('button', { name: 'Smallest first' }));
-    expect(sizeOrder()).toEqual(['Demo', 'Big']);
-    expect(within(sectionOf('Dataset size')).getByRole('img')).toHaveAccessibleName(
-      'Events, measurements and unique codes per dataset, grouped bars, sorted by events'
-    );
-    // Clicking the selected button again keeps it selected.
-    fireEvent.click(order().getByRole('button', { name: 'Smallest first' }));
-    expect(sizeOrder()).toEqual(['Demo', 'Big']);
-
-    // Names start A–Z, with the order buttons relabelled.
-    fireEvent.click(sortBy().getByRole('button', { name: 'Name' }));
-    expect(sizeOrder()).toEqual(['Big', 'Demo']);
-    expect(order().getByRole('button', { name: 'A–Z' })).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(order().getByRole('button', { name: 'Z–A' }));
-    expect(sizeOrder()).toEqual(['Demo', 'Big']);
-
-    // Switching back to a count starts largest first again.
-    fireEvent.click(sortBy().getByRole('button', { name: 'Subjects' }));
-    expect(sizeOrder()).toEqual(['Big', 'Demo']);
 
     fireEvent.click(
       within(screen.getByRole('group', { name: 'Per-subject measure' })).getByRole('button', {
@@ -246,30 +243,51 @@ describe('DatasetStatistics', () => {
     // Big's file suppresses its record-span quantiles.
     expect(figuresIn('How much data each subject has')[0].data[0].median).toEqual([90]);
 
-    fireEvent.click(
-      within(screen.getByRole('group', { name: 'Pace measure' })).getByRole('button', { name: 'Per event' })
+    // A file in view has the per-subject rate, so the pace starts with it, drawn as boxes.
+    const pace = () => within(sectionOf('Pace of measurements'));
+    const paceToggle = () => within(screen.getByRole('group', { name: 'Pace measure' }));
+    expect(paceToggle().getByRole('button', { name: 'Per day, per subject' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
     );
+    expect(figuresIn('Pace of measurements')[0].data[0]).toMatchObject({
+      type: 'box',
+      y: ['Demo'],
+      median: [2],
+    });
+    expect(pace().getByRole('img')).toHaveAccessibleName(
+      'Measurements per day, per subject, box chart per dataset'
+    );
+    expect(pace().getByText(/which newer versions of meds_summary_stats publish/)).toBeInTheDocument();
+    // The description gives the library's definition, and why the mean isn't shown.
+    expect(pace().getByText(/Birth and death records are left out/)).toBeInTheDocument();
+    expect(pace().getByText(/rather than the mean/)).toBeInTheDocument();
+    expect(pace().queryByText(/will appear here once/)).not.toBeInTheDocument();
+    fireEvent.click(paceToggle().getByRole('button', { name: 'Per event' }));
     expect(figuresIn('Pace of measurements')[0].data[0].y).toEqual(['Big', 'Demo']);
-    expect(within(sectionOf('Pace of measurements')).getByRole('img')).toHaveAccessibleName(
-      'Measurements per event, one bar per dataset'
-    );
+    expect(pace().getByRole('img')).toHaveAccessibleName('Measurements per event, one bar per dataset');
+    fireEvent.click(paceToggle().getByRole('button', { name: 'Per day, per subject' }));
 
     fireEvent.change(screen.getByLabelText('Highlight'), { target: { value: 'Demo' } });
     // The highlighted curve is drawn last, on top; the other keeps its colour but fades.
-    const highlighted = figuresIn('Coverage of the most common codes')[0].data;
+    const highlighted = figuresIn('How long the tail of codes is')[0].data;
     expect(highlighted.map(trace => trace.name)).toEqual(['Big', 'Demo']);
     expect(highlighted.map(trace => trace.opacity)).toEqual([0.25, 1]);
-    expect(within(sectionOf('Coverage of the most common codes')).getByRole('img')).toHaveAccessibleName(
-      'Share of measurements covered by the most frequent codes, one curve per dataset, Demo highlighted'
+    expect(within(sectionOf('How long the tail of codes is')).getByRole('img')).toHaveAccessibleName(
+      'Share of measurements outside the most frequent codes against the number of codes, both logarithmic, one curve per dataset, Demo highlighted'
     );
 
     fireEvent.click(screen.getByLabelText(/Include demo datasets/));
     expect(figuresIn('Dataset size')[0].data[0].y).toEqual(['Big']);
     expect(screen.queryByText('demo_summary_stats.json')).not.toBeInTheDocument();
-    expect(figuresIn('Mapping to standard vocabularies')).toHaveLength(0);
+    // No file in view has the per-subject rate any more: only the ratio per event, with the note.
+    expect(screen.queryByRole('group', { name: 'Pace measure' })).not.toBeInTheDocument();
+    expect(figuresIn('Pace of measurements')[0].data[0].y).toEqual(['Big']);
+    expect(pace().getByText(/will appear here once/)).toBeInTheDocument();
+    expect(figuresIn('Mapping to vocabularies')[0].data[1].y).toEqual(['Big']);
     // The highlighted demo dataset is gone, so nothing is highlighted, and Big keeps its colour.
     expect(screen.getByLabelText('Highlight')).toHaveValue('');
-    const remaining = figuresIn('Coverage of the most common codes')[0].data;
+    const remaining = figuresIn('How long the tail of codes is')[0].data;
     expect(remaining.map(trace => trace.name)).toEqual(['Big']);
     expect((remaining[0].line as { color: string }).color).toBe(
       (highlighted[0].line as { color: string }).color
@@ -277,7 +295,7 @@ describe('DatasetStatistics', () => {
 
     // Highlighting a dataset and then choosing "None" clears the highlight.
     fireEvent.change(screen.getByLabelText('Highlight'), { target: { value: 'Big' } });
-    expect(figuresIn('Coverage of the most common codes')[0].data[0].opacity).toBe(1);
+    expect(figuresIn('How long the tail of codes is')[0].data[0].opacity).toBe(1);
     fireEvent.change(screen.getByLabelText('Highlight'), { target: { value: '' } });
     expect(screen.getByLabelText('Highlight')).toHaveValue('');
   });
@@ -305,7 +323,7 @@ describe('DatasetStatistics', () => {
     expect(screen.queryByLabelText(/Include demo datasets/)).not.toBeInTheDocument();
     expect(screen.getByText(/No stats file yet in this ETL repository/)).toBeInTheDocument();
     // No vocabulary is a recognised OMOP one, so none is marked.
-    expect(figuresIn('Vocabularies used')).toHaveLength(1);
+    expect(figuresIn('Mapping to vocabularies')).toHaveLength(1);
     expect(screen.queryByText(/A standard OMOP CDM vocabulary/)).not.toBeInTheDocument();
   });
 

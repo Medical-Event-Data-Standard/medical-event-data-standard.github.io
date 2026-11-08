@@ -130,6 +130,21 @@ describe('normalizeStats', () => {
     });
   });
 
+  it("reads each subject's measurements per day where the file has them, quantiles or suppressed", () => {
+    expect(normalizeStats(statsDocument()).perSubject.measurementsPerDay).toBeNull();
+    const perSubject = (measurementsPerDay: unknown) =>
+      normalizeStats(statsDocument({ per_subject: { measurements_per_day: measurementsPerDay } })).perSubject;
+    expect(
+      perSubject({
+        n: 400,
+        mean: 2.5,
+        std: 1,
+        quantiles: { p1: 0.01, p5: 0.1, p25: 0.5, p50: 1.2, p75: 3, p95: 9, p99: 20 },
+      }).measurementsPerDay
+    ).toEqual({ suppressed: false, n: 400, mean: 2.5, p5: 0.1, p25: 0.5, p50: 1.2, p75: 3, p95: 9 });
+    expect(perSubject({ n: 12, suppressed: true }).measurementsPerDay).toEqual({ suppressed: true, n: 12 });
+  });
+
   it('drops calendar years, splits, digests, layout, config and dataset_digest', () => {
     const stats = normalizeStats(statsDocument());
     expect(Object.keys(stats).sort()).toEqual([
@@ -169,6 +184,7 @@ describe('normalizeStats', () => {
       events: null,
       uniqueCodes: null,
       spanDays: null,
+      measurementsPerDay: null,
     });
     // A dataset without codes.parquet says so; its counts are unknown.
     expect(stats.codeMetadata).toEqual({
