@@ -12,11 +12,19 @@
 #   exclude: papers that cite a seed but are not about using MEDS, e.g. ones mentioning it only in passing.
 #
 # `include` and `exclude` entries identify a paper by `id`: its Semantic Scholar paperId, `DOI:<doi>` or
-# `ARXIV:<arXiv id>`. Add a `note` saying why, for reviewers. For example:
+# `ARXIV:<arXiv id>`. Add a `note` saying why, for reviewers. An `include` entry can also set `title`, `authors`,
+# `venue`, `year` and `url`, shown instead of Semantic Scholar's; with a `title`, a paper that Semantic Scholar
+# doesn't have (yet) is listed from these details. For example:
 #
 #   include:
 #     - id: 'ARXIV:2401.00001'
 #       note: 'Trains on MIMIC-IV converted with MEDS-Transforms, but does not cite the MEDS papers.'
+#     - id: 'DOI:10.1234/thesis'
+#       note: 'Not on Semantic Scholar.'
+#       title: 'A Thesis Using MEDS'
+#       authors: ['Ada Lovelace']
+#       venue: 'PhD thesis, University of Example'
+#       year: 2026
 #   exclude:
 #     - id: 'DOI:10.1234/example'
 #       note: 'Survey that mentions MEDS only in passing.'
@@ -48,6 +56,49 @@ seeds:
     venue: 'ICLR 2024 Workshop on Learning from Time Series for Health'
     year: 2024
     url: 'https://openreview.net/forum?id=IsHy2ebjIG'
+  - id: '7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf'
+    label: 'MEDS-DEV'
+    note: >-
+      Semantic Scholar's record of this paper was parsed from the PDF: its "authors" are names from its
+      bibliography, and it has no venue, year or link. These details are from its OpenReview page instead.
+    title: >-
+      MEDS Decentralized, Extensible Validation (MEDS-DEV) Benchmark: Establishing Reproducibility and
+      Comparability in ML for Health
+    authors:
+      - 'Matthew B.A. McDermott'
+      - 'Aleksia Kolo'
+      - 'Chao Pang'
+      - 'Edward Choi'
+      - 'Ethan Steinberg'
+      - 'Hyewon Jeong'
+      - 'Jack Gallifant'
+      - 'Jason Alan Fries'
+      - 'Jeffrey N Chiang'
+      - 'Jungwoo Oh'
+      - 'Justin Xu'
+      - 'Kamilė Stankevičiūtė'
+      - 'Kiril Vadimovic Klein'
+      - 'Mikkel Fruelund Odgaard'
+      - 'Nassim Oufattole'
+      - 'Patrick Rockenschaub'
+      - 'Pawel Renc'
+      - 'Robin van de Water'
+      - 'Shalmali Joshi'
+      - 'Simon Austin Lee'
+      - 'Teya Bergamaschi'
+      - 'Tom Pollard'
+      - 'Vincent Jeanselme'
+      - 'Nigam Shah'
+      - 'Michael Wornow'
+      - 'Aparajita Kashyap'
+      - 'XinZhou Jiang'
+      - 'Yanwei Li'
+      - 'Young Sang Choi'
+      - 'Yuta Kobayashi'
+      - 'Ryan King'
+    venue: 'ML4H 2024 (Demo Track)'
+    year: 2024
+    url: 'https://openreview.net/forum?id=DExp3tRRel'
   - id: '27689dd149c473d24cdf22124c2a29d187c960b8'
     label: 'ACES'
   - id: 'f4b471a712d135aa606281e5061415657adb7085'
@@ -61,11 +112,111 @@ seeds:
     year: 2024
     url: 'https://openreview.net/forum?id=uwnK2LZtjX'
 
-include: []
+# Found by a literature search in November 2026 (see the pull request adding them for the evidence). Most of these
+# cite only the ICLR 2024 workshop paper, whose Semantic Scholar record lists no citing papers.
+include:
+  - id: 'ARXIV:2511.09337'
+    note: 'TempoQL: a query toolkit that supports MEDS datasets, demonstrated on EHRSHOT in MEDS.'
+  - id: 'ARXIV:2606.22692'
+    note: 'VISTA Architect: its source EHR data are "MEDS XML", derived from MEDS.'
+  - id: 'ARXIV:2606.06990'
+    note: 'Synthetic EHR generation benchmark: adopts a MEDS-aligned layout, so MEDS-compatible loaders work.'
+  - id: 'ARXIV:2607.22264'
+    note: 'Autoregressive EHR foundation models: converts MIMIC-IV and MIMIC-IV-ED to MEDS.'
+  - id: 'ARXIV:2509.03643'
+    note: 'CEHR-XGPT: converts its OMOP data to MEDS to compare with MOTOR.'
+  - id: 'ARXIV:2601.21340'
+    note: 'EHR-RAG: uses EHRSHOT in its MEDS format.'
+  - id: 'ARXIV:2605.11774'
+    note: 'From Token to Token Pair: turns raw EHR data into MEDS event streams.'
+  - id: 'ARXIV:2604.16775'
+    note: 'Representation Before Training: benchmarks tokenization of MIMIC MEDS event streams.'
+  - id: 'ARXIV:2610.16878'
+    note: 'Sequence Composition in EHR foundation model pretraining: converts MIMIC-IV, eICU and INSPIRE to MEDS.'
+  - id: 'ARXIV:2606.29503'
+    note: 'The Verbose Context Problem: generates synthetic patient records in MEDS format.'
+  - id: 'ARXIV:2603.15644'
+    note: 'Tokenization Tradeoffs in structured EHR foundation models: maps its EHR data to MEDS.'
+  - id: 'ARXIV:2601.20906'
+    note: 'TwinWeaver: converts its data to MEDS-OMOP for the CLMBR-T baseline.'
+  - id: 'DOI:10.3389/fdgth.2026.1956993'
+    note: 'Cross-continental generalizability of an EHR foundation model: converts OMOP data to MEDS.'
+  - id: 'DOI:10.64898/2026.08.18.26360487'
+    note: 'DBToken: a tokenizer for MEDS-compatible input.'
+  - id: 'DOI:10.1038/s44401-026-00095-y'
+    note: 'Multimodal generative model for EHRs: prepares its data in MEDS format.'
+  - id: 'DOI:10.1038/s41746-026-02337-7'
+    note: 'Cervical spondylotic myelopathy prediction: patient data standardized in MEDS.'
+  - id: 'DOI:10.1038/s41746-026-02915-9'
+    note: 'Large language models are powerful EHR encoders: converts its mapped data to MEDS.'
+  - id: 'DOI:10.21203/rs.3.rs-8819405/v1'
+    note: 'Sparse Foundation Models: evaluated on MEDS-DEV. Not on Semantic Scholar, so its details are given here.'
+    title: 'Sparse Foundation Models for Continous-Time EHRs'
+    authors:
+      - 'William Ferrel'
+      - 'Timothy S. Chang'
+      - 'Samuel Lawrence'
+    venue: 'Research Square'
+    year: 2026
+  - id: 'DOI:10.64898/2026.08.04.26359713'
+    note: 'Continuous Value Tokenization: MIMIC-IV extracted with the MIMIC-IV MEDS ETL, pipeline built on MEDS.'
+  - id: 'DOI:10.64898/2026.01.23.26344677'
+    note: 'Hepatitis B EHR foundation model: "Our work follows the MEDS standard."'
+  - id: 'DOI:10.21203/rs.3.rs-8200847/v1'
+    note: 'Lung cancer risk stratification: converts OMOP data to MEDS. Not on Semantic Scholar.'
+    title: >-
+      EHRs Enable Robust Lung Cancer Risk Stratification with Transformer-based Models: A Retrospective
+      Multi-center Validation Study
+    authors:
+      - 'Eduardo Alonso'
+      - 'Naroa Mendez'
+      - 'Teresa García-Navarro'
+      - 'Eunate Arana-Arri'
+      - 'Jon Eneko Idoyaga Uribarrena'
+      - 'Miguel Giraldez-Álvarez'
+      - 'Alberto Moreno-Conde'
+      - 'Jesús Moreno-Conde'
+      - 'Francisco J. Núñez-Benjumea'
+      - 'David Vicente-Baz'
+      - 'Julien Guiot'
+      - 'Astrid Paulus'
+      - 'Marjorie Gangolf'
+      - 'Monique A. Henket'
+      - 'Benoit Ernst'
+      - 'Valentina Gogulancea'
+      - 'Debbie Rankin'
+      - 'Michaela M. Black'
+      - 'Ibai Gurrutxaga'
+      - 'Andoni Beristain'
+      - 'Alba Garín-Muga'
+      - 'Iván Macía'
+      - 'Xabier Calle'
+    venue: 'Research Square'
+    year: 2025
+  - id: 'DOI:10.1038/s41598-026-71879-3'
+    note: "Crohn's-like disease of the pouch: both datasets standardized into MEDS."
+  - id: 'DOI:10.64898/2026.08.12.26360243'
+    note: 'Forecasting laboratory measurements: converts its EHR data to MEDS.'
+  - id: 'DOI:10.64898/2026.08.10.26360107'
+    note: 'Inherited cardiomyopathy foundation models: converts OMOP data to MEDS with meds_etl.'
+  - id: 'DOI:10.21203/rs.3.rs-10609619/v1'
+    note: 'PORT: pretrained on MEDS timelines.'
+  - id: 'DOI:10.1101/2025.09.08.25335368'
+    note: 'Predicting hospital admissions with pretrained EHR embeddings: converts OMOP data to MEDS with meds_etl.'
+  - id: 'DOI:10.25932/publishup-70445'
+    note: 'PhD thesis that contributes MEDS tools. Not on Semantic Scholar.'
+    title: 'Benchmark to bedside: Building modular multimodal machine learning infrastructure for healthcare at scale'
+    authors:
+      - 'Robin P. van de Water'
+    venue: 'PhD thesis, University of Potsdam'
+    year: 2026
 
 exclude:
-  - id: '7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf'
+  - id: 'ARXIV:2511.14318'
     note: >-
-      The MEDS-DEV benchmark paper, but Semantic Scholar's record of it was parsed from the PDF: its "authors" are
-      names from its bibliography, and it has no venue, year or link. Listing it would credit the wrong people.
-      Once its details are confirmed, consider adding it as a seed with corrected `title`/`authors`/`venue`/`url`.
+      Report on the Scoping Workshop on AI in Science Education Research 2025: about science education, citing the
+      KDD MEDS paper only as an example of reproducibility standards in biomedical AI.
+  - id: 'ARXIV:2512.19537'
+    note: >-
+      Event Extraction in Large Language Model: a survey of event extraction from text, citing ACES only in a list
+      of document-level argument extraction methods. Not about health AI or MEDS.

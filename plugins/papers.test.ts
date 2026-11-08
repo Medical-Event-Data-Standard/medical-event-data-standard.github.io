@@ -15,7 +15,8 @@ import papersPlugin, {
   type S2ClientOptions,
   type S2Request,
 } from './papers';
-import type { PapersConfig, S2Paper } from '../src/lib/papers/normalize';
+import { parse } from 'yaml';
+import { paperMatchesId, type PapersConfig, type S2Paper } from '../src/lib/papers/normalize';
 import type { PapersData } from '../src/lib/papers/types';
 
 const SEED = 'a'.repeat(40);
@@ -157,15 +158,20 @@ describe('fetchFromSemanticScholar', () => {
       { id: SEED, label: 'Seed' },
       { id: OTHER_SEED, label: 'Other' },
     ],
-    include: ['DOI:10.1/x', 'ARXIV:0000.00000'],
+    include: [
+      { id: 'DOI:10.1/x' },
+      { id: 'ARXIV:0000.00000' },
+      { id: 'DOI:10.1/own', overrides: { title: 'Own' } },
+    ],
     exclude: [],
   };
 
   it('fetches the seeds and included papers in one batch, then every page of citations', async () => {
     const request = jest.fn(async (pathAndQuery: string, body?: unknown) => {
       if (pathAndQuery.startsWith('/paper/batch')) {
-        expect(body).toEqual({ ids: [SEED, OTHER_SEED, 'DOI:10.1/x', 'ARXIV:0000.00000'] });
-        return [s2(SEED), s2(OTHER_SEED), s2('included'), null];
+        expect(body).toEqual({ ids: [SEED, OTHER_SEED, 'DOI:10.1/x', 'ARXIV:0000.00000', 'DOI:10.1/own'] });
+        // Nothing for the last paper at all, which Semantic Scholar should not do, but counts as not found.
+        return [s2(SEED), null, s2('included'), null];
       }
       if (pathAndQuery.includes(`${SEED}/citations`) && pathAndQuery.endsWith('offset=0')) {
         return { next: 1000, data: [{ citingPaper: s2('c1') }, { citingPaper: null }] };
@@ -176,12 +182,21 @@ describe('fetchFromSemanticScholar', () => {
 
     const { live, failures } = await fetchFromSemanticScholar(config, request);
 
-    expect([...live.seeds.keys()]).toEqual([SEED, OTHER_SEED]);
-    expect([...live.included.keys()]).toEqual(['DOI:10.1/x']);
+    expect([...live.seeds.keys()]).toEqual([SEED]);
+    // Included papers that Semantic Scholar doesn't have are recorded as such (null).
+    expect([...live.included]).toEqual([
+      ['DOI:10.1/x', s2('included')],
+      ['ARXIV:0000.00000', null],
+      ['DOI:10.1/own', null],
+    ]);
     expect(live.citations.get(SEED)?.map(p => p.paperId)).toEqual(['c1', 'c2']);
     expect(live.citations.get(OTHER_SEED)).toEqual([]);
     expect(live.incompleteSeeds.size).toBe(0);
-    expect(failures).toEqual(['ARXIV:0000.00000: not found on Semantic Scholar']);
+    // An included paper with a title in papers.yaml is listed from it, so its absence is no failure.
+    expect(failures).toEqual([
+      `${OTHER_SEED}: not found on Semantic Scholar`,
+      'ARXIV:0000.00000: not found on Semantic Scholar',
+    ]);
     expect(jest.mocked(request).mock.calls[1][0]).toBe(
       `/paper/${SEED}/citations?fields=title,year,venue,publicationVenue,authors,externalIds,url,citationCount,publicationDate&limit=1000&offset=0`
     );
@@ -219,9 +234,40 @@ describe('parsePapersConfig', () => {
       })
     ).toEqual({
       seeds: [{ id: SEED, label: 'Seed' }],
-      include: ['DOI:10.1/X', 'ARXIV:2401.00001', OTHER_SEED],
+      include: [{ id: 'DOI:10.1/X' }, { id: 'ARXIV:2401.00001' }, { id: OTHER_SEED }],
       exclude: [],
     });
+  });
+
+  it("parses an included paper's details, and ignores any but the id of an excluded paper", () => {
+    const details = {
+      title: ' A Thesis ',
+      authors: ['Ada Lovelace'],
+      venue: 'PhD thesis, University of Example',
+      year: 2026,
+      url: 'https://example.org/thesis',
+    };
+    expect(
+      parsePapersConfig({
+        seeds: [{ id: SEED, label: 'Seed' }],
+        include: [{ id: 'DOI:10.1/thesis', note: 'why', ...details }],
+        exclude: [{ id: 'DOI:10.1/other', title: 'Not checked' }],
+      })
+    ).toEqual({
+      seeds: [{ id: SEED, label: 'Seed' }],
+      include: [{ id: 'DOI:10.1/thesis', overrides: { ...details, title: 'A Thesis' } }],
+      exclude: ['DOI:10.1/other'],
+    });
+  });
+
+  it.each([
+    [{ year: 2026.5 }, '`include[0].year` must be a whole number'],
+    [{ title: '' }, '`include[0].title` must be a non-empty string'],
+    [{ label: 'Only seeds have labels' }, '`include[0]` has an unknown field `label`'],
+  ])('rejects invalid details of an included paper %j', (fields, error) => {
+    expect(() =>
+      parsePapersConfig({ seeds: [{ id: SEED, label: 'S' }], include: [{ id: 'DOI:10.1/x', ...fields }] })
+    ).toThrow(`Invalid static/data/papers.yaml: ${error}`);
   });
 
   it("parses a seed's overrides of Semantic Scholar's details", () => {
@@ -477,6 +523,18 @@ describe('with a site directory', () => {
       expect(newSeed.message).not.toContain('SEMANTIC_SCHOLAR_API_KEY');
     });
 
+    it("lists an included paper that Semantic Scholar doesn't have from its details, without a warning", async () => {
+      await writeYaml([SEED], "include:\n  - id: 'DOI:10.1/thesis'\n    title: 'A Thesis'\n    year: 2026\n");
+      const fetchFn = mockFetch({ '/paper/batch': () => json(200, [s2(SEED), null]) });
+      const result = await loadPapers(siteDir, { source: 'live', client: fastClient(fetchFn), now });
+
+      expect(result.warning).toBe(false);
+      expect(result.data.papers.map(paper => [paper.id, paper.title, paper.manual])).toEqual([
+        ['DOI:10.1/thesis', 'A Thesis', true],
+        ['live', 'Paper live', undefined],
+      ]);
+    });
+
     it('fails on an invalid papers.yaml', async () => {
       await fs.writeFile(path.join(siteDir, 'static', 'data', 'papers.yaml'), 'seeds: []\n');
       await expect(loadPapers(siteDir, { source: 'snapshot' })).rejects.toThrow(
@@ -580,5 +638,49 @@ describe('with a site directory', () => {
       expect(fetchFn).not.toHaveBeenCalled();
       expect(console.info).toHaveBeenCalledWith(expect.stringContaining('[papers] Using the snapshot'));
     });
+  });
+});
+
+describe("this repository's papers.yaml and snapshot", () => {
+  const dataDir = path.join(__dirname, '..', 'static', 'data');
+  const MEDS_DEV = '7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf';
+  const readConfig = async () =>
+    parsePapersConfig(parse(await fs.readFile(path.join(dataDir, 'papers.yaml'), 'utf8')));
+
+  it('has MEDS-DEV as a seed, with its details from OpenReview, and no longer excludes it', async () => {
+    const { seeds, include, exclude } = await readConfig();
+
+    const medsDev = seeds.find(seed => seed.id === MEDS_DEV);
+    expect(medsDev).toMatchObject({
+      label: 'MEDS-DEV',
+      overrides: {
+        title:
+          'MEDS Decentralized, Extensible Validation (MEDS-DEV) Benchmark: Establishing Reproducibility and ' +
+          'Comparability in ML for Health',
+        venue: 'ML4H 2024 (Demo Track)',
+        year: 2024,
+        url: 'https://openreview.net/forum?id=DExp3tRRel',
+      },
+    });
+    const authors = medsDev?.overrides?.authors ?? [];
+    expect(authors).toHaveLength(31);
+    expect([authors[0], authors[17], authors[30]]).toEqual([
+      'Matthew B.A. McDermott',
+      'Robin van de Water',
+      'Ryan King',
+    ]);
+    expect(exclude).not.toContain(MEDS_DEV);
+    expect(include.map(({ id }) => id)).not.toContain(MEDS_DEV);
+  });
+
+  it('has a snapshot with every seed and included paper, and no excluded one', async () => {
+    const { seeds, include, exclude } = await readConfig();
+    const { snapshot } = await readSnapshot(path.join(dataDir, 'papers.snapshot.json'));
+    const papers = snapshot?.papers ?? [];
+    const listed = (identifier: string) => papers.some(paper => paperMatchesId(paper, identifier));
+
+    expect(snapshot?.seeds.map(({ id }) => id)).toEqual(seeds.map(({ id }) => id));
+    expect(include.map(({ id }) => id).filter(id => !listed(id))).toEqual([]);
+    expect(exclude.filter(listed)).toEqual([]);
   });
 });

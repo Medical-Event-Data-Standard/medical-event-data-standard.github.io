@@ -8,9 +8,9 @@ import {
   emptyLiveFetch,
   isPapersData,
   type LiveFetch,
+  type PaperOverrides,
   type PapersConfig,
   type S2Paper,
-  type SeedOverrides,
 } from '../src/lib/papers/normalize';
 
 // This runs in Node.js at build time. It lists the papers that cite the core MEDS papers ("seeds") configured in
@@ -140,14 +140,16 @@ export async function fetchFromSemanticScholar(
   const live = emptyLiveFetch();
   const failures: string[] = [];
 
-  const ids = [...config.seeds.map(seed => seed.id), ...config.include];
+  const ids = [...config.seeds.map(seed => seed.id), ...config.include.map(include => include.id)];
   try {
     const results = await request<(S2Paper | null)[]>(`/paper/batch?fields=${S2_FIELDS}`, { ids });
     ids.forEach((id, i) => {
-      const paper = results[i];
-      if (!paper) failures.push(`${id}: not found on Semantic Scholar`);
-      else if (i < config.seeds.length) live.seeds.set(id, paper);
-      else live.included.set(id, paper);
+      const paper = results[i] ?? null;
+      const include = i < config.seeds.length ? undefined : config.include[i - config.seeds.length];
+      if (include) live.included.set(id, paper);
+      else if (paper) live.seeds.set(id, paper);
+      // An included paper with a title in papers.yaml is listed from its details there instead.
+      if (!paper && !include?.overrides?.title) failures.push(`${id}: not found on Semantic Scholar`);
     });
   } catch (err) {
     failures.push(`details of the seed and included papers: ${errorMessage(err)}`);
@@ -173,11 +175,16 @@ export async function fetchFromSemanticScholar(
   return { live, failures };
 }
 
-const identifierList = (value: unknown, key: string): string[] => {
+/**
+ * Parses an `include` or `exclude` list, of identifiers or `{ id, ... }` entries, into `[identifier, fields]`
+ * pairs: the normalised identifier, and the entry's other fields.
+ */
+const identifierList = (value: unknown, key: string): [string, Record<string, unknown>][] => {
   if (value === undefined || value === null) return [];
   if (!Array.isArray(value)) throw new Error(`\`${key}\` must be a list`);
   return value.map((entry, i) => {
-    const id = typeof entry === 'string' ? entry : (entry as { id?: unknown } | null)?.id;
+    const entryFields = typeof entry === 'string' ? { id: entry } : (entry ?? {});
+    const { id, ...fields } = entryFields as Record<string, unknown>;
     const match = typeof id === 'string' ? IDENTIFIER.exec(id.trim()) : null;
     if (!match) {
       throw new Error(
@@ -186,17 +193,17 @@ const identifierList = (value: unknown, key: string): string[] => {
     }
     // Semantic Scholar expects upper-case prefixes and arXiv ids without a version.
     const [, paperId, prefix, value] = match;
-    if (paperId) return paperId.toLowerCase();
-    return prefix.toUpperCase() === 'DOI' ? `DOI:${value}` : `ARXIV:${value.replace(/v\d+$/, '')}`;
+    if (paperId) return [paperId.toLowerCase(), fields];
+    return [prefix.toUpperCase() === 'DOI' ? `DOI:${value}` : `ARXIV:${value.replace(/v\d+$/, '')}`, fields];
   });
 };
 
 /**
- * Parses a seed's optional `title`, `authors`, `venue`, `year` and `url`, shown instead of Semantic Scholar's, and
- * allows a `note` for reviewers.
+ * Parses a seed's or included paper's optional `title`, `authors`, `venue`, `year` and `url`, shown instead of
+ * Semantic Scholar's, and allows a `note` for reviewers.
  */
-function parseSeedOverrides(fields: Record<string, unknown>, where: string): SeedOverrides | undefined {
-  const overrides: SeedOverrides = {};
+function parseOverrides(fields: Record<string, unknown>, where: string): PaperOverrides | undefined {
+  const overrides: PaperOverrides = {};
   for (const [key, value] of Object.entries(fields)) {
     const invalid = (expected: string) => new Error(`\`${where}.${key}\` must be ${expected}`);
     if (key === 'title' || key === 'venue' || key === 'url') {
@@ -229,11 +236,14 @@ export function parsePapersConfig(raw: unknown): PapersConfig {
           throw new Error(`\`seeds[${i}].id\` must be a Semantic Scholar paperId (40 hex characters)`);
         }
         if (typeof label !== 'string' || !label.trim()) throw new Error(`\`seeds[${i}].label\` must be set`);
-        const overrides = parseSeedOverrides(rest, `seeds[${i}]`);
+        const overrides = parseOverrides(rest, `seeds[${i}]`);
         return { id: id.trim(), label: label.trim(), ...(overrides ? { overrides } : {}) };
       }),
-      include: identifierList(include, 'include'),
-      exclude: identifierList(exclude, 'exclude'),
+      include: identifierList(include, 'include').map(([id, fields], i) => {
+        const overrides = parseOverrides(fields, `include[${i}]`);
+        return { id, ...(overrides ? { overrides } : {}) };
+      }),
+      exclude: identifierList(exclude, 'exclude').map(([id]) => id),
     };
   } catch (err) {
     throw new Error(`Invalid ${PAPERS_YAML}: ${errorMessage(err)}`);

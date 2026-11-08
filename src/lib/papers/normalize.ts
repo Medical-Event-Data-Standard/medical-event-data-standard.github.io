@@ -24,16 +24,28 @@ export interface SeedConfig {
   id: string;
   label: string;
   /** Details shown instead of Semantic Scholar's, for seeds whose record there is wrong (e.g. a garbled title). */
-  overrides?: SeedOverrides;
+  overrides?: PaperOverrides;
 }
 
-export type SeedOverrides = Partial<Pick<Paper, 'title' | 'authors' | 'venue' | 'year' | 'url'>>;
+/** Details set in papers.yaml, shown instead of Semantic Scholar's. */
+export type PaperOverrides = Partial<Pick<Paper, 'title' | 'authors' | 'venue' | 'year' | 'url'>>;
+
+/** A paper in the `include` list of papers.yaml. */
+export interface IncludeConfig {
+  /** Identifier (see `paperMatchesId`). */
+  id: string;
+  /**
+   * Details shown instead of Semantic Scholar's. With a `title`, the paper is listed from these details if
+   * Semantic Scholar doesn't have it.
+   */
+  overrides?: PaperOverrides;
+}
 
 /** The parsed contents of static/data/papers.yaml. */
 export interface PapersConfig {
   seeds: SeedConfig[];
-  /** Identifiers (see `paperMatchesId`) of papers to list even though they cite no seed. */
-  include: string[];
+  /** Papers to list even though they cite no seed. */
+  include: IncludeConfig[];
   /** Identifiers of papers never to list, e.g. ones that cite MEDS without using it. */
   exclude: string[];
 }
@@ -46,8 +58,8 @@ export interface LiveFetch {
   citations: Map<string, S2Paper[]>;
   /** Seeds whose citation list could not be fetched completely. */
   incompleteSeeds: Set<string>;
-  /** Papers fetched for the `include` list, by identifier. */
-  included: Map<string, S2Paper>;
+  /** Papers fetched for the `include` list, by identifier; null if Semantic Scholar doesn't have the paper. */
+  included: Map<string, S2Paper | null>;
 }
 
 export function emptyLiveFetch(): LiveFetch {
@@ -127,6 +139,39 @@ export function paperMatchesId(paper: Paper, identifier: string): boolean {
   return false;
 }
 
+/**
+ * A paper made from the details in papers.yaml alone, for papers Semantic Scholar doesn't have. Its id is the
+ * (normalised) identifier from papers.yaml, and it links to the given `url`, else its DOI, arXiv or Semantic
+ * Scholar page.
+ */
+export function paperFromDetails(identifier: string, details: PaperOverrides & { title: string }): Paper {
+  const separator = identifier.indexOf(':');
+  const prefix = separator === -1 ? null : identifier.slice(0, separator);
+  const value = identifier.slice(separator + 1);
+  const doi = prefix === 'DOI' ? value : null;
+  const arxivId = prefix === 'ARXIV' ? value : null;
+  return {
+    id: identifier,
+    authors: [],
+    venue: null,
+    year: null,
+    publicationDate: null,
+    doi,
+    arxivId,
+    url: doi
+      ? `https://doi.org/${doi}`
+      : arxivId
+        ? `https://arxiv.org/abs/${arxivId}`
+        : semanticScholarUrl(identifier),
+    citationCount: null,
+    ...details,
+  };
+}
+
+/** An included paper made from its details in papers.yaml, if they include a title; else null. */
+const ownDetails = ({ id, overrides }: IncludeConfig): Paper | null =>
+  overrides?.title ? paperFromDetails(id, { ...overrides, title: overrides.title }) : null;
+
 export interface BuildResult {
   seeds: SeedPaper[];
   papers: CitingPaper[];
@@ -141,8 +186,9 @@ export interface BuildResult {
  *
  * Whatever was fetched live is used as is; anything that failed (a seed's metadata, a seed's citation list, an
  * included paper) is taken from the snapshot instead. A seed whose citation list came back empty is also
- * filled in from the snapshot, since papers rarely stop citing something. Papers citing several seeds are merged
- * into one entry, the seeds themselves are never listed as citing papers, and `exclude` is applied last.
+ * filled in from the snapshot, since papers rarely stop citing something. An included paper that Semantic Scholar
+ * doesn't have is listed from its details in papers.yaml. Papers citing several seeds are merged into one entry,
+ * the seeds themselves are never listed as citing papers, and `exclude` is applied last.
  */
 export function buildPapersData(
   config: PapersConfig,
@@ -161,20 +207,7 @@ export function buildPapersData(
       return { ...paperDetails(saved), ...overrides, label };
     }
     missing.push(`details of ${label}`);
-    return {
-      id,
-      label,
-      title: label,
-      authors: [],
-      venue: null,
-      year: null,
-      publicationDate: null,
-      doi: null,
-      arxivId: null,
-      url: semanticScholarUrl(id),
-      citationCount: null,
-      ...overrides,
-    };
+    return { ...paperFromDetails(id, { title: label, ...overrides }), label };
   });
 
   const papers = new Map<string, CitingPaper>();
@@ -198,7 +231,11 @@ export function buildPapersData(
   for (const { id } of config.seeds) {
     for (const raw of live.citations.get(id) ?? []) add(normalizePaper(raw), [id], false);
   }
-  for (const identifier of config.include) add(normalizePaper(live.included.get(identifier)), [], true);
+  for (const include of config.include) {
+    const raw = live.included.get(include.id);
+    // A paper Semantic Scholar doesn't have is listed from its details in papers.yaml, if they include a title.
+    add(raw === null ? ownDetails(include) : normalizePaper(raw), [], true);
+  }
 
   for (const { id, label } of config.seeds) {
     const fetched = live.citations.get(id);
@@ -212,11 +249,22 @@ export function buildPapersData(
       (known ? fromSnapshot : missing).push(`papers citing ${label}`);
     }
   }
-  for (const identifier of config.include) {
-    if (live.included.has(identifier)) continue;
-    const saved = snapshot?.papers.find(paper => paperMatchesId(paper, identifier));
-    add(saved ?? null, [], true);
-    (saved ? fromSnapshot : missing).push(`included paper ${identifier}`);
+  for (const include of config.include) {
+    const raw = live.included.get(include.id);
+    if (raw || (raw === null && include.overrides?.title)) continue;
+    // Not fetched (or not on Semantic Scholar, with no title to list it by): use the snapshot's copy, else
+    // whatever details papers.yaml gives.
+    const saved = snapshot?.papers.find(paper => paperMatchesId(paper, include.id));
+    add(saved ?? ownDetails(include), [], true);
+    if (saved) fromSnapshot.push(`included paper ${include.id}`);
+    else if (!include.overrides?.title) missing.push(`included paper ${include.id}`);
+  }
+  // An included paper's details in papers.yaml win over Semantic Scholar's and the snapshot's.
+  for (const { id: identifier, overrides } of config.include) {
+    if (!overrides) continue;
+    for (const paper of papers.values()) {
+      if (paperMatchesId(paper, identifier)) Object.assign(paper, overrides);
+    }
   }
 
   const seedIds = new Set([...config.seeds.map(seed => seed.id), ...seeds.map(seed => seed.id)]);

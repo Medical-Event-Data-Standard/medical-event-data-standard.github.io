@@ -144,7 +144,8 @@ calls, and it is configured in [`static/data/papers.yaml`](static/data/papers.ya
 
 - `seeds`: the core MEDS papers, by Semantic Scholar paperId, with the short label shown on chips (and, where
   Semantic Scholar has them wrong, corrected details).
-- `include`: papers that use MEDS without citing a seed.
+- `include`: papers that use MEDS without citing a seed (with their title, authors, venue and year if Semantic
+  Scholar doesn't have them).
 - `exclude`: papers that cite a seed but don't belong on the list.
 
 Semantic Scholar rate-limits unauthenticated requests heavily, so the plugin makes one request at a time,

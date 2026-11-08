@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-06T20:17:26.898Z",
+  "updatedAt": "2026-11-08T22:09:55.486Z",
   "seeds": [
     {
       "id": "50846012e25acae4aebf1d2b2953655a19fe2e93",
@@ -94,6 +94,51 @@
       "url": "https://openreview.net/forum?id=IsHy2ebjIG",
       "citationCount": 0,
       "label": "MEDS (ICLR 2024 workshop)"
+    },
+    {
+      "id": "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf",
+      "title": "MEDS Decentralized, Extensible Validation (MEDS-DEV) Benchmark: Establishing Reproducibility and Comparability in ML for Health",
+      "authors": [
+        "Matthew B.A. McDermott",
+        "Aleksia Kolo",
+        "Chao Pang",
+        "Edward Choi",
+        "Ethan Steinberg",
+        "Hyewon Jeong",
+        "Jack Gallifant",
+        "Jason Alan Fries",
+        "Jeffrey N Chiang",
+        "Jungwoo Oh",
+        "Justin Xu",
+        "Kamilė Stankevičiūtė",
+        "Kiril Vadimovic Klein",
+        "Mikkel Fruelund Odgaard",
+        "Nassim Oufattole",
+        "Patrick Rockenschaub",
+        "Pawel Renc",
+        "Robin van de Water",
+        "Shalmali Joshi",
+        "Simon Austin Lee",
+        "Teya Bergamaschi",
+        "Tom Pollard",
+        "Vincent Jeanselme",
+        "Nigam Shah",
+        "Michael Wornow",
+        "Aparajita Kashyap",
+        "XinZhou Jiang",
+        "Yanwei Li",
+        "Young Sang Choi",
+        "Yuta Kobayashi",
+        "Ryan King"
+      ],
+      "venue": "ML4H 2024 (Demo Track)",
+      "year": 2024,
+      "publicationDate": null,
+      "doi": null,
+      "arxivId": null,
+      "url": "https://openreview.net/forum?id=DExp3tRRel",
+      "citationCount": 19,
+      "label": "MEDS-DEV"
     },
     {
       "id": "27689dd149c473d24cdf22124c2a29d187c960b8",
@@ -194,7 +239,7 @@
     {
       "id": "40b9bc9e68c6ba8a696cb9ddb90cd71d1342472a",
       "title": "MedJev: Evaluating Zero-Shot System-One Decision Making in Medicine",
-      "authors": ["Simon A. Lee", "Jia-Hang Sha", "M. Jeong", "Yu Pan", "Jeffrey N. Chiang"],
+      "authors": ["Simon A. Lee", "Jia-Hang Sha", "Moonseong Jeong", "Yu Pan", "Jeffrey N. Chiang"],
       "venue": null,
       "year": 2026,
       "publicationDate": "2026-10-26",
@@ -202,7 +247,49 @@
       "arxivId": "2610.36006",
       "url": "https://arxiv.org/abs/2610.36006",
       "citationCount": 0,
-      "cites": ["50846012e25acae4aebf1d2b2953655a19fe2e93", "2619008e94a623872a48eeb05da7e0a4a97e2ed5"]
+      "cites": [
+        "50846012e25acae4aebf1d2b2953655a19fe2e93",
+        "2619008e94a623872a48eeb05da7e0a4a97e2ed5",
+        "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"
+      ]
+    },
+    {
+      "id": "96d424186657a484a8ec4f4813f65330f15a5d2c",
+      "title": "Sequence Composition in EHR Foundation Model Pretraining",
+      "authors": ["J. Placidi", "Inigo Stibbe", "A. Balston", "Marek Rei", "A. Faisal"],
+      "venue": null,
+      "year": 2026,
+      "publicationDate": "2026-10-12",
+      "doi": null,
+      "arxivId": "2610.16878",
+      "url": "https://arxiv.org/abs/2610.16878",
+      "citationCount": 0,
+      "cites": [],
+      "manual": true
+    },
+    {
+      "id": "12e2289e910bfa5db46c564897150d66b1c62829",
+      "title": "Cross-continental generalizability of EHR foundation model: predicting length of stay in an Italian hospital using US-trained embeddings",
+      "authors": [
+        "G. Nicora",
+        "Francesca Negri",
+        "V. Tibollo",
+        "A. Malovini",
+        "A. Dagliati",
+        "L. Sacchi",
+        "F. Sottotetti",
+        "Paola Baiardi",
+        "R. Bellazzi"
+      ],
+      "venue": "Frontiers in Digital Health",
+      "year": 2026,
+      "publicationDate": "2026-10-09",
+      "doi": "10.3389/fdgth.2026.1956993",
+      "arxivId": null,
+      "url": "https://doi.org/10.3389/fdgth.2026.1956993",
+      "citationCount": 0,
+      "cites": [],
+      "manual": true
     },
     {
       "id": "ca7fec65c1a9d265310da4d416f36656cfdab578",
@@ -218,15 +305,40 @@
       "cites": ["ce0eaffb67ef48c8309e97df05b33f6fc7294d5f"]
     },
     {
+      "id": "b7b4a8d1af7fc80b6d52b72f48e6c7f286163b64",
+      "title": "Expert-defined features remain competitive with foundation models in predicting Crohn’s-like disease of the pouch",
+      "authors": [
+        "J. Schmid",
+        "S. Ibing",
+        "Stefan Kalabakov",
+        "Katharina Alefs",
+        "R. P. van de Water",
+        "Arkadiusz Kwasigroch",
+        "Eugenia Alleva",
+        "Bert Arnrich",
+        "Bernhard Y. Renard",
+        "M. Kayal"
+      ],
+      "venue": "Scientific Reports",
+      "year": 2026,
+      "publicationDate": "2026-09-29",
+      "doi": "10.1038/s41598-026-71879-3",
+      "arxivId": null,
+      "url": "https://doi.org/10.1038/s41598-026-71879-3",
+      "citationCount": 0,
+      "cites": [],
+      "manual": true
+    },
+    {
       "id": "f032a40a518205ea6dd16a6e1fa7693b8b8f7572",
       "title": "EHR2Trace: Auditable EHR Data Infrastructure for Patient World Models and Clinical Agents",
       "authors": ["Xin-Ye Yang", "Yu-Li Wang", "Cheng-Ting Lin", "Harrison X. Bai"],
-      "venue": null,
+      "venue": "arXiv",
       "year": 2026,
       "publicationDate": "2026-09-18",
-      "doi": null,
+      "doi": "10.48550/arXiv.2609.38193",
       "arxivId": "2609.38193",
-      "url": "https://arxiv.org/abs/2609.38193",
+      "url": "https://doi.org/10.48550/arXiv.2609.38193",
       "citationCount": 0,
       "cites": ["27689dd149c473d24cdf22124c2a29d187c960b8"]
     },
@@ -234,14 +346,18 @@
       "id": "6a852ff1cca9bd6847cf8573fae8f9180d19658e",
       "title": "Rethinking How We Evaluate Methodological Progress in Health AI",
       "authors": ["Florent Pollet", "Matthew B. A. McDermott"],
-      "venue": null,
+      "venue": "arXiv",
       "year": 2026,
       "publicationDate": "2026-09-16",
-      "doi": null,
+      "doi": "10.48550/arXiv.2609.18134",
       "arxivId": "2609.18134",
-      "url": "https://arxiv.org/abs/2609.18134",
+      "url": "https://doi.org/10.48550/arXiv.2609.18134",
       "citationCount": 1,
-      "cites": ["50846012e25acae4aebf1d2b2953655a19fe2e93", "27689dd149c473d24cdf22124c2a29d187c960b8"]
+      "cites": [
+        "50846012e25acae4aebf1d2b2953655a19fe2e93",
+        "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf",
+        "27689dd149c473d24cdf22124c2a29d187c960b8"
+      ]
     },
     {
       "id": "2508004d49d4a30a3ff49ea8258d937fa6994b92",
@@ -270,6 +386,29 @@
       "cites": ["50846012e25acae4aebf1d2b2953655a19fe2e93"]
     },
     {
+      "id": "ebd0796d735be9c7b29cb7301e02e1206162243c",
+      "title": "DBToken: A Database Tokenizer for Medical Event Foundation Models",
+      "authors": [
+        "I. Shin",
+        "K. McCann",
+        "G. Marino",
+        "U. T. Siam",
+        "H. Li",
+        "E. Stutz",
+        "R. Edara",
+        "A. Loza"
+      ],
+      "venue": "medRxiv",
+      "year": 2026,
+      "publicationDate": "2026-08-21",
+      "doi": "10.64898/2026.08.18.26360487",
+      "arxivId": null,
+      "url": "https://doi.org/10.64898/2026.08.18.26360487",
+      "citationCount": 0,
+      "cites": [],
+      "manual": true
+    },
+    {
       "id": "5981088a545d98c9e8fe50484f997274e0849759",
       "title": "Forecasting Patient Trajectories from the Electronic Health Records with Action-Conditioned World Models",
       "authors": [
@@ -290,8 +429,60 @@
       "cites": [
         "50846012e25acae4aebf1d2b2953655a19fe2e93",
         "2619008e94a623872a48eeb05da7e0a4a97e2ed5",
+        "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf",
         "27689dd149c473d24cdf22124c2a29d187c960b8"
       ]
+    },
+    {
+      "id": "c7394263091b6dc202a329a862305e86176376fc",
+      "title": "Forecasting laboratory measurements from longitudinal electronic health records",
+      "authors": ["F. Firoozbakht", "J. Baumabach"],
+      "venue": "medRxiv",
+      "year": 2026,
+      "publicationDate": "2026-08-13",
+      "doi": "10.64898/2026.08.12.26360243",
+      "arxivId": null,
+      "url": "https://doi.org/10.64898/2026.08.12.26360243",
+      "citationCount": 0,
+      "cites": [],
+      "manual": true
+    },
+    {
+      "id": "ea018056ee9e01d08793d0935c12f79806ba58ae",
+      "title": "Longitudinal Clinical Foundation Models Augmented with Genomics for Early Detection and Risk Stratification of Inherited Cardiomyopathy",
+      "authors": ["A. Zolensky", "Colleen M. Kripke", "Karl Keat", "S. Damrauer", "M. Levin", "A. Verma"],
+      "venue": "medRxiv",
+      "year": 2026,
+      "publicationDate": "2026-08-12",
+      "doi": "10.64898/2026.08.10.26360107",
+      "arxivId": null,
+      "url": "https://doi.org/10.64898/2026.08.10.26360107",
+      "citationCount": 0,
+      "cites": [],
+      "manual": true
+    },
+    {
+      "id": "eccc1e92acf66bbfe73a405b04f85375956524fb",
+      "title": "PORT: Generative EHR Pretraining for Pediatric Intraoperative Risk Prediction",
+      "authors": [
+        "Junseob Kim",
+        "Hao-Min Shi",
+        "Michael C. Fiedorek",
+        "Hannah D. Kilday",
+        "Henry P. Foote",
+        "C. Hornik",
+        "R. Kamaleswaran",
+        "Justin B. Long"
+      ],
+      "venue": "Research Square",
+      "year": 2026,
+      "publicationDate": "2026-08-12",
+      "doi": "10.21203/rs.3.rs-10609619/v1",
+      "arxivId": null,
+      "url": "https://doi.org/10.21203/rs.3.rs-10609619/v1",
+      "citationCount": 0,
+      "cites": [],
+      "manual": true
     },
     {
       "id": "f0edebf396be7cd86599e7761369584e97755782",
@@ -316,6 +507,34 @@
       "url": "https://doi.org/10.1145/3770855.3816474",
       "citationCount": 0,
       "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5"]
+    },
+    {
+      "id": "77a68dd42cf547e2097914f9c87f96f5fda000b8",
+      "title": "Continuous Value Tokenization Improves Medical Event Foundation Models",
+      "authors": ["K. McCann", "I. Shin", "Huan Li", "D. White", "E. Melnick", "M. Iscoe", "A. Loza"],
+      "venue": "medRxiv",
+      "year": 2026,
+      "publicationDate": "2026-08-06",
+      "doi": "10.64898/2026.08.04.26359713",
+      "arxivId": null,
+      "url": "https://doi.org/10.64898/2026.08.04.26359713",
+      "citationCount": 1,
+      "cites": [],
+      "manual": true
+    },
+    {
+      "id": "8c806aaf51ca080686c5d9571f325e3fa18e8afa",
+      "title": "Autoregressive EHR Foundation Models with Multimodal Inputs",
+      "authors": ["Yuxuan Liu", "J. Placidi", "Jinpei Han", "A. Balston", "Marek Rei", "A. Faisal"],
+      "venue": "arXiv",
+      "year": 2026,
+      "publicationDate": "2026-07-24",
+      "doi": "10.48550/arXiv.2607.22264",
+      "arxivId": "2607.22264",
+      "url": "https://doi.org/10.48550/arXiv.2607.22264",
+      "citationCount": 1,
+      "cites": [],
+      "manual": true
     },
     {
       "id": "39650e360f401743707080ceaa8025761006c970",
@@ -344,6 +563,20 @@
       "cites": ["50846012e25acae4aebf1d2b2953655a19fe2e93"]
     },
     {
+      "id": "268b9319be1138cef364f875a9ce828c3dac6d48",
+      "title": "The Verbose Context Problem in Medical Records",
+      "authors": ["Shiva Kaul", "Min-Gyu Kim", "A. Khurshid", "Sriram Vishwanath"],
+      "venue": "arXiv",
+      "year": 2026,
+      "publicationDate": "2026-06-28",
+      "doi": "10.48550/arXiv.2606.29503",
+      "arxivId": "2606.29503",
+      "url": "https://doi.org/10.48550/arXiv.2606.29503",
+      "citationCount": 0,
+      "cites": [],
+      "manual": true
+    },
+    {
       "id": "bbcbc4bb38ef02589ab0370be21721f8a3ce438e",
       "title": "PORTER: Language-Grounded Event Representations for Portable Structured EHR Foundation Models",
       "authors": ["L. Guo", "A. P. Yan", "E. Vettese", "Lillian Sung"],
@@ -357,6 +590,69 @@
       "cites": ["96f609fa94bfdbb85f0be595c575d64865c0cf66"]
     },
     {
+      "id": "84a0a9532b77659f4c95ed82f5bd2a9fe83ade15",
+      "title": "VISTA Architect: A graph database-oriented health AI system demonstrated in multidisciplinary tumor boards",
+      "authors": [
+        "T. Kiiskinen",
+        "J. A. Fries",
+        "P. Adamson",
+        "David J. H. Wu",
+        "T. Ellis-Caleo",
+        "A. Fanous",
+        "Balasubramanian Narasimhan",
+        "Joel W. Neal",
+        "S K Plevritis",
+        "Manuel A. Rivas"
+      ],
+      "venue": "arXiv",
+      "year": 2026,
+      "publicationDate": "2026-06-21",
+      "doi": "10.48550/arXiv.2606.22692",
+      "arxivId": "2606.22692",
+      "url": "https://doi.org/10.48550/arXiv.2606.22692",
+      "citationCount": 0,
+      "cites": [],
+      "manual": true
+    },
+    {
+      "id": "f88fd6798446f8e6a085411baa7fb066db54490c",
+      "title": "A multimodal generative model for structured and unstructured electronic health records",
+      "authors": [
+        "Sonish Sivarajkumar",
+        "Hang Zhang",
+        "Yuelyu Ji",
+        "Maneesh Bilalpur",
+        "Xi-Zhi Wu",
+        "Chen-Yu Li",
+        "Min Gu Kwak",
+        "S. Visweswaran",
+        "Yan-Shan Wang"
+      ],
+      "venue": "npj Health Systems",
+      "year": 2026,
+      "publicationDate": "2026-06-15",
+      "doi": "10.1038/s44401-026-00095-y",
+      "arxivId": null,
+      "url": "https://doi.org/10.1038/s44401-026-00095-y",
+      "citationCount": 0,
+      "cites": [],
+      "manual": true
+    },
+    {
+      "id": "05a2857393d199f1b197c63c827b9113a6659374",
+      "title": "Accelerating Reproducible Research in Synthetic EHR Generation",
+      "authors": ["Jalen Jiang", "Chu-Fan Gao", "E. Rasmussen", "Stephen Z. Xie", "Ji-Meng Sun"],
+      "venue": "arXiv",
+      "year": 2026,
+      "publicationDate": "2026-06-05",
+      "doi": "10.48550/arXiv.2606.06990",
+      "arxivId": "2606.06990",
+      "url": "https://doi.org/10.48550/arXiv.2606.06990",
+      "citationCount": 0,
+      "cites": [],
+      "manual": true
+    },
+    {
       "id": "eaedc9274c43a430a17ee45308f585838efa3cb2",
       "title": "AURORA: Contextual Orthogonalization for Geometric Representation Learning in Healthcare Foundation Models",
       "authors": ["Yuanyu Zhang", "Shi Li"],
@@ -367,7 +663,7 @@
       "arxivId": "2605.17765",
       "url": "https://doi.org/10.48550/arXiv.2605.17765",
       "citationCount": 0,
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5"]
+      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"]
     },
     {
       "id": "635851eabdf1b80e7253c2da2c5ec2de5e63eeca",
@@ -402,6 +698,20 @@
       "url": "https://doi.org/10.48550/arXiv.2605.15079",
       "citationCount": 1,
       "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5"]
+    },
+    {
+      "id": "41985f1c6538aaf944e21029297bb6746dd46b47",
+      "title": "From Token to Token Pair: Efficient Prompt Compression for Large Language Models in Clinical Prediction",
+      "authors": ["Mingcheng Zhu", "Zhi-Yao Luo", "Yu Liu", "Tingting Zhu"],
+      "venue": "arXiv",
+      "year": 2026,
+      "publicationDate": "2026-05-12",
+      "doi": "10.48550/arXiv.2605.11774",
+      "arxivId": "2605.11774",
+      "url": "https://doi.org/10.48550/arXiv.2605.11774",
+      "citationCount": 2,
+      "cites": [],
+      "manual": true
     },
     {
       "id": "48ba98a811c5058ecfcaa018a005c94168c2fff8",
@@ -440,7 +750,30 @@
       "arxivId": "2605.08685",
       "url": "https://doi.org/10.48550/arXiv.2605.08685",
       "citationCount": 0,
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5"]
+      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"]
+    },
+    {
+      "id": "e9b6fd982136a9b219a33db655d82ea0d84c03b6",
+      "title": "Representation Before Training: A Practical Benchmark for Generative Medical Event Model Tokenization",
+      "authors": [
+        "Inhyeok Lee",
+        "Luke Solo",
+        "Michael C. Burkhart",
+        "B. Ramadan",
+        "Sahil Sethi",
+        "Sarah Jabbour",
+        "W. F. Parker",
+        "B. Beaulieu-Jones"
+      ],
+      "venue": null,
+      "year": 2026,
+      "publicationDate": "2026-04-18",
+      "doi": null,
+      "arxivId": "2604.16775",
+      "url": "https://arxiv.org/abs/2604.16775",
+      "citationCount": 1,
+      "cites": [],
+      "manual": true
     },
     {
       "id": "d74fe8b476deeec0e813b7546c10034207be71a7",
@@ -453,7 +786,7 @@
       "arxivId": "2604.04175",
       "url": "https://doi.org/10.48550/arXiv.2604.04175",
       "citationCount": 1,
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5"]
+      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"]
     },
     {
       "id": "e03b10b76c8c07ef0d46001519b976d9b2d30711",
@@ -466,7 +799,7 @@
       "arxivId": "2603.20921",
       "url": "https://doi.org/10.48550/arXiv.2603.20921",
       "citationCount": 3,
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5"]
+      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"]
     },
     {
       "id": "daac83a997466a11064ea218d579b68faaf53346",
@@ -498,7 +831,29 @@
       "arxivId": "2603.07348",
       "url": "https://doi.org/10.48550/arXiv.2603.07348",
       "citationCount": 2,
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5"]
+      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"]
+    },
+    {
+      "id": "e00a70991805a18bd2d0ddeb1db9a43313bece8b",
+      "title": "Tokenization Tradeoffs in Structured EHR Foundation Models",
+      "authors": [
+        "L. Guo",
+        "S. Arciniegas",
+        "Joseph Lee",
+        "A. P. Yan",
+        "G. Tomlinson",
+        "J. A. Fries",
+        "Lillian Sung"
+      ],
+      "venue": "arXiv",
+      "year": 2026,
+      "publicationDate": "2026-03-03",
+      "doi": "10.48550/arXiv.2603.15644",
+      "arxivId": "2603.15644",
+      "url": "https://doi.org/10.48550/arXiv.2603.15644",
+      "citationCount": 11,
+      "cites": [],
+      "manual": true
     },
     {
       "id": "2c24a767ca8fec2d0809ef4441a12e00805a8d97",
@@ -519,7 +874,73 @@
       "arxivId": "2602.07706",
       "url": "https://doi.org/10.48550/arXiv.2602.07706",
       "citationCount": 0,
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5"]
+      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"]
+    },
+    {
+      "id": "a19c40320dee38dcd49a45b67e9b9c2f9a8438fd",
+      "title": "EHR-RAG: Bridging Long-Horizon Structured Electronic Health Records and Large Language Models via Enhanced Retrieval-Augmented Generation",
+      "authors": ["Lang Cao", "Qing-Yu Chen", "Yue Guo"],
+      "venue": "arXiv",
+      "year": 2026,
+      "publicationDate": "2026-01-29",
+      "doi": "10.48550/arXiv.2601.21340",
+      "arxivId": "2601.21340",
+      "url": "https://doi.org/10.48550/arXiv.2601.21340",
+      "citationCount": 11,
+      "cites": [],
+      "manual": true
+    },
+    {
+      "id": "2161182a2978bf388f0fd29652ca8c5d37f1221c",
+      "title": "TwinWeaver: An LLM-Based Foundation Model Framework for Pan-Cancer Digital Twins",
+      "authors": [
+        "Nikita Makarov",
+        "Maria Bordukova",
+        "Lena Voith von Voithenberg",
+        "Estrella Pivel-Villanueva",
+        "Sabrina Mielke",
+        "Jonathan Wickes",
+        "Hanchen Wang",
+        "M. Ma",
+        "Keunwoo Choi",
+        "Kyunghyun Cho",
+        "Stephen Ra",
+        "Raul Rodriguez-Esteban",
+        "Fabian Schmich",
+        "M. P. Menden"
+      ],
+      "venue": "arXiv",
+      "year": 2026,
+      "publicationDate": "2026-01-28",
+      "doi": "10.48550/arXiv.2601.20906",
+      "arxivId": "2601.20906",
+      "url": "https://doi.org/10.48550/arXiv.2601.20906",
+      "citationCount": 6,
+      "cites": [],
+      "manual": true
+    },
+    {
+      "id": "0eb752374dc73a621bb99b59cc5b87c2fd634b3b",
+      "title": "Developing a multi-domain EHR foundation model for predicting Hepatitis B liver disease: a clinical perspective",
+      "authors": [
+        "C. Weis",
+        "F. Grazioli",
+        "G. Visonà",
+        "A. Kania",
+        "M. Burg",
+        "M. Horn",
+        "J. Golob",
+        "P. Schwab"
+      ],
+      "venue": "medRxiv",
+      "year": 2026,
+      "publicationDate": "2026-01-24",
+      "doi": "10.64898/2026.01.23.26344677",
+      "arxivId": null,
+      "url": "https://doi.org/10.64898/2026.01.23.26344677",
+      "citationCount": 0,
+      "cites": [],
+      "manual": true
     },
     {
       "id": "96748814165bbd740ae85491f46273c6e5f011e1",
@@ -579,6 +1000,45 @@
       "cites": ["ce0eaffb67ef48c8309e97df05b33f6fc7294d5f"]
     },
     {
+      "id": "a447bee836289f083700d545e0197f2c548271ac",
+      "title": "Clinically-guided models or foundation models? predicting cervical spondylotic myelopathy from electronic health records",
+      "authors": [
+        "S. Yakdan",
+        "Benjamin C. Warner",
+        "Z. Ghogawala",
+        "Wilson Z. Ray",
+        "M. Bydon",
+        "M. Steinmetz",
+        "R. Griffey",
+        "R. Foraker",
+        "A. Wilcox",
+        "Chen-Yang Lu",
+        "J. Greenberg"
+      ],
+      "venue": "npj Digital Medicine",
+      "year": 2026,
+      "publicationDate": "2026-01-20",
+      "doi": "10.1038/s41746-026-02337-7",
+      "arxivId": null,
+      "url": "https://doi.org/10.1038/s41746-026-02337-7",
+      "citationCount": 6,
+      "cites": [],
+      "manual": true
+    },
+    {
+      "id": "9bd2f0db473c225527c4e9383190752de1d5b89e",
+      "title": "Learning Longitudinal Health Representations from EHR and Wearable Data",
+      "authors": ["Yuanyu Zhang", "Han Zhou", "Li Feng", "Yilin Hong", "Shi Li"],
+      "venue": "arXiv",
+      "year": 2026,
+      "publicationDate": "2026-01-18",
+      "doi": "10.48550/arXiv.2601.12227",
+      "arxivId": "2601.12227",
+      "url": "https://doi.org/10.48550/arXiv.2601.12227",
+      "citationCount": 1,
+      "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"]
+    },
+    {
       "id": "fe750689b02b906ce28ba569ac20e86c941c197a",
       "title": "Clinical Data Goes MEDS? Let's OWL make sense of it",
       "authors": ["A. Marfoglia", "J. Jhee", "Adrien Coulet"],
@@ -605,32 +1065,32 @@
       "cites": ["27689dd149c473d24cdf22124c2a29d187c960b8"]
     },
     {
-      "id": "ee588d73099acc0369c8e6966c96385097f6622a",
-      "title": "Event Extraction in Large Language Model",
-      "authors": [
-        "Bobo Li",
-        "Xudong Han",
-        "Jiang Liu",
-        "Yu-Zhe Ding",
-        "Li-Qiang Jing",
-        "Zhaoqi Zhang",
-        "Jinheng Li",
-        "Xin-Ya Du",
-        "Fei Li",
-        "Meishan Zhang",
-        "Min Zhang",
-        "Aixin Sun",
-        "P. Yu",
-        "Hao Fei"
-      ],
-      "venue": "arXiv",
-      "year": 2025,
-      "publicationDate": "2025-12-22",
-      "doi": "10.48550/arXiv.2512.19537",
-      "arxivId": "2512.19537",
-      "url": "https://doi.org/10.48550/arXiv.2512.19537",
-      "citationCount": 5,
-      "cites": ["27689dd149c473d24cdf22124c2a29d187c960b8"]
+      "id": "DOI:10.25932/publishup-70445",
+      "title": "Benchmark to bedside: Building modular multimodal machine learning infrastructure for healthcare at scale",
+      "authors": ["Robin P. van de Water"],
+      "venue": "PhD thesis, University of Potsdam",
+      "year": 2026,
+      "publicationDate": null,
+      "doi": "10.25932/publishup-70445",
+      "arxivId": null,
+      "url": "https://doi.org/10.25932/publishup-70445",
+      "citationCount": null,
+      "cites": [],
+      "manual": true
+    },
+    {
+      "id": "DOI:10.21203/rs.3.rs-8819405/v1",
+      "title": "Sparse Foundation Models for Continous-Time EHRs",
+      "authors": ["William Ferrel", "Timothy S. Chang", "Samuel Lawrence"],
+      "venue": "Research Square",
+      "year": 2026,
+      "publicationDate": null,
+      "doi": "10.21203/rs.3.rs-8819405/v1",
+      "arxivId": null,
+      "url": "https://doi.org/10.21203/rs.3.rs-8819405/v1",
+      "citationCount": null,
+      "cites": [],
+      "manual": true
     },
     {
       "id": "31e445b504e8efa9131acd8fe7cc060071e56e84",
@@ -670,42 +1130,18 @@
       "cites": ["ce0eaffb67ef48c8309e97df05b33f6fc7294d5f"]
     },
     {
-      "id": "1cd33284040a84acef58abd227ecca19bdf76c1d",
-      "title": "Report on the Scoping Workshop on AI in Science Education Research 2025",
-      "authors": [
-        "M. Kubsch",
-        "Marit Kastaun",
-        "Peter Wulff",
-        "Nicole Graulich",
-        "Moriah Ariely",
-        "Alexander Bergmann-Gering",
-        "Sebastian Gombert",
-        "B. Gregorcic",
-        "Hendrik Härtig",
-        "Benedikt Heuckmann",
-        "Andrea Horbach",
-        "Christina Krist",
-        "Gerd Kortemeyer",
-        "Ben Münch",
-        "Samuel Pazicni",
-        "Joshua M. Rosenberg",
-        "S. Schanze",
-        "Gena C. Sbeglia",
-        "Vidar Skogvoll",
-        "Christophe Speroni",
-        "C. Thyssen",
-        "L. Thoms",
-        "Brandon J Yik",
-        "Xiaoming Zhai"
-      ],
+      "id": "32c5ad1d74293805e552fc906a229bf7b1cfce0b",
+      "title": "TempoQL: A Readable, Precise, and Portable Query System for Electronic Health Record Data",
+      "authors": ["Ziyong Ma", "R. Boyce", "Adam Perer", "Venkatesh Sivaraman"],
       "venue": "arXiv",
       "year": 2025,
-      "publicationDate": "2025-11-18",
-      "doi": "10.48550/arXiv.2511.14318",
-      "arxivId": "2511.14318",
-      "url": "https://doi.org/10.48550/arXiv.2511.14318",
-      "citationCount": 2,
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5"]
+      "publicationDate": "2025-11-12",
+      "doi": "10.48550/arXiv.2511.09337",
+      "arxivId": "2511.09337",
+      "url": "https://doi.org/10.48550/arXiv.2511.09337",
+      "citationCount": 0,
+      "cites": [],
+      "manual": true
     },
     {
       "id": "80914fd5d5216ba9e7e5131e71bc8a10290e4fbd",
@@ -748,7 +1184,26 @@
       "arxivId": "2510.25785",
       "url": "https://doi.org/10.48550/arXiv.2510.25785",
       "citationCount": 26,
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5"]
+      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"]
+    },
+    {
+      "id": "b7c06083b1f91e9c1e8b4c3b56390884c8f70f3d",
+      "title": "BONSAI: A framework for processing and analysing Electronic Health Records (EHR) data using transformer-based models",
+      "authors": [
+        "M. E. Montgomery",
+        "K. Klein",
+        "Mikkel Odgaard",
+        "Stephan Sloth Lorenzen",
+        "Zahra Sobhaninia"
+      ],
+      "venue": "Journal of Open Source Software",
+      "year": 2025,
+      "publicationDate": "2025-10-20",
+      "doi": "10.21105/joss.08869",
+      "arxivId": null,
+      "url": "https://doi.org/10.21105/joss.08869",
+      "citationCount": 1,
+      "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"]
     },
     {
       "id": "42b67ebb43b51c9a229c28ff6e9f6043e9cdfbe8",
@@ -796,6 +1251,53 @@
       "url": "https://doi.org/10.48550/arXiv.2510.00549",
       "citationCount": 1,
       "cites": ["27689dd149c473d24cdf22124c2a29d187c960b8"]
+    },
+    {
+      "id": "98e97a91faca5ec692edf1d41677a350450b2339",
+      "title": "Predicting Hospital Admissions Using Pretrained EHR Embeddings: External Evaluation and Insights on Local Vocabulary Adaptation",
+      "authors": [
+        "B. Neves",
+        "J. Cerejo",
+        "S. Gonçalves",
+        "I. Mota",
+        "J. Moreira",
+        "N. Silva",
+        "F. Leite",
+        "M. Wornow",
+        "M. J. Silva"
+      ],
+      "venue": "medRxiv",
+      "year": 2025,
+      "publicationDate": "2025-09-12",
+      "doi": "10.1101/2025.09.08.25335368",
+      "arxivId": null,
+      "url": "https://doi.org/10.1101/2025.09.08.25335368",
+      "citationCount": 0,
+      "cites": [],
+      "manual": true
+    },
+    {
+      "id": "5aafd493d9a8808340aa6ee6aabcf6d6989296d3",
+      "title": "CEHR-XGPT: A Scalable Multi-Task Foundation Model for Electronic Health Records",
+      "authors": [
+        "Chao Pang",
+        "Jiheum Park",
+        "Xin-Zhuo Jiang",
+        "N. Pavinkurve",
+        "Krishna S. Kalluri",
+        "Shalmali Joshi",
+        "N. Elhadad",
+        "Karthik Natarajan"
+      ],
+      "venue": "arXiv",
+      "year": 2025,
+      "publicationDate": "2025-09-03",
+      "doi": "10.48550/arXiv.2509.03643",
+      "arxivId": "2509.03643",
+      "url": "https://doi.org/10.48550/arXiv.2509.03643",
+      "citationCount": 9,
+      "cites": [],
+      "manual": true
     },
     {
       "id": "36201ec9b9c77e7206c57642471ca67495ae6a6d",
@@ -846,7 +1348,63 @@
       "arxivId": "2505.16941",
       "url": "https://doi.org/10.48550/arXiv.2505.16941",
       "citationCount": 15,
-      "cites": ["27689dd149c473d24cdf22124c2a29d187c960b8", "96f609fa94bfdbb85f0be595c575d64865c0cf66"]
+      "cites": [
+        "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf",
+        "27689dd149c473d24cdf22124c2a29d187c960b8",
+        "96f609fa94bfdbb85f0be595c575d64865c0cf66"
+      ]
+    },
+    {
+      "id": "904d9447f7fe998a3752d1f53486f0a0daa79734",
+      "title": "Temporal Entailment Pretraining for Clinical Language Models over EHR Data",
+      "authors": ["Tatsunori Tanaka", "Fi Zheng", "Kai Sato", "Zhifeng Li", "Yuanyu Zhang", "Shi Li"],
+      "venue": "arXiv",
+      "year": 2025,
+      "publicationDate": "2025-04-25",
+      "doi": "10.48550/arXiv.2504.18128",
+      "arxivId": "2504.18128",
+      "url": "https://doi.org/10.48550/arXiv.2504.18128",
+      "citationCount": 2,
+      "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"]
+    },
+    {
+      "id": "780e184d0e0cec844353f9fd94af58100bd2bc26",
+      "title": "A Case Study Exploring the Current Landscape of Synthetic Medical Record Generation with Commercial LLMs",
+      "authors": ["Yihan Lin", "Zhi-Rong Yu", "Simon A. Lee"],
+      "venue": "ACM Conference on Health, Inference, and Learning",
+      "year": 2025,
+      "publicationDate": "2025-04-20",
+      "doi": "10.48550/arXiv.2504.14657",
+      "arxivId": "2504.14657",
+      "url": "https://doi.org/10.48550/arXiv.2504.14657",
+      "citationCount": 16,
+      "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"]
+    },
+    {
+      "id": "deeea713cb042c41852ff9c89ae26ab7934687e6",
+      "title": "ChronoFormer: Time-Aware Transformer Architectures for Structured Clinical Event Modeling",
+      "authors": ["Yuanyu Zhang", "Shi Li"],
+      "venue": "arXiv",
+      "year": 2025,
+      "publicationDate": "2025-04-10",
+      "doi": "10.48550/arXiv.2504.07373",
+      "arxivId": "2504.07373",
+      "url": "https://doi.org/10.48550/arXiv.2504.07373",
+      "citationCount": 16,
+      "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"]
+    },
+    {
+      "id": "a1de898ce28bdfc5c1cb65c3d010941885907dc2",
+      "title": "Clinical ModernBERT: An efficient and long context encoder for biomedical text",
+      "authors": ["Simon A. Lee", "A. Wu", "Jeffrey N. Chiang"],
+      "venue": "arXiv",
+      "year": 2025,
+      "publicationDate": "2025-04-04",
+      "doi": "10.48550/arXiv.2504.03964",
+      "arxivId": "2504.03964",
+      "url": "https://doi.org/10.48550/arXiv.2504.03964",
+      "citationCount": 60,
+      "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"]
     },
     {
       "id": "07752708fc7ec3c234f2dd7d22ddcc687ad7f843",
@@ -859,7 +1417,30 @@
       "arxivId": "2503.05768",
       "url": "https://doi.org/10.48550/arXiv.2503.05768",
       "citationCount": 13,
-      "cites": ["27689dd149c473d24cdf22124c2a29d187c960b8"]
+      "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf", "27689dd149c473d24cdf22124c2a29d187c960b8"]
+    },
+    {
+      "id": "2be3376c90365292548d8c8039b97145f2832f1a",
+      "title": "Large language models are powerful electronic health record encoders",
+      "authors": [
+        "Stefan Hegselmann",
+        "Georg von Arnim",
+        "Tillmann Rheude",
+        "Noel Kronenberg",
+        "David A. Sontag",
+        "G. Hindricks",
+        "R. Eils",
+        "B. Wild"
+      ],
+      "venue": "npj Digital Medicine",
+      "year": 2025,
+      "publicationDate": "2025-02-24",
+      "doi": "10.1038/s41746-026-02915-9",
+      "arxivId": "2502.17403",
+      "url": "https://doi.org/10.1038/s41746-026-02915-9",
+      "citationCount": 39,
+      "cites": [],
+      "manual": true
     },
     {
       "id": "eca467b5a8decf6f4041e37e6418ace5617411e6",
@@ -886,6 +1467,57 @@
       "url": "https://doi.org/10.1093/gigascience/giaf107",
       "citationCount": 31,
       "cites": ["f4b471a712d135aa606281e5061415657adb7085"]
+    },
+    {
+      "id": "d8236cbcded0773538ee834f239b801b4fd8a945",
+      "title": "Mind the data gap: Missingness Still Shapes Large Language Model Prognoses",
+      "authors": ["Y. Kobayashi", "V. Jeanselme", "Shalmali Joshi"],
+      "venue": "arXiv",
+      "year": 2025,
+      "publicationDate": null,
+      "doi": "10.48550/arXiv.2512.00479",
+      "arxivId": null,
+      "url": "https://doi.org/10.48550/arXiv.2512.00479",
+      "citationCount": 1,
+      "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"]
+    },
+    {
+      "id": "DOI:10.21203/rs.3.rs-8200847/v1",
+      "title": "EHRs Enable Robust Lung Cancer Risk Stratification with Transformer-based Models: A Retrospective Multi-center Validation Study",
+      "authors": [
+        "Eduardo Alonso",
+        "Naroa Mendez",
+        "Teresa García-Navarro",
+        "Eunate Arana-Arri",
+        "Jon Eneko Idoyaga Uribarrena",
+        "Miguel Giraldez-Álvarez",
+        "Alberto Moreno-Conde",
+        "Jesús Moreno-Conde",
+        "Francisco J. Núñez-Benjumea",
+        "David Vicente-Baz",
+        "Julien Guiot",
+        "Astrid Paulus",
+        "Marjorie Gangolf",
+        "Monique A. Henket",
+        "Benoit Ernst",
+        "Valentina Gogulancea",
+        "Debbie Rankin",
+        "Michaela M. Black",
+        "Ibai Gurrutxaga",
+        "Andoni Beristain",
+        "Alba Garín-Muga",
+        "Iván Macía",
+        "Xabier Calle"
+      ],
+      "venue": "Research Square",
+      "year": 2025,
+      "publicationDate": null,
+      "doi": "10.21203/rs.3.rs-8200847/v1",
+      "arxivId": null,
+      "url": "https://doi.org/10.21203/rs.3.rs-8200847/v1",
+      "citationCount": null,
+      "cites": [],
+      "manual": true
     },
     {
       "id": "8b270d7d03c422be39b1bf9c549bf76c5a0c0ff0",
