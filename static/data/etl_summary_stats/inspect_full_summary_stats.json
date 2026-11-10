@@ -1,0 +1,797 @@
+{
+  "code_metadata": {
+    "description_length": {
+      "mean": 27.2562,
+      "n": 95414,
+      "quantiles": {
+        "p1": 5.0,
+        "p25": 16.0,
+        "p5": 6.0,
+        "p50": 25.0,
+        "p75": 34.0,
+        "p95": 55.0,
+        "p99": 83.0
+      },
+      "std": 17.1302
+    },
+    "n_codes": 95414,
+    "n_data_codes_missing_from_metadata": 55286,
+    "n_metadata_codes_absent_from_data": 95028,
+    "n_with_description": 95414,
+    "n_with_parent_codes": 88437,
+    "ontology": {
+      "by_vocabulary": {
+        "<suppressed>": {
+          "n_child_codes": 87233,
+          "n_measurements": 0,
+          "n_vocabularies": 19
+        },
+        "CMS Place of Service": {
+          "keys_digest": "sha256:bf196f432f5fa360de349827d87372a14dd6f08cecc6227cb94044d9bfcb668b",
+          "n_child_codes": 120,
+          "n_distinct_keys": 7,
+          "n_measurements": 285372,
+          "n_subjects": 14134,
+          "recognized": false
+        },
+        "Medicare Specialty": {
+          "keys_digest": "sha256:b77c3cf7ad847c27900068a1d956c6abd961b2b7939efb7157ae3ced9acfe25d",
+          "n_child_codes": 378,
+          "n_distinct_keys": 71,
+          "n_measurements": 803949,
+          "n_subjects": 18649,
+          "recognized": true
+        },
+        "NUCC": {
+          "keys_digest": "sha256:cf1073784fdb31464239cc8bc28dd4540efb6df75a36e41b3c89aa60fe1d1917",
+          "n_child_codes": 332,
+          "n_distinct_keys": 88,
+          "n_measurements": 736647,
+          "n_subjects": 17415,
+          "recognized": true
+        },
+        "Visit": {
+          "keys_digest": "sha256:c6c75feb5bc5d5d2d631bd0347b714bac424aac0ba9d89a5d4a5be2ec310079d",
+          "n_child_codes": 508,
+          "n_distinct_keys": 8,
+          "n_measurements": 2068535,
+          "n_subjects": 18259,
+          "recognized": true
+        }
+      },
+      "coverage": {
+        "frac_measurements_mapped": 0.0173066,
+        "frac_observed_codes_with_parents": 0.00678977,
+        "n_measurements_mapped": 3894503,
+        "n_measurements_unmapped": 221134966,
+        "n_observed_codes": 55672,
+        "n_observed_codes_with_parents": 378,
+        "n_observed_codes_without_parents": 55294
+      },
+      "n_codes_in_multiple_vocabularies": 134,
+      "n_codes_with_parents": 88437,
+      "n_distinct_parents": 30207,
+      "n_parent_links": 91252,
+      "n_parents_without_vocabulary": 0,
+      "n_vocabularies": 23,
+      "n_vocabularies_recognized": 17,
+      "parents_per_code": {
+        "mean": 0.95638,
+        "n": 95414,
+        "quantiles": {
+          "p1": 0.0,
+          "p25": 1.0,
+          "p5": 0.0,
+          "p50": 1.0,
+          "p75": 1.0,
+          "p95": 1.0,
+          "p99": 2.0
+        },
+        "std": 0.438646
+      },
+      "present": true,
+      "vocabularies_per_code": {
+        "mean": 0.928281,
+        "n": 95414,
+        "quantiles": {
+          "p1": 0.0,
+          "p25": 1.0,
+          "p5": 0.0,
+          "p50": 1.0,
+          "p75": 1.0,
+          "p95": 1.0,
+          "p99": 1.0
+        },
+        "std": 0.26341
+      }
+    },
+    "present": true,
+    "vocabulary_digest": "sha256:045cfdf0fa830cea5df06f5c81cafe24afc756b1acf3197bc0f7346990e78979"
+  },
+  "codes": {
+    "concentration": {
+      "frac_measurements_in_top_10": 0.37072,
+      "frac_measurements_in_top_100": 0.825587,
+      "frac_measurements_in_top_1000": 0.94695,
+      "n_codes_covering_50pct": 19,
+      "n_codes_covering_90pct": 327,
+      "n_codes_covering_99pct": 5950
+    },
+    "digests": {
+      "alphabetical": "sha256:5c58a175aad73f95239cc3d00bc24a5e873f9c483870c13d0c283f537c6a1d9a",
+      "by_measurement_frequency": "sha256:445c247f26af3149989f47a2179e1a6eb81e880b689ec094e2d20b29f247fbbb",
+      "by_subject_frequency": "sha256:3900b5aba85e630fbd52cecc895ab58bbe6e3fad53040cd62de9c489ae7bae09",
+      "numeric_moments": {
+        "digest": "sha256:7e9aba37d68859edcb6cad2749547ebcea19adb2e4601aeaaefa7675f3d303ab",
+        "n_codes": 839
+      },
+      "thresholded": {
+        "100": {
+          "alphabetical": "sha256:5df99548a57e069ddfbbceb5ca29693b33197a8e908441d445f2a6191792788d",
+          "by_measurement_frequency": "sha256:8446c4ce733ce8d8ec090b57b79f2960facaeac04592ea4caeda0131b02b0a86",
+          "by_subject_frequency": "sha256:ad52744d3988a936a3719665b727bafd9723703466df2c6c4af966823e22e617",
+          "n_codes": 6413
+        },
+        "1000": {
+          "alphabetical": "sha256:04e4000821732753276779c66fdbbbe9a4c238950ae90ac02af1fed985a95646",
+          "by_measurement_frequency": "sha256:c74dada09c3787ecce7a8c918fd546a1e6af333657b6ed789c0d8c1bec5296dd",
+          "by_subject_frequency": "sha256:30cdd4888da6282da68341d919ca8cc92f2d87154d0e8beb95f06a9f241cd31e",
+          "n_codes": 1252
+        },
+        "20": {
+          "alphabetical": "sha256:03ad99401d5b453f5ec040069c8308e4bc6d0a385fab9b4f58dd5e1aab1d1fa2",
+          "by_measurement_frequency": "sha256:2a5fe54fedd10a8a86e2ee58a865ea786fa948fba096377429e1464dc513e2f9",
+          "by_subject_frequency": "sha256:3a2cc9713d24e282653ef0ee8dc24f544d9784e34aa63872067e8b932e801b13",
+          "n_codes": 15490
+        }
+      }
+    },
+    "n_codes_below_min_cell_size": 40182,
+    "n_unique_codes": 55672,
+    "occurrence": {
+      "n_measurements": {
+        "mean": 4042.06,
+        "n": 55672,
+        "quantiles": {
+          "p1": 1.0,
+          "p25": 3.0,
+          "p5": 1.0,
+          "p50": 12.0,
+          "p75": 84.0,
+          "p95": 1782.45,
+          "p99": 16716.3
+        },
+        "std": 129975.0
+      },
+      "n_subjects": {
+        "mean": 133.406,
+        "n": 55672,
+        "quantiles": {
+          "p1": 1.0,
+          "p25": 1.0,
+          "p5": 1.0,
+          "p50": 5.0,
+          "p75": 24.0,
+          "p95": 355.0,
+          "p99": 2526.29
+        },
+        "std": 929.737
+      }
+    }
+  },
+  "config": {
+    "code_metadata_only_digests": true,
+    "dataset_digest": "files",
+    "digest_subject_thresholds": [20, 100, 1000],
+    "emit_ontology_keys": false,
+    "min_cell_size": 20,
+    "min_numeric_cell_size": 20,
+    "moment_digest_sig_digits": 6,
+    "numeric_detail": "moments",
+    "quantiles": [0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99]
+  },
+  "counts": {
+    "n_events": 35918209,
+    "n_measurements": 225029469,
+    "n_static_measurements": 0,
+    "n_subjects": 19390,
+    "n_subjects_with_birth": 19390,
+    "n_subjects_with_death": 3148,
+    "n_subjects_with_static": 0,
+    "n_unique_codes": 55672,
+    "numeric": {
+      "mean": 107.891,
+      "n_finite": 168198572,
+      "n_infinite": 0,
+      "n_nan": 0,
+      "n_negative": 138651,
+      "n_present": 168198572,
+      "n_zero": 14108128,
+      "std": 40815.0
+    },
+    "quality": {
+      "n_empty_code": 0,
+      "n_null_code": 0,
+      "n_null_subject_id": 0
+    }
+  },
+  "dataset": {
+    "dataset_name": "Epic Clarity SHC|Epic Clarity LPCH|Stanford vocabulary version",
+    "dataset_version": "2024-08-27|2024-08-27|2024-08-27",
+    "etl_name": "meds_etl.omop",
+    "etl_version": "0.3.9.dev11+gba0eec1.d20250131",
+    "meds_version": "0.3.3",
+    "present": true
+  },
+  "dataset_digest": {
+    "by_file": null,
+    "code_metadata": "sha256:38d92786ecff43e7ea2f6131a4e0958e7ecf57bcf1326422eec576da907972e8",
+    "combined": "sha256:be5fe4b0006ca40433012cf89575a3f3a19eba43b9ab7eb42dc7ab11877ccd5a",
+    "data": {
+      "digest": "sha256:ecac19fd9f2f308602b266e1f6331f5c49bfbf3d6d72070748d2064ee1744031",
+      "n_files": 100
+    },
+    "dataset_metadata": "sha256:e6a0907602f6c43c671c874b2867865aee9888186bdda65e3fdf497249ee60d2",
+    "method": "files",
+    "n_files": 102,
+    "subject_splits": null
+  },
+  "extracted_at": "2026-11-10T18:57:03.796583",
+  "layout": {
+    "code_metadata_columns": {
+      "code": "String",
+      "description": "String",
+      "parent_codes": "List(String)"
+    },
+    "column_dtype_conflicts": {},
+    "column_presence": {
+      "care_site_id": 100,
+      "clarity_table": 100,
+      "code": 100,
+      "end": 100,
+      "note_id": 100,
+      "numeric_value": 100,
+      "provider_id": 100,
+      "subject_id": 100,
+      "table": 100,
+      "text_value": 100,
+      "time": 100,
+      "unit": 100,
+      "visit_id": 100
+    },
+    "data_columns": {
+      "care_site_id": "String",
+      "clarity_table": "String",
+      "code": "String",
+      "end": "Datetime(time_unit='us', time_zone=None)",
+      "note_id": "String",
+      "numeric_value": "Float32",
+      "provider_id": "String",
+      "subject_id": "Int64",
+      "table": "String",
+      "text_value": "String",
+      "time": "Datetime(time_unit='us', time_zone=None)",
+      "unit": "String",
+      "visit_id": "String"
+    },
+    "extra_data_columns": [
+      "care_site_id",
+      "clarity_table",
+      "end",
+      "note_id",
+      "provider_id",
+      "table",
+      "text_value",
+      "unit",
+      "visit_id"
+    ],
+    "has_code_metadata": true,
+    "has_dataset_metadata": true,
+    "has_subject_splits": false,
+    "missing_core_columns": [],
+    "n_data_shards": 100,
+    "shard_names": null,
+    "shard_names_digest": "sha256:7a89a3a2311803fd465adaef700b7d035f28b67bda15af80b0c65cb8f1cdc81b"
+  },
+  "meds_summary_stats_version": "0.0.3",
+  "per_subject": {
+    "n_events": {
+      "mean": 1852.41,
+      "n": 19390,
+      "quantiles": {
+        "p1": 8.0,
+        "p25": 314.0,
+        "p5": 41.0,
+        "p50": 996.5,
+        "p75": 2342.0,
+        "p95": 6269.2,
+        "p99": 12786.0
+      },
+      "std": 2727.94
+    },
+    "n_measurements": {
+      "mean": 11605.4,
+      "n": 19390,
+      "quantiles": {
+        "p1": 15.89,
+        "p25": 1575.0,
+        "p5": 185.0,
+        "p50": 5758.0,
+        "p75": 15245.5,
+        "p95": 40710.6,
+        "p99": 80152.1
+      },
+      "std": 16917.6
+    },
+    "n_unique_codes": {
+      "mean": 383.031,
+      "n": 19390,
+      "quantiles": {
+        "p1": 9.0,
+        "p25": 195.0,
+        "p5": 73.0,
+        "p50": 334.0,
+        "p75": 514.0,
+        "p95": 877.0,
+        "p99": 1211.33
+      },
+      "std": 256.301
+    },
+    "span_days": {
+      "mean": 22951.9,
+      "n": 19390,
+      "quantiles": {
+        "p1": 8247.9,
+        "p25": 18793.2,
+        "p5": 11128.7,
+        "p50": 23808.3,
+        "p75": 27958.0,
+        "p95": 32318.2,
+        "p99": 32739.8
+      },
+      "std": 6478.11
+    }
+  },
+  "splits": {
+    "present": false
+  },
+  "stats_schema_version": 1,
+  "time": {
+    "by_year": {
+      "1917": {
+        "n_measurements": 84,
+        "n_subjects": 24
+      },
+      "1918": {
+        "n_measurements": 135,
+        "n_subjects": 35
+      },
+      "1919": {
+        "n_measurements": 110,
+        "n_subjects": 30
+      },
+      "1920": {
+        "n_measurements": 140,
+        "n_subjects": 38
+      },
+      "1921": {
+        "n_measurements": 201,
+        "n_subjects": 52
+      },
+      "1922": {
+        "n_measurements": 232,
+        "n_subjects": 62
+      },
+      "1923": {
+        "n_measurements": 358,
+        "n_subjects": 95
+      },
+      "1924": {
+        "n_measurements": 328,
+        "n_subjects": 90
+      },
+      "1925": {
+        "n_measurements": 374,
+        "n_subjects": 100
+      },
+      "1926": {
+        "n_measurements": 358,
+        "n_subjects": 97
+      },
+      "1927": {
+        "n_measurements": 540,
+        "n_subjects": 142
+      },
+      "1928": {
+        "n_measurements": 523,
+        "n_subjects": 142
+      },
+      "1929": {
+        "n_measurements": 633,
+        "n_subjects": 169
+      },
+      "1930": {
+        "n_measurements": 596,
+        "n_subjects": 154
+      },
+      "1931": {
+        "n_measurements": 614,
+        "n_subjects": 161
+      },
+      "1932": {
+        "n_measurements": 630,
+        "n_subjects": 165
+      },
+      "1933": {
+        "n_measurements": 801,
+        "n_subjects": 209
+      },
+      "1934": {
+        "n_measurements": 915,
+        "n_subjects": 238
+      },
+      "1935": {
+        "n_measurements": 1010,
+        "n_subjects": 270
+      },
+      "1936": {
+        "n_measurements": 918,
+        "n_subjects": 243
+      },
+      "1937": {
+        "n_measurements": 1031,
+        "n_subjects": 272
+      },
+      "1938": {
+        "n_measurements": 1161,
+        "n_subjects": 309
+      },
+      "1939": {
+        "n_measurements": 1205,
+        "n_subjects": 319
+      },
+      "1940": {
+        "n_measurements": 1308,
+        "n_subjects": 347
+      },
+      "1941": {
+        "n_measurements": 1304,
+        "n_subjects": 342
+      },
+      "1942": {
+        "n_measurements": 1496,
+        "n_subjects": 394
+      },
+      "1943": {
+        "n_measurements": 1393,
+        "n_subjects": 368
+      },
+      "1944": {
+        "n_measurements": 1530,
+        "n_subjects": 407
+      },
+      "1945": {
+        "n_measurements": 1483,
+        "n_subjects": 392
+      },
+      "1946": {
+        "n_measurements": 1559,
+        "n_subjects": 414
+      },
+      "1947": {
+        "n_measurements": 1625,
+        "n_subjects": 432
+      },
+      "1948": {
+        "n_measurements": 1584,
+        "n_subjects": 418
+      },
+      "1949": {
+        "n_measurements": 1635,
+        "n_subjects": 432
+      },
+      "1950": {
+        "n_measurements": 1570,
+        "n_subjects": 417
+      },
+      "1951": {
+        "n_measurements": 1518,
+        "n_subjects": 403
+      },
+      "1952": {
+        "n_measurements": 1647,
+        "n_subjects": 439
+      },
+      "1953": {
+        "n_measurements": 1629,
+        "n_subjects": 433
+      },
+      "1954": {
+        "n_measurements": 1717,
+        "n_subjects": 457
+      },
+      "1955": {
+        "n_measurements": 1521,
+        "n_subjects": 405
+      },
+      "1956": {
+        "n_measurements": 1506,
+        "n_subjects": 404
+      },
+      "1957": {
+        "n_measurements": 1750,
+        "n_subjects": 461
+      },
+      "1958": {
+        "n_measurements": 1420,
+        "n_subjects": 377
+      },
+      "1959": {
+        "n_measurements": 1487,
+        "n_subjects": 395
+      },
+      "1960": {
+        "n_measurements": 1276,
+        "n_subjects": 338
+      },
+      "1961": {
+        "n_measurements": 1302,
+        "n_subjects": 345
+      },
+      "1962": {
+        "n_measurements": 1354,
+        "n_subjects": 360
+      },
+      "1963": {
+        "n_measurements": 1312,
+        "n_subjects": 349
+      },
+      "1964": {
+        "n_measurements": 1203,
+        "n_subjects": 329
+      },
+      "1965": {
+        "n_measurements": 1166,
+        "n_subjects": 313
+      },
+      "1966": {
+        "n_measurements": 1168,
+        "n_subjects": 314
+      },
+      "1967": {
+        "n_measurements": 1070,
+        "n_subjects": 289
+      },
+      "1968": {
+        "n_measurements": 926,
+        "n_subjects": 246
+      },
+      "1969": {
+        "n_measurements": 972,
+        "n_subjects": 260
+      },
+      "1970": {
+        "n_measurements": 913,
+        "n_subjects": 246
+      },
+      "1971": {
+        "n_measurements": 889,
+        "n_subjects": 239
+      },
+      "1972": {
+        "n_measurements": 821,
+        "n_subjects": 221
+      },
+      "1973": {
+        "n_measurements": 750,
+        "n_subjects": 201
+      },
+      "1974": {
+        "n_measurements": 742,
+        "n_subjects": 199
+      },
+      "1975": {
+        "n_measurements": 740,
+        "n_subjects": 199
+      },
+      "1976": {
+        "n_measurements": 655,
+        "n_subjects": 177
+      },
+      "1977": {
+        "n_measurements": 696,
+        "n_subjects": 190
+      },
+      "1978": {
+        "n_measurements": 745,
+        "n_subjects": 201
+      },
+      "1979": {
+        "n_measurements": 690,
+        "n_subjects": 192
+      },
+      "1980": {
+        "n_measurements": 653,
+        "n_subjects": 179
+      },
+      "1981": {
+        "n_measurements": 688,
+        "n_subjects": 187
+      },
+      "1982": {
+        "n_measurements": 651,
+        "n_subjects": 177
+      },
+      "1983": {
+        "n_measurements": 638,
+        "n_subjects": 171
+      },
+      "1984": {
+        "n_measurements": 663,
+        "n_subjects": 179
+      },
+      "1985": {
+        "n_measurements": 661,
+        "n_subjects": 179
+      },
+      "1986": {
+        "n_measurements": 519,
+        "n_subjects": 142
+      },
+      "1987": {
+        "n_measurements": 484,
+        "n_subjects": 134
+      },
+      "1988": {
+        "n_measurements": 484,
+        "n_subjects": 133
+      },
+      "1989": {
+        "n_measurements": 450,
+        "n_subjects": 120
+      },
+      "1990": {
+        "n_measurements": 497,
+        "n_subjects": 133
+      },
+      "1991": {
+        "n_measurements": 504,
+        "n_subjects": 137
+      },
+      "1992": {
+        "n_measurements": 457,
+        "n_subjects": 123
+      },
+      "1993": {
+        "n_measurements": 397,
+        "n_subjects": 107
+      },
+      "1994": {
+        "n_measurements": 339,
+        "n_subjects": 93
+      },
+      "1995": {
+        "n_measurements": 362,
+        "n_subjects": 98
+      },
+      "1996": {
+        "n_measurements": 301,
+        "n_subjects": 86
+      },
+      "1997": {
+        "n_measurements": 1106,
+        "n_subjects": 310
+      },
+      "1998": {
+        "n_measurements": 32655,
+        "n_subjects": 1557
+      },
+      "1999": {
+        "n_measurements": 128460,
+        "n_subjects": 1817
+      },
+      "2000": {
+        "n_measurements": 191664,
+        "n_subjects": 2222
+      },
+      "2001": {
+        "n_measurements": 252172,
+        "n_subjects": 2372
+      },
+      "2002": {
+        "n_measurements": 293645,
+        "n_subjects": 2610
+      },
+      "2003": {
+        "n_measurements": 387309,
+        "n_subjects": 2814
+      },
+      "2004": {
+        "n_measurements": 513021,
+        "n_subjects": 3430
+      },
+      "2005": {
+        "n_measurements": 652361,
+        "n_subjects": 4076
+      },
+      "2006": {
+        "n_measurements": 824791,
+        "n_subjects": 4493
+      },
+      "2007": {
+        "n_measurements": 902214,
+        "n_subjects": 4879
+      },
+      "2008": {
+        "n_measurements": 2132955,
+        "n_subjects": 7219
+      },
+      "2009": {
+        "n_measurements": 3491588,
+        "n_subjects": 5298
+      },
+      "2010": {
+        "n_measurements": 4004292,
+        "n_subjects": 5535
+      },
+      "2011": {
+        "n_measurements": 4007063,
+        "n_subjects": 6146
+      },
+      "2012": {
+        "n_measurements": 5169309,
+        "n_subjects": 7613
+      },
+      "2013": {
+        "n_measurements": 9068289,
+        "n_subjects": 8470
+      },
+      "2014": {
+        "n_measurements": 10561600,
+        "n_subjects": 9004
+      },
+      "2015": {
+        "n_measurements": 12615093,
+        "n_subjects": 10775
+      },
+      "2016": {
+        "n_measurements": 18508785,
+        "n_subjects": 10878
+      },
+      "2017": {
+        "n_measurements": 21413720,
+        "n_subjects": 11075
+      },
+      "2018": {
+        "n_measurements": 25465864,
+        "n_subjects": 11750
+      },
+      "2019": {
+        "n_measurements": 28312945,
+        "n_subjects": 12057
+      },
+      "2020": {
+        "n_measurements": 31104868,
+        "n_subjects": 11586
+      },
+      "2021": {
+        "n_measurements": 28635471,
+        "n_subjects": 10922
+      },
+      "2022": {
+        "n_measurements": 14197648,
+        "n_subjects": 10338
+      },
+      "2023": {
+        "n_measurements": 2088607,
+        "n_subjects": 6934
+      },
+      "<suppressed>": {
+        "n_measurements": 257,
+        "n_years": 13
+      }
+    },
+    "n_measurements_with_time": 225029469,
+    "n_years_observed": 120
+  }
+}

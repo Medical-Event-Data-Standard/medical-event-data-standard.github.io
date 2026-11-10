@@ -5,10 +5,13 @@ import type { LoadContext, Plugin } from '@docusaurus/types';
 import { repoKey } from '../src/lib/ecosystem/githubMetadata';
 import { isEtlStatsData, normalizeStatsDocument } from '../src/lib/etlSummaryStats/normalize';
 import {
+  type DatasetOverride,
   ETL_SUMMARY_STATS_PLUGIN,
   type EtlStatsData,
   type EtlStatsEntry,
   type RepoWithoutStats,
+  SITE_GITHUB_REPO,
+  type StatsHost,
   type StatsVariant,
 } from '../src/lib/etlSummaryStats/types';
 
@@ -23,6 +26,13 @@ import {
 // and overrides in static/data/etl_summary_stats.yaml. Each repository's file list is read from the GitHub API
 // (authenticated with GITHUB_TOKEN if set) and searched for `*summary_stats*.json`, so new ETLs appear by
 // themselves. The files are then downloaded from raw.githubusercontent.com, validated and normalised.
+//
+// Stats files of datasets that no ETL repository publishes can be committed to this repository instead (under
+// static/data/etl_summary_stats/) and listed under `local_files` in etl_summary_stats.yaml. They are read from disk
+// whenever the GitHub files are fetched, and normalised and snapshotted the same way. A listed file that is missing
+// or isn't a stats document is a mistake in this repository, so it fails the build. An entry can set the dataset
+// name and version that the page shows (`dataset_name`, `dataset_version`), for a file whose dataset.json states
+// something else; the file's own values are kept alongside.
 //
 // The network never fails the build: whatever can't be fetched is taken from the committed snapshot
 // (static/data/etl_summary_stats.snapshot.json), with a single warning in the build log. Where the data comes from
@@ -62,10 +72,21 @@ export interface RepoOverride {
   files: Record<string, FileOverride>;
 }
 
+/** A stats file committed to this repository. */
+export interface LocalStatsFile {
+  /** Relative to the site directory, e.g. `static/data/etl_summary_stats/x_full_summary_stats.json`. */
+  path: string;
+  label: string;
+  variant: StatsVariant;
+  /** The dataset name and version to show instead of those the file states (`dataset_name`, `dataset_version`). */
+  datasetOverride?: DatasetOverride;
+}
+
 export interface EtlStatsConfig {
   repos: RepoOverride[];
   /** `owner/repo` or `owner/repo/path/to/file.json`. */
   exclude: string[];
+  localFiles: LocalStatsFile[];
 }
 
 /** An ETL repository to search, with its display name and per-file overrides. */
@@ -121,19 +142,74 @@ function parseRepoOverride(value: unknown, i: number): RepoOverride {
   };
 }
 
+/** A demo dataset's stats file has "demo" in its name, unless configured otherwise. */
+const variantFromName = (file: string): StatsVariant =>
+  /demo/i.test(file.split('/').pop() as string) ? 'demo' : 'full';
+
+function parseLocalFile(value: unknown, i: number): LocalStatsFile {
+  const where = `local_files[${i}]`;
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(`\`${where}\` must be a mapping with a \`path\` and a \`label\``);
+  }
+  const fields = value as Record<string, unknown>;
+  const unknown = Object.keys(fields).find(
+    key => !['path', 'label', 'variant', 'dataset_name', 'dataset_version', 'note'].includes(key)
+  );
+  if (unknown) throw new Error(`\`${where}\` has an unknown field \`${unknown}\``);
+  const { path: file, label, variant } = fields;
+  // A plain relative path inside the site directory, so it also names the file in this repository on GitHub.
+  if (
+    typeof file !== 'string' ||
+    !file.trim().endsWith('.json') ||
+    path.posix.isAbsolute(file.trim()) ||
+    file.includes('\\') ||
+    file
+      .trim()
+      .split('/')
+      .some(part => part === '..' || part === '.' || part === '')
+  ) {
+    throw new Error(`\`${where}.path\` must be a relative path to a .json file, such as static/data/x.json`);
+  }
+  if (typeof label !== 'string' || !label.trim()) throw new Error(`\`${where}.label\` must be a string`);
+  if (variant !== undefined && variant !== 'full' && variant !== 'demo') {
+    throw new Error(`\`${where}.variant\` must be full or demo`);
+  }
+  // Each is shown instead of what the file's dataset.json states; null shows nothing.
+  const datasetOverride: DatasetOverride = {};
+  for (const [key, field] of [
+    ['name', 'dataset_name'],
+    ['version', 'dataset_version'],
+  ] as const) {
+    if (!(field in fields)) continue;
+    const text = fields[field];
+    if (text !== null && (typeof text !== 'string' || !text.trim())) {
+      throw new Error(`\`${where}.${field}\` must be a string (quote a number, e.g. '1.2') or null`);
+    }
+    datasetOverride[key] = text === null ? null : text.trim();
+  }
+  return {
+    path: file.trim(),
+    label: label.trim(),
+    variant: variant ?? variantFromName(file.trim()),
+    ...(Object.keys(datasetOverride).length > 0 ? { datasetOverride } : {}),
+  };
+}
+
 /** Validates the parsed etl_summary_stats.yaml. A malformed file is a mistake in this repository, so this throws. */
 export function parseEtlStatsConfig(raw: unknown): EtlStatsConfig {
   try {
-    if (raw === null || raw === undefined) return { repos: [], exclude: [] };
+    if (raw === null || raw === undefined) return { repos: [], exclude: [], localFiles: [] };
     if (typeof raw !== 'object' || Array.isArray(raw)) throw new Error('it must be a mapping');
-    const { repos, exclude, ...rest } = raw as Record<string, unknown>;
+    const { repos, exclude, local_files: localFiles, ...rest } = raw as Record<string, unknown>;
     const unknown = Object.keys(rest);
     if (unknown.length > 0) throw new Error(`unknown top-level field \`${unknown[0]}\``);
-    if (repos !== undefined && repos !== null && !Array.isArray(repos))
-      throw new Error('`repos` must be a list');
-    if (exclude !== undefined && exclude !== null && !Array.isArray(exclude)) {
-      throw new Error('`exclude` must be a list');
+    for (const [name, list] of Object.entries({ repos, exclude, local_files: localFiles })) {
+      if (list !== undefined && list !== null && !Array.isArray(list))
+        throw new Error(`\`${name}\` must be a list`);
     }
+    const local = ((localFiles ?? []) as unknown[]).map(parseLocalFile);
+    const duplicate = local.find((file, i) => local.findIndex(other => other.path === file.path) !== i);
+    if (duplicate) throw new Error(`\`local_files\` lists ${duplicate.path} more than once`);
     return {
       repos: ((repos ?? []) as unknown[]).map(parseRepoOverride),
       exclude: ((exclude ?? []) as unknown[]).map((entry, i) => {
@@ -142,6 +218,7 @@ export function parseEtlStatsConfig(raw: unknown): EtlStatsConfig {
         }
         return entry.trim();
       }),
+      localFiles: local,
     };
   } catch (err) {
     throw new Error(`Invalid ${ETL_STATS_YAML}: ${errorMessage(err)}`);
@@ -202,9 +279,10 @@ export function mergeEtlRepos(
 
 // ─── Discovery ──────────────────────────────────────────────────
 
-/** A stats file to fetch. */
+/** A stats file to fetch or read. */
 export interface StatsFileTarget {
   id: string;
+  host: StatsHost;
   githubRepo: string;
   path: string;
   label: string;
@@ -225,10 +303,10 @@ export function planStatsFiles(repo: EtlRepo, files: string[], exclude: string[]
     .sort()
     .map(file => {
       const override = repo.files[file] ?? {};
-      const baseName = file.split('/').pop() as string;
-      const variant = override.variant ?? (/demo/i.test(baseName) ? 'demo' : 'full');
+      const variant = override.variant ?? variantFromName(file);
       return {
         id: statsFileId(repo.githubRepo, file),
+        host: 'etl' as const,
         githubRepo: repo.githubRepo,
         path: file,
         label: override.label ?? (variant === 'demo' ? `${repo.name} demo` : repo.name),
@@ -376,6 +454,54 @@ export async function collectEtlStats(
   return result;
 }
 
+// ─── Files in this repository ───────────────────────────────────
+
+/**
+ * Reads, validates and normalises the stats files committed to this repository (`local_files`). Unlike a file on
+ * GitHub, one that is missing, isn't JSON or isn't a stats document is a mistake in this repository, so this
+ * throws. A file with a schema version the page can't read is kept, with its problem, as for files on GitHub.
+ */
+export async function readLocalStats(
+  siteDir: string,
+  files: LocalStatsFile[]
+): Promise<{ datasets: EtlStatsEntry[]; problems: string[] }> {
+  const datasets: EtlStatsEntry[] = [];
+  const problems: string[] = [];
+  for (const file of files) {
+    try {
+      let text: string;
+      try {
+        text = await fs.readFile(path.join(siteDir, file.path), 'utf8');
+      } catch (err) {
+        throw new Error(
+          (err as NodeJS.ErrnoException).code === 'ENOENT' ? 'it does not exist' : errorMessage(err)
+        );
+      }
+      let doc: unknown;
+      try {
+        doc = JSON.parse(text);
+      } catch {
+        throw new Error('it is not valid JSON');
+      }
+      const normalized = normalizeStatsDocument(doc);
+      if (normalized.problem) problems.push(`${file.label} (${file.path}): ${normalized.problem}`);
+      datasets.push({
+        id: statsFileId(SITE_GITHUB_REPO, file.path),
+        host: 'site',
+        githubRepo: SITE_GITHUB_REPO,
+        path: file.path,
+        label: file.label,
+        variant: file.variant,
+        ...normalized,
+        ...(file.datasetOverride ? { datasetOverride: file.datasetOverride } : {}),
+      });
+    } catch (err) {
+      throw new Error(`${file.path}, listed under local_files in ${ETL_STATS_YAML}: ${errorMessage(err)}`);
+    }
+  }
+  return { datasets, problems };
+}
+
 // ─── Loading ────────────────────────────────────────────────────
 
 /** Reads the snapshot, returning null (with the reason) if it is missing or malformed. */
@@ -449,6 +575,8 @@ export async function loadEtlStats(
         };
   }
 
+  // The files in this repository first, so that a mistake in them fails the build before any request is made.
+  const local = await readLocalStats(siteDir, config.localFiles);
   const ecosystem = parse(await fs.readFile(path.join(siteDir, ECOSYSTEM_YAML), 'utf8'));
   const repos = mergeEtlRepos(collectDatasetEtls(ecosystem), config);
   const token = env.GITHUB_TOKEN?.trim() || undefined;
@@ -456,19 +584,21 @@ export async function loadEtlStats(
   const fresh = collected.failures.length === 0;
   const data: EtlStatsData = {
     updatedAt: fresh ? now().toISOString() : (snapshot?.updatedAt ?? null),
-    datasets: collected.datasets,
+    datasets: [...collected.datasets, ...local.datasets],
     reposWithoutStats: collected.reposWithoutStats,
   };
 
   const summary =
-    `${data.datasets.length} stats files from ${repos.length - data.reposWithoutStats.length} of ` +
-    `${repos.length} ETL repositories`;
-  if (fresh && collected.problems.length === 0) {
+    `${collected.datasets.length} stats files from ${repos.length - data.reposWithoutStats.length} of ` +
+    `${repos.length} ETL repositories` +
+    (local.datasets.length > 0 ? ` and ${local.datasets.length} from this repository` : '');
+  const problems = [...collected.problems, ...local.problems];
+  if (fresh && problems.length === 0) {
     return { data, warning: false, message: `Collected ${summary}.` };
   }
   const lines = [
     ...collected.failures,
-    ...collected.problems,
+    ...problems,
     ...(collected.fromSnapshot.length
       ? [`Taken from the snapshot instead: ${collected.fromSnapshot.join('; ')}.`]
       : []),

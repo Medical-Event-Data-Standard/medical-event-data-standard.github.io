@@ -1,33 +1,39 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, Box, FormControlLabel, Paper, Switch, Typography, useMediaQuery } from '@mui/material';
 import { usePluginData } from '@docusaurus/useGlobalData';
+import Heading from '@theme/Heading';
 import {
+  type Axis,
+  type AxisScale,
+  type AxisScales,
+  BREADTH_MEASURES,
+  type BreadthMeasure,
+  CHART_FONT,
+  type ChartModel,
   DESCRIPTION_THRESHOLD,
+  ICD_GROUP,
+  MAPPING_COLUMNS,
+  MISSING_CODES_VIEWS,
+  type MissingCodesView,
+  NO_MAPPING,
   OMOP_MARK,
-  PACE_METRICS,
-  type PaceMetric,
+  PACE_LABEL,
   type PerSubjectMetric,
   PER_SUBJECT_METRICS,
-  SIZE_SORT_OPTIONS,
-  type SizeOrder,
-  type SizeSortKey,
-  type SortDirection,
-  codeCoverageChart,
+  codeTailChart,
   coverageChart,
   datasetName,
-  defaultDirection,
   depthBreadthChart,
   formatDate,
   formatPercent,
   githubRepoUrl,
   healthCheck,
-  ontologyChart,
+  INK,
   orderDatasets,
   paceChart,
   perSubjectChart,
   schemaDescription,
   sizeChart,
-  sortDirectionOptions,
   statsFileUrl,
   vocabularyChart,
 } from '@site/src/lib/etlSummaryStats/charts';
@@ -43,34 +49,123 @@ import {
   DatasetSelect,
   ExternalLink,
   HealthTable,
-  LabelledToggle,
   MetricToggle,
   Plot,
+  ScaleToggle,
 } from './parts';
 
-// The "Dataset statistics" page: charts of the `meds_summary_stats` files that dataset ETLs publish, collected at
-// build time by plugins/etlSummaryStats.ts. One filter (include demo datasets) above everything it scopes, then a
-// summary table with each file's provenance, then one section per chart.
+// The "Dataset statistics" page: charts of the `meds_summary_stats` files that dataset ETLs publish, and of those
+// committed to this site's repository, collected at build time by plugins/etlSummaryStats.ts. One filter (include
+// demo datasets) above everything it scopes, then a summary table with each file's provenance, then one section per
+// chart.
 
-/** Screens up to this width get the bubble chart's phone layout (smaller bubbles, labels for a narrow plot). */
+/**
+ * Screens up to this width get the phone layouts: smaller bubbles and labels laid out for a narrow plot in the
+ * bubble chart, and a taller tail plot, whose legend takes a line per dataset.
+ */
 const NARROW_SCREEN = '(max-width: 760px)';
 
-/** Which ETL and file each dataset's numbers come from, and when they were extracted. */
+/** The page's sections, in order: their heading and its anchor. */
+export const SECTIONS = {
+  files: { id: 'stats-files', title: 'Datasets and their stats files' },
+  size: { id: 'dataset-size', title: 'Dataset size' },
+  depth: { id: 'depth-breadth', title: 'Depth vs. breadth' },
+  perSubject: { id: 'per-subject', title: 'How much data each subject has' },
+  pace: { id: 'pace', title: 'Pace of events' },
+  coverage: { id: 'record-coverage', title: 'Record coverage' },
+  tail: { id: 'code-tail', title: 'How long the tail of codes is' },
+  vocabularies: { id: 'vocabularies', title: 'Mapping to vocabularies' },
+  health: { id: 'health-check', title: 'Health check' },
+} as const;
+
+/**
+ * The sections' entries in the page's table of contents. Headings rendered by a component don't reach the table of
+ * contents by themselves, so the MDX page exports these as part of its `toc`.
+ */
+export const DATASET_STATISTICS_TOC = Object.values(SECTIONS).map(({ id, title }) => ({
+  value: title,
+  id,
+  level: 2,
+}));
+
+/** "A", "A and B", "A, B and C". */
+const listOf = (items: string[]): string =>
+  items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+
+/** What a chart's axes are, for its description. */
+function axesSentence(log: Record<Axis, boolean>): string {
+  const minorGrid = 'with fainter gridlines at 2 to 9 times each power of ten';
+  if (log.x && log.y) return `Both axes are logarithmic, ${minorGrid}.`;
+  if (!log.x && !log.y) return 'Both axes are linear.';
+  return log.x
+    ? `The horizontal axis is logarithmic, ${minorGrid}, and the vertical axis linear.`
+    : `The vertical axis is logarithmic, ${minorGrid}, and the horizontal axis linear.`;
+}
+
+/** What the value axis of a bar or box chart is, for its description. */
+const valueAxisSentence = (log: boolean): string =>
+  log
+    ? 'The axis is logarithmic: each labelled gridline is ten times the last, and the fainter gridlines between them mark 2 to 9 times.'
+    : 'The axis is linear, from zero.';
+
+/** The charts whose logarithmic axes can be switched to linear. */
+type ScaledChart = 'size' | 'depth' | 'perSubject' | 'pace' | 'tail';
+
+/** Below this width the summary table stacks each dataset's cells, each after its heading, rather than scrolling. */
+const STACKED = '@media (max-width: 599.95px)';
+
+/** Styles of the summary table: cells wrap, so it fits beside the table of contents, and it stacks on a phone. */
+const SUMMARY_TABLE = {
+  ...COMPACT_TABLE,
+  '& th, & td': { ...COMPACT_TABLE['& th, & td'], whiteSpace: 'normal' },
+  '& thead th': { verticalAlign: 'bottom' },
+  // Long versions break anywhere rather than widening their column.
+  '& td.dataset-name': { minWidth: '9em', overflowWrap: 'anywhere' },
+  '& td.extracted': { whiteSpace: 'nowrap' },
+  [STACKED]: {
+    '& table, & tbody, & tr': { display: 'block' },
+    // The headings stay for screen readers; each cell shows its own.
+    '& thead': {
+      position: 'absolute',
+      width: '1px',
+      height: '1px',
+      overflow: 'hidden',
+      clipPath: 'inset(50%)',
+      whiteSpace: 'nowrap',
+    },
+    '& tr': { py: 0.75 },
+    // Each dataset's heading heads its block rather than staying in view, on its row's shading. (These selectors
+    // match those that make the heading stay in view, so that they win over them.)
+    '& tr > th:first-of-type, & tbody tr:nth-of-type(2n) > th:first-of-type': {
+      position: 'static',
+      boxShadow: 'none',
+      background: 'none',
+    },
+    '& th, & td': { display: 'block', border: 0, py: 0.25, px: 1.25, textAlign: 'left' },
+    '& td, & td.extracted': {
+      display: 'grid',
+      gridTemplateColumns: '8.5em minmax(0, 1fr)',
+      columnGap: 1,
+      whiteSpace: 'normal',
+    },
+    '& td.dataset-name': { minWidth: 0 },
+    '& td::before': { content: 'attr(data-label)', color: 'text.secondary' },
+  },
+} as const;
+
+/** The columns of the summary table after the dataset's label. */
+const SUMMARY_COLUMNS = ['Dataset name and version', 'Stats file', 'Extracted', 'Schema'] as const;
+
+/** Which dataset, file and repository each dataset's numbers come from, and when they were extracted. */
 function SummaryTable({ entries }: { entries: EtlStatsEntry[] }): React.JSX.Element {
-  const headers = [
-    'Dataset',
-    'ETL repository',
-    'Stats file',
-    'Extracted',
-    'Dataset name and version',
-    'Schema',
-  ];
+  const [nameColumn, fileColumn, extractedColumn, schemaColumn] = SUMMARY_COLUMNS;
   return (
-    <Box sx={COMPACT_TABLE}>
-      <table>
+    <Box sx={SUMMARY_TABLE}>
+      <table aria-label="Datasets and their stats files">
         <thead>
           <tr>
-            {headers.map(header => (
+            <th scope="col">Dataset</th>
+            {SUMMARY_COLUMNS.map(header => (
               <th key={header} scope="col">
                 {header}
               </th>
@@ -81,15 +176,32 @@ function SummaryTable({ entries }: { entries: EtlStatsEntry[] }): React.JSX.Elem
           {entries.map(entry => (
             <tr key={entry.id}>
               <th scope="row">{entry.label}</th>
-              <td>
-                <ExternalLink href={githubRepoUrl(entry.githubRepo)}>{entry.githubRepo}</ExternalLink>
+              {/* Each cell holds one element, the second column of its row when the table is stacked. */}
+              <td className="dataset-name" data-label={nameColumn}>
+                <span>
+                  {datasetName(entry)}
+                  {entry.datasetOverride && <sup>{OVERRIDE_MARK}</sup>}
+                </span>
               </td>
-              <td title={entry.path}>
-                <ExternalLink href={statsFileUrl(entry)}>{entry.path.split('/').pop()}</ExternalLink>
+              <td data-label={fileColumn}>
+                <div>
+                  <ExternalLink href={statsFileUrl(entry)}>{entry.path.split('/').pop()}</ExternalLink>
+                  <Box component="span" sx={{ display: 'block', color: 'text.secondary' }}>
+                    {entry.host === 'site' ? (
+                      "in this site's repository"
+                    ) : (
+                      <>
+                        in{' '}
+                        <ExternalLink href={githubRepoUrl(entry.githubRepo)}>{entry.githubRepo}</ExternalLink>
+                      </>
+                    )}
+                  </Box>
+                </div>
               </td>
-              <td>{formatDate(entry.extractedAt)}</td>
-              <td style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>{datasetName(entry)}</td>
-              <td>{schemaDescription(entry)}</td>
+              <td className="extracted" data-label={extractedColumn}>
+                {formatDate(entry.extractedAt)}
+              </td>
+              <td data-label={schemaColumn}>{schemaDescription(entry)}</td>
             </tr>
           ))}
         </tbody>
@@ -98,13 +210,53 @@ function SummaryTable({ entries }: { entries: EtlStatsEntry[] }): React.JSX.Elem
   );
 }
 
+/**
+ * A chart's row names, set beside it rather than in it, so that they stay in view when it scrolls sideways, in
+ * the chart's font. Screen readers get the chart's own label instead.
+ */
+function RowLabels({
+  labels,
+  top,
+  rowHeight,
+}: {
+  labels: string[];
+  top: number;
+  rowHeight: number;
+}): React.JSX.Element {
+  return (
+    <Box
+      aria-hidden="true"
+      sx={{
+        flex: 'none',
+        pt: `${top}px`,
+        pr: 1,
+        textAlign: 'right',
+        font: `12px ${CHART_FONT}`,
+        color: INK.primary,
+      }}
+    >
+      {labels.map(label => (
+        <Box key={label} sx={{ height: rowHeight, lineHeight: `${rowHeight}px`, whiteSpace: 'nowrap' }}>
+          {label}
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+/** Marks a dataset name and version set in this site's configuration rather than taken from the stats file. */
+const OVERRIDE_MARK = '†';
+
 export default function DatasetStatistics(): React.JSX.Element {
   const data = usePluginData(ETL_SUMMARY_STATS_PLUGIN) as EtlStatsData | undefined;
   const [includeDemo, setIncludeDemo] = useState(true);
-  const [sizeOrder, setSizeOrder] = useState<SizeOrder>({ key: 'measurements', direction: 'desc' });
-  const [perSubjectMetric, setPerSubjectMetric] = useState<PerSubjectMetric>('measurements');
-  const [paceMetric, setPaceMetric] = useState<PaceMetric>('perDay');
+  const [perSubjectMetric, setPerSubjectMetric] = useState<PerSubjectMetric>('events');
+  const [breadth, setBreadth] = useState<BreadthMeasure>('subjects');
+  const [bubbleSize, setBubbleSize] = useState<BreadthMeasure>('uniqueCodes');
+  const [missingCodes, setMissingCodes] = useState<MissingCodesView>('share');
   const [highlight, setHighlight] = useState<string | null>(null);
+  // Each chart's axis scales; every axis that can be logarithmic starts out so.
+  const [scales, setScales] = useState<Partial<Record<ScaledChart, AxisScales>>>({});
   const narrow = useMediaQuery(NARROW_SCREEN);
 
   const allEntries = useMemo(() => orderDatasets(data?.datasets ?? []), [data]);
@@ -112,21 +264,25 @@ export default function DatasetStatistics(): React.JSX.Element {
     () => allEntries.filter(entry => includeDemo || entry.variant !== 'demo'),
     [allEntries, includeDemo]
   );
-  const size = useMemo(() => sizeChart(entries, sizeOrder), [entries, sizeOrder]);
-  const sortLabel = (SIZE_SORT_OPTIONS.find(option => option.key === sizeOrder.key) as { label: string })
-    .label;
-  const depth = useMemo(() => depthBreadthChart(entries, { narrow }), [entries, narrow]);
-  const perSubject = useMemo(() => perSubjectChart(entries, perSubjectMetric), [entries, perSubjectMetric]);
-  const pace = useMemo(() => paceChart(entries, paceMetric), [entries, paceMetric]);
+  const scaleOf = (chart: ScaledChart, axis: Axis): AxisScale => scales[chart]?.[axis] ?? 'log';
+  const size = useMemo(() => sizeChart(entries, scales.size?.x), [entries, scales.size]);
+  const depth = useMemo(
+    () => depthBreadthChart(entries, { narrow, breadth, size: bubbleSize, scales: scales.depth }),
+    [entries, narrow, breadth, bubbleSize, scales.depth]
+  );
+  const perSubject = useMemo(
+    () => perSubjectChart(entries, perSubjectMetric, scales.perSubject?.x),
+    [entries, perSubjectMetric, scales.perSubject]
+  );
+  const pace = useMemo(() => paceChart(entries, scales.pace?.x), [entries, scales.pace]);
   const coverage = useMemo(() => coverageChart(entries), [entries]);
   const datasetLabels = useMemo(() => allEntries.map(entry => entry.label), [allEntries]);
-  const codeCoverage = useMemo(
-    () => codeCoverageChart(entries, highlight, datasetLabels),
-    [entries, highlight, datasetLabels]
+  const codeTail = useMemo(
+    () => codeTailChart(entries, highlight, datasetLabels, { narrow, scales: scales.tail }),
+    [entries, highlight, datasetLabels, narrow, scales.tail]
   );
   const vocabularies = useMemo(() => vocabularyChart(entries), [entries]);
-  const ontology = useMemo(() => ontologyChart(entries), [entries]);
-  const health = useMemo(() => healthCheck(entries), [entries]);
+  const health = useMemo(() => healthCheck(entries, { missingCodes }), [entries, missingCodes]);
 
   if (!data || data.datasets.length === 0) {
     return (
@@ -137,21 +293,56 @@ export default function DatasetStatistics(): React.JSX.Element {
     );
   }
 
+  /** Whether a chart's axis is drawn logarithmic: it can be, and its toggle is on log. */
+  const isLog = (chart: ScaledChart, model: ChartModel, axis: Axis = 'x'): boolean =>
+    model.logAxes.includes(axis) && scaleOf(chart, axis) === 'log';
+  /** A log/linear toggle for each axis of the chart that can be logarithmic. */
+  const scaleToggles = (chart: ScaledChart, model: ChartModel): React.ReactNode[] =>
+    model.logAxes.map(axis => (
+      <ScaleToggle
+        key={axis}
+        axis={axis}
+        value={scaleOf(chart, axis)}
+        onChange={scale => setScales(prev => ({ ...prev, [chart]: { ...prev[chart], [axis]: scale } }))}
+      />
+    ));
+
   const hasDemo = allEntries.some(entry => entry.variant === 'demo');
   const minCellSizes = [...new Set(allEntries.map(entry => entry.minCellSize).filter(n => n !== null))];
   const problems = entries.filter(entry => entry.problem);
   const missing = data.reposWithoutStats;
+  const overridden = entries.some(entry => entry.datasetOverride);
+  const measure = (key: BreadthMeasure) =>
+    BREADTH_MEASURES.find(option => option.key === key) as (typeof BREADTH_MEASURES)[number];
+  const across = measure(breadth);
+  const sizedBy = measure(bubbleSize);
+  const tailLog = { x: isLog('tail', codeTail, 'x'), y: isLog('tail', codeTail, 'y') };
+  const tailAxes =
+    tailLog.x === tailLog.y
+      ? `both ${tailLog.x ? 'logarithmic' : 'linear'}`
+      : `${tailLog.x ? 'logarithmic' : 'linear'} across and ${tailLog.y ? 'logarithmic' : 'linear'} up`;
 
   return (
     <div>
       <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
-        Every number here comes from the stats file that an ETL&apos;s maintainers computed on their own copy
-        of the data and published in their repository; the table links to each file and gives the date it was
-        extracted.
+        {allEntries.some(entry => entry.host === 'site') ? (
+          <>
+            Every number here comes from a stats file that <code>meds_summary_stats</code> computed on a copy
+            of the dataset. ETL maintainers publish these files in their repositories, and some are committed
+            to this site&apos;s repository; the table links to each file and gives the date it was extracted.
+          </>
+        ) : (
+          <>
+            Every number here comes from the stats file that an ETL&apos;s maintainers computed on their own
+            copy of the data and published in their repository; the table links to each file and gives the
+            date it was extracted.
+          </>
+        )}
         {data.updatedAt ? ` This site collected the files on ${formatDate(data.updatedAt)}.` : ''} Cells
         backed by
         {minCellSizes.length === 1 ? ` fewer than ${minCellSizes[0]} subjects` : ' too few subjects'} are
-        suppressed by <code>meds_summary_stats</code>, and are shown as suppressed, never filled in.
+        suppressed by <code>meds_summary_stats</code>, and are shown as suppressed, never filled in. Every row
+        of a dataset counts as one event, including rows that share a subject and time.
       </Alert>
 
       {hasDemo && (
@@ -165,9 +356,17 @@ export default function DatasetStatistics(): React.JSX.Element {
         </Paper>
       )}
 
-      <Box component="section" aria-labelledby="stats-files" sx={{ mb: 5 }}>
-        <h2 id="stats-files">Datasets and their stats files</h2>
+      <Box component="section" aria-labelledby={SECTIONS.files.id} sx={{ mb: 5 }}>
+        <Heading as="h2" id={SECTIONS.files.id}>
+          {SECTIONS.files.title}
+        </Heading>
         <SummaryTable entries={entries} />
+        {overridden && (
+          <Typography variant="body2" color="text.secondary" component="p" sx={{ mt: 1 }}>
+            {OVERRIDE_MARK} Set in this site&apos;s configuration (
+            <code>static/data/etl_summary_stats.yaml</code>) rather than taken from the stats file.
+          </Typography>
+        )}
         {problems.map(entry => (
           <Alert key={entry.id} severity="warning" sx={{ mt: 1 }}>
             <strong>{entry.label}</strong>: {entry.problem} It is listed here but left out of the charts.
@@ -189,44 +388,42 @@ export default function DatasetStatistics(): React.JSX.Element {
       </Box>
 
       <ChartSection
-        id="dataset-size"
-        title="Dataset size"
-        description="Events (distinct subject and time pairs), measurements (rows) and distinct codes in each dataset, side by side. The axis is logarithmic: each gridline is ten times the last. Sort the datasets by any count or by name; the table below also lists each dataset's subjects."
-        controls={
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', columnGap: 3, rowGap: 0.5 }}>
-            <LabelledToggle label="Sort by">
-              <MetricToggle
-                label="Sort by"
-                options={SIZE_SORT_OPTIONS}
-                value={sizeOrder.key}
-                onChange={(key: SizeSortKey) => setSizeOrder({ key, direction: defaultDirection(key) })}
-              />
-            </LabelledToggle>
-            <LabelledToggle label="Order">
-              <MetricToggle
-                label="Order"
-                options={sortDirectionOptions(sizeOrder.key)}
-                value={sizeOrder.direction}
-                onChange={(direction: SortDirection) => setSizeOrder({ ...sizeOrder, direction })}
-              />
-            </LabelledToggle>
-          </Box>
-        }
+        {...SECTIONS.size}
+        description={`Events (rows) and distinct codes in each dataset, side by side, with the most events first. ${valueAxisSentence(isLog('size', size))} The table below also lists each dataset's subjects.`}
+        controls={scaleToggles('size', size)}
         skipped={size.skipped}
         table={size.table}
       >
         {size.figure && (
           <Plot
             figure={size.figure}
-            label={`Events, measurements and unique codes per dataset, grouped bars, sorted by ${sortLabel.toLowerCase()}`}
+            label="Events and unique codes per dataset, grouped bars, most events first"
           />
         )}
       </ChartSection>
 
       <ChartSection
-        id="depth-breadth"
-        title="Depth vs. breadth"
-        description="One bubble per dataset: how many subjects it covers (across) against how much data a typical subject has, the median number of measurements per subject (up). The bubble's area shows how many distinct codes the dataset uses. Both axes are logarithmic. Datasets further right are broader, and those higher up are deeper."
+        {...SECTIONS.depth}
+        description={`One bubble per dataset. Across is its breadth: the number of ${across.noun} it has. Up is its depth: the median number of events per subject. The bubble's area shows the number of ${sizedBy.noun}${bubbleSize === breadth ? ', as the horizontal axis does' : ''}. ${axesSentence({ x: isLog('depth', depth, 'x'), y: isLog('depth', depth, 'y') })} Datasets further right are broader, and those higher up are deeper.`}
+        controls={
+          depth.figure && [
+            <MetricToggle
+              key="breadth"
+              label="Breadth"
+              options={BREADTH_MEASURES}
+              value={breadth}
+              onChange={setBreadth}
+            />,
+            <MetricToggle
+              key="size"
+              label="Bubble size"
+              options={BREADTH_MEASURES}
+              value={bubbleSize}
+              onChange={setBubbleSize}
+            />,
+            ...scaleToggles('depth', depth),
+          ]
+        }
         skipped={depth.skipped}
         table={depth.table}
       >
@@ -234,7 +431,7 @@ export default function DatasetStatistics(): React.JSX.Element {
           <>
             <Plot
               figure={depth.figure}
-              label="Subjects against median measurements per subject, one bubble per dataset, sized by unique codes"
+              label={`${across.label} against median events per subject, one bubble per dataset, sized by ${sizedBy.noun}`}
             />
             <BubbleKey model={depth} />
           </>
@@ -242,91 +439,99 @@ export default function DatasetStatistics(): React.JSX.Element {
       </ChartSection>
 
       <ChartSection
-        id="per-subject"
-        title="How much data each subject has"
-        description="The spread across subjects: each box runs from the 25th to the 75th percentile with the median marked inside, and the whiskers reach the 5th and 95th percentiles. The stats files publish no minimum or maximum, by design. Logarithmic axis."
-        controls={
+        {...SECTIONS.perSubject}
+        description={`The spread across subjects: each box runs from the 25th to the 75th percentile with the median marked inside, and the whiskers reach the 5th and 95th percentiles. The stats files publish no minimum or maximum, by design. ${valueAxisSentence(isLog('perSubject', perSubject))}`}
+        controls={[
           <MetricToggle
+            key="metric"
             label="Per-subject measure"
             options={PER_SUBJECT_METRICS}
             value={perSubjectMetric}
             onChange={setPerSubjectMetric}
-          />
-        }
+          />,
+          ...scaleToggles('perSubject', perSubject),
+        ]}
         skipped={perSubject.skipped}
         table={perSubject.table}
       >
         {perSubject.figure && (
-          <Plot figure={perSubject.figure} label={`${perSubjectMetric} per subject, box chart per dataset`} />
+          <Plot
+            figure={perSubject.figure}
+            label={`${(PER_SUBJECT_METRICS.find(m => m.key === perSubjectMetric) as { axis: string }).axis}, box chart per dataset`}
+          />
         )}
       </ChartSection>
 
       <ChartSection
-        id="pace"
-        title="Pace of measurements"
+        {...SECTIONS.pace}
         description={
           <>
-            <strong>Measurements per day of record</strong>: the mean number of measurements per subject
-            divided by the mean record span in days. This is a ratio of two averages, not the rate of a
-            typical subject. A record spans a subject&apos;s first to last event, including a birth record
-            where there is one, so for datasets that record births the span covers most of a lifetime and the
-            ratio is low. Logarithmic axis. <strong>Measurements per event</strong>: all measurements divided
-            by all events (distinct subject and time pairs), an exact figure for the whole dataset. Largest
-            first.
+            How densely each dataset records data: each subject&apos;s own rate, their timed events divided by
+            the days from their earliest to their latest one, as <code>per_subject.measurements_per_day</code>{' '}
+            in a stats file gives it. Birth and death records are left out, so that birth dates and registry
+            deaths don&apos;t stretch the span, and subjects with fewer than two distinct timestamps have no
+            rate and aren&apos;t counted. Each box runs from the 25th to the 75th percentile of subjects, with
+            the median marked inside, and the whiskers reach the 5th and 95th percentiles. Very short records
+            give very large rates, so the chart shows these percentiles rather than the mean. The datasets are
+            ranked by their median.{pace.figure ? ` ${valueAxisSentence(isLog('pace', pace))}` : ''}
           </>
         }
-        controls={
-          <MetricToggle
-            label="Pace measure"
-            options={PACE_METRICS}
-            value={paceMetric}
-            onChange={setPaceMetric}
-          />
-        }
+        controls={scaleToggles('pace', pace)}
         skipped={pace.skipped}
         table={pace.table}
       >
-        {pace.figure && (
-          <Plot
-            figure={pace.figure}
-            label={`${(PACE_METRICS.find(m => m.key === paceMetric) as { full: string }).full}, one bar per dataset`}
-          />
-        )}
+        {pace.figure && <Plot figure={pace.figure} label={`${PACE_LABEL}, box chart per dataset`} />}
       </ChartSection>
 
       <ChartSection
-        id="record-coverage"
-        title="Record coverage"
-        description="Birth, Death and Static: the share of subjects with a birth record, a death record and static (time-less) data. Numeric: the share of measurements that carry a numeric value. Darker cells are higher shares."
+        {...SECTIONS.coverage}
+        description="Birth, Death and Static: the share of subjects with a birth record, a death record and static (time-less) data. Numeric: the share of events that carry a numeric value. Darker cells are higher shares."
         skipped={coverage.skipped}
       >
         {coverage.figure && <Plot figure={coverage.figure} label="Record coverage per dataset, heatmap" />}
       </ChartSection>
 
       <ChartSection
-        id="code-coverage"
-        title="Coverage of the most common codes"
-        description="The share of all measurements (up) that a dataset's most frequent codes cover, against how many of them are taken (across, logarithmic). A curve that climbs steeply means that a few codes, often high-frequency vitals, make up most of the data; one that climbs slowly means the data is spread over many codes. Each curve ends where all of the dataset's codes cover 100%. The points are the published figures (the shares of the top 10, 100 and 1,000 codes, and how many codes cover 50%, 90% and 99%), joined by lines. Each dataset has its own colour, line style and marker (see the legend); click a legend entry to hide that dataset, or double-click it to show only that one. To compare one dataset against the rest, highlight it."
+        {...SECTIONS.tail}
+        description={
+          <>
+            For each dataset, the share of events whose code is not among its N most frequent codes (up),
+            against N (across). {axesSentence(tailLog)}{' '}
+            {tailLog.x && tailLog.y
+              ? "As in a power-law plot, a curve that falls in a straight line means that code frequencies fall off as a power of their rank, as in Zipf's law. The steeper a curve falls, the faster its tail thins out. One that drops a labelled gridline (ten times fewer events outside) for every labelled gridline across (ten times as many codes) has a slope of −1; a flatter one has a longer tail of rarer codes. Curves bend down as they near a dataset's number of codes, where the tail runs out."
+              : 'With both axes logarithmic, the chart is a power-law plot, on which a straight curve means that code frequencies fall off as a power of their rank.'}{' '}
+            No line is fitted: the points are the published figures, joined by lines. They are the shares of
+            the top 10, 100 and 1,000 codes, and how many codes it takes to cover 50%, 90% and 99% of events
+            (leaving 50%, 10% and 1% outside).{' '}
+            {tailLog.y
+              ? "A point that leaves nothing outside, such as all of a dataset's codes, can't go on a logarithmic axis and is left out. "
+              : ''}
+            Each dataset has its own colour, line style and marker; click a legend entry to hide that dataset,
+            double-click it to show only that one, or highlight one to compare it against the rest.
+          </>
+        }
         controls={
-          codeCoverage.options.length > 0 && (
+          codeTail.options.length > 0 && [
             <DatasetSelect
+              key="highlight"
               label="Highlight"
               emptyOption="None"
-              options={codeCoverage.options}
-              value={codeCoverage.highlighted ?? ''}
+              options={codeTail.options}
+              value={codeTail.highlighted ?? ''}
               onChange={value => setHighlight(value || null)}
-            />
-          )
+            />,
+            ...scaleToggles('tail', codeTail),
+          ]
         }
-        skipped={codeCoverage.skipped}
-        table={codeCoverage.table}
+        skipped={codeTail.skipped}
+        table={codeTail.table}
       >
-        {codeCoverage.figure && (
+        {codeTail.figure && (
           <Plot
-            figure={codeCoverage.figure}
-            label={`Share of measurements covered by the most frequent codes, one curve per dataset${
-              codeCoverage.highlighted
-                ? `, ${codeCoverage.highlighted} highlighted`
+            figure={codeTail.figure}
+            label={`Share of events outside the most frequent codes against the number of codes, ${tailAxes}, one curve per dataset${
+              codeTail.highlighted
+                ? `, ${codeTail.highlighted} highlighted`
                 : ', each in its own colour and line style'
             }`}
           />
@@ -334,29 +539,76 @@ export default function DatasetStatistics(): React.JSX.Element {
       </ChartSection>
 
       <ChartSection
-        id="vocabularies-used"
-        title="Vocabularies used"
-        description="The share of each dataset's measurements whose code has a parent code in each vocabulary, through the parent codes in its code metadata. A code can map into several vocabularies, so a row's shares can add up to more than the share of measurements that are mapped at all (next chart). Vocabularies used by the most datasets come first. Darker cells are larger shares, shaded on a logarithmic scale so that small vocabularies still show; a blank grey cell means the dataset doesn't use that vocabulary."
+        {...SECTIONS.vocabularies}
+        description={
+          <>
+            How each dataset&apos;s codes map to vocabularies such as LOINC or ICD-10, through the parent
+            codes in its code metadata. Every cell is a share, printed and shaded on a logarithmic scale
+            (darker is larger) so that small shares still show. The first two columns count each event and
+            code once: <strong>{MAPPING_COLUMNS[0].label}</strong> is the share of events whose code maps to
+            any vocabulary, de-duplicated, and <strong>{MAPPING_COLUMNS[1].label}</strong> the share of the
+            distinct codes in the data that have a parent code. After the gap, each column is one vocabulary
+            {vocabularies.icdVocabularies.length > 0 ? ` (${ICD_GROUP} groups several, see below)` : ''}: the
+            share of events whose code has a parent in it. A code can map into several vocabularies, so a
+            row&apos;s vocabulary shares can add up to more than its {MAPPING_COLUMNS[0].label} share.
+            Vocabularies used by the most datasets come first, and a blank grey cell means the dataset
+            doesn&apos;t use that vocabulary. Datasets whose code metadata maps no codes show 0% and &ldquo;
+            {NO_MAPPING}&rdquo;.
+          </>
+        }
         skipped={vocabularies.skipped}
       >
         {vocabularies.figure && (
           <>
-            <Plot
-              figure={vocabularies.figure}
-              minWidth={vocabularies.minWidth}
-              label="Share of measurements per vocabulary and dataset, heatmap"
-            />
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              component="p"
-              sx={{ mt: 1, mb: 0, display: { xs: 'block', md: 'none' } }}
-            >
-              Swipe sideways to see every vocabulary.
-            </Typography>
+            {/* Its width is queried, so that the hint shows only when the heatmap is wider than the space. */}
+            <Box sx={{ containerType: 'inline-size' }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                component="p"
+                sx={{
+                  display: 'none',
+                  mt: 0,
+                  mb: 1,
+                  [`@container (max-width: ${vocabularies.rowLabels.width + vocabularies.minWidth - 1}px)`]: {
+                    display: 'block',
+                  },
+                }}
+              >
+                Scroll the heatmap sideways to see every vocabulary.
+              </Typography>
+              <Box sx={{ display: 'flex' }}>
+                <RowLabels {...vocabularies.rowLabels} />
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Plot
+                    figure={vocabularies.figure}
+                    minWidth={vocabularies.minWidth}
+                    label="Share of events mapped to any vocabulary and to each vocabulary, per dataset, heatmap"
+                  />
+                </Box>
+              </Box>
+            </Box>
             {vocabularies.anyRecognized && (
               <Typography variant="body2" color="text.secondary" component="p" sx={{ mt: 1, mb: 0 }}>
                 {OMOP_MARK} A standard OMOP CDM vocabulary, as recognised by <code>meds_summary_stats</code>.
+              </Typography>
+            )}
+            {vocabularies.icdVocabularies.length > 0 && (
+              <Typography variant="body2" color="text.secondary" component="p" sx={{ mt: 1, mb: 0 }}>
+                <strong>{ICD_GROUP}</strong> groups the vocabularies whose names start with ICD:{' '}
+                {listOf(vocabularies.icdVocabularies)}. Its cell is the share of events whose code has a
+                parent in at least one of them. Where the stats file reports that no code has parents in more
+                than one vocabulary, that is the sum of their shares. Otherwise a code can count in several,
+                and the file only bounds the share: from below by the largest ICD share, and by the share
+                mapped to any vocabulary minus the shares of all other vocabularies (including suppressed
+                ones, and parent codes that name none, where the file gives these); from above by the sum of
+                the ICD shares, and by the share mapped to any vocabulary. The cell gives one value where the
+                bounds round alike, and the range otherwise
+                {vocabularies.icdRanges.length > 0 ? ` (${listOf(vocabularies.icdRanges)})` : ''}.
+                {vocabularies.icdWithSuppressed
+                  ? ' Suppressed vocabularies are not named, so none of them is counted as ICD.'
+                  : ''}{' '}
+                Hover over a cell for each ICD vocabulary&apos;s own share.
               </Typography>
             )}
           </>
@@ -364,21 +616,18 @@ export default function DatasetStatistics(): React.JSX.Element {
       </ChartSection>
 
       <ChartSection
-        id="vocabularies"
-        title="Mapping to standard vocabularies"
-        description="Where the code metadata links codes to parent codes in standard vocabularies such as LOINC or ICD-10: the share of measurements whose code is mapped to any vocabulary, and the share of the distinct codes in the data that are. Unlike the shares above, each measurement and code counts once."
-        skipped={ontology.skipped}
-        table={ontology.table}
-      >
-        {ontology.figure && (
-          <Plot figure={ontology.figure} label="Vocabulary mapping coverage, grouped bars" />
-        )}
-      </ChartSection>
-
-      <ChartSection
-        id="health-check"
-        title="Health check"
+        {...SECTIONS.health}
         description={`Invariants every MEDS dataset should meet, from each stats file. A check mark means the check passes, a warning sign that it needs a look, and a question mark that the stats file doesn't report it. Codes with a description pass at ${formatPercent(DESCRIPTION_THRESHOLD)} or more. The versions, and codes listed in codes.parquet but not used, are information without a verdict.`}
+        controls={
+          health.anyMissingCodes && (
+            <MetricToggle
+              label="Missing codes"
+              options={MISSING_CODES_VIEWS}
+              value={missingCodes}
+              onChange={setMissingCodes}
+            />
+          )
+        }
         skipped={health.skipped}
       >
         <HealthTable model={health} />
