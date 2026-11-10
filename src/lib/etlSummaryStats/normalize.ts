@@ -6,6 +6,7 @@ import {
   type EtlStatsEntry,
   type SuppressedRollup,
   type VocabularyCell,
+  NO_VOCABULARY_KEY,
   SUPPORTED_SCHEMA_VERSIONS,
   SUPPRESSED_KEY,
 } from './types';
@@ -16,6 +17,10 @@ import {
 //
 // Nothing here derives a number the document doesn't state: suppressed cells stay suppressed (only the published
 // `<suppressed>` rollup is kept), and nothing is back-computed from totals.
+//
+// The page counts every row as an event, so what `meds_summary_stats` calls measurements (`n_measurements`,
+// `frac_measurements_mapped`, ...) are read as events here. Its own `n_events` (distinct subject and time pairs) is
+// not read.
 
 type JsonObject = Record<string, unknown>;
 
@@ -64,7 +69,7 @@ export function normalizeKeyed<T>(
   let suppressed: SuppressedRollup | null = null;
   for (const [key, cell] of Object.entries(value)) {
     if (key === SUPPRESSED_KEY) {
-      if (isObject(cell)) suppressed = { cells: num(cell[countKey]), measurements: num(cell.n_measurements) };
+      if (isObject(cell)) suppressed = { cells: num(cell[countKey]), events: num(cell.n_measurements) };
       continue;
     }
     const parsed = parse(key, cell);
@@ -80,7 +85,7 @@ const parseVocabulary = (key: string, cell: unknown): VocabularyCell | null => {
   const recognized = dig(cell, 'recognized');
   return {
     name: key,
-    measurements: num(dig(cell, 'n_measurements')),
+    events: num(dig(cell, 'n_measurements')),
     recognized: typeof recognized === 'boolean' ? recognized : null,
   };
 };
@@ -120,20 +125,29 @@ export function normalizeStats(doc: JsonObject): EtlStats {
   const ontologyBlock = dig(codeMetadataBlock, 'ontology');
   let ontology: EtlStats['ontology'] = null;
   if (isObject(ontologyBlock) && ontologyBlock.present === true) {
-    const vocabularies = normalizeKeyed(ontologyBlock.by_vocabulary, parseVocabulary, 'n_vocabularies');
+    const byVocabulary = ontologyBlock.by_vocabulary;
+    const vocabularies = normalizeKeyed(byVocabulary, parseVocabulary, 'n_vocabularies');
+    // Without a `<no-vocabulary>` entry, no events fall outside the named and suppressed vocabularies.
+    const noVocabulary = isObject(byVocabulary) ? byVocabulary[NO_VOCABULARY_KEY] : undefined;
     ontology = {
-      measurementsMapped: num(dig(ontologyBlock, 'coverage', 'frac_measurements_mapped')),
+      eventsMapped: num(dig(ontologyBlock, 'coverage', 'frac_measurements_mapped')),
       codesWithParents: num(dig(ontologyBlock, 'coverage', 'frac_observed_codes_with_parents')),
       vocabularies: (vocabularies?.cells ?? []).sort((a, b) => a.name.localeCompare(b.name)),
       suppressed: vocabularies?.suppressed ?? null,
+      mappedEvents: num(dig(ontologyBlock, 'coverage', 'n_measurements_mapped')),
+      noVocabularyEvents: !vocabularies
+        ? null
+        : noVocabulary === undefined
+          ? 0
+          : num(dig(noVocabulary, 'n_measurements')),
+      codesInMultipleVocabularies: num(ontologyBlock.n_codes_in_multiple_vocabularies),
     };
   }
 
   return {
     counts: {
       subjects: num(dig(counts, 'n_subjects')),
-      events: num(dig(counts, 'n_events')),
-      measurements: num(dig(counts, 'n_measurements')),
+      events: num(dig(counts, 'n_measurements')),
       uniqueCodes: num(dig(counts, 'n_unique_codes')),
       subjectsWithBirth: num(dig(counts, 'n_subjects_with_birth')),
       subjectsWithDeath: num(dig(counts, 'n_subjects_with_death')),
@@ -148,10 +162,10 @@ export function normalizeStats(doc: JsonObject): EtlStats {
       infiniteValues: num(dig(counts, 'numeric', 'n_infinite')),
     },
     perSubject: {
-      measurements: normalizeDistribution(dig(perSubject, 'n_measurements')),
-      events: normalizeDistribution(dig(perSubject, 'n_events')),
+      events: normalizeDistribution(dig(perSubject, 'n_measurements')),
       uniqueCodes: normalizeDistribution(dig(perSubject, 'n_unique_codes')),
       spanDays: normalizeDistribution(dig(perSubject, 'span_days')),
+      eventsPerDay: normalizeDistribution(dig(perSubject, 'measurements_per_day')),
     },
     codeMetadata,
     concentration,
