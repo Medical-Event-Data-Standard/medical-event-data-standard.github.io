@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { Suspense, lazy, useMemo, useState } from 'react';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
 import { usePluginData } from '@docusaurus/useGlobalData';
-import { Alert, Box, Grid, Typography } from '@mui/material';
+import { Alert, Box, Button, Grid, Typography } from '@mui/material';
 import InstitutionList from '@site/src/components/papers/InstitutionList';
 import PaperBrowser from '@site/src/components/papers/PaperBrowser';
 import PaperCard from '@site/src/components/papers/PaperCard';
@@ -11,6 +11,9 @@ import { PAPERS_PLUGIN, type PapersPageData } from '@site/src/lib/papers/types';
 
 const REPO = 'https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io';
 const PAPERS_YAML = `${REPO}/blob/main/static/data/papers.yaml`;
+
+// The map and its land outline are only loaded once it is shown.
+const InstitutionMap = lazy(() => import('@site/src/components/papers/InstitutionMap'));
 
 /**
  * Papers citing the core MEDS papers, collected from Semantic Scholar at build time by plugins/papers.ts, with
@@ -24,6 +27,9 @@ export default function Papers(): React.JSX.Element {
   const institutions = useMemo(() => countInstitutions(data?.papers ?? []), [data]);
   const withoutInstitutions = papers.filter(paper => paper.institutions.length === 0).length;
   const [institution, setInstitution] = useState<string | null>(null);
+  const [showMap, setShowMap] = useState(false);
+  const locations = data?.institutionLocations ?? {};
+  const icons = data?.institutionIcons ?? {};
 
   const selectInstitution = (name: string | null): void => {
     setInstitution(name);
@@ -94,10 +100,35 @@ export default function Papers(): React.JSX.Element {
             </p>
             <InstitutionList
               institutions={institutions}
-              icons={data?.institutionIcons ?? {}}
+              icons={icons}
               selected={institution}
               onSelect={selectInstitution}
+              actions={
+                Object.keys(locations).length > 0 && (
+                  <Button
+                    size="small"
+                    aria-expanded={showMap}
+                    aria-controls={showMap ? 'institution-map' : undefined}
+                    onClick={() => setShowMap(!showMap)}
+                  >
+                    {showMap ? 'Hide map' : 'Show map'}
+                  </Button>
+                )
+              }
             />
+            {showMap && (
+              <Suspense fallback={<Typography sx={{ mt: 1.5 }}>Loading the map&hellip;</Typography>}>
+                {/* Selecting on the map doesn't scroll to the list, so the selection stays in view. */}
+                <InstitutionMap
+                  institutions={institutions}
+                  locations={locations}
+                  papers={papers}
+                  icons={icons}
+                  selected={institution}
+                  onSelect={setInstitution}
+                />
+              </Suspense>
+            )}
           </section>
         )}
 
@@ -108,6 +139,7 @@ export default function Papers(): React.JSX.Element {
             seeds={seeds}
             institution={institution}
             onInstitutionChange={setInstitution}
+            icons={icons}
           />
         </section>
 
@@ -134,7 +166,8 @@ export default function Papers(): React.JSX.Element {
               they can be added by hand in the <code>affiliations</code> list of papers.yaml. An institution
               that OpenAlex records as part of another listed institution is shown as that institution, unless
               papers.yaml keeps it separate. An institution&rsquo;s icon is its website&rsquo;s icon, found
-              through the homepage that OpenAlex, or papers.yaml, lists for it.
+              through the homepage that OpenAlex, or papers.yaml, lists for it, and its place on the map is
+              the location OpenAlex records for it.
               {withoutInstitutions > 0 && (
                 <>
                   {' '}

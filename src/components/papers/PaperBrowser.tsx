@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Box, Button, Chip, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import { matchesQuery, sortPapers, type SortOrder } from '@site/src/lib/papers/display';
 import type { CitingPaper, SeedPaper } from '@site/src/lib/papers/types';
+import InstitutionIcon from './InstitutionIcon';
 import PaperCard from './PaperCard';
 
 const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
@@ -19,11 +20,14 @@ export default function PaperBrowser({
   seeds,
   institution,
   onInstitutionChange,
+  icons = {},
 }: {
   papers: CitingPaper[];
   seeds: SeedPaper[];
   institution: string | null;
   onInstitutionChange: (name: string | null) => void;
+  /** URL path of each institution's icon, by name. */
+  icons?: Readonly<Record<string, string>>;
 }): React.JSX.Element {
   const [query, setQuery] = useState('');
   // Why a paper is listed: 'all', a seed's id (it cites that seed), or 'manual' (it was added by hand).
@@ -114,6 +118,14 @@ export default function PaperBrowser({
           <Chip
             size="small"
             color="primary"
+            avatar={
+              <InstitutionIcon
+                name={institution}
+                icon={icons[institution]}
+                // On the coloured chip, an icon gets a white background like the other chips.
+                sx={icons[institution] ? { bgcolor: 'common.white' } : undefined}
+              />
+            }
             label={institution}
             onDelete={() => onInstitutionChange(null)}
             aria-label={`Institution: ${institution}`}
@@ -131,7 +143,7 @@ export default function PaperBrowser({
       ) : (
         <Stack spacing={1.5}>
           {shown.map(paper => (
-            <PaperCard key={paper.id} paper={paper} institutions={paper.institutions} />
+            <PaperCard key={paper.id} paper={paper} institutions={paper.institutions} icons={icons} />
           ))}
         </Stack>
       )}

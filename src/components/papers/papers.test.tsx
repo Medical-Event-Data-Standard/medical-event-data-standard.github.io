@@ -186,8 +186,19 @@ describe('Papers page', () => {
     );
     expect(list.getByText('Alan Turing, Grace Hopper, Edsger Dijkstra, Barbara Liskov')).toBeInTheDocument();
     expect(list.getByText('ML4H · 2024')).toBeInTheDocument();
-    expect(list.getByText('Columbia University · Stanford University')).toBeInTheDocument();
-    expect(list.getByText('Columbia University')).toBeInTheDocument();
+    // Each card lists its institutions with their icons.
+    const cards = list.getAllByRole('list', { name: 'Institutions' });
+    expect(
+      cards.map(card =>
+        within(card)
+          .getAllByRole('listitem')
+          .map(item => item.textContent)
+      )
+    ).toEqual([['Columbia University'], ['Columbia University', 'SStanford University']]);
+    expect(cards[0].querySelector('img')).toHaveAttribute(
+      'src',
+      '/base/img/institutions/columbia-university.png'
+    );
     expect(list.queryByText('Cites')).not.toBeInTheDocument();
   });
 
@@ -275,8 +286,16 @@ describe('Papers page', () => {
     mockUsePluginData.mockReturnValue(data);
     render(<Papers />);
 
+    fireEvent.click(screen.getByRole('button', { name: 'Columbia University: 2 papers' }));
+    const columbia = within(listRegion()).getByRole('button', { name: 'Institution: Columbia University' });
+    // The chip shows the institution's icon, or its initial.
+    expect(columbia.querySelector('img')).toHaveAttribute(
+      'src',
+      '/base/img/institutions/columbia-university.png'
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Stanford University: 1 paper' }));
     const active = within(listRegion()).getByRole('button', { name: 'Institution: Stanford University' });
+    expect(active).toHaveTextContent('SStanford University');
     fireEvent.keyUp(active, { key: 'Backspace' });
     expect(listedTitles()).toHaveLength(3);
     expect(screen.getByText('3 papers')).toBeInTheDocument();
@@ -313,6 +332,146 @@ describe('Papers page', () => {
     fireEvent.click(institutions.getByRole('button', { name: 'Show fewer' }));
     expect(chipNames()).toHaveLength(25);
     expect(chipNames()[24]).toBe('Institution 28: 1 paper');
+  });
+
+  it('shows a zoomable map of the institutions when asked, with pins and numbered clusters', async () => {
+    const newYork = { latitude: 40.71427, longitude: -74.00597, city: 'New York', country: 'US' };
+    mockUsePluginData.mockReturnValue({
+      ...data,
+      papers: [
+        { ...papers[0], institutions: ['Columbia University', 'Stanford University', 'New York University'] },
+        { ...papers[1], institutions: ['Columbia University', 'Nowhere Institute', 'Yale University'] },
+        papers[2],
+      ],
+      institutionLocations: {
+        'Columbia University': newYork,
+        'New York University': newYork,
+        'Yale University': { latitude: 41.30815, longitude: -72.92816, city: 'New Haven', country: 'US' },
+        'Stanford University': { latitude: 37.42411, longitude: -122.16608, city: 'Stanford', country: 'US' },
+      },
+    });
+    const scrollIntoView = jest.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    render(<Papers />);
+    const region = within(screen.getByRole('region', { name: 'Institutions' }));
+    const mapName = 'Map of the institutions';
+
+    // Hidden until asked for.
+    const toggle = region.getByRole('button', { name: 'Show map' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('group', { name: mapName })).not.toBeInTheDocument();
+    fireEvent.click(toggle);
+    const map = within(await screen.findByRole('group', { name: mapName }));
+    expect(region.getByRole('button', { name: 'Hide map' })).toHaveAttribute('aria-expanded', 'true');
+
+    // Institutions close together on the screen are a cluster, showing their number; the others are pins.
+    const markers = () =>
+      map
+        .getAllByRole('button', { name: /(papers?|institutions: .*)$/ })
+        .map(marker => marker.getAttribute('aria-label'));
+    const cluster = (count: number) =>
+      map.getByRole('button', { name: new RegExp(`^${count} institutions:`) });
+    const stanford = () => map.getByRole('button', { name: 'Stanford University: 1 paper' });
+    expect(markers()).toEqual([
+      '3 institutions: Columbia University, New York University, Yale University',
+      'Stanford University: 1 paper',
+    ]);
+    expect(cluster(3)).toHaveTextContent(/^3$/);
+    expect(stanford().querySelector('svg')?.style.fontSize).toBe('20px');
+    expect(
+      region.getByText(/1 of the 5 institutions has no location on OpenAlex and is not shown\./)
+    ).toBeInTheDocument();
+    expect(region.getByRole('link', { name: 'Natural Earth' })).toHaveAttribute(
+      'href',
+      'https://www.naturalearthdata.com/'
+    );
+
+    // Hovering over a cluster lists its institutions, with their icons.
+    fireEvent.mouseOver(cluster(3));
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent('Columbia University: 2 papers');
+    expect(tooltip).toHaveTextContent('Yale University: 1 paper');
+    expect(tooltip.querySelector('img')).toHaveAttribute(
+      'src',
+      '/base/img/institutions/columbia-university.png'
+    );
+    fireEvent.mouseLeave(cluster(3));
+
+    // A pin selects its institution, without scrolling away from the map, and labels it on the map.
+    fireEvent.click(stanford());
+    expect(listedTitles()).toEqual(['An Older Paper About Foundation Models']);
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    expect(stanford()).toHaveAttribute('aria-pressed', 'true');
+    expect(map.getByText('Stanford University')).toBeInTheDocument();
+    // Its chip is selected too; selecting the pin again clears the filter.
+    expect(
+      region.getAllByRole('button', { name: 'Stanford University: 1 paper', pressed: true })
+    ).toHaveLength(2);
+    fireEvent.click(stanford());
+    expect(listedTitles()).toHaveLength(3);
+    expect(map.queryByText('Stanford University')).not.toBeInTheDocument();
+
+    // A cluster zooms in on its institutions, leaving Stanford out of view.
+    expect(map.getByRole('button', { name: 'Zoom out' })).toBeDisabled();
+    fireEvent.click(cluster(3));
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    // Markers further north come first, so that those further south are drawn over them.
+    expect(markers()).toEqual([
+      'Yale University: 1 paper',
+      '2 institutions: Columbia University, New York University',
+    ]);
+    expect(map.getByRole('button', { name: 'Zoom out' })).toBeEnabled();
+
+    // A cluster of institutions at one place lists them instead, with their icons.
+    fireEvent.click(cluster(2));
+    const items = screen.getAllByRole('menuitem');
+    expect(items.map(item => item.textContent)).toEqual(['Columbia University2', 'NNew York University1']);
+    expect(items[0].querySelector('img')).toHaveAttribute(
+      'src',
+      '/base/img/institutions/columbia-university.png'
+    );
+    fireEvent.click(items[1]);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(listedTitles()).toEqual(['An Older Paper About Foundation Models']);
+    expect(screen.getByRole('button', { name: 'Institution: New York University' })).toBeInTheDocument();
+    expect(map.getByText('New York University')).toBeInTheDocument();
+
+    // Zooming keeps the selected institution in view.
+    fireEvent.click(map.getByRole('button', { name: 'Zoom out' }));
+    expect(markers()).toContain('2 institutions: Columbia University, New York University');
+    expect(map.getByText('New York University')).toBeInTheDocument();
+
+    // Selecting Stanford with its chip moves the map to show it.
+    fireEvent.click(region.getByRole('button', { name: 'Stanford University: 1 paper' }));
+    expect(markers()).toEqual(['Stanford University: 1 paper']);
+    expect(map.getByText('Stanford University')).toBeInTheDocument();
+    fireEvent.click(map.getByRole('button', { name: 'Show the whole map' }));
+    expect(map.queryByRole('button', { name: 'Show the whole map' })).not.toBeInTheDocument();
+    expect(markers()).toHaveLength(2);
+
+    // A double click zooms in, and dragging moves the map; neither selects anything.
+    const frame = screen.getByRole('group', { name: mapName });
+    fireEvent.doubleClick(frame, { clientX: 0, clientY: 0 });
+    expect(map.getByRole('button', { name: 'Zoom out' })).toBeEnabled();
+    fireEvent.pointerDown(frame, { clientX: 500, clientY: 100, pointerId: 1 });
+    fireEvent.pointerMove(frame, { clientX: 100, clientY: 100, pointerId: 1 });
+    fireEvent.pointerUp(frame, { pointerId: 1 });
+    expect(screen.getByRole('button', { name: 'Institution: Stanford University' })).toBeInTheDocument();
+
+    // The caption says when the selected institution has no location.
+    fireEvent.click(region.getByRole('button', { name: 'Nowhere Institute: 1 paper' }));
+    expect(
+      region.getByText(/Nowhere Institute has no location on OpenAlex, so it is not on the map\./)
+    ).toBeInTheDocument();
+
+    fireEvent.click(region.getByRole('button', { name: 'Hide map' }));
+    expect(screen.queryByRole('group', { name: mapName })).not.toBeInTheDocument();
+  });
+
+  it('offers no map when no institution has a location', () => {
+    mockUsePluginData.mockReturnValue(data);
+    render(<Papers />);
+    expect(screen.queryByRole('button', { name: 'Show map' })).not.toBeInTheDocument();
   });
 
   it('filters by why a paper is listed, offering only reasons some paper has', () => {

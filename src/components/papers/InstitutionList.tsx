@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Avatar, Box, Button, Chip, ToggleButton, ToggleButtonGroup } from '@mui/material';
-import { useBaseUrlUtils } from '@docusaurus/useBaseUrl';
+import { Box, Button, Chip, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import type { InstitutionCount } from '@site/src/lib/papers/display';
+import InstitutionIcon from './InstitutionIcon';
 
 /** How many institutions are shown before "Show all". */
 export const COLLAPSED_COUNT = 24;
@@ -17,6 +17,7 @@ export default function InstitutionList({
   icons,
   selected,
   onSelect,
+  actions,
 }: {
   /** Most papers first. */
   institutions: readonly InstitutionCount[];
@@ -24,8 +25,9 @@ export default function InstitutionList({
   icons: Readonly<Record<string, string>>;
   selected: string | null;
   onSelect: (name: string | null) => void;
+  /** Buttons shown after the "Show all" button. */
+  actions?: React.ReactNode;
 }): React.JSX.Element {
-  const { withBaseUrl } = useBaseUrlUtils();
   const [expanded, setExpanded] = useState(false);
   const [order, setOrder] = useState<InstitutionOrder>('papers');
   const sorted = useMemo(
@@ -59,18 +61,7 @@ export default function InstitutionList({
           return (
             <li key={name}>
               <Chip
-                avatar={
-                  icon ? (
-                    <Avatar
-                      variant="rounded"
-                      alt=""
-                      src={withBaseUrl(icon)}
-                      sx={{ bgcolor: 'transparent', '& img': { objectFit: 'contain' } }}
-                    />
-                  ) : (
-                    <Avatar aria-hidden>{name.charAt(0)}</Avatar>
-                  )
-                }
+                avatar={<InstitutionIcon name={name} icon={icon} />}
                 label={
                   <>
                     {name}
@@ -89,10 +80,15 @@ export default function InstitutionList({
           );
         })}
       </Box>
-      {collapsible && (
-        <Button size="small" sx={{ mt: 1 }} onClick={() => setExpanded(!expanded)}>
-          {expanded ? 'Show fewer' : `Show all ${sorted.length} institutions`}
-        </Button>
+      {(collapsible || actions) && (
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+          {collapsible && (
+            <Button size="small" onClick={() => setExpanded(!expanded)}>
+              {expanded ? 'Show fewer' : `Show all ${sorted.length} institutions`}
+            </Button>
+          )}
+          {actions}
+        </Box>
       )}
     </Box>
   );
