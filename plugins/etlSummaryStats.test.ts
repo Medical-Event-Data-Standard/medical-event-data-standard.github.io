@@ -522,6 +522,7 @@ describe('parseDatasetLocations', () => {
         {
           institution: 'General Hospital',
           openalexId: 'I123',
+          coordinatesSource: null,
           city: 'Boston',
           country: 'US',
           latitude: 42.3,
@@ -537,6 +538,18 @@ describe('parseDatasetLocations', () => {
     });
   });
 
+  it('reads coordinates from another cited source where OpenAlex has no record', () => {
+    const entry: Record<string, unknown> = {
+      ...location(),
+      coordinates_source: 'https://en.wikipedia.org/wiki/Boston',
+    };
+    delete entry.openalex;
+    expect(parseDatasetLocations({ locations: [entry] }).locations[0]).toMatchObject({
+      openalexId: null,
+      coordinatesSource: 'https://en.wikipedia.org/wiki/Boston',
+    });
+  });
+
   it('reads an empty file, or empty lists, as no locations', () => {
     expect(parseDatasetLocations(null)).toEqual({ locations: [], unplaced: [] });
     expect(parseDatasetLocations({ locations: null })).toEqual({ locations: [], unplaced: [] });
@@ -549,6 +562,18 @@ describe('parseDatasetLocations', () => {
     [{ unplaced: 'x' }, '`unplaced` must be a list'],
     [{ locations: [location({ city: '' })] }, '`locations[0].city` must be a string'],
     [{ locations: [location({ openalex: 'W1' })] }, '`locations[0].openalex` must be an OpenAlex id'],
+    [
+      { locations: [location({ coordinates_source: 'https://en.wikipedia.org/wiki/Boston' })] },
+      '`locations[0]` must have either `openalex` or `coordinates_source`, not both',
+    ],
+    [
+      { locations: [location({ openalex: undefined })] },
+      '`locations[0]` must have either `openalex` or `coordinates_source`, not both',
+    ],
+    [
+      { locations: [location({ openalex: undefined, coordinates_source: 'www.example.org' })] },
+      '`locations[0].coordinates_source` must be an https URL',
+    ],
     [
       { locations: [location({ country: 'USA' })] },
       '`locations[0].country` must be an ISO 3166-1 alpha-2 code',

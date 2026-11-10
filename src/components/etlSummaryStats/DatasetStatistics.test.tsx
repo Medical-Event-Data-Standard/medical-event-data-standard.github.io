@@ -679,6 +679,7 @@ describe('DatasetStatistics', () => {
     const location = (institution: string, city: string, labels: string[]): DatasetLocation => ({
       institution,
       openalexId: 'I1',
+      coordinatesSource: null,
       city,
       country: 'US',
       latitude: 42.34,
@@ -693,7 +694,11 @@ describe('DatasetStatistics', () => {
     const locations = {
       locations: [
         { ...location('General Hospital', 'Boston', ['Big']), caveat: 'Several hospitals.' },
-        location('Far Clinic', 'Stanford', ['Future']),
+        {
+          ...location('Far Clinic', 'Stanford', ['Future']),
+          openalexId: null,
+          coordinatesSource: 'https://en.wikipedia.org/wiki/Stanford,_California',
+        },
       ],
       unplaced: [{ datasets: ['Demo'], reason: 'Many hospitals.', source: 'https://www.example.org/demo' }],
     };
@@ -721,8 +726,13 @@ describe('DatasetStatistics', () => {
     ).toEqual([
       'DatasetInstitutionLocationSource',
       'BigGeneral HospitalSeveral hospitals.Boston, United Statesphysionet.org',
-      'FutureFar ClinicStanford, United Statesphysionet.org',
+      'FutureFar ClinicStanford, United StatesCoordinates from en.wikipedia.orgphysionet.org',
     ]);
+    // Coordinates that don't come from OpenAlex link to their source.
+    expect(within(table).getByRole('link', { name: 'en.wikipedia.org' })).toHaveAttribute(
+      'href',
+      'https://en.wikipedia.org/wiki/Stanford,_California'
+    );
     expect(within(table).getAllByRole('link')[0]).toHaveAttribute(
       'href',
       'https://physionet.org/content/Big/'

@@ -243,12 +243,17 @@ export interface LocatedDataset {
   caveat: string | null;
 }
 
-/** An institution that datasets come from, at its OpenAlex location (static/data/dataset_locations.yaml). */
+/**
+ * An institution that datasets come from, at its OpenAlex location, or at coordinates from another cited source where
+ * OpenAlex has none (static/data/dataset_locations.yaml).
+ */
 export interface DatasetLocation {
   /** As the datasets' documentation names it. */
   institution: string;
-  /** The OpenAlex id of the record that gives its coordinates, e.g. `I1316535847`. */
-  openalexId: string;
+  /** The OpenAlex id of the record that gives its coordinates, e.g. `I1316535847`; null if another source does. */
+  openalexId: string | null;
+  /** URL of the source of the coordinates, where they don't come from OpenAlex; null otherwise. */
+  coordinatesSource: string | null;
   city: string;
   /** ISO 3166-1 alpha-2 code, e.g. `US`. */
   country: string;

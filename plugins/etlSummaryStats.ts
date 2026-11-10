@@ -386,6 +386,7 @@ function parseLocation(value: unknown, i: number): DatasetLocation {
   const fields = mapping(value, where, [
     'institution',
     'openalex',
+    'coordinates_source',
     'city',
     'country',
     'latitude',
@@ -393,14 +394,20 @@ function parseLocation(value: unknown, i: number): DatasetLocation {
     'caveat',
     'datasets',
   ]);
-  const openalexId = text(fields, 'openalex', where);
-  if (!/^I\d+$/.test(openalexId))
+  // The coordinates come from an OpenAlex record, or, where OpenAlex has none, from another source cited here.
+  const openalexId = optionalText(fields, 'openalex', where);
+  if (openalexId !== null && !/^I\d+$/.test(openalexId))
     throw new Error(`\`${where}.openalex\` must be an OpenAlex id, such as I123`);
+  const coordinatesSource =
+    fields.coordinates_source === undefined ? null : url(fields, 'coordinates_source', where);
+  if ((openalexId === null) === (coordinatesSource === null))
+    throw new Error(`\`${where}\` must have either \`openalex\` or \`coordinates_source\`, not both`);
   const country = text(fields, 'country', where);
   if (!/^[A-Z]{2}$/.test(country)) throw new Error(`\`${where}.country\` must be an ISO 3166-1 alpha-2 code`);
   return {
     institution: text(fields, 'institution', where),
     openalexId,
+    coordinatesSource,
     city: text(fields, 'city', where),
     country,
     latitude: coordinate(fields, 'latitude', where, 90),

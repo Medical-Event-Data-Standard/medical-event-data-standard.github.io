@@ -7,6 +7,7 @@ const CONFIG: DatasetLocations = {
     {
       institution: 'General Hospital',
       openalexId: 'I1',
+      coordinatesSource: null,
       city: 'Boston',
       country: 'US',
       latitude: 42.3,
@@ -19,7 +20,8 @@ const CONFIG: DatasetLocations = {
     },
     {
       institution: 'Hospital Group',
-      openalexId: 'I2',
+      openalexId: null,
+      coordinatesSource: 'https://en.wikipedia.org/wiki/Madrid',
       city: 'Madrid',
       country: 'ES',
       latitude: 40.4,
@@ -30,6 +32,7 @@ const CONFIG: DatasetLocations = {
     {
       institution: 'Unshown Clinic',
       openalexId: 'I3',
+      coordinatesSource: null,
       city: 'Bern',
       country: 'CH',
       latitude: 46.9,
@@ -61,6 +64,7 @@ describe('datasetMap', () => {
         weight: 1,
         where: 'Boston, United States',
         caveat: null,
+        coordinatesSource: null,
         datasets: [CONFIG.locations[0].datasets[1], CONFIG.locations[0].datasets[0]],
       },
       expect.objectContaining({
@@ -76,8 +80,13 @@ describe('datasetMap', () => {
         where: 'Boston, United States',
         caveats: [],
         source: 'https://physionet.org/content/big/',
+        coordinatesSource: null,
       },
-      expect.objectContaining({ dataset: 'Synthetic', caveats: ['Several hospitals.', 'Synthetic.'] }),
+      expect.objectContaining({
+        dataset: 'Synthetic',
+        caveats: ['Several hospitals.', 'Synthetic.'],
+        coordinatesSource: 'https://en.wikipedia.org/wiki/Madrid',
+      }),
       expect.objectContaining({ dataset: 'Big demo', source: 'https://physionet.org/content/big-demo/' }),
     ]);
     // Datasets the page doesn't show are left out, and so is an institution with none of them.

@@ -10,6 +10,8 @@ export interface DatasetPlace extends MapPlace {
   /** "Boston, United States". */
   where: string;
   caveat: string | null;
+  /** URL of the source of its coordinates, where they don't come from OpenAlex; else null. */
+  coordinatesSource: string | null;
   datasets: LocatedDataset[];
 }
 
@@ -21,6 +23,8 @@ export interface LocationRow {
   /** The location's caveat, then the dataset's, where there are any. */
   caveats: string[];
   source: string;
+  /** URL of the source of the location's coordinates, where they don't come from OpenAlex; else null. */
+  coordinatesSource: string | null;
 }
 
 export interface DatasetMapModel {
@@ -58,6 +62,7 @@ export function datasetMap(config: DatasetLocations, labels: readonly string[]):
         weight: 1,
         where: `${location.city}, ${countryName(location.country)}`,
         caveat: location.caveat,
+        coordinatesSource: location.coordinatesSource,
         datasets,
       },
     ];
@@ -74,6 +79,7 @@ export function datasetMap(config: DatasetLocations, labels: readonly string[]):
         where: place.where,
         caveats: [place.caveat, dataset.caveat].filter((caveat): caveat is string => caveat !== null),
         source: dataset.source,
+        coordinatesSource: place.coordinatesSource,
       }))
     )
     .sort((a, b) => order(a.dataset) - order(b.dataset));

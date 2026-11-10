@@ -62,9 +62,9 @@ export default function DatasetLocations({
         The institution where each dataset&apos;s records were collected, as the dataset&apos;s own
         documentation (such as its PhysioNet page or paper) names it, recorded in{' '}
         <ExternalLink href={CONFIG_URL}>static/data/dataset_locations.yaml</ExternalLink>. The map has a pin
-        for each institution, at its location on OpenAlex, listing its datasets: {model.rows.length} of the{' '}
-        {labels.length} datasets shown, at {model.places.length}{' '}
-        {model.places.length === 1 ? 'institution' : 'institutions'}.
+        for each institution, at its location on OpenAlex (or, where OpenAlex has none, at coordinates whose
+        source the table below gives), listing its datasets: {model.rows.length} of the {labels.length}{' '}
+        datasets shown, at {model.places.length} {model.places.length === 1 ? 'institution' : 'institutions'}.
       </p>
       {model.places.length > 0 && (
         <Button
@@ -91,11 +91,11 @@ export default function DatasetLocations({
             onSelect={setSelected}
             caption={
               <>
-                Each pin marks an institution at its OpenAlex location; hover over it for its datasets. Pins
-                less than {CLUSTER_SPACING_PX} pixels apart are grouped into a circle that shows how many
-                there are. Select a circle to zoom in on it, or to choose from its institutions when zooming
-                can&rsquo;t separate them. Zoom with the buttons, a double-click, or a trackpad pinch (or Ctrl
-                and scroll); drag to move the map.
+                Each pin marks an institution at its OpenAlex location, or as the table below notes; hover
+                over it for its datasets. Pins less than {CLUSTER_SPACING_PX} pixels apart are grouped into a
+                circle that shows how many there are. Select a circle to zoom in on it, or to choose from its
+                institutions when zooming can&rsquo;t separate them. Zoom with the buttons, a double-click, or
+                a trackpad pinch (or Ctrl and scroll); drag to move the map.
               </>
             }
           />
@@ -143,7 +143,17 @@ export default function DatasetLocations({
                         </Box>
                       ))}
                     </td>
-                    <td>{row.where}</td>
+                    <td>
+                      {row.where}
+                      {row.coordinatesSource && (
+                        <Box component="span" sx={{ display: 'block', color: 'text.secondary' }}>
+                          Coordinates from{' '}
+                          <ExternalLink href={row.coordinatesSource}>
+                            {host(row.coordinatesSource)}
+                          </ExternalLink>
+                        </Box>
+                      )}
+                    </td>
                     <td>
                       <ExternalLink href={row.source}>{host(row.source)}</ExternalLink>
                     </td>

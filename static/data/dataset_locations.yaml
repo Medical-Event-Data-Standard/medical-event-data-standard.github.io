@@ -4,8 +4,9 @@
 #   locations:  one entry per source institution, as the dataset's own documentation names it (its PhysioNet or
 #               Redivis page, its paper, or its ETL's README):
 #                 institution  the name shown on the page, as the documentation gives it
-#                 openalex     the institution's OpenAlex id, whose record (`geo`) gives the coordinates
-#                 city, country (ISO 3166-1 alpha-2), latitude, longitude: from that OpenAlex record
+#                 openalex     the institution's OpenAlex id, whose record (`geo`) gives the coordinates; or, where
+#                              OpenAlex has no record, `coordinates_source`: the URL the coordinates come from
+#                 city, country (ISO 3166-1 alpha-2), latitude, longitude: from that OpenAlex record or source
 #                 caveat       optional: shown with the location, e.g. for a multi-centre dataset
 #                 datasets     the datasets from there (a demo shares its full dataset's place), each with its
 #                              `label` on the page, the `source` URL of the documentation that names the
@@ -172,21 +173,38 @@ locations:
       "...deidentified structured data from the electronic health records (EHRs) of 6,739 patients from Stanford
       Medicine."
 
-unplaced:
-  - datasets: [eICU, eICU demo]
-    reason: >-
-      Its patients were admitted to 335 units at 208 hospitals throughout the US, and the documentation doesn't name
-      them.
-    source: https://physionet.org/content/eicu-crd/2.0/
+  - institution: 208 hospitals throughout the US
+    coordinates_source: https://en.wikipedia.org/wiki/Geographic_center_of_the_United_States#Contiguous_United_States
+    city: Centre of the contiguous US
+    country: US
+    latitude: 39.8333
+    longitude: -98.5833
+    caveat: >-
+      The documentation doesn't name the hospitals, so the pin is at the geographic centre of the contiguous United
+      States, near Lebanon, Kansas.
+    datasets:
+      - label: eICU
+        source: https://physionet.org/content/eicu-crd/2.0/
+      - label: eICU demo
+        source: https://physionet.org/content/eicu-crd-demo/2.0.1/
     note: >-
       "Patients were admitted to one of 335 units at 208 hospitals located throughout the US." and "Hospital and unit
-      identifiers have also been removed to protect the privacy of contributing organizations."
+      identifiers have also been removed to protect the privacy of contributing organizations." Coordinates: 39°50′N
+      98°35′W, from Wikipedia's "Geographic center of the United States" (looked up once, 2026-11-10). The demo is a
+      subset of eICU.
 
-  - datasets: [Zigong]
-    reason: >-
-      Its documentation names Zigong Fourth People's Hospital in Sichuan, China, but no OpenAlex record of it was
-      found, and the map takes its coordinates from OpenAlex.
-    source: https://physionet.org/content/icu-infection-zigong-fourth/1.1/
+  - institution: Zigong Fourth People's Hospital
+    coordinates_source: https://en.wikipedia.org/wiki/Zigong
+    city: Zigong, Sichuan
+    country: CN
+    latitude: 29.339
+    longitude: 104.779
+    caveat: Neither OpenAlex nor ROR has a record of the hospital, so the pin is at the city of Zigong.
+    datasets:
+      - label: Zigong
+        source: https://physionet.org/content/icu-infection-zigong-fourth/1.1/
     note: >-
-      "The study was conducted in Zigong Fourth People's Hospital, Sichuan, China". Neither ROR nor OpenAlex has a
-      record of it.
+      "The study was conducted in Zigong Fourth People's Hospital, Sichuan, China". Coordinates of Zigong from Wikipedia
+      (looked up once, 2026-11-10).
+
+unplaced: []
