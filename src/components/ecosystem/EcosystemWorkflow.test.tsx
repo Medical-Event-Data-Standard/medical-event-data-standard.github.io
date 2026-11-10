@@ -11,8 +11,11 @@ import { RawCategory } from '@site/src/lib/ecosystem/types';
 import { parseCategoryMap } from '@site/src/lib/ecosystem/utils';
 
 // `@docusaurus/*` modules are webpack aliases that only exist inside a Docusaurus build. The tiles' PackageCard
-// uses them; without metadata, it shows no stars or releases.
+// uses them; without metadata, it shows no stars or releases, and the MEDS logo.
 jest.mock('@docusaurus/useGlobalData', () => ({ usePluginData: jest.fn() }), { virtual: true });
+jest.mock('@docusaurus/useBaseUrl', () => ({ __esModule: true, default: (url: string) => `/${url}` }), {
+  virtual: true,
+});
 jest.mock(
   '@docusaurus/Link',
   () => ({

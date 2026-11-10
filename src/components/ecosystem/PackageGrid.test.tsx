@@ -7,7 +7,7 @@ import PackageGrid from './PackageGrid';
 import { parseCategoryMap } from '@site/src/lib/ecosystem/utils';
 
 // `@docusaurus/*` modules are webpack aliases that only exist inside a Docusaurus build. The grid keeps its search
-// and topics in the URL; without metadata, its cards show no stars or releases.
+// and topics in the URL; without metadata, its cards show no stars or releases, and the MEDS logo.
 let mockLocation = { pathname: '/docs/intro_pages/ecosystem', search: '' };
 const mockReplace = jest.fn();
 jest.mock(
@@ -16,6 +16,9 @@ jest.mock(
   { virtual: true }
 );
 jest.mock('@docusaurus/useGlobalData', () => ({ usePluginData: () => undefined }), { virtual: true });
+jest.mock('@docusaurus/useBaseUrl', () => ({ __esModule: true, default: (url: string) => `/${url}` }), {
+  virtual: true,
+});
 jest.mock('@docusaurus/Link', () => ({ __esModule: true, default: () => null }), { virtual: true });
 
 const { packages, topics, topicPackages } = parseCategoryMap({

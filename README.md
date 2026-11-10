@@ -75,6 +75,21 @@ not enough for every package, so set `GITHUB_TOKEN` to see them all locally:
 GITHUB_TOKEN=$(gh auth token) npm start
 ```
 
+Each card on the ecosystem pages shows, in its top right corner, the GitHub avatar of the organization that
+owns the package's repository. The avatars are committed in `static/img/ecosystem-logos/`, so the site serves
+them itself and neither builds nor visitors fetch them. After adding a package from a new GitHub owner, refresh
+them and commit the result:
+
+```bash
+GITHUB_TOKEN=$(gh auth token) npm run ecosystem:logos
+```
+
+This downloads each owner's avatar at 64 pixels, keeps only PNG, JPEG and GIF images, and deletes the logos of
+owners no longer listed. Packages without a GitHub repository, and those owned by a personal account (whose
+avatar is often a photo of a person; see `PERSONAL_ACCOUNT_LOGOS` in `plugins/ecosystemMetadata.ts`) or by an
+organization that has not uploaded an avatar, show the MEDS logo. The script makes one GitHub API request per
+owner, so it also works without a token.
+
 The [papers page](https://medical-event-data-standard.github.io/papers) is built the same way; see
 [The papers page](#the-papers-page) below. The dev server uses its committed snapshot rather than fetching, so
 it starts quickly.

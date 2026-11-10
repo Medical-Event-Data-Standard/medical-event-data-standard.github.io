@@ -99,10 +99,23 @@ export interface RepoMetadata {
 /** Keyed by `repoKey(githubRepo)`, i.e. lower-cased `owner/repo`. */
 export type EcosystemMetadata = Record<string, RepoMetadata>;
 
+/** The global data of the `ecosystem-metadata` plugin. */
+export interface EcosystemPluginData {
+  /** The repositories' GitHub metadata, fetched at build time. */
+  repos: EcosystemMetadata;
+  /**
+   * The committed logos of the repositories' owners, as paths relative to the site's base URL, keyed by
+   * `ownerKey(githubRepo)`, i.e. the lower-cased owner. Owners without a logo are left out.
+   */
+  logos: Record<string, string>;
+}
+
 export interface PackageWithMetadata extends Package {
   stars: number | null;
   lastUpdated: Date | null;
   release: string | null;
+  /** The logo of the package's GitHub owner (see `EcosystemPluginData.logos`), or null if there is none. */
+  logo: string | null;
 }
 
 /** A category (or subcategory) of static/data/ecosystem.yaml. */
