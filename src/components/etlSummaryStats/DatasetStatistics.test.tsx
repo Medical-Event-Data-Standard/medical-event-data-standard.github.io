@@ -62,6 +62,9 @@ const demo = statsEntry('Demo', {
   githubRepo: 'org/Big',
   path: 'tests/demo_summary_stats.json',
   variant: 'demo',
+  // Written by meds_summary_stats 0.0.4, in stats schema version 2.
+  schemaVersion: 2,
+  toolVersion: '0.0.4',
   stats: etlStats(100, {
     codeMetadata: {
       present: true,
@@ -87,9 +90,9 @@ const big = statsEntry('Big', {
   }),
 });
 const future = statsEntry('Future', {
-  schemaVersion: 2,
+  schemaVersion: 3,
   stats: null,
-  problem: 'Its stats schema version is 2, which this page cannot read yet (it reads version 1).',
+  problem: 'Its stats schema version is 3, which this page cannot read yet (it reads versions 1 and 2).',
 });
 
 const data: EtlStatsData = {
@@ -125,8 +128,9 @@ describe('DatasetStatistics', () => {
       'href',
       'https://github.com/org/Big/blob/HEAD/tests/demo_summary_stats.json'
     );
-    expect(within(table).getAllByText('1 (tool 0.0.3)')).toHaveLength(2);
-    expect(within(table).getByText('2 (tool 0.0.3)')).toBeInTheDocument();
+    expect(within(table).getByText('1 (tool 0.0.3)')).toBeInTheDocument();
+    expect(within(table).getByText('2 (tool 0.0.4)')).toBeInTheDocument();
+    expect(within(table).getByText('3 (tool 0.0.3)')).toBeInTheDocument();
     for (const link of within(table).getAllByRole('link')) {
       expect(link).toHaveAttribute('target', '_blank');
       expect(link).toHaveAttribute('rel', 'noopener noreferrer');
@@ -137,7 +141,7 @@ describe('DatasetStatistics', () => {
     expect(
       screen
         .getAllByRole('alert')
-        .filter(alert => alert.textContent?.includes('Future: Its stats schema version is 2'))
+        .filter(alert => alert.textContent?.includes('Future: Its stats schema version is 3'))
     ).toHaveLength(1);
     expect(screen.getByRole('link', { name: 'AUMCdb' })).toHaveAttribute(
       'href',
@@ -283,17 +287,18 @@ describe('DatasetStatistics', () => {
   });
 
   it('switches measures, bubble sizes and axis scales, and can leave out demo datasets', () => {
-    // Only the demo's file has each subject's events per day.
+    // Only the demo's file has each subject's events per day, for only 20 subjects, so that it leaves out the 5th
+    // and 95th percentiles.
     const demoStats = demo.stats as EtlStats;
     const rate = {
       suppressed: false as const,
-      n: 100,
+      n: 20,
       mean: null,
-      p5: 0.1,
+      p5: null,
       p25: 0.5,
       p50: 2,
       p75: 6,
-      p95: 20,
+      p95: null,
     };
     const demoWithRate = {
       ...demo,
@@ -318,12 +323,31 @@ describe('DatasetStatistics', () => {
 
     // A file in view has the per-subject rate, so the pace is drawn as boxes, with its own scale toggle.
     const pace = () => within(sectionOf('Pace of events'));
-    expect(figuresIn('Pace of events')[0].data[0]).toMatchObject({ type: 'box', y: ['Demo'], median: [2] });
+    expect(figuresIn('Pace of events')[0].data[0]).toMatchObject({
+      type: 'box',
+      y: ['Demo'],
+      median: [2],
+      lowerfence: [0.5],
+      upperfence: [6],
+    });
     expect(pace().getByRole('img')).toHaveAccessibleName(
       'Events per day, per subject, box chart per dataset'
     );
+    expect(
+      pace().getByText(
+        'Without a whisker where the stats file leaves out the 5th or 95th percentile, as meds_summary_stats ' +
+          'does from version 0.0.4 on where they would depend on the smallest or largest value: Demo.'
+      )
+    ).toBeInTheDocument();
     expect(pace().getByText(/Not shown in this chart/)).toBeInTheDocument();
-    expect(pace().getByText(/per_subject.measurements_per_day\)\./)).toBeInTheDocument();
+    expect(
+      pace().getByText(
+        /per_subject.measurements_per_day\), which meds_summary_stats writes from version 0\.0\.4 on\./
+      )
+    ).toBeInTheDocument();
+    expect(
+      pace().getByText(/writes this from version 0\.0\.4 \(stats schema version 2\) on/)
+    ).toBeInTheDocument();
     // The description gives the library's definition, and why the mean isn't shown.
     expect(pace().getByText(/Birth and death records are left out/)).toBeInTheDocument();
     expect(pace().getByText(/rather than the mean/)).toBeInTheDocument();

@@ -194,6 +194,8 @@ export interface ChartModel {
   table: TableView;
   /** The axes that can be logarithmic for the data drawn (all their values are positive), so get a scale toggle. */
   logAxes: Axis[];
+  /** Sentences about how some of the drawn datasets are drawn, shown below the chart. */
+  notes?: string[];
 }
 
 /** Largest datasets (by subjects) first, so the charts list datasets in the same order. */
@@ -207,6 +209,17 @@ export function orderDatasets(entries: EtlStatsEntry[]): EtlStatsEntry[] {
 /** "fewer than 20 subjects" (the file's suppression floor), or a generic phrase if the file doesn't state it. */
 const floorPhrase = (entry: EtlStatsEntry): string =>
   entry.minCellSize !== null ? `fewer than ${formatCount(entry.minCellSize)} subjects` : 'too few subjects';
+
+/** What `meds_summary_stats` leaves out from version 0.0.4 on, for the notes on withheld quantiles. */
+const EXTREMES_RULE =
+  'as meds_summary_stats does from version 0.0.4 on where they would depend on the smallest or largest value';
+
+/** A quantile that the stats file leaves out, in a table or hover. */
+const WITHHELD = 'withheld';
+
+/** Why a distribution without its quartiles or median (see `Distribution`) is left out. */
+const extremesSkip = (what: string): string =>
+  `Withheld: its stats file leaves out the quartiles or median of the ${what}, ${EXTREMES_RULE}.`;
 
 /**
  * Splits the datasets into those a chart can draw (`pick` returns a value) and those it skips (`pick` returns a
@@ -664,7 +677,11 @@ export function depthBreadthChart(
     if (uniqueCodes === null) return { skip: 'Its stats file has no unique-code count.' };
     if (!dist) return { skip: 'Its stats file has no per-subject event distribution.' };
     if (dist.suppressed) {
-      return { skip: `Suppressed: the median is withheld because it rests on ${floorPhrase(entry)}.` };
+      return {
+        skip: dist.extremes
+          ? extremesSkip('events per subject')
+          : `Suppressed: the median is withheld because it rests on ${floorPhrase(entry)}.`,
+      };
     }
     const breadthValue = breadth === 'subjects' ? subjects : uniqueCodes;
     if ((xScale === 'log' && breadthValue <= 0) || (yScale === 'log' && dist.p50 <= 0)) {
@@ -833,10 +850,20 @@ export function depthBreadthChart(
 
 export type PerSubjectMetric = 'events' | 'uniqueCodes' | 'spanDays';
 
-export const PER_SUBJECT_METRICS: { key: PerSubjectMetric; label: string; axis: string }[] = [
-  { key: 'events', label: 'Events', axis: 'Events per subject' },
-  { key: 'uniqueCodes', label: 'Unique codes', axis: 'Distinct codes per subject' },
-  { key: 'spanDays', label: 'Record span', axis: 'Days from first to last event per subject' },
+export const PER_SUBJECT_METRICS: { key: PerSubjectMetric; label: string; axis: string; of: string }[] = [
+  { key: 'events', label: 'Events', axis: 'Events per subject', of: 'events per subject' },
+  {
+    key: 'uniqueCodes',
+    label: 'Unique codes',
+    axis: 'Distinct codes per subject',
+    of: 'distinct codes per subject',
+  },
+  {
+    key: 'spanDays',
+    label: 'Record span',
+    axis: 'Days from first to last event per subject',
+    of: 'record spans',
+  },
 ];
 
 /** Which per-subject distribution a box chart draws, and how. */
@@ -848,6 +875,8 @@ interface DistributionSpec {
   suppressed?: string;
   /** Who `n` counts, for the table and hover: "Subjects", or e.g. only the subjects with a rate. */
   subjects: string;
+  /** What the distribution is of, for the note on withheld quartiles: "events per subject". */
+  of: string;
   axis: string;
   /** Formats its values: counts in full, rates to three significant digits. */
   format: (value: number) => string;
@@ -858,13 +887,16 @@ interface DistributionSpec {
 /**
  * Box-style summaries drawn from the published quantiles: the box spans the 25th to 75th percentile, the line
  * inside it is the median, and the whiskers reach the 5th and 95th percentiles (there are no minima or maxima:
- * `meds_summary_stats` never publishes extremes). The value axis is logarithmic unless `scale` is linear.
+ * `meds_summary_stats` never publishes extremes). Where a file leaves out the 5th or 95th percentile (see
+ * `Distribution`), that whisker isn't drawn, and a note says so. The value axis is logarithmic unless `scale` is
+ * linear.
  */
 function distributionChart(entries: EtlStatsEntry[], spec: DistributionSpec, scale: AxisScale): ChartModel {
   const { drawn, skipped } = partition(orderDatasets(entries), (stats, entry) => {
     const dist = spec.pick(stats);
     if (!dist) return { skip: spec.missing };
     if (dist.suppressed) {
+      if (dist.extremes) return { skip: extremesSkip(spec.of) };
       return {
         skip:
           spec.suppressed ??
@@ -876,20 +908,31 @@ function distributionChart(entries: EtlStatsEntry[], spec: DistributionSpec, sca
   // A stable sort, so datasets with the same median stay largest first.
   if (spec.ranked) drawn.sort((a, b) => b.value.p50 - a.value.p50);
   const { format } = spec;
+  const formatQuantile = (value: number | null): string => (value === null ? WITHHELD : format(value));
   const table: TableView = {
     columns: ['Dataset', spec.subjects, '5th pct.', '25th pct.', 'Median', '75th pct.', '95th pct.'],
     rows: drawn.map(({ entry, value }) => [
       entry.label,
       formatCount(value.n),
-      ...[value.p5, value.p25, value.p50, value.p75, value.p95].map(format),
+      ...[value.p5, value.p25, value.p50, value.p75, value.p95].map(formatQuantile),
     ]),
   };
   if (drawn.length === 0) return { figure: null, skipped, table, logAxes: [] };
 
   const labels = drawn.map(d => d.entry.label);
   const dists = drawn.map(d => d.value);
-  const pick = (key: 'p5' | 'p25' | 'p50' | 'p75' | 'p95') => dists.map(d => d[key]);
-  const extremes = [...pick('p5'), ...pick('p95')];
+  // A missing whisker ends at its box, so it isn't drawn.
+  const lower = dists.map(d => d.p5 ?? d.p25);
+  const upper = dists.map(d => d.p95 ?? d.p75);
+  const extremes = [...lower, ...upper];
+  const withoutWhisker = drawn.filter(({ value }) => value.p5 === null || value.p95 === null);
+  const notes =
+    withoutWhisker.length > 0
+      ? [
+          `Without a whisker where the stats file leaves out the 5th or 95th percentile, ${EXTREMES_RULE}: ` +
+            `${withoutWhisker.map(({ entry }) => entry.label).join(', ')}.`,
+        ]
+      : [];
   return {
     figure: {
       data: [
@@ -897,11 +940,11 @@ function distributionChart(entries: EtlStatsEntry[], spec: DistributionSpec, sca
           type: 'box',
           orientation: 'h',
           y: labels,
-          lowerfence: pick('p5'),
-          q1: pick('p25'),
-          median: pick('p50'),
-          q3: pick('p75'),
-          upperfence: pick('p95'),
+          lowerfence: lower,
+          q1: dists.map(d => d.p25),
+          median: dists.map(d => d.p50),
+          q3: dists.map(d => d.p75),
+          upperfence: upper,
           fillcolor: 'rgba(42, 120, 214, 0.18)',
           line: { color: SERIES_COLORS[0], width: 2 },
           whiskerwidth: 0.4,
@@ -912,9 +955,12 @@ function distributionChart(entries: EtlStatsEntry[], spec: DistributionSpec, sca
           type: 'scatter',
           mode: 'markers',
           y: labels,
-          x: pick('p50'),
+          x: dists.map(d => d.p50),
           marker: { size: 18, color: 'rgba(0,0,0,0)' },
-          customdata: dists.map(d => [...[d.p5, d.p25, d.p50, d.p75, d.p95].map(format), formatCount(d.n)]),
+          customdata: dists.map(d => [
+            ...[d.p5, d.p25, d.p50, d.p75, d.p95].map(formatQuantile),
+            formatCount(d.n),
+          ]),
           hovertemplate:
             '%{y}<br>Median: %{customdata[2]}<br>25th–75th percentile: %{customdata[1]}–%{customdata[3]}' +
             '<br>5th–95th percentile: %{customdata[0]}–%{customdata[4]}<br>' +
@@ -928,6 +974,7 @@ function distributionChart(entries: EtlStatsEntry[], spec: DistributionSpec, sca
     skipped,
     table,
     logAxes: canBeLog(extremes) ? ['x'] : [],
+    notes,
   };
 }
 
@@ -943,6 +990,7 @@ export function perSubjectChart(
     {
       pick: stats => stats.perSubject[metric],
       missing: `Its stats file has no per-subject ${meta.label.toLowerCase()} distribution.`,
+      of: meta.of,
       axis: meta.axis,
       subjects: 'Subjects',
       format: formatCount,
@@ -959,14 +1007,16 @@ export const PACE_LABEL = 'Events per day, per subject';
 
 /**
  * How densely each dataset records data: the spread of each subject's own rate, `per_subject.measurements_per_day`,
- * drawn as boxes from its published quantiles like `perSubjectChart`, ranked by median. Stats files written before
- * `meds_summary_stats` computed the rate don't have it. Very short records give very large rates, which skew the
- * mean, so the mean is never drawn. Only subjects with a rate (two or more distinct timestamps) are counted, and
- * their quantiles are withheld below `min_numeric_cell_size`, which the page doesn't read, so that note names no
- * number.
+ * drawn as boxes from its published quantiles like `perSubjectChart`, ranked by median. `meds_summary_stats` writes
+ * the rate from version 0.0.4 (stats schema version 2) on, so files of schema version 1 don't have it. Very short
+ * records give very large rates, which skew the mean, so the mean is never drawn. Only subjects with a rate (two or
+ * more distinct timestamps) are counted, and their quantiles are withheld below `min_numeric_cell_size`, which the
+ * page doesn't read, so that note names no number.
  */
 export function paceChart(entries: EtlStatsEntry[], scale: AxisScale = 'log'): ChartModel {
-  const missing = 'Its stats file has no per-subject events per day (per_subject.measurements_per_day).';
+  const missing =
+    'Its stats file has no per-subject events per day (per_subject.measurements_per_day), which ' +
+    'meds_summary_stats writes from version 0.0.4 on.';
   const model = distributionChart(
     entries,
     {
@@ -974,6 +1024,7 @@ export function paceChart(entries: EtlStatsEntry[], scale: AxisScale = 'log'): C
       missing,
       suppressed: 'Suppressed: too few subjects have a rate, so its quantiles are withheld.',
       subjects: 'Subjects with a rate',
+      of: 'events per day',
       // Short enough for a phone; the boxes and the description say it is per subject.
       axis: 'Events per day',
       format: formatRatio,
@@ -989,7 +1040,9 @@ export function paceChart(entries: EtlStatsEntry[], scale: AxisScale = 'log'): C
     skipped: [
       {
         label: without.map(s => s.label).join(', '),
-        reason: 'Their stats files have no per-subject events per day (per_subject.measurements_per_day).',
+        reason:
+          'Their stats files have no per-subject events per day (per_subject.measurements_per_day), which ' +
+          'meds_summary_stats writes from version 0.0.4 on.',
       },
       ...model.skipped.filter(s => s.reason !== missing),
     ],
@@ -1727,7 +1780,7 @@ export const HEALTH_CHECKS: { key: HealthCheckKey; label: string; help: string }
   {
     key: 'descriptions',
     label: 'Codes with a description',
-    help: `The share of the codes in codes.parquet that have a description. It passes at ${formatPercent(DESCRIPTION_THRESHOLD)} or more and is flagged below that.`,
+    help: `The share of the codes in codes.parquet that have a description. It passes at ${formatPercent(DESCRIPTION_THRESHOLD)} or more and is flagged below that. Stats files of schema version 2 count only descriptions with text in them; those of version 1 also count empty or whitespace-only ones.`,
   },
   {
     key: 'unusedCodes',

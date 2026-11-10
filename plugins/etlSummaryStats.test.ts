@@ -470,14 +470,14 @@ describe('collectEtlStats', () => {
       [treeUrl('org/Next')]: response(200, tree(['full_summary_stats.json'])),
       [rawUrl('org/Next', 'full_summary_stats.json')]: response(
         200,
-        statsDocument({ stats_schema_version: 2 })
+        statsDocument({ stats_schema_version: 3 })
       ),
     });
     const result = await collectEtlStats([repo('org/Next')], null, { fetchFn });
     expect(result.failures).toEqual([]);
-    expect(result.datasets[0]).toMatchObject({ schemaVersion: 2, stats: null });
+    expect(result.datasets[0]).toMatchObject({ schemaVersion: 3, stats: null });
     expect(result.problems).toEqual([
-      expect.stringMatching(/^Next \(full_summary_stats\.json\): .*schema version is 2/),
+      expect.stringMatching(/^Next \(full_summary_stats\.json\): .*schema version is 3/),
     ]);
   });
 });
@@ -647,11 +647,11 @@ describe('loading', () => {
 
     it('keeps one with a schema version the page cannot read, as a problem', async () => {
       await write(ETL_STATS_YAML, config());
-      await write(HERE, JSON.stringify(statsDocument({ stats_schema_version: 2 })));
+      await write(HERE, JSON.stringify(statsDocument({ stats_schema_version: 3 })));
       const result = await loadEtlStats(siteDir, { source: 'live', env: {}, fetchFn: github(), now });
       expect(result.warning).toBe(true);
-      expect(result.data.datasets[1]).toMatchObject({ label: 'Here', schemaVersion: 2, stats: null });
-      expect(result.message).toContain(`Here (${HERE}): Its stats schema version is 2`);
+      expect(result.data.datasets[1]).toMatchObject({ label: 'Here', schemaVersion: 3, stats: null });
+      expect(result.message).toContain(`Here (${HERE}): Its stats schema version is 3`);
     });
 
     it.each([

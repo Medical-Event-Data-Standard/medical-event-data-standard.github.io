@@ -451,6 +451,7 @@ export default function DatasetStatistics(): React.JSX.Element {
           />,
           ...scaleToggles('perSubject', perSubject),
         ]}
+        notes={perSubject.notes}
         skipped={perSubject.skipped}
         table={perSubject.table}
       >
@@ -468,15 +469,18 @@ export default function DatasetStatistics(): React.JSX.Element {
           <>
             How densely each dataset records data: each subject&apos;s own rate, their timed events divided by
             the days from their earliest to their latest one, as <code>per_subject.measurements_per_day</code>{' '}
-            in a stats file gives it. Birth and death records are left out, so that birth dates and registry
-            deaths don&apos;t stretch the span, and subjects with fewer than two distinct timestamps have no
-            rate and aren&apos;t counted. Each box runs from the 25th to the 75th percentile of subjects, with
-            the median marked inside, and the whiskers reach the 5th and 95th percentiles. Very short records
-            give very large rates, so the chart shows these percentiles rather than the mean. The datasets are
-            ranked by their median.{pace.figure ? ` ${valueAxisSentence(isLog('pace', pace))}` : ''}
+            in a stats file gives it. <code>meds_summary_stats</code> writes this from version 0.0.4 (stats
+            schema version 2) on, so files written by earlier versions don&apos;t have it. Birth and death
+            records are left out, so that birth dates and registry deaths don&apos;t stretch the span, and
+            subjects with fewer than two distinct timestamps have no rate and aren&apos;t counted. Each box
+            runs from the 25th to the 75th percentile of subjects, with the median marked inside, and the
+            whiskers reach the 5th and 95th percentiles. Very short records give very large rates, so the
+            chart shows these percentiles rather than the mean. The datasets are ranked by their median.
+            {pace.figure ? ` ${valueAxisSentence(isLog('pace', pace))}` : ''}
           </>
         }
         controls={scaleToggles('pace', pace)}
+        notes={pace.notes}
         skipped={pace.skipped}
         table={pace.table}
       >

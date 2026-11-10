@@ -10,8 +10,13 @@
 /** Name of the build-time plugin that collects the ETLs' published `meds_summary_stats` files. */
 export const ETL_SUMMARY_STATS_PLUGIN = 'etl-summary-stats';
 
-/** The `stats_schema_version`s of `meds_summary_stats` documents that the page knows how to read. */
-export const SUPPORTED_SCHEMA_VERSIONS: readonly number[] = [1];
+/**
+ * The `stats_schema_version`s of `meds_summary_stats` documents that the page knows how to read: 1, written by
+ * versions 0.0.1 to 0.0.3, and 2, written from version 0.0.4 on. For the fields the page reads, version 2 adds
+ * `per_subject.measurements_per_day`, withholds quantiles that would depend on the smallest or largest value (see
+ * `Distribution`), and counts only non-blank descriptions in `code_metadata.n_with_description`.
+ */
+export const SUPPORTED_SCHEMA_VERSIONS: readonly number[] = [1, 2];
 
 /** The key under which `meds_summary_stats` rolls up cells backed by too few subjects. */
 export const SUPPRESSED_KEY = '<suppressed>';
@@ -24,7 +29,10 @@ export type StatsVariant = 'full' | 'demo';
 
 /**
  * The distribution of a per-subject quantity, reduced to the quantiles the page draws. `meds_summary_stats`
- * withholds the quantiles below a minimum number of values, in which case only `n` is published.
+ * withholds the quantiles below a minimum number of values, in which case only `n` is published. From version 0.0.4
+ * (schema version 2) on, it also leaves out each quantile that would depend on the smallest or largest value: the
+ * 5th and 95th percentiles of fewer than 21 values, and, if `min_numeric_cell_size` is lowered below its default of
+ * 20, the quartiles of fewer than 5 values and the median of fewer than 3.
  */
 export type Distribution =
   | {
@@ -32,13 +40,23 @@ export type Distribution =
       n: number;
       /** Null if the file doesn't state it. */
       mean: number | null;
-      p5: number;
+      /** Null if the file leaves it out. */
+      p5: number | null;
       p25: number;
       p50: number;
       p75: number;
-      p95: number;
+      /** Null if the file leaves it out. */
+      p95: number | null;
     }
-  | { suppressed: true; n: number };
+  | {
+      suppressed: true;
+      n: number;
+      /**
+       * True if the file doesn't mark the distribution suppressed, but leaves out its quartiles or median, as
+       * `meds_summary_stats` does from version 0.0.4 on where they would depend on the smallest or largest value.
+       */
+      extremes?: true;
+    };
 
 /** A rollup of keyed cells (here: vocabularies) that were withheld because too few subjects backed each. */
 export interface SuppressedRollup {
@@ -83,8 +101,9 @@ export interface EtlStats {
     /**
      * Each subject's events per day (`per_subject.measurements_per_day`): their rows with a time, other than MEDS
      * birth and death, divided by the days from the earliest to the latest of those rows. `n` counts only the
-     * subjects with a rate (two or more distinct timestamps). Absent (not just null) in stats collected before the
-     * page read it.
+     * subjects with a rate (two or more distinct timestamps). `meds_summary_stats` writes it from version 0.0.4
+     * (schema version 2) on, so it is null for files of schema version 1. Absent (not just null) in stats collected
+     * before the page read it.
      */
     eventsPerDay?: Distribution | null;
   };
@@ -101,7 +120,10 @@ export interface EtlStats {
     /** False if the dataset has no `metadata/codes.parquet`. */
     present: boolean;
     codes: number | null;
-    /** Null if codes.parquet has no description column. */
+    /**
+     * Null if codes.parquet has no description column. Schema version 2 counts only non-blank descriptions;
+     * version 1 also counts empty and whitespace-only ones.
+     */
     withDescription: number | null;
     /** Codes in the data that codes.parquet lacks (MEDS requires none). */
     dataCodesMissing: number | null;

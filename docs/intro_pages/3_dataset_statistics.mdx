@@ -21,10 +21,10 @@ files each time the site is built, together with the summaries committed to this
 whose ETL repository doesn't publish one, and charts them side by side.
 
 The files are safe to publish by design: `meds_summary_stats` never writes out a code, reports no minimum or
-maximum value (only percentiles), and suppresses every split, calendar year or vocabulary that fewer than 20
-subjects contribute to, keeping only a pooled `<suppressed>` total. This page shows such cells as suppressed and
-never estimates them. It does not chart calendar years, because most datasets shift their dates to de-identify
-them.
+maximum value (only percentiles, and from version 0.0.4 on none that would depend on the smallest or largest
+value), and suppresses every split, calendar year or vocabulary that fewer than 20 subjects contribute to, keeping
+only a pooled `<suppressed>` total. This page shows such cells as suppressed and never estimates them. It does not
+chart calendar years, because most datasets shift their dates to de-identify them.
 
 <DatasetStatistics />
 
