@@ -14,11 +14,12 @@ import etlSummaryStatsPlugin, {
   mergeEtlRepos,
   parseEtlStatsConfig,
   planStatsFiles,
+  readLocalStats,
   readSnapshot,
   updateEtlStatsSnapshot,
 } from './etlSummaryStats';
 import { statsDocument, statsEntry } from '../src/lib/etlSummaryStats/testFixtures';
-import type { EtlStatsData } from '../src/lib/etlSummaryStats/types';
+import { type EtlStatsData, SITE_GITHUB_REPO } from '../src/lib/etlSummaryStats/types';
 
 // ─── A fake GitHub ──────────────────────────────────────────────
 
@@ -84,12 +85,32 @@ describe('parseEtlStatsConfig', () => {
         },
       ],
       exclude: ['org/Gone', 'org/Alpha/old_summary_stats.json'],
+      localFiles: [],
     });
   });
 
+  it('parses files committed to this repository, taking the variant from the name unless given', () => {
+    expect(
+      parseEtlStatsConfig({
+        local_files: [
+          { path: ' static/data/stats/a_full_summary_stats.json ', label: ' A ', variant: 'full', note: 'x' },
+          { path: 'static/data/stats/b_demo_summary_stats.json', label: 'B demo' },
+          { path: 'static/data/stats/c.json', label: 'C' },
+          { path: 'static/data/stats/d_demo.json', label: 'D', variant: 'full' },
+        ],
+      }).localFiles
+    ).toEqual([
+      { path: 'static/data/stats/a_full_summary_stats.json', label: 'A', variant: 'full' },
+      { path: 'static/data/stats/b_demo_summary_stats.json', label: 'B demo', variant: 'demo' },
+      { path: 'static/data/stats/c.json', label: 'C', variant: 'full' },
+      { path: 'static/data/stats/d_demo.json', label: 'D', variant: 'full' },
+    ]);
+  });
+
   it('accepts an empty file or empty lists', () => {
-    expect(parseEtlStatsConfig(null)).toEqual({ repos: [], exclude: [] });
-    expect(parseEtlStatsConfig({ repos: null, exclude: null })).toEqual({ repos: [], exclude: [] });
+    const empty = { repos: [], exclude: [], localFiles: [] };
+    expect(parseEtlStatsConfig(null)).toEqual(empty);
+    expect(parseEtlStatsConfig({ repos: null, exclude: null, local_files: null })).toEqual(empty);
   });
 
   it.each([
@@ -126,6 +147,34 @@ describe('parseEtlStatsConfig', () => {
       'an unknown file field',
       { repos: [{ github_repo: 'o/r', files: { f: { path: 'x' } } }] },
       '`repos[0].files.f` has an unknown field `path`',
+    ],
+    ['local_files that are not a list', { local_files: {} }, '`local_files` must be a list'],
+    ['a local file that is a string', { local_files: ['a.json'] }, '`local_files[0]` must be a mapping'],
+    [
+      'an unknown local file field',
+      { local_files: [{ path: 'a.json', label: 'A', repo: 'x' }] },
+      '`local_files[0]` has an unknown field `repo`',
+    ],
+    ['a local file without a path', { local_files: [{ label: 'A' }] }, '`local_files[0].path` must be'],
+    ['a local file that is not JSON', { local_files: [{ path: 'a.yaml', label: 'A' }] }, '.path` must be'],
+    ['an absolute local path', { local_files: [{ path: '/etc/a.json', label: 'A' }] }, '.path` must be'],
+    ['a local path out of the site', { local_files: [{ path: '../a.json', label: 'A' }] }, '.path` must be'],
+    ['a local path with a backslash', { local_files: [{ path: 'a\\b.json', label: 'A' }] }, '.path` must be'],
+    ['a local file without a label', { local_files: [{ path: 'a.json' }] }, '`local_files[0].label` must'],
+    [
+      'a local file with an unknown variant',
+      { local_files: [{ path: 'a.json', label: 'A', variant: 'sample' }] },
+      '`local_files[0].variant` must be full or demo',
+    ],
+    [
+      'a local file listed twice',
+      {
+        local_files: [
+          { path: 'a.json', label: 'A' },
+          { path: 'a.json', label: 'B' },
+        ],
+      },
+      '`local_files` lists a.json more than once',
     ],
   ])('rejects %s', (_name, raw, message) => {
     expect(() => parseEtlStatsConfig(raw)).toThrow(`Invalid ${ETL_STATS_YAML}: `);
@@ -179,6 +228,7 @@ describe('mergeEtlRepos', () => {
           { githubRepo: 'other/Unlabelled_MEDS', files: {} },
         ],
         exclude: ['org/gone'],
+        localFiles: [],
       }
     );
     expect(merged).toEqual([
@@ -205,6 +255,7 @@ describe('planStatsFiles', () => {
     expect(planStatsFiles(repo('org/MIMIC', 'MIMIC-IV'), files)).toEqual([
       {
         id: 'org/mimic/tests/regression/demo_summary_stats.json',
+        host: 'etl',
         githubRepo: 'org/MIMIC',
         path: 'tests/regression/demo_summary_stats.json',
         label: 'MIMIC-IV demo',
@@ -212,6 +263,7 @@ describe('planStatsFiles', () => {
       },
       {
         id: 'org/mimic/tests/regression/full_summary_stats.json',
+        host: 'etl',
         githubRepo: 'org/MIMIC',
         path: 'tests/regression/full_summary_stats.json',
         label: 'MIMIC-IV',
@@ -298,6 +350,7 @@ describe('collectEtlStats', () => {
       id: ALPHA_ID,
       label: 'Alpha',
       variant: 'full',
+      host: 'etl',
       githubRepo: ALPHA,
       path: ALPHA_FILE,
       schemaVersion: 1,
@@ -519,6 +572,74 @@ describe('loading', () => {
     expect(result).toMatchObject({
       warning: false,
       message: 'Collected 1 stats files from 1 of 2 ETL repositories.',
+    });
+  });
+
+  describe('stats files committed to this repository', () => {
+    const HERE = 'static/data/etl_summary_stats/here_full_summary_stats.json';
+    const config = (file = HERE) =>
+      `exclude: [org/Extra]\nlocal_files:\n  - path: ${file}\n    label: Here\n    note: for reviewers\n`;
+
+    it('reads them with the files on GitHub, normalised the same way, and snapshots them', async () => {
+      await write(ETL_STATS_YAML, config());
+      await write(HERE, JSON.stringify(statsDocument()));
+      const result = await loadEtlStats(siteDir, { source: 'live', env: {}, fetchFn: github(), now });
+      expect(result).toMatchObject({
+        warning: false,
+        message: 'Collected 1 stats files from 1 of 2 ETL repositories and 1 from this repository.',
+      });
+      expect(result.data.datasets.map(d => [d.label, d.host])).toEqual([
+        ['Alpha', 'etl'],
+        ['Here', 'site'],
+      ]);
+      expect(result.data.datasets[1]).toMatchObject({
+        id: `${SITE_GITHUB_REPO.toLowerCase()}/${HERE}`,
+        githubRepo: SITE_GITHUB_REPO,
+        path: HERE,
+        variant: 'full',
+        schemaVersion: 1,
+        problem: null,
+      });
+      expect(result.data.datasets[1].stats).toEqual(result.data.datasets[0].stats);
+
+      const snapshot = await updateEtlStatsSnapshot(siteDir, { env: {}, fetchFn: github(), now });
+      const written = JSON.parse(await fs.readFile(path.join(siteDir, ETL_STATS_SNAPSHOT), 'utf8'));
+      expect(written.datasets.map((d: { label: string }) => d.label)).toEqual(['Alpha', 'Here']);
+      expect(written).toEqual(snapshot.data);
+      // The dev server uses the snapshot, without reading them again.
+      await fs.rm(path.join(siteDir, HERE));
+      const dev = await loadEtlStats(siteDir, { env: {} });
+      expect(dev.data.datasets.map(d => d.label)).toEqual(['Alpha', 'Here']);
+    });
+
+    it('keeps one with a schema version the page cannot read, as a problem', async () => {
+      await write(ETL_STATS_YAML, config());
+      await write(HERE, JSON.stringify(statsDocument({ stats_schema_version: 2 })));
+      const result = await loadEtlStats(siteDir, { source: 'live', env: {}, fetchFn: github(), now });
+      expect(result.warning).toBe(true);
+      expect(result.data.datasets[1]).toMatchObject({ label: 'Here', schemaVersion: 2, stats: null });
+      expect(result.message).toContain(`Here (${HERE}): Its stats schema version is 2`);
+    });
+
+    it.each([
+      ['missing', null, 'it does not exist'],
+      ['not JSON', '{"stats_schema_version": 1,', 'it is not valid JSON'],
+      ['not a stats file', '{"hello": "world"}', 'it has no `stats_schema_version`'],
+    ])('fails the build, before any request, for one that is %s', async (_name, content, reason) => {
+      await write(ETL_STATS_YAML, config());
+      if (content !== null) await write(HERE, content);
+      const fetchFn = github();
+      await expect(loadEtlStats(siteDir, { source: 'live', env: {}, fetchFn })).rejects.toThrow(
+        `${HERE}, listed under local_files in ${ETL_STATS_YAML}: ${reason}`
+      );
+      expect(fetchFn).not.toHaveBeenCalled();
+    });
+
+    it('reports why a file could not be read', async () => {
+      await fs.mkdir(path.join(siteDir, 'folder.json'));
+      await expect(
+        readLocalStats(siteDir, [{ path: 'folder.json', label: 'Folder', variant: 'full' }])
+      ).rejects.toThrow(/^folder\.json, listed under local_files in .*: EISDIR/);
     });
   });
 

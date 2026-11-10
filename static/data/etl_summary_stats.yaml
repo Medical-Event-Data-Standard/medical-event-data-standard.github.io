@@ -1,17 +1,23 @@
-# Which published `meds_summary_stats` files the "Dataset statistics" page (docs/intro_pages/3_dataset_statistics.mdx)
-# shows. See plugins/etlSummaryStats.ts for how they are collected.
+# Which `meds_summary_stats` files the "Dataset statistics" page (docs/intro_pages/3_dataset_statistics.mdx) shows.
+# See plugins/etlSummaryStats.ts for how they are collected.
 #
 # Every package under `dataset_etls` in static/data/ecosystem.yaml that has a `github_repo` is searched
 # automatically, on its default branch, for committed files named `*summary_stats*.json`, so a new ETL appears on
 # the page as soon as it commits one. A file whose name contains "demo" is treated as a demo dataset. Use this file
 # only for what that can't work out:
 #
-#   repos:    ETL repositories that aren't in ecosystem.yaml, and overrides for those that are. Each entry has a
-#             `github_repo` (owner/repo) and optionally a `label` (defaults to the ecosystem package name) and
-#             `files`: per-file overrides, keyed by the path in the repository, with a `label` and/or a `variant`
-#             (`full` or `demo`). A file listed here is shown even if its name doesn't match the pattern above.
-#             A `note` for reviewers is allowed anywhere and ignored.
-#   exclude:  repositories (owner/repo) or single files (owner/repo/path/to/file.json) to leave out.
+#   repos:        ETL repositories that aren't in ecosystem.yaml, and overrides for those that are. Each entry has a
+#                 `github_repo` (owner/repo) and optionally a `label` (defaults to the ecosystem package name) and
+#                 `files`: per-file overrides, keyed by the path in the repository, with a `label` and/or a
+#                 `variant` (`full` or `demo`). A file listed here is shown even if its name doesn't match the
+#                 pattern above.
+#   exclude:      repositories (owner/repo) or single files (owner/repo/path/to/file.json) to leave out.
+#   local_files:  stats files committed to this repository, for datasets whose stats no ETL repository publishes.
+#                 Each entry has a `path` (relative to the repository root, conventionally under
+#                 static/data/etl_summary_stats/), a `label`, and optionally a `variant` (`full` or `demo`; by
+#                 default from the file name, as above).
+#
+# A `note` for reviewers is allowed in any entry and ignored.
 #
 # After editing this file, refresh the committed snapshot, which the dev server uses (see the plugin's comments).
 
@@ -26,3 +32,18 @@ repos:
         variant: demo
 
 exclude: []
+
+local_files:
+  - path: static/data/etl_summary_stats/ehrshot_full_summary_stats.json
+    label: EHRSHOT
+    variant: full
+    note: >-
+      Written by meds_summary_stats 0.0.3 (git tag 0.0.3) with the default suppression (min_cell_size 20,
+      min_numeric_cell_size 20), from a MEDS_transforms 0.6.7 build of EHRSHOT (MEDS 0.4.1).
+  - path: static/data/etl_summary_stats/inspect_full_summary_stats.json
+    # The file's dataset.json names the source systems, not INSPECT, so the label is set here.
+    label: INSPECT
+    variant: full
+    note: >-
+      Written by meds_summary_stats 0.0.3 (git tag 0.0.3) with the default suppression (min_cell_size 20,
+      min_numeric_cell_size 20), from a meds_etl.omop build of INSPECT (MEDS 0.3.3).

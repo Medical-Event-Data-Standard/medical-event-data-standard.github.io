@@ -4,13 +4,26 @@ import '@testing-library/jest-dom';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { usePluginData } from '@docusaurus/useGlobalData';
 
-import DatasetStatistics from './DatasetStatistics';
+import DatasetStatistics, { DATASET_STATISTICS_TOC } from './DatasetStatistics';
 import { etlStats, statsEntry } from '@site/src/lib/etlSummaryStats/testFixtures';
-import type { EtlStats, EtlStatsData } from '@site/src/lib/etlSummaryStats/types';
+import { type EtlStats, type EtlStatsData, SITE_GITHUB_REPO } from '@site/src/lib/etlSummaryStats/types';
 
-// `@docusaurus/*` modules are webpack aliases that only exist inside a Docusaurus build, and Plotly needs a real
-// browser, so the wrapper is replaced by a stub that exposes the figure it was given.
+// `@docusaurus/*` and `@theme/*` modules are webpack aliases that only exist inside a Docusaurus build, and Plotly
+// needs a real browser, so the wrapper is replaced by a stub that exposes the figure it was given, and the theme's
+// heading (which adds the permalink) by a plain one.
 jest.mock('@docusaurus/useGlobalData', () => ({ usePluginData: jest.fn() }), { virtual: true });
+jest.mock(
+  '@theme/Heading',
+  () => ({
+    __esModule: true,
+    default: ({ as: Tag, id, children }: { as: 'h2'; id: string; children: React.ReactNode }) => (
+      <Tag id={id} data-permalink={`#${id}`}>
+        {children}
+      </Tag>
+    ),
+  }),
+  { virtual: true }
+);
 jest.mock(
   '@site/src/components/MEDS-DEV/plots/PlotlyWrapper',
   () => ({
@@ -23,8 +36,10 @@ jest.mock(
 );
 const mockUsePluginData = jest.mocked(usePluginData);
 
+type FigureJson = { data: Record<string, unknown>[]; layout: Record<string, Record<string, unknown>> };
+
 /** The figures of the plots inside the section with the given heading. */
-function figuresIn(heading: string): { data: Record<string, unknown>[]; layout: Record<string, unknown> }[] {
+function figuresIn(heading: string): FigureJson[] {
   const section = screen.getByRole('heading', { level: 2, name: heading }).closest('section') as HTMLElement;
   return within(section)
     .queryAllByTestId('plot')
@@ -33,6 +48,14 @@ function figuresIn(heading: string): { data: Record<string, unknown>[]; layout: 
 
 const sectionOf = (heading: string) =>
   screen.getByRole('heading', { level: 2, name: heading }).closest('section') as HTMLElement;
+
+/** Clicks a choice of a labelled toggle inside a section. */
+const choose = (heading: string, group: string, option: string) =>
+  fireEvent.click(
+    within(within(sectionOf(heading)).getByRole('group', { name: group })).getByRole('button', {
+      name: option,
+    })
+  );
 
 const demo = statsEntry('Demo', {
   id: 'org/big/demo_summary_stats.json',
@@ -48,10 +71,10 @@ const demo = statsEntry('Demo', {
       metadataCodesUnused: 0,
     },
     ontology: {
-      measurementsMapped: 0.6,
+      eventsMapped: 0.6,
       codesWithParents: 0.25,
-      vocabularies: [{ name: 'LOINC', measurements: 5000, recognized: true }],
-      suppressed: { cells: 2, measurements: 9 },
+      vocabularies: [{ name: 'LOINC', events: 5000, recognized: true }],
+      suppressed: { cells: 2, events: 9 },
     },
   }),
 });
@@ -88,6 +111,8 @@ describe('DatasetStatistics', () => {
     expect(mockUsePluginData).toHaveBeenCalledWith('etl-summary-stats');
     expect(screen.getByText(/This site collected the files on 2026-11-06\./)).toBeInTheDocument();
     expect(screen.getByText(/fewer than 20 subjects are suppressed/)).toBeInTheDocument();
+    expect(screen.getByText(/published in their repository/)).toBeInTheDocument();
+    expect(screen.getByText(/Every row of a dataset counts as one event/)).toBeInTheDocument();
 
     // One row per stats file, linking to the repository and the file.
     const table = within(sectionOf('Datasets and their stats files')).getAllByRole('table')[0];
@@ -106,6 +131,7 @@ describe('DatasetStatistics', () => {
       expect(link).toHaveAttribute('target', '_blank');
       expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     }
+    expect(screen.queryByText(/committed to this site's repository/)).not.toBeInTheDocument();
 
     // A file the page can't read is listed, with why, and left out of the charts.
     expect(
@@ -118,41 +144,61 @@ describe('DatasetStatistics', () => {
       'https://github.com/org/AUMCdb_MEDS'
     );
 
-    // The sections, in order; the calendar-year, split and code-concentration charts are gone, and the vocabulary
-    // heatmap and mapping bars are one section.
-    expect(screen.getAllByRole('heading', { level: 2 }).map(heading => heading.textContent)).toEqual([
+    // The sections, in order, each heading with its anchor, as the page's table of contents lists them.
+    const headings = screen.getAllByRole('heading', { level: 2 });
+    expect(headings.map(heading => heading.textContent)).toEqual([
       'Datasets and their stats files',
       'Dataset size',
       'Depth vs. breadth',
       'How much data each subject has',
-      'Pace of measurements',
+      'Pace of events',
       'Record coverage',
       'How long the tail of codes is',
       'Mapping to vocabularies',
       'Health check',
     ]);
-
-    // Dataset size has a fixed order, the most measurements first, and no sort controls.
-    expect(figuresIn('Dataset size')[0].data[0].y).toEqual(['Big', 'Demo']);
-    expect(screen.queryByRole('group', { name: /Sort by|Order/ })).not.toBeInTheDocument();
-    expect(within(sectionOf('Dataset size')).getByRole('img')).toHaveAccessibleName(
-      'Events, measurements and unique codes per dataset, grouped bars, most measurements first'
+    expect(DATASET_STATISTICS_TOC).toEqual(
+      headings.map(heading => ({ value: heading.textContent, id: heading.id, level: 2 }))
     );
+    for (const heading of headings) {
+      expect(heading).toHaveAttribute('data-permalink', `#${heading.id}`);
+      expect(heading.closest('section')).toHaveAttribute('aria-labelledby', heading.id);
+    }
+
+    // Dataset size has a fixed order, the most events first: events (rows) and unique codes side by side.
+    expect(figuresIn('Dataset size')[0].data.map(trace => trace.name)).toEqual(['Events', 'Unique codes']);
+    expect(figuresIn('Dataset size')[0].data[0].y).toEqual(['Big', 'Demo']);
+    expect(within(sectionOf('Dataset size')).getByRole('img')).toHaveAccessibleName(
+      'Events and unique codes per dataset, grouped bars, most events first'
+    );
+    expect(within(sectionOf('Dataset size')).getByText(/The axis is logarithmic/)).toBeInTheDocument();
+    // Nothing on the page distinguishes measurements from events; only a source field keeps its name.
+    expect(document.body.textContent?.replace(/measurements_per_day/g, '')).not.toMatch(/measurement/i);
+
     expect(figuresIn('Depth vs. breadth')[0].data[0].text).toEqual(['Big', 'Demo']);
     expect(
       within(sectionOf('Depth vs. breadth')).getByText(
         'Bubble area is proportional to the number of unique codes.'
       )
     ).toBeInTheDocument();
+    expect(within(sectionOf('Depth vs. breadth')).getByText(/how many distinct codes/)).toBeInTheDocument();
     expect(within(sectionOf('Depth vs. breadth')).queryByText(/Left unlabelled/)).not.toBeInTheDocument();
     expect(figuresIn('How much data each subject has')[0].data[0].y).toEqual(['Big', 'Demo']);
-    // No file has the per-subject rate yet: only the exact ratio per event, with a note and no toggle.
-    const pace = within(sectionOf('Pace of measurements'));
-    expect(figuresIn('Pace of measurements')[0].data[0].y).toEqual(['Big', 'Demo']);
-    expect(pace.getByRole('img')).toHaveAccessibleName('Measurements per event, one bar per dataset');
-    expect(pace.queryByRole('group', { name: 'Pace measure' })).not.toBeInTheDocument();
-    expect(pace.getByText(/will appear here once the ETLs publish it/)).toBeInTheDocument();
-    expect(pace.queryByText(/average/)).not.toBeInTheDocument();
+    expect(
+      within(sectionOf('How much data each subject has'))
+        .getAllByRole('button')
+        .map(button => button.textContent)
+    ).toEqual(['Events', 'Unique codes', 'Record span', 'Log', 'Linear']);
+
+    // No file has the per-subject rate yet: no chart, no empty frame and no scale toggle, only why.
+    const pace = within(sectionOf('Pace of events'));
+    expect(figuresIn('Pace of events')).toHaveLength(0);
+    expect(pace.queryByRole('group')).not.toBeInTheDocument();
+    expect(pace.getByText('No dataset can be drawn in this chart:')).toBeInTheDocument();
+    expect(pace.getByText('Big, Demo')).toBeInTheDocument();
+    expect(pace.queryByText(/per event/i)).not.toBeInTheDocument();
+    expect(pace.queryByText(/The axis is/)).not.toBeInTheDocument();
+
     expect(figuresIn('Record coverage')[0].data[0].y).toEqual(['Big', 'Demo']);
     // Every dataset has its own curve and legend entry; none is highlighted at first.
     const tail = within(sectionOf('How long the tail of codes is'));
@@ -163,23 +209,41 @@ describe('DatasetStatistics', () => {
     expect(figuresIn('How long the tail of codes is')[0].layout.yaxis).toMatchObject({ type: 'log' });
     expect(tail.getByLabelText('Highlight')).toHaveValue('');
     expect(tail.getByRole('img')).toHaveAccessibleName(
-      'Share of measurements outside the most frequent codes against the number of codes, both logarithmic, one curve per dataset, each in its own colour and line style'
+      'Share of events outside the most frequent codes against the number of codes, both logarithmic, one curve per dataset, each in its own colour and line style'
     );
+    expect(tail.getByText(/As in a power-law plot/)).toBeInTheDocument();
+    expect(tail.getByText(/can't go on a logarithmic axis/)).toBeInTheDocument();
     // Every dataset has a row, Big's without a mapping marked as such.
     const mapping = within(sectionOf('Mapping to vocabularies'));
     const [, vocabularyCells] = figuresIn('Mapping to vocabularies')[0].data;
     expect(vocabularyCells.y).toEqual(['Big', 'Demo']);
     expect((vocabularyCells.x as string[]).slice(0, 2)).toEqual(['Any vocabulary', 'Codes with a parent']);
     expect(
-      (figuresIn('Mapping to vocabularies')[0].layout.annotations as { y: string; text: string }[]).map(a => [
-        a.y,
-        a.text,
-      ])
+      (
+        figuresIn('Mapping to vocabularies')[0].layout.annotations as unknown as { y: string; text: string }[]
+      ).map(a => [a.y, a.text])
     ).toEqual([['Big', '<i>No vocabulary mapping</i>']]);
     expect(mapping.getByText(/A standard OMOP CDM vocabulary/)).toBeInTheDocument();
     expect(mapping.getByText(/2 more vocabularies are suppressed/)).toBeInTheDocument();
     expect(mapping.getByText(/de-duplicated/)).toBeInTheDocument();
     expect(within(sectionOf('Dataset size')).getByText('Future')).toBeInTheDocument();
+
+    // Every chart with a log axis has a log/linear toggle per log axis, starting on log; the heatmaps have none.
+    // (A "Show the numbers" disclosure is an unnamed group too.)
+    const toggles = (heading: string) =>
+      within(sectionOf(heading))
+        .queryAllByRole('group')
+        .map(group => group.getAttribute('aria-label'))
+        .filter(Boolean);
+    expect(toggles('Dataset size')).toEqual(['Horizontal axis']);
+    expect(toggles('Depth vs. breadth')).toEqual(['Bubble size', 'Horizontal axis', 'Vertical axis']);
+    expect(toggles('How much data each subject has')).toEqual(['Per-subject measure', 'Horizontal axis']);
+    expect(toggles('How long the tail of codes is')).toEqual(['Horizontal axis', 'Vertical axis']);
+    expect(toggles('Record coverage')).toEqual([]);
+    expect(toggles('Mapping to vocabularies')).toEqual([]);
+    for (const group of screen.getAllByRole('group', { name: /axis$/ })) {
+      expect(within(group).getByRole('button', { name: 'Log' })).toHaveAttribute('aria-pressed', 'true');
+    }
 
     // Charts have their numbers as a table, except those that print every number: the heatmaps and the
     // health check.
@@ -187,12 +251,11 @@ describe('DatasetStatistics', () => {
       'Dataset size',
       'Depth vs. breadth',
       'How much data each subject has',
-      'Pace of measurements',
       'How long the tail of codes is',
     ]) {
       expect(within(sectionOf(heading)).getByText('Show the numbers')).toBeInTheDocument();
     }
-    for (const heading of ['Record coverage', 'Mapping to vocabularies', 'Health check']) {
+    for (const heading of ['Pace of events', 'Record coverage', 'Mapping to vocabularies', 'Health check']) {
       expect(within(sectionOf(heading)).queryByText('Show the numbers')).not.toBeInTheDocument();
     }
 
@@ -206,17 +269,10 @@ describe('DatasetStatistics', () => {
     expect(within(scorecard).getAllByRole('img', { name: 'Passes' })).toHaveLength(6);
     expect(health.getByText(/It passes at 90% or more/)).toBeInTheDocument();
     expect(health.getByText('Future')).toBeInTheDocument();
-
-    // Dataset size: events, measurements and unique codes side by side, largest measurements first.
-    expect(figuresIn('Dataset size')[0].data.map(trace => trace.name)).toEqual([
-      'Events',
-      'Measurements',
-      'Unique codes',
-    ]);
   });
 
-  it('switches measures and can leave out demo datasets', () => {
-    // Only the demo's file has each subject's measurements per day.
+  it('switches measures, bubble sizes and axis scales, and can leave out demo datasets', () => {
+    // Only the demo's file has each subject's events per day.
     const demoStats = demo.stats as EtlStats;
     const rate = {
       suppressed: false as const,
@@ -230,60 +286,111 @@ describe('DatasetStatistics', () => {
     };
     const demoWithRate = {
       ...demo,
-      stats: { ...demoStats, perSubject: { ...demoStats.perSubject, measurementsPerDay: rate } },
+      stats: { ...demoStats, perSubject: { ...demoStats.perSubject, eventsPerDay: rate } },
     };
     mockUsePluginData.mockReturnValue({ ...data, datasets: [big, demoWithRate, future] });
     render(<DatasetStatistics />);
 
-    fireEvent.click(
-      within(screen.getByRole('group', { name: 'Per-subject measure' })).getByRole('button', {
-        name: 'Record span',
-      })
-    );
+    choose('How much data each subject has', 'Per-subject measure', 'Record span');
     // Big's file suppresses its record-span quantiles.
     expect(figuresIn('How much data each subject has')[0].data[0].median).toEqual([90]);
-
-    // A file in view has the per-subject rate, so the pace starts with it, drawn as boxes.
-    const pace = () => within(sectionOf('Pace of measurements'));
-    const paceToggle = () => within(screen.getByRole('group', { name: 'Pace measure' }));
-    expect(paceToggle().getByRole('button', { name: 'Per day, per subject' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
+    expect(within(sectionOf('How much data each subject has')).getByRole('img')).toHaveAccessibleName(
+      'Days from first to last event per subject, box chart per dataset'
     );
-    expect(figuresIn('Pace of measurements')[0].data[0]).toMatchObject({
-      type: 'box',
-      y: ['Demo'],
-      median: [2],
+    // The scale stays when the measure changes.
+    choose('How much data each subject has', 'Horizontal axis', 'Linear');
+    choose('How much data each subject has', 'Per-subject measure', 'Events');
+    expect(figuresIn('How much data each subject has')[0].layout.xaxis).toMatchObject({
+      title: { text: 'Events per subject' },
+      rangemode: 'tozero',
     });
+
+    // A file in view has the per-subject rate, so the pace is drawn as boxes, with its own scale toggle.
+    const pace = () => within(sectionOf('Pace of events'));
+    expect(figuresIn('Pace of events')[0].data[0]).toMatchObject({ type: 'box', y: ['Demo'], median: [2] });
     expect(pace().getByRole('img')).toHaveAccessibleName(
-      'Measurements per day, per subject, box chart per dataset'
+      'Events per day, per subject, box chart per dataset'
     );
-    expect(pace().getByText(/which newer versions of meds_summary_stats publish/)).toBeInTheDocument();
+    expect(pace().getByText(/Not shown in this chart/)).toBeInTheDocument();
+    expect(pace().getByText(/per_subject.measurements_per_day\)\./)).toBeInTheDocument();
     // The description gives the library's definition, and why the mean isn't shown.
     expect(pace().getByText(/Birth and death records are left out/)).toBeInTheDocument();
     expect(pace().getByText(/rather than the mean/)).toBeInTheDocument();
-    expect(pace().queryByText(/will appear here once/)).not.toBeInTheDocument();
-    fireEvent.click(paceToggle().getByRole('button', { name: 'Per event' }));
-    expect(figuresIn('Pace of measurements')[0].data[0].y).toEqual(['Big', 'Demo']);
-    expect(pace().getByRole('img')).toHaveAccessibleName('Measurements per event, one bar per dataset');
-    fireEvent.click(paceToggle().getByRole('button', { name: 'Per day, per subject' }));
+    expect(pace().getByText(/The axis is logarithmic/)).toBeInTheDocument();
+    choose('Pace of events', 'Horizontal axis', 'Linear');
+    expect(figuresIn('Pace of events')[0].layout.xaxis).toMatchObject({ rangemode: 'tozero' });
+    expect(figuresIn('Pace of events')[0].layout.xaxis).not.toHaveProperty('type');
+    expect(pace().getByText(/The axis is linear, from zero/)).toBeInTheDocument();
+
+    // Each chart keeps its own scales.
+    choose('Dataset size', 'Horizontal axis', 'Linear');
+    expect(figuresIn('Dataset size')[0].layout.xaxis).toMatchObject({ title: { text: 'Count' } });
+    expect(figuresIn('How long the tail of codes is')[0].layout.xaxis).toMatchObject({ type: 'log' });
+    choose('Dataset size', 'Horizontal axis', 'Log');
+    expect(figuresIn('Dataset size')[0].layout.xaxis).toMatchObject({
+      type: 'log',
+      minor: { dtick: 'D1' },
+    });
+
+    // Bubbles are sized by unique codes at first, and by subjects on request; the axes switch independently.
+    const depth = () => within(sectionOf('Depth vs. breadth'));
+    choose('Depth vs. breadth', 'Bubble size', 'Subjects');
+    expect(depth().getByText(/^Bubble area is proportional to the number of subjects\./)).toBeInTheDocument();
+    expect(depth().getByText('1K subjects')).toBeInTheDocument();
+    expect(depth().getByText(/how many subjects the dataset has/)).toBeInTheDocument();
+    expect(depth().getByRole('img')).toHaveAccessibleName(
+      'Subjects against median events per subject, one bubble per dataset, sized by subjects'
+    );
+    expect(figuresIn('Depth vs. breadth')[0].data[0].hovertemplate).toContain('Subjects (bubble size)');
+    expect(depth().getByText(/Both axes are logarithmic/)).toBeInTheDocument();
+    choose('Depth vs. breadth', 'Vertical axis', 'Linear');
+    expect(figuresIn('Depth vs. breadth')[0].layout.xaxis).toMatchObject({ type: 'log' });
+    expect(figuresIn('Depth vs. breadth')[0].layout.yaxis).toMatchObject({ type: 'linear' });
+    expect(
+      depth().getByText(/The horizontal axis is logarithmic, .* and the vertical axis linear\./)
+    ).toBeInTheDocument();
+    choose('Depth vs. breadth', 'Horizontal axis', 'Linear');
+    expect(depth().getByText(/Both axes are linear\./)).toBeInTheDocument();
+    choose('Depth vs. breadth', 'Vertical axis', 'Log');
+    expect(
+      depth().getByText(/The vertical axis is logarithmic, .* and the horizontal axis linear\./)
+    ).toBeInTheDocument();
+    choose('Depth vs. breadth', 'Bubble size', 'Unique codes');
+    expect(
+      depth().getByText('Bubble area is proportional to the number of unique codes.')
+    ).toBeInTheDocument();
+
+    // The tail plot's description and label follow its scales.
+    const tail = () => within(sectionOf('How long the tail of codes is'));
+    choose('How long the tail of codes is', 'Vertical axis', 'Linear');
+    expect(figuresIn('How long the tail of codes is')[0].layout.yaxis).toMatchObject({ type: 'linear' });
+    expect(tail().getByRole('img')).toHaveAccessibleName(
+      /against the number of codes, logarithmic across and linear up, one curve per dataset/
+    );
+    expect(tail().queryByText(/can't go on a logarithmic axis/)).not.toBeInTheDocument();
+    expect(tail().getByText(/With both axes logarithmic, the chart is a power-law plot/)).toBeInTheDocument();
+    choose('How long the tail of codes is', 'Horizontal axis', 'Linear');
+    expect(tail().getByRole('img')).toHaveAccessibleName(/codes, both linear, one curve/);
+    choose('How long the tail of codes is', 'Vertical axis', 'Log');
+    expect(tail().getByRole('img')).toHaveAccessibleName(
+      /codes, linear across and logarithmic up, one curve/
+    );
+    expect(tail().getByText(/can't go on a logarithmic axis/)).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Highlight'), { target: { value: 'Demo' } });
     // The highlighted curve is drawn last, on top; the other keeps its colour but fades.
     const highlighted = figuresIn('How long the tail of codes is')[0].data;
     expect(highlighted.map(trace => trace.name)).toEqual(['Big', 'Demo']);
     expect(highlighted.map(trace => trace.opacity)).toEqual([0.25, 1]);
-    expect(within(sectionOf('How long the tail of codes is')).getByRole('img')).toHaveAccessibleName(
-      'Share of measurements outside the most frequent codes against the number of codes, both logarithmic, one curve per dataset, Demo highlighted'
-    );
+    expect(tail().getByRole('img')).toHaveAccessibleName(/, Demo highlighted$/);
 
     fireEvent.click(screen.getByLabelText(/Include demo datasets/));
     expect(figuresIn('Dataset size')[0].data[0].y).toEqual(['Big']);
     expect(screen.queryByText('demo_summary_stats.json')).not.toBeInTheDocument();
-    // No file in view has the per-subject rate any more: only the ratio per event, with the note.
-    expect(screen.queryByRole('group', { name: 'Pace measure' })).not.toBeInTheDocument();
-    expect(figuresIn('Pace of measurements')[0].data[0].y).toEqual(['Big']);
-    expect(pace().getByText(/will appear here once/)).toBeInTheDocument();
+    // No file in view has the per-subject rate any more: no chart and no scale toggle.
+    expect(figuresIn('Pace of events')).toHaveLength(0);
+    expect(pace().queryByRole('group')).not.toBeInTheDocument();
+    expect(pace().getByText(/Its stats file has no per-subject events per day/)).toBeInTheDocument();
     expect(figuresIn('Mapping to vocabularies')[0].data[1].y).toEqual(['Big']);
     // The highlighted demo dataset is gone, so nothing is highlighted, and Big keeps its colour.
     expect(screen.getByLabelText('Highlight')).toHaveValue('');
@@ -305,9 +412,9 @@ describe('DatasetStatistics', () => {
       minCellSize: 10,
       stats: etlStats(1000, {
         ontology: {
-          measurementsMapped: 0.1,
+          eventsMapped: 0.1,
           codesWithParents: 0.1,
-          vocabularies: [{ name: 'LOCAL', measurements: 50, recognized: false }],
+          vocabularies: [{ name: 'LOCAL', events: 50, recognized: false }],
           suppressed: null,
         },
       }),
@@ -325,6 +432,47 @@ describe('DatasetStatistics', () => {
     // No vocabulary is a recognised OMOP one, so none is marked.
     expect(figuresIn('Mapping to vocabularies')).toHaveLength(1);
     expect(screen.queryByText(/A standard OMOP CDM vocabulary/)).not.toBeInTheDocument();
+  });
+
+  it('lists stats files committed to this repository without an ETL repository, and says so', () => {
+    const here = (label: string) =>
+      statsEntry(label, {
+        id: `${SITE_GITHUB_REPO.toLowerCase()}/static/data/etl_summary_stats/${label.toLowerCase()}.json`,
+        host: 'site',
+        githubRepo: SITE_GITHUB_REPO,
+        path: `static/data/etl_summary_stats/${label.toLowerCase()}_full_summary_stats.json`,
+      });
+    mockUsePluginData.mockReturnValue({ ...data, datasets: [big, here('Alpha')] });
+    const { rerender } = render(<DatasetStatistics />);
+    const row = within(sectionOf('Datasets and their stats files')).getByRole('row', { name: /^Alpha/ });
+    expect(within(row).getAllByRole('cell')[0]).toHaveTextContent('—');
+    expect(within(row).getByRole('link', { name: 'alpha_full_summary_stats.json' })).toHaveAttribute(
+      'href',
+      `https://github.com/${SITE_GITHUB_REPO}/blob/HEAD/static/data/etl_summary_stats/alpha_full_summary_stats.json`
+    );
+    expect(
+      screen.getByText(
+        "The stats file of Alpha is committed to this site's repository, so it has no ETL repository in the table."
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText(/some are committed to this site's repository/)).toBeInTheDocument();
+    // It is in every comparison.
+    expect(figuresIn('Dataset size')[0].data[0].y).toEqual(['Big', 'Alpha']);
+    expect(figuresIn('How long the tail of codes is')[0].data.map(trace => trace.name)).toEqual([
+      'Alpha',
+      'Big',
+    ]);
+
+    mockUsePluginData.mockReturnValue({
+      ...data,
+      datasets: [big, here('Alpha'), here('Beta'), here('Gamma')],
+    });
+    rerender(<DatasetStatistics />);
+    expect(
+      screen.getByText(
+        "The stats files of Alpha, Beta and Gamma are committed to this site's repository, so they have no ETL repository in the table."
+      )
+    ).toBeInTheDocument();
   });
 
   it('leaves off bubble labels that would overlap, and says which', () => {
@@ -346,12 +494,16 @@ describe('DatasetStatistics', () => {
     expect(screen.getByText(/No dataset statistics could be collected/)).toBeInTheDocument();
   });
 
-  it('draws no chart where no dataset can be drawn', () => {
+  it('draws no chart, frame or toggle where no dataset can be drawn', () => {
     mockUsePluginData.mockReturnValue({ updatedAt: null, datasets: [future], reposWithoutStats: [] });
     render(<DatasetStatistics />);
     expect(screen.queryAllByTestId('plot')).toHaveLength(0);
     expect(within(sectionOf('Dataset size')).getByText('Future')).toBeInTheDocument();
+    expect(within(sectionOf('Dataset size')).getByText(/No dataset can be drawn/)).toBeInTheDocument();
     expect(screen.queryByLabelText('Highlight')).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('group', { name: /axis$|Bubble size/ })).toHaveLength(0);
+    // The per-subject measure stays, since another measure may have data.
+    expect(screen.getByRole('group', { name: 'Per-subject measure' })).toBeInTheDocument();
     expect(within(sectionOf('Health check')).getAllByRole('row')).toHaveLength(1);
   });
 });

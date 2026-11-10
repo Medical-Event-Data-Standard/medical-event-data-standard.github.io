@@ -1,11 +1,14 @@
 import { describe, expect, it } from '@jest/globals';
 import {
+  AXIS_SCALES,
   baseLayout,
+  canBeLog,
   CATEGORICAL_COLORS,
   codeTailChart,
   codeTailPoints,
   coverageChart,
   datasetName,
+  BUBBLE_SIZES,
   depthBreadthChart,
   formatCompact,
   formatCount,
@@ -17,6 +20,8 @@ import {
   githubRepoUrl,
   HEALTH_CHECKS,
   healthCheck,
+  LOG_AXIS_TICKS,
+  linearTicks,
   logTicks,
   orderDatasets,
   paceChart,
@@ -28,7 +33,7 @@ import {
   SERIES_COLORS,
   seriesStyle,
   sizeChart,
-  sortByMeasurements,
+  sortByEvents,
   statsFileUrl,
   valueAxis,
   vocabularyChart,
@@ -97,13 +102,59 @@ describe('formatting', () => {
     });
   });
 
-  it('uses a log axis only for positive values', () => {
-    expect(valueAxis([10, 1000], 'Count')).toMatchObject({
+  it('uses a log axis only for positive values, with minor ticks at 2 to 9 times each power of ten', () => {
+    expect(valueAxis([10, 1000], 'Count')).toEqual({
       type: 'log',
       title: { text: 'Count (log scale)' },
+      tickvals: [10, 100, 1000],
+      ticktext: ['10', '100', '1K'],
+      ticks: 'outside',
+      ticklen: 6,
+      tickcolor: expect.any(String),
+      minor: { ticks: 'outside', dtick: 'D1', ticklen: 3, tickcolor: expect.any(String) },
     });
-    expect(valueAxis([0, 1000], 'Count')).toEqual({ title: { text: 'Count' }, rangemode: 'tozero' });
-    expect(valueAxis([], 'Count')).toEqual({ title: { text: 'Count' }, rangemode: 'tozero' });
+    expect(valueAxis([0, 1000], 'Count')).toEqual({
+      title: { text: 'Count' },
+      rangemode: 'tozero',
+      ...linearTicks(1000),
+    });
+    expect(valueAxis([], 'Count')).toEqual({
+      title: { text: 'Count' },
+      rangemode: 'tozero',
+      tickvals: [0],
+      ticktext: ['0'],
+    });
+    expect(canBeLog([10, 1000])).toBe(true);
+    expect(canBeLog([0, 1000])).toBe(false);
+    expect(canBeLog([])).toBe(false);
+  });
+
+  it('builds linear-axis ticks from zero, at 1, 2, 5 or 10 times a power of ten, labelled like log ticks', () => {
+    expect(linearTicks(1000)).toEqual({
+      tickvals: [0, 200, 400, 600, 800, 1000, 1200],
+      ticktext: ['0', '200', '400', '600', '800', '1K', '1.2K'],
+    });
+    expect(linearTicks(1_100_000_000).ticktext).toEqual(['0', '500M', '1B', '1.5B']);
+    expect(linearTicks(5).tickvals).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    expect(linearTicks(40).tickvals).toEqual([0, 10, 20, 30, 40, 50]);
+    expect(linearTicks(0.7)).toEqual({
+      tickvals: [0, 0.2, 0.4, 0.6, 0.8],
+      ticktext: ['0', '0.2', '0.4', '0.6', '0.8'],
+    });
+    expect(linearTicks(0)).toEqual({ tickvals: [0], ticktext: ['0'] });
+  });
+
+  it('uses a linear axis from zero when asked', () => {
+    expect(valueAxis([10, 1000], 'Count', 'linear')).toEqual({
+      title: { text: 'Count' },
+      rangemode: 'tozero',
+      ...linearTicks(1000),
+    });
+    expect(valueAxis([10, 1000], 'Count', 'log')).toMatchObject({ type: 'log' });
+    expect(AXIS_SCALES.map(scale => [scale.key, scale.label])).toEqual([
+      ['log', 'Log'],
+      ['linear', 'Linear'],
+    ]);
   });
 
   it('computes ratios only when both parts are known', () => {
@@ -154,20 +205,20 @@ describe('shared helpers', () => {
   });
 });
 
-describe('sortByMeasurements', () => {
-  const withMeasurements = (label: string, measurements: number | null) =>
-    statsEntry(label, { stats: etlStats(10, { counts: { ...etlStats(10).counts, measurements } }) });
+describe('sortByEvents', () => {
+  const withEvents = (label: string, events: number | null) =>
+    statsEntry(label, { stats: etlStats(10, { counts: { ...etlStats(10).counts, events } }) });
   const labels = (items: EtlStatsEntry[]) => items.map(item => item.label);
 
-  it('puts the most measurements first, ties in name order, and missing counts and unreadable files last', () => {
+  it('puts the most events first, ties in name order, and missing counts and unreadable files last', () => {
     expect(
       labels(
-        sortByMeasurements([
-          withMeasurements('Beta', 300),
+        sortByEvents([
+          withEvents('Beta', 300),
           unreadable,
-          withMeasurements('None', null),
-          withMeasurements('Gamma', 5000),
-          withMeasurements('Alpha', 300),
+          withEvents('None', null),
+          withEvents('Gamma', 5000),
+          withEvents('Alpha', 300),
         ])
       )
     ).toEqual(['Gamma', 'Alpha', 'Beta', 'Future', 'None']);
@@ -175,74 +226,94 @@ describe('sortByMeasurements', () => {
 });
 
 describe('sizeChart', () => {
-  it('draws events, measurements and unique codes as grouped bars on one log axis, most measurements first', () => {
+  it('draws events and unique codes as grouped bars on one log axis, most events first', () => {
     const model = sizeChart([small, big, unreadable]);
     const traces = (model.figure?.data ?? []).map(attrs);
-    expect(traces.map(t => t.name)).toEqual(['Events', 'Measurements', 'Unique codes']);
+    expect(traces.map(t => t.name)).toEqual(['Events', 'Unique codes']);
     expect(traces.map(t => t.y)).toEqual([
       ['Big', 'Small'],
       ['Big', 'Small'],
-      ['Big', 'Small'],
     ]);
+    // Events are rows: the fixture has 100 per subject.
     expect(traces.map(t => t.x)).toEqual([
-      [50000, 1000],
       [500000, 10000],
       [50, 50],
     ]);
-    expect(traces[0].text).toEqual(['50K', '1K']);
-    expect(traces[1].customdata).toEqual(['500,000', '10,000']);
+    expect(traces[0].text).toEqual(['500K', '10K']);
+    expect(traces[0].customdata).toEqual(['500,000', '10,000']);
     expect(traces.map(t => (t.marker as { color: string }).color)).toEqual([
       SERIES_COLORS[0],
       SERIES_COLORS[1],
-      SERIES_COLORS[2],
     ]);
     expect(model.figure?.layout).toMatchObject({ barmode: 'group', showlegend: true });
-    expect(model.figure?.layout.xaxis).toMatchObject({ type: 'log', title: { text: 'Count (log scale)' } });
+    expect(model.figure?.layout.xaxis).toMatchObject({
+      type: 'log',
+      title: { text: 'Count (log scale)' },
+      ...LOG_AXIS_TICKS,
+    });
+    expect(model.logAxes).toEqual(['x']);
     expect(model.skipped).toEqual([{ label: 'Future', reason: unreadable.problem }]);
-    expect(model.table.columns).toEqual(['Dataset', 'Subjects', 'Events', 'Measurements', 'Unique codes']);
+    expect(model.table.columns).toEqual(['Dataset', 'Subjects', 'Events', 'Unique codes']);
     expect(model.table.rows).toEqual([
-      ['Big', '5,000', '50,000', '500,000', '50'],
-      ['Small', '100', '1,000', '10,000', '50'],
+      ['Big', '5,000', '500,000', '50'],
+      ['Small', '100', '10,000', '50'],
     ]);
   });
 
-  it('keeps a dataset with some counts, noting the missing bars, and leaves out one with none', () => {
-    const noEvents = statsEntry('No events', {
-      stats: etlStats(300, { counts: { ...etlStats(300).counts, events: null, uniqueCodes: null } }),
+  it('draws a linear axis from zero when asked, keeping the toggle', () => {
+    const model = sizeChart([small, big], 'linear');
+    expect(model.figure?.layout.xaxis).toEqual(
+      expect.objectContaining({ title: { text: 'Count' }, rangemode: 'tozero' })
+    );
+    expect(model.figure?.layout.xaxis).not.toHaveProperty('type');
+    expect(model.figure?.layout.xaxis).not.toHaveProperty('minor');
+    expect(model.logAxes).toEqual(['x']);
+  });
+
+  it('keeps a dataset with some counts, noting the missing bar, and leaves out one with none', () => {
+    const noCodes = statsEntry('No codes', {
+      stats: etlStats(300, { counts: { ...etlStats(300).counts, uniqueCodes: null } }),
     });
     const noCounts = statsEntry('No counts', {
-      stats: etlStats(300, {
-        counts: { ...etlStats(300).counts, events: null, measurements: null, uniqueCodes: null },
-      }),
+      stats: etlStats(300, { counts: { ...etlStats(300).counts, events: null, uniqueCodes: null } }),
     });
-    const model = sizeChart([noEvents, noCounts, small]);
-    const [events, measurements] = (model.figure?.data ?? []).map(attrs);
-    expect(events.y).toEqual(['No events', 'Small']);
-    expect(events.x).toEqual([null, 1000]);
-    expect(events.text).toEqual(['', '1K']);
-    expect(events.customdata).toEqual(['—', '1,000']);
-    expect(measurements.x).toEqual([30000, 10000]);
+    const noEvents = statsEntry('No events', {
+      stats: etlStats(200, { counts: { ...etlStats(200).counts, events: null } }),
+    });
+    const model = sizeChart([noCodes, noCounts, noEvents, small]);
+    const [events, codes] = (model.figure?.data ?? []).map(attrs);
+    expect(events.y).toEqual(['No codes', 'Small', 'No events']);
+    expect(events.x).toEqual([30000, 10000, null]);
+    expect(events.text).toEqual(['30K', '10K', '']);
+    expect(events.customdata).toEqual(['30,000', '10,000', '—']);
+    expect(codes.x).toEqual([null, 50, 50]);
     expect(model.skipped).toEqual([
-      { label: 'No counts', reason: 'Its stats file has no event, measurement or unique-code counts.' },
-      {
-        label: 'No events',
-        reason: 'Its stats file has no events or unique codes count, so that bar is missing.',
-      },
+      { label: 'No counts', reason: 'Its stats file has no event or unique-code counts.' },
+      { label: 'No codes', reason: 'Its stats file has no unique codes count, so that bar is missing.' },
+      { label: 'No events', reason: 'Its stats file has no events count, so that bar is missing.' },
     ]);
-    // The table follows the chart's order, with a dataset missing the measurement count last.
+    // The table follows the chart's order, with datasets missing the event count last.
     expect(model.table.rows).toEqual([
-      ['No events', '300', '—', '30,000', '—'],
-      ['Small', '100', '1,000', '10,000', '50'],
-      ['No counts', '300', '—', '—', '—'],
+      ['No codes', '300', '30,000', '—'],
+      ['Small', '100', '10,000', '50'],
+      ['No counts', '300', '—', '—'],
+      ['No events', '200', '—', '50'],
     ]);
   });
 
-  it('has no figure when nothing can be drawn', () => {
+  it('has no figure when nothing can be drawn, and no log axis for a count of zero', () => {
     expect(sizeChart([unreadable])).toEqual({
       figure: null,
       skipped: [{ label: 'Future', reason: unreadable.problem }],
-      table: { columns: ['Dataset', 'Subjects', 'Events', 'Measurements', 'Unique codes'], rows: [] },
+      table: { columns: ['Dataset', 'Subjects', 'Events', 'Unique codes'], rows: [] },
+      logAxes: [],
     });
+    const empty = statsEntry('Empty', {
+      stats: etlStats(0, { counts: { ...etlStats(0).counts, uniqueCodes: 0 } }),
+    });
+    const model = sizeChart([empty, big]);
+    expect(model.logAxes).toEqual([]);
+    expect(model.figure?.layout.xaxis).toMatchObject({ title: { text: 'Count' }, rangemode: 'tozero' });
   });
 });
 
@@ -300,7 +371,38 @@ describe('perSubjectChart', () => {
     const tiny = statsEntry('Tiny', {
       stats: etlStats(5, { perSubject: { ...etlStats(5).perSubject, events: { suppressed: true, n: 5 } } }),
     });
-    expect(perSubjectChart([tiny], 'events').figure).toBeNull();
+    expect(perSubjectChart([tiny], 'events')).toMatchObject({ figure: null, logAxes: [] });
+  });
+
+  it("draws each subject's events, on a log axis or, when asked, a linear one", () => {
+    const log = perSubjectChart([big], 'events');
+    expect(attrs(log.figure?.data[0]).median).toEqual([30]);
+    expect(log.figure?.layout.xaxis).toMatchObject({
+      type: 'log',
+      title: { text: 'Events per subject (log scale)' },
+      minor: { dtick: 'D1' },
+    });
+    expect(log.logAxes).toEqual(['x']);
+    const linear = perSubjectChart([big], 'events', 'linear');
+    expect(linear.figure?.layout.xaxis).toMatchObject({
+      title: { text: 'Events per subject' },
+      rangemode: 'tozero',
+    });
+    expect(linear.logAxes).toEqual(['x']);
+  });
+
+  it('has no log axis, and so no toggle, for a 5th percentile of zero', () => {
+    const sameDay = statsEntry('Same day', {
+      stats: etlStats(100, {
+        perSubject: perSubject({
+          spanDays: { suppressed: false, n: 100, mean: null, p5: 0, p25: 2, p50: 30, p75: 40, p95: 50 },
+        }),
+      }),
+    });
+    const model = perSubjectChart([sameDay], 'spanDays');
+    expect(model.logAxes).toEqual([]);
+    expect(model.figure?.layout.xaxis).toMatchObject({ rangemode: 'tozero' });
+    expect(model.figure?.layout.xaxis).not.toHaveProperty('type');
   });
 });
 
@@ -316,7 +418,6 @@ describe('coverageChart', () => {
         counts: {
           subjects: null,
           events: null,
-          measurements: null,
           uniqueCodes: null,
           subjectsWithBirth: null,
           subjectsWithDeath: null,
@@ -420,7 +521,7 @@ describe('depthBreadthChart', () => {
   it('draws a bubble per dataset, its area proportional to unique codes, on two log axes', () => {
     const broad = withCodes('Broad', 100_000, 40_000);
     const deep = withCodes('Deep', 100, 10_000, {
-      perSubject: perSubject({ measurements: dist(9000, 1000) }),
+      perSubject: perSubject({ events: dist(9000, 1000) }),
     });
     const tiny = withCodes('Tiny', 3000, 100);
     const model = depthBreadthChart([deep, tiny, broad, unreadable], wide);
@@ -442,8 +543,24 @@ describe('depthBreadthChart', () => {
       'Bubble area is proportional to the number of unique codes. Datasets with fewer than about 817 codes are ' +
         'drawn at the smallest size, so they stay visible.'
     );
+    // The hover names the measure that sets the bubble's size.
+    expect(bubbles.hovertemplate).toBe(
+      '%{text}<br>Subjects: %{customdata[0]}<br>Median events per subject: %{customdata[1]}' +
+        '<br>Unique codes (bubble size): %{customdata[2]}<extra></extra>'
+    );
+    expect(model.logAxes).toEqual(['x', 'y']);
     const layout = model.figure?.layout as Record<string, Record<string, unknown>>;
-    expect(layout.xaxis).toMatchObject({ type: 'log', title: { text: 'Subjects (log scale)' } });
+    expect(layout.xaxis).toMatchObject({
+      type: 'log',
+      title: { text: 'Subjects (log scale)' },
+      ...LOG_AXIS_TICKS,
+    });
+    expect(layout.yaxis).toMatchObject({
+      type: 'log',
+      autorange: false,
+      title: { text: 'Median events per subject (log scale)' },
+      minor: { dtick: 'D1' },
+    });
     // Three decades of subjects get ticks at powers of ten; the medians, under two and a half, also at 3s.
     expect(layout.xaxis.ticktext).toEqual(['10', '100', '1K', '10K', '100K', '1M']);
     expect(layout.yaxis.ticktext).toEqual(['10', '30', '100', '300', '1K', '3K', '10K', '30K']);
@@ -455,13 +572,64 @@ describe('depthBreadthChart', () => {
     expect(model.unlabelled).toEqual([]);
     expect(model.skipped).toEqual([{ label: 'Future', reason: unreadable.problem }]);
     expect(model.table).toEqual({
-      columns: ['Dataset', 'Subjects', 'Median measurements per subject', 'Unique codes'],
+      columns: ['Dataset', 'Subjects', 'Median events per subject', 'Unique codes'],
       rows: [
         ['Broad', '100,000', '30', '40,000'],
         ['Tiny', '3,000', '30', '100'],
         ['Deep', '100', '1,000', '10,000'],
       ],
     });
+  });
+
+  it('sizes bubbles by subjects when asked, and says so in the key, the note and the hover', () => {
+    const many = withCodes('Many', 100_000, 100);
+    const quarter = withCodes('Quarter', 25_000, 40_000);
+    const few = withCodes('Few', 1000, 10_000);
+    const model = depthBreadthChart([many, quarter, few], { ...wide, size: 'subjects' });
+    const bubbles = attrs(model.figure?.data[0]);
+    expect(bubbles.text).toEqual(['Many', 'Quarter', 'Few']);
+    expect((bubbles.marker as { size: number[] }).size).toEqual([56, 28, 8]);
+    expect(bubbles.hovertemplate).toContain('Subjects (bubble size): %{customdata[0]}');
+    expect(bubbles.hovertemplate).toContain('<br>Unique codes: %{customdata[2]}');
+    expect(model.sizeKey).toEqual([
+      { label: '100K subjects', diameter: 56 },
+      { label: '10K subjects', diameter: 56 * Math.sqrt(0.1) },
+    ]);
+    expect(model.sizeNote).toBe(
+      'Bubble area is proportional to the number of subjects. Datasets with fewer than about 2K subjects ' +
+        'are drawn at the smallest size, so they stay visible.'
+    );
+    // The positions don't change with the size.
+    expect(bubbles.x).toEqual([100_000, 25_000, 1000]);
+    expect(BUBBLE_SIZES.map(option => option.key)).toEqual(['uniqueCodes', 'subjects']);
+  });
+
+  it('draws linear axes when asked, placing labels on them, and keeps datasets a log axis cannot show', () => {
+    const broad = withCodes('Broad', 100_000, 40_000);
+    const deep = withCodes('Deep', 100, 10_000, { perSubject: perSubject({ events: dist(9000, 1000) }) });
+    const zero = entryWith('Zero median', 10, { perSubject: perSubject({ events: dist(1, 0) }) });
+    const model = depthBreadthChart([broad, deep, zero], { ...wide, scales: { x: 'linear', y: 'linear' } });
+    expect(model.skipped).toEqual([]);
+    expect(model.logAxes).toEqual(['x', 'y']);
+    const layout = model.figure?.layout as Record<string, Record<string, unknown>>;
+    expect(layout.xaxis).toMatchObject({ type: 'linear', title: { text: 'Subjects' } });
+    expect(layout.xaxis).not.toHaveProperty('minor');
+    expect(layout.yaxis).toMatchObject({ type: 'linear', title: { text: 'Median events per subject' } });
+    // From zero to the largest value, with room for the largest bubble on both sides.
+    const [xLo, xHi] = layout.xaxis.range as number[];
+    expect(xLo).toBeLessThan(0);
+    expect(xHi).toBeGreaterThan(100_000);
+    const [yLo, yHi] = layout.yaxis.range as number[];
+    expect(yLo).toBeLessThan(0);
+    expect(yHi).toBeGreaterThan(1000);
+    // Labels sit at the values themselves, not their logarithms.
+    const annotations = layout.annotations as unknown as { text: string; x: number; y: number }[];
+    expect(annotations.find(a => a.text === 'Broad')).toMatchObject({ x: 100_000, y: 30 });
+    // A mixed chart: logarithmic across, linear up.
+    const mixed = depthBreadthChart([broad, deep, zero], { ...wide, scales: { y: 'linear' } });
+    expect(mixed.skipped).toEqual([]);
+    expect(mixed.figure?.layout.xaxis).toMatchObject({ type: 'log' });
+    expect(mixed.figure?.layout.yaxis).toMatchObject({ type: 'linear' });
   });
 
   it('uses smaller bubbles on a narrow screen, and widens an axis that spans less than a decade', () => {
@@ -486,29 +654,30 @@ describe('depthBreadthChart', () => {
       [
         entryWith('No subjects', 50, { counts: counts(50, { subjects: null }) }),
         entryWith('No codes', 40, { counts: counts(40, { uniqueCodes: null }) }),
-        entryWith('No distribution', 30, { perSubject: perSubject({ measurements: null }) }),
-        entryWith('Suppressed', 20, { perSubject: perSubject({ measurements: SUPPRESSED }) }),
+        entryWith('No distribution', 30, { perSubject: perSubject({ events: null }) }),
+        entryWith('Suppressed', 20, { perSubject: perSubject({ events: SUPPRESSED }) }),
         entryWith('Zero subjects', 0, {}),
-        entryWith('Zero median', 10, { perSubject: perSubject({ measurements: dist(1, 0) }) }),
+        entryWith('Zero median', 10, { perSubject: perSubject({ events: dist(1, 0) }) }),
       ],
       wide
     );
     expect(model).toEqual({
       figure: null,
+      logAxes: [],
       skipped: [
         { label: 'No codes', reason: 'Its stats file has no unique-code count.' },
-        { label: 'No distribution', reason: 'Its stats file has no per-subject measurement distribution.' },
+        { label: 'No distribution', reason: 'Its stats file has no per-subject event distribution.' },
         {
           label: 'Suppressed',
           reason: 'Suppressed: the median is withheld because it rests on fewer than 20 subjects.',
         },
         {
           label: 'Zero median',
-          reason: 'It has no subjects or no measurements, which a logarithmic axis cannot show.',
+          reason: 'Its subject count or median is zero, which a logarithmic axis cannot show.',
         },
         {
           label: 'Zero subjects',
-          reason: 'It has no subjects or no measurements, which a logarithmic axis cannot show.',
+          reason: 'Its subject count or median is zero, which a logarithmic axis cannot show.',
         },
         { label: 'No subjects', reason: 'Its stats file has no subject count.' },
       ],
@@ -522,7 +691,7 @@ describe('depthBreadthChart', () => {
 
 describe('paceChart', () => {
   const slow = entryWith('Slow', 300, {});
-  /** A published distribution of each subject's measurements per day. */
+  /** A published distribution of each subject's events per day. */
   const rate = (p50: number): Distribution => ({
     suppressed: false,
     n: 200,
@@ -533,15 +702,14 @@ describe('paceChart', () => {
     p75: 4,
     p95: 12.25,
   });
-  const NO_RATE =
-    'Its stats file has no per-subject measurements per day, which newer versions of meds_summary_stats publish.';
+  const NO_RATE = 'Its stats file has no per-subject events per day (per_subject.measurements_per_day).';
 
-  it("draws each subject's measurements per day as boxes from the quantiles, ranked by median, on a log axis", () => {
-    const fast = entryWith('Fast', 200, { perSubject: perSubject({ measurementsPerDay: rate(1.5) }) });
-    const steady = entryWith('Steady', 300, { perSubject: perSubject({ measurementsPerDay: rate(0.0137) }) });
+  it("draws each subject's events per day as boxes from the quantiles, ranked by median, on a log axis", () => {
+    const fast = entryWith('Fast', 200, { perSubject: perSubject({ eventsPerDay: rate(1.5) }) });
+    const steady = entryWith('Steady', 300, { perSubject: perSubject({ eventsPerDay: rate(0.0137) }) });
     // Stats collected before the page read the field don't have it at all.
     const older = entryWith('Older', 400, {});
-    const model = paceChart([steady, older, fast, unreadable], 'perDay');
+    const model = paceChart([steady, older, fast, unreadable]);
     const [box, hover] = (model.figure?.data ?? []).map(attrs);
     expect(box).toMatchObject({
       type: 'box',
@@ -562,8 +730,10 @@ describe('paceChart', () => {
     ]);
     expect(model.figure?.layout.xaxis).toMatchObject({
       type: 'log',
-      title: { text: 'Measurements per day (log scale)' },
+      title: { text: 'Events per day (log scale)' },
+      minor: { dtick: 'D1' },
     });
+    expect(model.logAxes).toEqual(['x']);
     expect(model.table.rows).toEqual([
       ['Fast', '200', '0.05', '0.2', '1.5', '4', '12.3'],
       ['Steady', '200', '0.05', '0.2', '0.0137', '4', '12.3'],
@@ -572,50 +742,30 @@ describe('paceChart', () => {
       { label: 'Older', reason: NO_RATE },
       { label: 'Future', reason: unreadable.problem },
     ]);
+    // On a linear axis, the same boxes from zero.
+    expect(paceChart([fast], 'linear').figure?.layout.xaxis).toEqual(
+      expect.objectContaining({ title: { text: 'Events per day' }, rangemode: 'tozero' })
+    );
   });
 
-  it('has no per-day figure until a file publishes it with quantiles', () => {
-    const model = paceChart(
-      [
-        slow,
-        entryWith('Null', 200, { perSubject: perSubject({ measurementsPerDay: null }) }),
-        entryWith('Suppressed', 100, { perSubject: perSubject({ measurementsPerDay: SUPPRESSED }) }),
-      ],
-      'perDay'
-    );
+  it('has no figure until a file publishes it with quantiles', () => {
+    const model = paceChart([
+      slow,
+      entryWith('Null', 200, { perSubject: perSubject({ eventsPerDay: null }) }),
+      entryWith('Suppressed', 100, { perSubject: perSubject({ eventsPerDay: SUPPRESSED }) }),
+    ]);
     expect(model.figure).toBeNull();
+    expect(model.logAxes).toEqual([]);
     // The files without the rate share one note; a suppressed rate is never taken for a missing one.
     expect(model.skipped).toEqual([
       {
         label: 'Slow, Null',
-        reason:
-          'Their stats files have no per-subject measurements per day, which newer versions of meds_summary_stats publish.',
+        reason: 'Their stats files have no per-subject events per day (per_subject.measurements_per_day).',
       },
       {
         label: 'Suppressed',
         reason: 'Suppressed: too few subjects have a rate, so its quantiles are withheld.',
       },
-    ]);
-  });
-
-  it('ranks measurements per event, an exact ratio, on a linear axis', () => {
-    const dense = entryWith('Dense', 100, { counts: counts(100, { events: 400 }) });
-    const noEvents = entryWith('No events', 50, { counts: counts(50, { events: null }) });
-    const model = paceChart([slow, dense, noEvents], 'perEvent');
-    expect(attrs(model.figure?.data[0])).toMatchObject({ y: ['Dense', 'Slow'], x: [25, 10] });
-    expect(model.figure?.layout.xaxis).toMatchObject({
-      title: { text: 'Measurements per event' },
-      rangemode: 'tozero',
-    });
-    expect(model.table).toEqual({
-      columns: ['Dataset', 'Measurements', 'Events', 'Measurements per event'],
-      rows: [
-        ['Dense', '10,000', '400', '25'],
-        ['Slow', '30,000', '3,000', '10'],
-      ],
-    });
-    expect(model.skipped).toEqual([
-      { label: 'No events', reason: 'Its stats file has no measurement or event count.' },
     ]);
   });
 });
@@ -643,12 +793,12 @@ describe('codeTailPoints', () => {
       [1000, 0.001],
     ]);
     expect(points.map(p => p.text)).toEqual([
-      'It takes the 4 most frequent codes to cover 50% of measurements, leaving 50% outside them',
-      '40% of measurements fall outside the 10 most frequent codes',
-      'It takes the 40 most frequent codes to cover 90% of measurements, leaving 10% outside them',
-      '5% of measurements fall outside the 100 most frequent codes',
-      'It takes the 300 most frequent codes to cover 99% of measurements, leaving 1% outside them',
-      '0.1% of measurements fall outside the 1,000 most frequent codes',
+      'It takes the 4 most frequent codes to cover 50% of events, leaving 50% outside them',
+      '40% of events fall outside the 10 most frequent codes',
+      'It takes the 40 most frequent codes to cover 90% of events, leaving 10% outside them',
+      '5% of events fall outside the 100 most frequent codes',
+      'It takes the 300 most frequent codes to cover 99% of events, leaving 1% outside them',
+      '0.1% of events fall outside the 1,000 most frequent codes',
     ]);
     // Points past the dataset's number of codes are dropped.
     expect(pairs(codeTailPoints(concentration, 200)).map(([codes]) => codes)).toEqual([4, 10, 40, 100]);
@@ -664,6 +814,23 @@ describe('codeTailPoints', () => {
       [1000, 0.01],
       [1000, 0.005],
     ]);
+  });
+
+  it('keeps points that leave nothing outside for a linear axis, but never one beyond the number of codes', () => {
+    const covering = { ...concentration, top100: 1, top1000: 1 };
+    expect(pairs(codeTailPoints(covering, 500, true))).toEqual([
+      [4, 0.5],
+      [10, 0.4],
+      [40, 0.1],
+      [100, 0],
+      [300, 0.01],
+    ]);
+    expect(codeTailPoints(covering, 500, true)[3].text).toBe(
+      '0% of events fall outside the 100 most frequent codes'
+    );
+    expect(pairs(codeTailPoints(covering, 500)).map(([codes]) => codes)).toEqual([4, 10, 40, 300]);
+    // A share above 100% is not a share.
+    expect(codeTailPoints({ ...concentration, top10: 1.2 }, 2000, true).map(p => p.codes)).not.toContain(10);
   });
 });
 
@@ -705,18 +872,22 @@ describe('codeTailChart', () => {
       text: ['Big', 'Big', 'Big', 'Big'],
     });
     expect(model.figure?.layout).toMatchObject({ showlegend: true });
+    expect(model.logAxes).toEqual(['x', 'y']);
     expect(model.figure?.layout.xaxis).toMatchObject({
       type: 'log',
       ticktext: ['1', '10', '100'],
       title: { text: 'Number of most frequent codes, N (log scale)' },
+      ...LOG_AXIS_TICKS,
     });
     // Down to just below the smallest share left outside, up to 100%.
     expect(model.figure?.layout.yaxis).toMatchObject({
       type: 'log',
+      autorange: false,
       range: [-2.15, 0.05],
       tickvals: [0.01, 0.1, 1],
       ticktext: ['1%', '10%', '100%'],
       title: { text: 'Share outside the top N (log scale)' },
+      ...LOG_AXIS_TICKS,
     });
     expect(model.table.columns).toEqual([
       'Dataset',
@@ -732,6 +903,50 @@ describe('codeTailChart', () => {
     expect(model.figure?.layout.height).toBe(460);
     // On a phone the legend takes a line per dataset, so the figure is taller.
     expect(codeTailChart([small, other, big], null, [], { narrow: true }).figure?.layout.height).toBe(700);
+  });
+
+  it('draws either axis linear when asked, a linear vertical axis with the points that leave nothing outside', () => {
+    const model = codeTailChart([big], null, [], { scales: { x: 'linear', y: 'linear' } });
+    // The fixture's points that leave nothing outside (top 100 and top 1,000) lie beyond its 50 codes: none is added.
+    const [curve] = (model.figure?.data ?? []).map(attrs);
+    expect(curve).toMatchObject({ x: [4, 10, 20, 45], y: [0.5, 0.7, 0.1, 0.01] });
+    expect(model.figure?.layout.xaxis).toEqual({
+      ...baseLayout(0).xaxis,
+      type: 'linear',
+      rangemode: 'tozero',
+      tickvals: [0, 10, 20, 30, 40, 50],
+      ticktext: ['0', '10', '20', '30', '40', '50'],
+      title: { text: 'Number of most frequent codes, N' },
+    });
+    expect(model.figure?.layout.yaxis).toMatchObject({
+      type: 'linear',
+      autorange: false,
+      range: [-0.03, 1.03],
+      tickvals: [0, 0.25, 0.5, 0.75, 1],
+      ticktext: ['0%', '25%', '50%', '75%', '100%'],
+      title: { text: 'Share outside the top N' },
+    });
+    expect(model.figure?.layout.yaxis).not.toHaveProperty('minor');
+    expect(model.logAxes).toEqual(['x', 'y']);
+
+    // A dataset whose top 10 codes are all its codes: no point on a log axis, a point at 0% on a linear one.
+    const unknown = {
+      top10: null,
+      top100: null,
+      top1000: null,
+      codesFor50: null,
+      codesFor90: null,
+      codesFor99: null,
+    };
+    const covered = entryWith('Covered', 20, {
+      counts: counts(20, { uniqueCodes: 10 }),
+      concentration: { ...unknown, top10: 1 },
+    });
+    expect(codeTailChart([covered], null).figure).toBeNull();
+    const linear = codeTailChart([covered], null, [], { scales: { y: 'linear' } });
+    expect(attrs(linear.figure?.data[0])).toMatchObject({ x: [10], y: [0] });
+    expect(linear.figure?.layout.xaxis).toMatchObject({ type: 'log' });
+    expect(linear.skipped).toEqual([]);
   });
 
   it("keeps each dataset's style when others are filtered out", () => {
@@ -781,11 +996,23 @@ describe('codeTailChart', () => {
       { label: 'Empty', reason: 'Its stats file has no code-concentration figures.' },
       {
         label: 'Covered',
-        reason:
-          'Its most frequent codes leave no measurements outside them, which a logarithmic axis cannot show.',
+        reason: 'Its most frequent codes leave no events outside them, which a logarithmic axis cannot show.',
       },
     ]);
-    expect(codeTailChart([empty], null)).toMatchObject({ figure: null, options: [], highlighted: null });
+    expect(codeTailChart([empty], null)).toMatchObject({
+      figure: null,
+      logAxes: [],
+      options: [],
+      highlighted: null,
+    });
+    // Figures that all lie beyond the dataset's number of codes give no point on either scale.
+    const beyond = entryWith('Beyond', 20, {
+      counts: counts(20, { uniqueCodes: 5 }),
+      concentration: { ...unknown, top10: 0.9, top100: 1 },
+    });
+    expect(codeTailChart([beyond], null, [], { scales: { y: 'linear' } }).skipped).toEqual([
+      { label: 'Beyond', reason: 'None of its code-concentration figures lies within its number of codes.' },
+    ]);
     // A missing share shows as a dash in the table.
     const partial = entryWith('Partial', 20, {
       concentration: {
@@ -799,39 +1026,39 @@ describe('codeTailChart', () => {
 
 describe('vocabularyChart', () => {
   const ontology = (
-    vocabularies: { name: string; measurements: number | null; recognized: boolean | null }[],
-    suppressed: { cells: number | null; measurements: number | null } | null = null
-  ): EtlStats['ontology'] => ({ measurementsMapped: 0.5, codesWithParents: 0.5, vocabularies, suppressed });
+    vocabularies: { name: string; events: number | null; recognized: boolean | null }[],
+    suppressed: { cells: number | null; events: number | null } | null = null
+  ): EtlStats['ontology'] => ({ eventsMapped: 0.5, codesWithParents: 0.5, vocabularies, suppressed });
   const LEAD = ['Any vocabulary', 'Codes with a parent'];
   const layoutOf = (model: { figure: { layout: unknown } | null }) =>
     model.figure?.layout as Record<string, unknown> & { margin: { r: number } };
 
   it('shows every dataset: mapping shares first, then each vocabulary, shaded on a log scale', () => {
-    // Big has 500,000 measurements; Small 10,000; Other 1,000.
+    // Big has 500,000 events; Small 10,000; Other 1,000.
     const bigVocab = entryWith('Big', 5000, {
       ontology: ontology(
         [
-          { name: 'ICD10CM', measurements: 1000, recognized: true },
-          { name: 'LOCAL', measurements: 10, recognized: false },
-          { name: 'LOINC', measurements: 250_000, recognized: true },
-          { name: 'MAYBE', measurements: null, recognized: null },
+          { name: 'ICD10CM', events: 1000, recognized: true },
+          { name: 'LOCAL', events: 10, recognized: false },
+          { name: 'LOINC', events: 250_000, recognized: true },
+          { name: 'MAYBE', events: null, recognized: null },
         ],
-        { cells: 2, measurements: 40 }
+        { cells: 2, events: 40 }
       ),
     });
     const smallVocab = entryWith('Small', 100, {
-      ontology: ontology([{ name: 'ICD10CM', measurements: 500, recognized: null }], {
+      ontology: ontology([{ name: 'ICD10CM', events: 500, recognized: null }], {
         cells: 1,
-        measurements: 3,
+        events: 3,
       }),
     });
     const otherVocab = entryWith('Other', 10, {
       ontology: ontology(
         [
-          { name: 'ICD10CM', measurements: 100, recognized: true },
-          { name: 'LOINC', measurements: 1000, recognized: true },
+          { name: 'ICD10CM', events: 100, recognized: true },
+          { name: 'LOINC', events: 1000, recognized: true },
         ],
-        { cells: null, measurements: 9 }
+        { cells: null, events: 9 }
       ),
     });
     const unmapped = entryWith('Unmapped', 50, { ontology: null });
@@ -870,13 +1097,13 @@ describe('vocabularyChart', () => {
       ['50%', '50%', '', '10%', '100%', '', ''],
     ]);
     expect((heatmap.customdata as string[][])[0]).toEqual([
-      'Any vocabulary: 50% of measurements map to a vocabulary',
+      'Any vocabulary: 50% of events map to a vocabulary',
       'Codes with a parent: 50% of the distinct codes have a parent code',
       '',
-      'ICD10CM (a standard OMOP vocabulary): 0.2% of measurements',
-      'LOINC (a standard OMOP vocabulary): 50% of measurements',
-      'LOCAL: <0.1% of measurements',
-      'MAYBE: n/a of measurements',
+      'ICD10CM (a standard OMOP vocabulary): 0.2% of events',
+      'LOINC (a standard OMOP vocabulary): 50% of events',
+      'LOCAL: <0.1% of events',
+      'MAYBE: n/a of events',
     ]);
     // The dataset without a mapping says so where its vocabulary cells would be.
     expect(model.figure?.layout.annotations).toEqual([
@@ -914,21 +1141,21 @@ describe('vocabularyChart', () => {
   });
 
   it('marks rows without vocabulary cells, and notes what a file lacks', () => {
-    const local = (measurements: number) => ontology([{ name: 'LOCAL', measurements, recognized: false }]);
+    const local = (events: number) => ontology([{ name: 'LOCAL', events, recognized: false }]);
     const model = vocabularyChart([
       entryWith('Local', 900, { ontology: local(5) }),
       entryWith('No metadata', 800, { codeMetadata: null, ontology: null }),
-      entryWith('Uncounted', 700, { counts: counts(700, { measurements: null }), ontology: local(7) }),
-      entryWith('Empty data', 600, { counts: counts(600, { measurements: 0 }), ontology: local(0) }),
+      entryWith('Uncounted', 700, { counts: counts(700, { events: null }), ontology: local(7) }),
+      entryWith('Empty data', 600, { counts: counts(600, { events: 0 }), ontology: local(0) }),
       entryWith('Nameless', 500, { ontology: ontology([]) }),
-      entryWith('All suppressed', 400, { ontology: ontology([], { cells: 3, measurements: 7 }) }),
-      entryWith('Uncounted rollup', 300, { ontology: ontology([], { cells: null, measurements: null }) }),
+      entryWith('All suppressed', 400, { ontology: ontology([], { cells: 3, events: 7 }) }),
+      entryWith('Uncounted rollup', 300, { ontology: ontology([], { cells: null, events: null }) }),
       entryWith('Unstated', 200, {
         ontology: {
-          measurementsMapped: null,
+          eventsMapped: null,
           codesWithParents: 0.5,
           vocabularies: [],
-          suppressed: { cells: 1, measurements: 1 },
+          suppressed: { cells: 1, events: 1 },
         },
       }),
     ]);
@@ -942,7 +1169,7 @@ describe('vocabularyChart', () => {
       'Uncounted rollup',
       'Unstated',
     ]);
-    // Without a measurement count, a vocabulary's share is unknown; so is a mapping share the file doesn't state.
+    // Without an event count, a vocabulary's share is unknown; so is a mapping share the file doesn't state.
     expect((heatmap.text as string[][]).map(row => row.join(' | '))).toEqual([
       '50% | 50% |  | <0.1%',
       '50% | 50% |  | n/a',
@@ -967,11 +1194,11 @@ describe('vocabularyChart', () => {
       { label: 'No metadata', reason: 'Its stats file does not report on its code metadata.' },
       {
         label: 'Uncounted',
-        reason: 'Its stats file has no measurement count, so its vocabulary shares are unknown.',
+        reason: 'Its stats file has no event count, so its vocabulary shares are unknown.',
       },
       {
         label: 'Empty data',
-        reason: 'Its stats file has no measurement count, so its vocabulary shares are unknown.',
+        reason: 'Its stats file has no event count, so its vocabulary shares are unknown.',
       },
       { label: 'Nameless', reason: 'Its code metadata names no vocabulary.' },
       {

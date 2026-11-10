@@ -57,13 +57,13 @@ describe('normalizeKeyed', () => {
   it('separates the suppressed rollup from the reported cells and drops cells the parser rejects', () => {
     expect(
       normalizeKeyed({ a: 1, b: 'x', '<suppressed>': { n_measurements: 4, n_things: 2 } }, parse, 'n_things')
-    ).toEqual({ cells: [{ key: 'a', cell: 1 }], suppressed: { cells: 2, measurements: 4 } });
+    ).toEqual({ cells: [{ key: 'a', cell: 1 }], suppressed: { cells: 2, events: 4 } });
   });
 
   it('keeps unknown parts of a rollup as null, and ignores a malformed one', () => {
     expect(normalizeKeyed({ '<suppressed>': {} }, parse, 'n_things')).toEqual({
       cells: [],
-      suppressed: { cells: null, measurements: null },
+      suppressed: { cells: null, events: null },
     });
     expect(normalizeKeyed({ '<suppressed>': 5 }, parse, 'n_things')).toEqual({ cells: [], suppressed: null });
   });
@@ -76,10 +76,10 @@ describe('normalizeKeyed', () => {
 describe('normalizeStats', () => {
   it('reduces a full document to the charted numbers', () => {
     const stats = normalizeStats(statsDocument());
+    // Every row is an event: `n_measurements`, not `n_events` (distinct subject and time pairs, 9,000 here).
     expect(stats.counts).toEqual({
       subjects: 500,
-      events: 9000,
-      measurements: 40000,
+      events: 40000,
       uniqueCodes: 300,
       subjectsWithBirth: 500,
       subjectsWithDeath: 50,
@@ -120,29 +120,40 @@ describe('normalizeStats', () => {
     });
     // Sorted by name; `<no-vocabulary>` is not a vocabulary, and a mistyped `recognized` is unknown.
     expect(stats.ontology).toEqual({
-      measurementsMapped: 0.4,
+      eventsMapped: 0.4,
       codesWithParents: 0.2,
       vocabularies: [
-        { name: 'ICD10CM', measurements: 5, recognized: null },
-        { name: 'LOINC', measurements: 10, recognized: true },
+        { name: 'ICD10CM', events: 5, recognized: null },
+        { name: 'LOINC', events: 10, recognized: true },
       ],
-      suppressed: { cells: 2, measurements: 3 },
+      suppressed: { cells: 2, events: 3 },
     });
   });
 
-  it("reads each subject's measurements per day where the file has them, quantiles or suppressed", () => {
-    expect(normalizeStats(statsDocument()).perSubject.measurementsPerDay).toBeNull();
-    const perSubject = (measurementsPerDay: unknown) =>
-      normalizeStats(statsDocument({ per_subject: { measurements_per_day: measurementsPerDay } })).perSubject;
+  it("reads each subject's rows as their events, and never the distinct subject and time pairs", () => {
+    const { perSubject } = normalizeStats(statsDocument());
+    // The fixture's per-subject rows are scaled by 10, its distinct timestamps by 5.
+    expect(perSubject.events).toMatchObject({ suppressed: false, p50: 30 });
+    expect(Object.keys(perSubject).sort()).toEqual(['events', 'eventsPerDay', 'spanDays', 'uniqueCodes']);
+    expect(normalizeStats({ counts: { n_events: 9000 } }).counts.events).toBeNull();
+    expect(
+      normalizeStats({ per_subject: { n_events: { n: 5, suppressed: true } } }).perSubject.events
+    ).toBeNull();
+  });
+
+  it("reads each subject's events per day where the file has them, quantiles or suppressed", () => {
+    expect(normalizeStats(statsDocument()).perSubject.eventsPerDay).toBeNull();
+    const perSubject = (eventsPerDay: unknown) =>
+      normalizeStats(statsDocument({ per_subject: { measurements_per_day: eventsPerDay } })).perSubject;
     expect(
       perSubject({
         n: 400,
         mean: 2.5,
         std: 1,
         quantiles: { p1: 0.01, p5: 0.1, p25: 0.5, p50: 1.2, p75: 3, p95: 9, p99: 20 },
-      }).measurementsPerDay
+      }).eventsPerDay
     ).toEqual({ suppressed: false, n: 400, mean: 2.5, p5: 0.1, p25: 0.5, p50: 1.2, p75: 3, p95: 9 });
-    expect(perSubject({ n: 12, suppressed: true }).measurementsPerDay).toEqual({ suppressed: true, n: 12 });
+    expect(perSubject({ n: 12, suppressed: true }).eventsPerDay).toEqual({ suppressed: true, n: 12 });
   });
 
   it('drops calendar years, splits, digests, layout, config and dataset_digest', () => {
@@ -164,7 +175,7 @@ describe('normalizeStats', () => {
 
   it('turns missing or mistyped fields into nulls rather than failing', () => {
     const stats = normalizeStats({
-      counts: { n_subjects: '500', n_events: null, quality: { n_empty_code: 'none' } },
+      counts: { n_subjects: '500', n_measurements: null, quality: { n_empty_code: 'none' } },
       per_subject: { n_measurements: { n: 10, suppressed: true } },
       codes: {},
       code_metadata: { present: false, ontology: { present: false } },
@@ -180,11 +191,10 @@ describe('normalizeStats', () => {
       infiniteValues: null,
     });
     expect(stats.perSubject).toEqual({
-      measurements: { suppressed: true, n: 10 },
-      events: null,
+      events: { suppressed: true, n: 10 },
       uniqueCodes: null,
       spanDays: null,
-      measurementsPerDay: null,
+      eventsPerDay: null,
     });
     // A dataset without codes.parquet says so; its counts are unknown.
     expect(stats.codeMetadata).toEqual({
@@ -212,14 +222,14 @@ describe('normalizeStats', () => {
           code_metadata: { ontology: { present: true, coverage: { frac_measurements_mapped: null } } },
         })
       ).ontology
-    ).toEqual({ measurementsMapped: null, codesWithParents: null, vocabularies: [], suppressed: null });
+    ).toEqual({ eventsMapped: null, codesWithParents: null, vocabularies: [], suppressed: null });
     expect(
       normalizeStats(
         statsDocument({
           code_metadata: { ontology: { present: true, by_vocabulary: { SNOMED: { recognized: false } } } },
         })
       ).ontology?.vocabularies
-    ).toEqual([{ name: 'SNOMED', measurements: null, recognized: false }]);
+    ).toEqual([{ name: 'SNOMED', events: null, recognized: false }]);
   });
 });
 

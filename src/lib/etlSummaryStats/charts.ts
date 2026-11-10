@@ -5,9 +5,9 @@ import type { Distribution, EtlStats, EtlStatsEntry } from './types';
 // datasets each chart had to leave out (with the reason, which the page shows). No React and no Plotly runtime
 // here, so all of it is unit-tested.
 //
-// Every number plotted is one the ETL's stats file states, a ratio of two it states, or one minus a share it
-// states. Suppressed cells are never filled in or back-computed: a chart that would need them leaves the dataset
-// out with a note.
+// Every number plotted is one a stats file states, a ratio of two it states, or one minus a share it states.
+// Suppressed cells are never filled in or back-computed: a chart that would need them leaves the dataset out with
+// a note. Every row of a dataset counts as an event (see `EtlStats`).
 
 // ─── Look ───────────────────────────────────────────────────────
 
@@ -125,6 +125,9 @@ const plural = (count: number, one: string, many: string): string =>
 export const formatDate = (iso: string | null): string =>
   iso ? (/^\d{4}-\d{2}-\d{2}/.exec(iso)?.[0] ?? iso) : '—';
 
+/** A tick label: compact (1K, 2.5M), but below 1 to three significant digits, which compact notation rounds to 0. */
+const tickLabel = (value: number): string => (value < 1 ? formatRatio(value) : formatCompact(value));
+
 /**
  * Ticks for a log axis spanning [min, max], labelled compactly: powers of ten, or with `multipliers` such as
  * [1, 3] also 3, 30, 300, ... for an axis that spans only a decade or two.
@@ -139,11 +142,21 @@ export function logTicks(
     // Rounded to 12 significant digits, so 3 x 0.1 is 0.3 rather than 0.30000000000000004.
     for (const multiplier of multipliers) tickvals.push(Number((multiplier * 10 ** exp).toPrecision(12)));
   }
-  // Below 1, compact notation would round 0.01 to "0".
-  return {
-    tickvals,
-    ticktext: tickvals.map(value => (value < 1 ? formatRatio(value) : formatCompact(value))),
-  };
+  return { tickvals, ticktext: tickvals.map(tickLabel) };
+}
+
+/**
+ * Ticks for a linear axis from zero past `max`, labelled like log ticks: about five, at a step of 1, 2, 5 or 10
+ * times a power of ten. Plotly leaves out those beyond the axis's range.
+ */
+export function linearTicks(max: number): { tickvals: number[]; ticktext: string[] } {
+  if (!(max > 0)) return { tickvals: [0], ticktext: ['0'] };
+  const rough = max / 5;
+  const power = 10 ** Math.floor(Math.log10(rough));
+  const step = [1, 2, 5].map(multiplier => multiplier * power).find(s => s >= rough) ?? 10 * power;
+  const tickvals: number[] = [];
+  for (let i = 0; i * step <= max + step; i++) tickvals.push(Number((i * step).toPrecision(12)));
+  return { tickvals, ticktext: tickvals.map(tickLabel) };
 }
 
 // ─── Shared helpers ─────────────────────────────────────────────
@@ -163,11 +176,16 @@ export interface Figure {
   layout: Partial<Layout>;
 }
 
+/** A chart's horizontal (`x`) or vertical (`y`) axis. */
+export type Axis = 'x' | 'y';
+
 export interface ChartModel {
   /** Null when no dataset can be drawn. */
   figure: Figure | null;
   skipped: Skipped[];
   table: TableView;
+  /** The axes that can be logarithmic for the data drawn (all their values are positive), so get a scale toggle. */
+  logAxes: Axis[];
 }
 
 /** Largest datasets (by subjects) first, so the charts list datasets in the same order. */
@@ -259,36 +277,70 @@ const TOP_LEGEND: Partial<Layout> = {
   },
 };
 
-/** A log axis if every value is positive (values span orders of magnitude), else a linear one from zero. */
-export function valueAxis(values: number[], title: string): Partial<Layout['xaxis']> {
-  if (values.length === 0 || values.some(value => value <= 0)) {
-    return { title: { text: title }, rangemode: 'tozero' };
+// ─── Axis scales ────────────────────────────────────────────────
+
+/** Whether an axis is logarithmic or linear. Every axis that can be logarithmic starts out logarithmic. */
+export type AxisScale = 'log' | 'linear';
+
+/** The choices of the scale toggle that every logarithmic axis has, in display order. */
+export const AXIS_SCALES: { key: AxisScale; label: string }[] = [
+  { key: 'log', label: 'Log' },
+  { key: 'linear', label: 'Linear' },
+];
+
+/** The scales of a chart's axes; an axis not given is logarithmic. */
+export type AxisScales = Partial<Record<Axis, AxisScale>>;
+
+/** Whether values can go on a log axis: there are some, and all are positive. */
+export const canBeLog = (values: number[]): boolean => values.length > 0 && values.every(value => value > 0);
+
+/**
+ * Tick marks of a log axis: the labelled major ticks, and unlabelled minor ticks at 2 to 9 times each power of ten
+ * (Plotly's `D1`), which bunch up towards the next power of ten and so show that the axis is logarithmic.
+ */
+export const LOG_AXIS_TICKS = {
+  ticks: 'outside',
+  ticklen: 6,
+  tickcolor: INK.axis,
+  minor: { ticks: 'outside', dtick: 'D1', ticklen: 3, tickcolor: INK.axis },
+} as const;
+
+/**
+ * The value axis of a bar or box chart: logarithmic if asked and every value is positive (values span orders of
+ * magnitude), else linear from zero.
+ */
+export function valueAxis(
+  values: number[],
+  title: string,
+  scale: AxisScale = 'log'
+): Partial<Layout['xaxis']> {
+  if (scale === 'linear' || !canBeLog(values)) {
+    return { title: { text: title }, rangemode: 'tozero', ...linearTicks(Math.max(0, ...values)) };
   }
   const { tickvals, ticktext } = logTicks(Math.min(...values), Math.max(...values));
-  return { title: { text: `${title} (log scale)` }, type: 'log', tickvals, ticktext };
+  return { title: { text: `${title} (log scale)` }, type: 'log', tickvals, ticktext, ...LOG_AXIS_TICKS };
 }
 
 // ─── 1. Dataset size ────────────────────────────────────────────
 
-export type SizeMetric = 'subjects' | 'events' | 'measurements' | 'uniqueCodes';
+export type SizeMetric = 'subjects' | 'events' | 'uniqueCodes';
 
 export const SIZE_METRICS: { key: SizeMetric; label: string }[] = [
   { key: 'subjects', label: 'Subjects' },
   { key: 'events', label: 'Events' },
-  { key: 'measurements', label: 'Measurements' },
   { key: 'uniqueCodes', label: 'Unique codes' },
 ];
 
 /** The measures drawn side by side for each dataset, in legend (and colour) order. */
-export const SIZE_BAR_METRICS: SizeMetric[] = ['events', 'measurements', 'uniqueCodes'];
+export const SIZE_BAR_METRICS: SizeMetric[] = ['events', 'uniqueCodes'];
 
 /**
- * The size chart's order: the most measurements first. A dataset whose file lacks the count (or can't be read)
- * goes last; ties go by name, A–Z.
+ * The size chart's order: the most events first. A dataset whose file lacks the count (or can't be read) goes
+ * last; ties go by name, A–Z.
  */
-export function sortByMeasurements<T extends Pick<EtlStatsEntry, 'label' | 'stats'>>(items: T[]): T[] {
+export function sortByEvents<T extends Pick<EtlStatsEntry, 'label' | 'stats'>>(items: T[]): T[] {
   // Counts are never negative, so -1 puts a missing count last.
-  const count = (item: T) => item.stats?.counts.measurements ?? -1;
+  const count = (item: T) => item.stats?.counts.events ?? -1;
   return [...items].sort((a, b) => count(b) - count(a) || a.label.localeCompare(b.label));
 }
 
@@ -296,19 +348,19 @@ const lowerLabel = (metric: SizeMetric): string =>
   (SIZE_METRICS.find(m => m.key === metric) as (typeof SIZE_METRICS)[number]).label.toLowerCase();
 
 /**
- * Events, measurements and unique codes per dataset as grouped bars on one log axis, the most measurements first.
- * A dataset missing one of the counts keeps its other bars and is noted; one missing all three is left out. The
- * table lists all four counts, subjects included, in the same order as the chart.
+ * Events and unique codes per dataset as grouped bars on one axis, logarithmic unless `scale` is linear, the most
+ * events first. A dataset missing one of the counts keeps its other bar and is noted; one missing both is left
+ * out. The table lists all three counts, subjects included, in the same order as the chart.
  */
-export function sizeChart(entries: EtlStatsEntry[]): ChartModel {
+export function sizeChart(entries: EtlStatsEntry[], scale: AxisScale = 'log'): ChartModel {
   const { drawn, skipped } = partition<{ stats: EtlStats; missing: SizeMetric[] }>(entries, stats => {
     const missing = SIZE_BAR_METRICS.filter(metric => stats.counts[metric] === null);
     if (missing.length === SIZE_BAR_METRICS.length) {
-      return { skip: 'Its stats file has no event, measurement or unique-code counts.' };
+      return { skip: 'Its stats file has no event or unique-code counts.' };
     }
     return { stats, missing };
   });
-  const sorted = sortByMeasurements(drawn.map(d => ({ label: d.entry.label, ...d.value })));
+  const sorted = sortByEvents(drawn.map(d => ({ label: d.entry.label, ...d.value })));
   for (const { label, missing } of sorted) {
     if (missing.length > 0) {
       skipped.push({
@@ -320,7 +372,7 @@ export function sizeChart(entries: EtlStatsEntry[]): ChartModel {
 
   const table: TableView = {
     columns: ['Dataset', ...SIZE_METRICS.map(m => m.label)],
-    rows: sortByMeasurements(
+    rows: sortByEvents(
       entries.filter((entry): entry is EtlStatsEntry & { stats: EtlStats } => entry.stats !== null)
     ).map(({ label, stats }) => [
       label,
@@ -330,7 +382,7 @@ export function sizeChart(entries: EtlStatsEntry[]): ChartModel {
       }),
     ]),
   };
-  if (sorted.length === 0) return { figure: null, skipped, table };
+  if (sorted.length === 0) return { figure: null, skipped, table, logAxes: [] };
 
   const labels = sorted.map(entry => entry.label);
   const allValues: number[] = [];
@@ -357,17 +409,18 @@ export function sizeChart(entries: EtlStatsEntry[]): ChartModel {
   return {
     figure: {
       data,
-      layout: baseLayout(sorted.length * 2.2, {
+      layout: baseLayout(sorted.length * 1.6, {
         ...TOP_LEGEND,
         barmode: 'group',
         bargap: 0.25,
         bargroupgap: 0.08,
         margin: { ...MARGIN, t: 32, r: 56 },
-        xaxis: valueAxis(allValues, 'Count'),
+        xaxis: valueAxis(allValues, 'Count', scale),
       }),
     },
     skipped,
     table,
+    logAxes: canBeLog(allValues) ? ['x'] : [],
   };
 }
 
@@ -486,7 +539,7 @@ const SCATTER = {
    * clear each other here clear each other on the page, where the points sit further apart.
    */
   plotWidth: { wide: 560, narrow: 260 },
-  /** Bubble diameters in pixels: the dataset with the most codes gets `max`; none is smaller than `min`. */
+  /** Bubble diameters in pixels: the dataset with the largest value gets `max`; none is smaller than `min`. */
   bubble: { wide: { max: 56, min: 8 }, narrow: { max: 40, min: 8 } },
   font: 12,
   /** A generous estimate of the label font's character width (labels are mostly capitals). */
@@ -494,20 +547,47 @@ const SCATTER = {
   lineHeight: 16,
 };
 
+/** What the area of a depth-vs-breadth bubble shows. */
+export type BubbleSize = 'uniqueCodes' | 'subjects';
+
+/**
+ * The choices of what bubble area shows, unique codes first (the default): `label` for the toggle and the hover,
+ * `noun` for the note under the chart, `unit` for the reference bubbles.
+ */
+export const BUBBLE_SIZES: { key: BubbleSize; label: string; noun: string; unit: string }[] = [
+  { key: 'uniqueCodes', label: 'Unique codes', noun: 'unique codes', unit: 'codes' },
+  { key: 'subjects', label: 'Subjects', noun: 'subjects', unit: 'subjects' },
+];
+
 export interface BubbleChartModel extends ChartModel {
   /** Reference bubbles for a size legend, with their diameter in pixels. */
   sizeKey: { label: string; diameter: number }[];
-  /** How bubble size maps to unique codes. */
+  /** What bubble size shows, and how. */
   sizeNote: string;
   /** Datasets whose label had to be left off to avoid overlaps. */
   unlabelled: string[];
 }
 
-/** A log axis range covering [min, max] (at least a decade) with room for `pad` pixels on both sides. */
-function paddedLogRange(min: number, max: number, pad: number, pixels: number): [number, number] {
-  let lo = Math.log10(min);
-  let hi = Math.log10(max);
-  if (hi - lo < 1) {
+export interface DepthBreadthOptions extends ScreenOptions {
+  /** What bubble area shows; unique codes unless given. */
+  size?: BubbleSize;
+  /** The scales of the two axes; logarithmic unless given. */
+  scales?: AxisScales;
+}
+
+/**
+ * An axis range covering [min, max] with room for `pad` pixels on both sides: on a log axis in powers of ten and at
+ * least a decade wide, on a linear axis from zero.
+ */
+function paddedRange(
+  min: number,
+  max: number,
+  pad: number,
+  pixels: number,
+  scale: AxisScale
+): [number, number] {
+  let [lo, hi] = scale === 'log' ? [Math.log10(min), Math.log10(max)] : [0, Math.max(max, 1)];
+  if (scale === 'log' && hi - lo < 1) {
     const mid = (lo + hi) / 2;
     [lo, hi] = [mid - 0.5, mid + 0.5];
   }
@@ -520,29 +600,42 @@ function rangeTicks([lo, hi]: [number, number]): { tickvals: number[]; ticktext:
   return logTicks(10 ** lo, 10 ** hi, hi - lo < 2.5 ? [1, 3] : [1]);
 }
 
+/** A scatter axis over a fixed range: logarithmic, with ticks and minor ticks, or linear. */
+function scatterAxis(range: [number, number], scale: AxisScale, title: string): Partial<Layout['xaxis']> {
+  return scale === 'log'
+    ? { type: 'log', range, ...rangeTicks(range), ...LOG_AXIS_TICKS, title: { text: `${title} (log scale)` } }
+    : { type: 'linear', range, ...linearTicks(range[1]), title: { text: title } };
+}
+
 /**
  * One bubble per dataset: how many subjects it has (x) against how much data a typical subject has (y, the median
- * measurements per subject), with the bubble's area proportional to the dataset's number of distinct codes. Both
- * axes are logarithmic. Labels are placed so that none overlap (see `placeLabels`).
+ * events per subject), with the bubble's area proportional to the dataset's number of distinct codes or, with
+ * `size: 'subjects'`, of subjects. Both axes are logarithmic unless `scales` makes them linear; a log axis leaves out
+ * datasets with a value of zero. Labels are placed so that none overlap (see `placeLabels`).
  */
-export function depthBreadthChart(entries: EtlStatsEntry[], { narrow }: ScreenOptions): BubbleChartModel {
+export function depthBreadthChart(
+  entries: EtlStatsEntry[],
+  { narrow, size = 'uniqueCodes', scales = {} }: DepthBreadthOptions
+): BubbleChartModel {
+  const xScale = scales.x ?? 'log';
+  const yScale = scales.y ?? 'log';
   type Bubble = { subjects: number; median: number; uniqueCodes: number };
   const { drawn, skipped } = partition<Bubble>(orderDatasets(entries), (stats, entry) => {
     const { subjects, uniqueCodes } = stats.counts;
-    const dist = stats.perSubject.measurements;
+    const dist = stats.perSubject.events;
     if (subjects === null) return { skip: 'Its stats file has no subject count.' };
     if (uniqueCodes === null) return { skip: 'Its stats file has no unique-code count.' };
-    if (!dist) return { skip: 'Its stats file has no per-subject measurement distribution.' };
+    if (!dist) return { skip: 'Its stats file has no per-subject event distribution.' };
     if (dist.suppressed) {
       return { skip: `Suppressed: the median is withheld because it rests on ${floorPhrase(entry)}.` };
     }
-    if (subjects <= 0 || dist.p50 <= 0) {
-      return { skip: 'It has no subjects or no measurements, which a logarithmic axis cannot show.' };
+    if ((xScale === 'log' && subjects <= 0) || (yScale === 'log' && dist.p50 <= 0)) {
+      return { skip: 'Its subject count or median is zero, which a logarithmic axis cannot show.' };
     }
     return { subjects, median: dist.p50, uniqueCodes };
   });
   const table: TableView = {
-    columns: ['Dataset', 'Subjects', 'Median measurements per subject', 'Unique codes'],
+    columns: ['Dataset', 'Subjects', 'Median events per subject', 'Unique codes'],
     rows: drawn.map(({ entry, value }) => [
       entry.label,
       formatCount(value.subjects),
@@ -550,18 +643,19 @@ export function depthBreadthChart(entries: EtlStatsEntry[], { narrow }: ScreenOp
       formatCount(value.uniqueCodes),
     ]),
   };
-  const empty = { figure: null, skipped, table, sizeKey: [], sizeNote: '', unlabelled: [] };
+  const empty = { figure: null, skipped, table, logAxes: [], sizeKey: [], sizeNote: '', unlabelled: [] };
   if (drawn.length === 0) return empty;
 
+  const sizeMeta = BUBBLE_SIZES.find(s => s.key === size) as (typeof BUBBLE_SIZES)[number];
   const screen = narrow ? 'narrow' : 'wide';
   const bubble = SCATTER.bubble[screen];
-  const maxCodes = Math.max(...drawn.map(d => d.value.uniqueCodes), 1);
-  const diameter = (codes: number) => Math.max(bubble.min, bubble.max * Math.sqrt(codes / maxCodes));
+  const maxSize = Math.max(...drawn.map(d => d.value[size]), 1);
+  const diameter = (value: number) => Math.max(bubble.min, bubble.max * Math.sqrt(value / maxSize));
   // In the page's order (largest first), which is also the order in which their labels are placed.
   const points = drawn.map(({ entry, value }) => ({
     label: entry.label,
     ...value,
-    diameter: diameter(value.uniqueCodes),
+    diameter: diameter(value[size]),
   }));
   // Bubbles are drawn largest first, so that small ones stay on top and can be hovered.
   const bubbles = [...points].sort((a, b) => b.diameter - a.diameter);
@@ -569,24 +663,28 @@ export function depthBreadthChart(entries: EtlStatsEntry[], { narrow }: ScreenOp
   const width = SCATTER.plotWidth[screen];
   const height = SCATTER.height - SCATTER.margin.t - SCATTER.margin.b;
   const pad = bubble.max / 2 + 4;
-  const xRange = paddedLogRange(
+  const xRange = paddedRange(
     Math.min(...points.map(p => p.subjects)),
     Math.max(...points.map(p => p.subjects)),
     pad,
-    width
+    width,
+    xScale
   );
-  const yRange = paddedLogRange(
+  const yRange = paddedRange(
     Math.min(...points.map(p => p.median)),
     Math.max(...points.map(p => p.median)),
     pad,
-    height
+    height,
+    yScale
   );
-  const toPixels = (value: number, [lo, hi]: [number, number], pixels: number) =>
-    ((Math.log10(value) - lo) / (hi - lo)) * pixels;
+  // A value's position on an axis: in powers of ten on a log axis (as Plotly places annotations there).
+  const toAxis = (value: number, scale: AxisScale) => (scale === 'log' ? Math.log10(value) : value);
+  const toPixels = (value: number, scale: AxisScale, [lo, hi]: [number, number], pixels: number) =>
+    ((toAxis(value, scale) - lo) / (hi - lo)) * pixels;
   const placements = placeLabels(
     points.map(p => ({
-      x: toPixels(p.subjects, xRange, width),
-      y: height - toPixels(p.median, yRange, height),
+      x: toPixels(p.subjects, xScale, xRange, width),
+      y: height - toPixels(p.median, yScale, yRange, height),
       r: p.diameter / 2,
       width: p.label.length * SCATTER.charWidth,
       height: SCATTER.lineHeight,
@@ -597,8 +695,8 @@ export function depthBreadthChart(entries: EtlStatsEntry[], { narrow }: ScreenOp
     const place = placements[i];
     if (!place) return [];
     const common = {
-      x: Math.log10(p.subjects),
-      y: Math.log10(p.median),
+      x: toAxis(p.subjects, xScale),
+      y: toAxis(p.median, yScale),
       text: p.label,
       font: { color: INK.primary, size: SCATTER.font },
     };
@@ -626,15 +724,18 @@ export function depthBreadthChart(entries: EtlStatsEntry[], { narrow }: ScreenOp
     ];
   });
 
-  // Reference sizes for the legend: the powers of ten below the largest count whose bubble is clearly visible
+  // Reference sizes for the legend: the powers of ten below the largest value whose bubble is clearly visible
   // (at most two, since each power of ten is a third of the diameter of the next).
   const sizeKey: BubbleChartModel['sizeKey'] = [];
-  for (let codes = 10 ** Math.floor(Math.log10(maxCodes)); codes >= 1; codes /= 10) {
-    if (diameter(codes) >= 12)
-      sizeKey.push({ label: `${formatCompact(codes)} codes`, diameter: diameter(codes) });
+  for (let value = 10 ** Math.floor(Math.log10(maxSize)); value >= 1; value /= 10) {
+    if (diameter(value) >= 12) {
+      sizeKey.push({ label: `${formatCompact(value)} ${sizeMeta.unit}`, diameter: diameter(value) });
+    }
   }
-  const floorCodes = maxCodes * (bubble.min / bubble.max) ** 2;
-  const atFloor = points.some(p => p.uniqueCodes < floorCodes);
+  const floorValue = maxSize * (bubble.min / bubble.max) ** 2;
+  const atFloor = points.some(p => p[size] < floorValue);
+  // The hover names the measure that sets the bubble's size.
+  const hoverLabel = (key: BubbleSize, label: string) => (key === size ? `${label} (bubble size)` : label);
 
   return {
     figure: {
@@ -653,8 +754,9 @@ export function depthBreadthChart(entries: EtlStatsEntry[], { narrow }: ScreenOp
           },
           customdata: bubbles.map(p => [p.subjects, p.median, p.uniqueCodes].map(formatCount)),
           hovertemplate:
-            '%{text}<br>Subjects: %{customdata[0]}<br>Median measurements per subject: %{customdata[1]}' +
-            '<br>Unique codes: %{customdata[2]}<extra></extra>',
+            `%{text}<br>${hoverLabel('subjects', 'Subjects')}: %{customdata[0]}` +
+            '<br>Median events per subject: %{customdata[1]}' +
+            `<br>${hoverLabel('uniqueCodes', 'Unique codes')}: %{customdata[2]}<extra></extra>`,
         }),
       ],
       layout: baseLayout(0, {
@@ -662,30 +764,23 @@ export function depthBreadthChart(entries: EtlStatsEntry[], { narrow }: ScreenOp
         margin: { ...SCATTER.margin },
         hovermode: 'closest',
         annotations,
-        xaxis: {
-          type: 'log',
-          range: xRange,
-          ...rangeTicks(xRange),
-          title: { text: 'Subjects (log scale)' },
-        },
+        xaxis: scatterAxis(xRange, xScale, 'Subjects'),
         yaxis: {
-          type: 'log',
+          ...scatterAxis(yRange, yScale, 'Median events per subject'),
           autorange: false,
-          range: yRange,
-          ...rangeTicks(yRange),
           gridcolor: INK.grid,
           tickfont: { color: INK.muted },
-          title: { text: 'Median measurements per subject (log scale)' },
         },
       } as Partial<Layout>),
     },
     skipped,
     table,
+    logAxes: ['x', 'y'],
     sizeKey,
     sizeNote:
-      'Bubble area is proportional to the number of unique codes.' +
+      `Bubble area is proportional to the number of ${sizeMeta.noun}.` +
       (atFloor
-        ? ` Datasets with fewer than about ${formatCompact(Math.ceil(floorCodes))} codes are drawn at the smallest size, so they stay visible.`
+        ? ` Datasets with fewer than about ${formatCompact(Math.ceil(floorValue))} ${sizeMeta.unit} are drawn at the smallest size, so they stay visible.`
         : ''),
     unlabelled: points.filter((_, i) => placements[i] === null).map(p => p.label),
   };
@@ -693,10 +788,9 @@ export function depthBreadthChart(entries: EtlStatsEntry[], { narrow }: ScreenOp
 
 // ─── 3. Per-subject distributions ───────────────────────────────
 
-export type PerSubjectMetric = 'measurements' | 'events' | 'uniqueCodes' | 'spanDays';
+export type PerSubjectMetric = 'events' | 'uniqueCodes' | 'spanDays';
 
 export const PER_SUBJECT_METRICS: { key: PerSubjectMetric; label: string; axis: string }[] = [
-  { key: 'measurements', label: 'Measurements', axis: 'Measurements per subject' },
   { key: 'events', label: 'Events', axis: 'Events per subject' },
   { key: 'uniqueCodes', label: 'Unique codes', axis: 'Distinct codes per subject' },
   { key: 'spanDays', label: 'Record span', axis: 'Days from first to last event per subject' },
@@ -721,9 +815,9 @@ interface DistributionSpec {
 /**
  * Box-style summaries drawn from the published quantiles: the box spans the 25th to 75th percentile, the line
  * inside it is the median, and the whiskers reach the 5th and 95th percentiles (there are no minima or maxima:
- * `meds_summary_stats` never publishes extremes).
+ * `meds_summary_stats` never publishes extremes). The value axis is logarithmic unless `scale` is linear.
  */
-function distributionChart(entries: EtlStatsEntry[], spec: DistributionSpec): ChartModel {
+function distributionChart(entries: EtlStatsEntry[], spec: DistributionSpec, scale: AxisScale): ChartModel {
   const { drawn, skipped } = partition(orderDatasets(entries), (stats, entry) => {
     const dist = spec.pick(stats);
     if (!dist) return { skip: spec.missing };
@@ -747,11 +841,12 @@ function distributionChart(entries: EtlStatsEntry[], spec: DistributionSpec): Ch
       ...[value.p5, value.p25, value.p50, value.p75, value.p95].map(format),
     ]),
   };
-  if (drawn.length === 0) return { figure: null, skipped, table };
+  if (drawn.length === 0) return { figure: null, skipped, table, logAxes: [] };
 
   const labels = drawn.map(d => d.entry.label);
   const dists = drawn.map(d => d.value);
   const pick = (key: 'p5' | 'p25' | 'p50' | 'p75' | 'p95') => dists.map(d => d[key]);
+  const extremes = [...pick('p5'), ...pick('p95')];
   return {
     figure: {
       data: [
@@ -784,120 +879,77 @@ function distributionChart(entries: EtlStatsEntry[], spec: DistributionSpec): Ch
         }),
       ],
       layout: baseLayout(drawn.length, {
-        xaxis: valueAxis([...pick('p5'), ...pick('p95')], spec.axis),
+        xaxis: valueAxis(extremes, spec.axis, scale),
       }),
     },
     skipped,
     table,
+    logAxes: canBeLog(extremes) ? ['x'] : [],
   };
 }
 
 /** How much data each subject has, as one box per dataset, largest dataset first. */
-export function perSubjectChart(entries: EtlStatsEntry[], metric: PerSubjectMetric): ChartModel {
+export function perSubjectChart(
+  entries: EtlStatsEntry[],
+  metric: PerSubjectMetric,
+  scale: AxisScale = 'log'
+): ChartModel {
   const meta = PER_SUBJECT_METRICS.find(m => m.key === metric) as (typeof PER_SUBJECT_METRICS)[number];
-  return distributionChart(entries, {
-    pick: stats => stats.perSubject[metric],
-    missing: `Its stats file has no per-subject ${meta.label.toLowerCase()} distribution.`,
-    axis: meta.axis,
-    subjects: 'Subjects',
-    format: formatCount,
-    ranked: false,
-  });
+  return distributionChart(
+    entries,
+    {
+      pick: stats => stats.perSubject[metric],
+      missing: `Its stats file has no per-subject ${meta.label.toLowerCase()} distribution.`,
+      axis: meta.axis,
+      subjects: 'Subjects',
+      format: formatCount,
+      ranked: false,
+    },
+    scale
+  );
 }
 
-// ─── 4. Pace of measurements ────────────────────────────────────
+// ─── 4. Pace of events ──────────────────────────────────────────
 
-export type PaceMetric = 'perDay' | 'perEvent';
-
-/** `label` for the toggle; `full` for the table, the hover and the axis. */
-export const PACE_METRICS: { key: PaceMetric; label: string; full: string }[] = [
-  { key: 'perDay', label: 'Per day, per subject', full: 'Measurements per day, per subject' },
-  { key: 'perEvent', label: 'Per event', full: 'Measurements per event' },
-];
+/** What the pace chart shows, for its table, hover and label. */
+export const PACE_LABEL = 'Events per day, per subject';
 
 /**
- * How densely each dataset records data, largest first. "Per day, per subject" is the spread of each subject's own
- * rate, `per_subject.measurements_per_day`, drawn as boxes from its published quantiles like `perSubjectChart`
- * (older stats files don't have it). Very short records give very large rates, which skew the mean, so the mean is
- * never drawn. Only subjects with a rate (two or more distinct timestamps) are counted, and their quantiles are
- * withheld below `min_numeric_cell_size`, which the page doesn't read, so that note names no number. "Per event"
- * divides the dataset's measurements by its events, which is exact, as one bar per dataset.
+ * How densely each dataset records data: the spread of each subject's own rate, `per_subject.measurements_per_day`,
+ * drawn as boxes from its published quantiles like `perSubjectChart`, ranked by median. Stats files written before
+ * `meds_summary_stats` computed the rate don't have it. Very short records give very large rates, which skew the
+ * mean, so the mean is never drawn. Only subjects with a rate (two or more distinct timestamps) are counted, and
+ * their quantiles are withheld below `min_numeric_cell_size`, which the page doesn't read, so that note names no
+ * number.
  */
-export function paceChart(entries: EtlStatsEntry[], metric: PaceMetric): ChartModel {
-  const meta = PACE_METRICS.find(m => m.key === metric) as (typeof PACE_METRICS)[number];
-  if (metric === 'perDay') {
-    const missing =
-      'Its stats file has no per-subject measurements per day, which newer versions of meds_summary_stats publish.';
-    const model = distributionChart(entries, {
-      pick: stats => stats.perSubject.measurementsPerDay,
+export function paceChart(entries: EtlStatsEntry[], scale: AxisScale = 'log'): ChartModel {
+  const missing = 'Its stats file has no per-subject events per day (per_subject.measurements_per_day).';
+  const model = distributionChart(
+    entries,
+    {
+      pick: stats => stats.perSubject.eventsPerDay,
       missing,
       suppressed: 'Suppressed: too few subjects have a rate, so its quantiles are withheld.',
       subjects: 'Subjects with a rate',
-      // Short enough for a phone; the boxes and the toggle say it is per subject.
-      axis: 'Measurements per day',
+      // Short enough for a phone; the boxes and the description say it is per subject.
+      axis: 'Events per day',
       format: formatRatio,
       ranked: true,
-    });
-    // Until every ETL re-runs a newer meds_summary_stats, many files lack the rate: one note for all of them.
-    const older = model.skipped.filter(s => s.reason === missing);
-    if (older.length < 2) return model;
-    return {
-      ...model,
-      skipped: [
-        {
-          label: older.map(s => s.label).join(', '),
-          reason:
-            'Their stats files have no per-subject measurements per day, which newer versions of meds_summary_stats publish.',
-        },
-        ...model.skipped.filter(s => s.reason !== missing),
-      ],
-    };
-  }
-  const { drawn, skipped } = partition<{ value: number; inputs: [number, number] }>(
-    orderDatasets(entries),
-    stats => {
-      const { measurements, events } = stats.counts;
-      const value = ratio(measurements, events);
-      if (value === null) return { skip: 'Its stats file has no measurement or event count.' };
-      return { value, inputs: [measurements as number, events as number] };
-    }
-  );
-  const ranked = [...drawn].sort((a, b) => b.value.value - a.value.value);
-  const table: TableView = {
-    columns: ['Dataset', 'Measurements', 'Events', meta.full],
-    rows: ranked.map(({ entry, value }) => [
-      entry.label,
-      ...value.inputs.map(formatCount),
-      formatRatio(value.value),
-    ]),
-  };
-  if (ranked.length === 0) return { figure: null, skipped, table };
-
-  const values = ranked.map(d => d.value.value);
-  return {
-    figure: {
-      data: [
-        trace({
-          type: 'bar',
-          orientation: 'h',
-          y: ranked.map(d => d.entry.label),
-          x: values,
-          text: values.map(formatRatio),
-          textposition: 'outside',
-          textfont: { color: INK.primary },
-          cliponaxis: false,
-          marker: { color: SERIES_COLORS[0], cornerradius: 4 },
-          hovertemplate: `%{y}<br>${meta.full}: %{text}<extra></extra>`,
-        }),
-      ],
-      layout: baseLayout(ranked.length, {
-        bargap: 0.35,
-        margin: { ...MARGIN, r: 48 },
-        xaxis: { title: { text: meta.full }, rangemode: 'tozero' },
-      }),
     },
-    skipped,
-    table,
+    scale
+  );
+  // Many files lack the rate: one note for all of them.
+  const without = model.skipped.filter(s => s.reason === missing);
+  if (without.length < 2) return model;
+  return {
+    ...model,
+    skipped: [
+      {
+        label: without.map(s => s.label).join(', '),
+        reason: 'Their stats files have no per-subject events per day (per_subject.measurements_per_day).',
+      },
+      ...model.skipped.filter(s => s.reason !== missing),
+    ],
   };
 }
 
@@ -924,9 +976,9 @@ const COVERAGE_COLUMNS: {
     value: c => ratio(c.subjectsWithStatic, c.subjects),
   },
   {
-    label: 'Measurements with a numeric value',
+    label: 'Events with a numeric value',
     short: 'Numeric',
-    value: c => ratio(c.numericValues, c.measurements),
+    value: c => ratio(c.numericValues, c.events),
   },
 ];
 
@@ -950,7 +1002,7 @@ export function coverageChart(entries: EtlStatsEntry[]): ChartModel {
       ...value.map(share => (share === null ? '—' : formatPercent(share))),
     ]),
   };
-  if (drawn.length === 0) return { figure: null, skipped, table };
+  if (drawn.length === 0) return { figure: null, skipped, table, logAxes: [] };
 
   return {
     figure: {
@@ -988,6 +1040,7 @@ export function coverageChart(entries: EtlStatsEntry[]): ChartModel {
     },
     skipped,
     table,
+    logAxes: [],
   };
 }
 
@@ -996,7 +1049,7 @@ export function coverageChart(entries: EtlStatsEntry[]): ChartModel {
 export interface CodeTailPoint {
   /** The number of most frequent codes, N. */
   codes: number;
-  /** The share of all measurements whose code is not among the N most frequent: one minus the share they cover. */
+  /** The share of all events whose code is not among the N most frequent: one minus the share they cover. */
   remaining: number;
   /** What the point says, for the hover label. */
   text: string;
@@ -1006,15 +1059,16 @@ export interface CodeTailPoint {
 const complement = (share: number): number => Number((1 - share).toPrecision(12));
 
 /**
- * The points of a dataset's code-tail curve, by number of codes N, each with the share of measurements left outside
- * the N most frequent codes: from the shares its 10, 100 and 1,000 most frequent codes cover, and from how many
- * codes it takes to cover 50%, 90% and 99% (which leave 50%, 10% and 1% outside). Points that leave nothing
- * outside have no place on a logarithmic axis and are dropped, as are points beyond the dataset's number of codes
- * (its 1,000 most frequent codes are all its codes if it has fewer).
+ * The points of a dataset's code-tail curve, by number of codes N, each with the share of events left outside the
+ * N most frequent codes: from the shares its 10, 100 and 1,000 most frequent codes cover, and from how many codes
+ * it takes to cover 50%, 90% and 99% (which leave 50%, 10% and 1% outside). Points beyond the dataset's number of
+ * codes are dropped (its 1,000 most frequent codes are all its codes if it has fewer). So are points that leave
+ * nothing outside, which have no place on a logarithmic axis, unless `keepZero` is set for a linear one.
  */
 export function codeTailPoints(
   concentration: NonNullable<EtlStats['concentration']>,
-  uniqueCodes: number | null
+  uniqueCodes: number | null,
+  keepZero = false
 ): CodeTailPoint[] {
   type Candidate = { codes: number | null; remaining: number | null; text: (codes: number) => string };
   const top = (codes: number, share: number | null): Candidate => {
@@ -1023,14 +1077,14 @@ export function codeTailPoints(
       codes,
       remaining,
       text: n =>
-        `${formatPercentSignificant(remaining as number)} of measurements fall outside the ${formatCount(n)} most frequent codes`,
+        `${formatPercentSignificant(remaining as number)} of events fall outside the ${formatCount(n)} most frequent codes`,
     };
   };
   const covering = (codes: number | null, share: number): Candidate => ({
     codes,
     remaining: complement(share),
     text: n =>
-      `It takes the ${formatCount(n)} most frequent codes to cover ${formatPercent(share)} of measurements, ` +
+      `It takes the ${formatCount(n)} most frequent codes to cover ${formatPercent(share)} of events, ` +
       `leaving ${formatPercentSignificant(complement(share))} outside them`,
   });
   const c = concentration;
@@ -1044,7 +1098,8 @@ export function codeTailPoints(
   ];
   const points: CodeTailPoint[] = [];
   for (const { codes, remaining, text } of candidates) {
-    if (codes === null || remaining === null || codes <= 0 || remaining <= 0) continue;
+    if (codes === null || remaining === null || codes <= 0 || remaining < 0) continue;
+    if (remaining === 0 && !keepZero) continue;
     if (uniqueCodes !== null && codes > uniqueCodes) continue;
     points.push({ codes, remaining, text: text(codes) });
   }
@@ -1061,22 +1116,30 @@ export interface CodeTailModel extends ChartModel {
   highlighted: string | null;
 }
 
+export interface CodeTailOptions extends Partial<ScreenOptions> {
+  /** The scales of the two axes; logarithmic unless given. */
+  scales?: AxisScales;
+}
+
 /**
- * A tail plot: one curve per dataset of the share of measurements outside its N most frequent codes, against N,
- * both on log axes, as in a plot of a power law. A straight, falling line means code frequencies fall off as a power
- * of their rank, as in Zipf's law (a slope of -a means a frequency proportional to rank^-(a+1)); the steeper it falls,
- * the more the data concentrates in its most frequent codes. No line is fitted, and no reference slope is drawn: on
- * these axes classic Zipf (rank^-1) is not a straight line, and a slope-only guide would add a line to 15 curves.
- * Every dataset has its own colour, line dash and marker (`seriesStyle`), assigned alphabetically over
- * `identityLabels` (pass every dataset's label, including ones filtered out) so that toggling datasets never repaints
- * the others. Optionally one dataset is highlighted: drawn thicker and on top, with the others faded.
+ * A tail plot: one curve per dataset of the share of events outside its N most frequent codes, against N, by default
+ * on two log axes, as in a plot of a power law. There a straight, falling line means code frequencies fall off as a
+ * power of their rank, as in Zipf's law (a slope of -a means a frequency proportional to rank^-(a+1)); the steeper
+ * it falls, the more the data concentrates in its most frequent codes. No line is fitted, and no reference slope is
+ * drawn: on these axes classic Zipf (rank^-1) is not a straight line, and a slope-only guide would add a line to 15
+ * curves. Either axis can be made linear with `scales`; a linear vertical axis also shows the points that leave
+ * nothing outside. Every dataset has its own colour, line dash and marker (`seriesStyle`), assigned alphabetically
+ * over `identityLabels` (pass every dataset's label, including ones filtered out) so that toggling datasets never
+ * repaints the others. Optionally one dataset is highlighted: drawn thicker and on top, with the others faded.
  */
 export function codeTailChart(
   entries: EtlStatsEntry[],
   highlight: string | null,
   identityLabels: string[] = [],
-  { narrow }: ScreenOptions = { narrow: false }
+  { narrow = false, scales = {} }: CodeTailOptions = {}
 ): CodeTailModel {
+  const xScale = scales.x ?? 'log';
+  const yScale = scales.y ?? 'log';
   type Curve = {
     points: CodeTailPoint[];
     concentration: NonNullable<EtlStats['concentration']>;
@@ -1084,16 +1147,20 @@ export function codeTailChart(
   };
   const { drawn, skipped } = partition<Curve>(orderDatasets(entries), stats => {
     const c = stats.concentration;
+    const { uniqueCodes } = stats.counts;
     if (!c || Object.values(c).every(value => value === null)) {
       return { skip: 'Its stats file has no code-concentration figures.' };
     }
-    const points = codeTailPoints(c, stats.counts.uniqueCodes);
+    const points = codeTailPoints(c, uniqueCodes, yScale === 'linear');
     if (points.length === 0) {
       return {
-        skip: 'Its most frequent codes leave no measurements outside them, which a logarithmic axis cannot show.',
+        skip:
+          codeTailPoints(c, uniqueCodes, true).length > 0
+            ? 'Its most frequent codes leave no events outside them, which a logarithmic axis cannot show.'
+            : 'None of its code-concentration figures lies within its number of codes.',
       };
     }
-    return { points, concentration: c, uniqueCodes: stats.counts.uniqueCodes };
+    return { points, concentration: c, uniqueCodes };
   });
   const outside = (share: number | null) =>
     share === null ? '—' : formatPercentSignificant(complement(share));
@@ -1121,7 +1188,7 @@ export function codeTailChart(
     ]),
   };
   const options = drawn.map(d => d.entry.label);
-  if (drawn.length === 0) return { figure: null, skipped, table, options, highlighted: null };
+  if (drawn.length === 0) return { figure: null, skipped, table, logAxes: [], options, highlighted: null };
 
   const highlighted = highlight !== null && options.includes(highlight) ? highlight : null;
   const identity = [...new Set([...identityLabels, ...options])].sort((a, b) => a.localeCompare(b));
@@ -1137,10 +1204,33 @@ export function codeTailChart(
     : curves;
   const allCodes = drawn.flatMap(d => d.value.points.map(p => p.codes));
   const allRemaining = drawn.flatMap(d => d.value.points.map(p => p.remaining));
-  // Powers of ten from just below the smallest share left outside up to 100%, the share outside no codes at all.
-  const yLow = Math.log10(Math.min(...allRemaining)) - 0.15;
-  const yTicks: number[] = [];
-  for (let exp = Math.ceil(yLow); exp <= 0; exp++) yTicks.push(10 ** exp);
+  const xTitle = 'Number of most frequent codes, N';
+  const yTitle = 'Share outside the top N';
+  let yaxis: Partial<Layout['yaxis']>;
+  if (yScale === 'log') {
+    // Powers of ten from just below the smallest share left outside up to 100%, the share outside no codes at all.
+    const yLow = Math.log10(Math.min(...allRemaining)) - 0.15;
+    const yTicks: number[] = [];
+    for (let exp = Math.ceil(yLow); exp <= 0; exp++) yTicks.push(10 ** exp);
+    yaxis = {
+      type: 'log',
+      range: [yLow, 0.05],
+      tickvals: yTicks,
+      ticktext: yTicks.map(formatPercentSignificant),
+      ...LOG_AXIS_TICKS,
+      title: { text: `${yTitle} (log scale)` },
+    };
+  } else {
+    // 0% to 100%, with room for the markers at either end.
+    const yTicks = [0, 0.25, 0.5, 0.75, 1];
+    yaxis = {
+      type: 'linear',
+      range: [-0.03, 1.03],
+      tickvals: yTicks,
+      ticktext: yTicks.map(formatPercent),
+      title: { text: yTitle },
+    };
+  }
   return {
     figure: {
       data: drawOrder.map(({ entry, value, index }) => {
@@ -1173,25 +1263,26 @@ export function codeTailChart(
         height: narrow ? CODE_TAIL_HEIGHT.narrow : CODE_TAIL_HEIGHT.wide,
         margin: { ...MARGIN, t: 32, b: 48 },
         hovermode: 'closest',
-        xaxis: {
-          type: 'log',
-          ...logTicks(Math.min(...allCodes), Math.max(...allCodes)),
-          title: { text: 'Number of most frequent codes, N (log scale)' },
-        },
-        yaxis: {
-          type: 'log',
-          autorange: false,
-          range: [yLow, 0.05],
-          tickvals: yTicks,
-          ticktext: yTicks.map(formatPercentSignificant),
-          gridcolor: INK.grid,
-          tickfont: { color: INK.muted },
-          title: { text: 'Share outside the top N (log scale)' },
-        },
+        xaxis:
+          xScale === 'log'
+            ? {
+                type: 'log',
+                ...logTicks(Math.min(...allCodes), Math.max(...allCodes)),
+                ...LOG_AXIS_TICKS,
+                title: { text: `${xTitle} (log scale)` },
+              }
+            : {
+                type: 'linear',
+                rangemode: 'tozero',
+                ...linearTicks(Math.max(...allCodes)),
+                title: { text: xTitle },
+              },
+        yaxis: { ...yaxis, autorange: false, gridcolor: INK.grid, tickfont: { color: INK.muted } },
       }),
     },
     skipped,
     table,
+    logAxes: ['x', 'y'],
     options,
     highlighted,
   };
@@ -1220,11 +1311,11 @@ export interface VocabularyModel {
 export const OMOP_MARK = '*';
 
 /**
- * The columns before the vocabularies: how much of a dataset maps into any vocabulary at all. Each measurement and
- * code counts once here, however many vocabularies it maps into.
+ * The columns before the vocabularies: how much of a dataset maps into any vocabulary at all. Each event and code
+ * counts once here, however many vocabularies it maps into.
  */
 export const MAPPING_COLUMNS = [
-  { key: 'measurementsMapped', label: 'Any vocabulary', of: 'of measurements map to a vocabulary' },
+  { key: 'eventsMapped', label: 'Any vocabulary', of: 'of events map to a vocabulary' },
   { key: 'codesWithParents', label: 'Codes with a parent', of: 'of the distinct codes have a parent code' },
 ] as const;
 
@@ -1233,24 +1324,24 @@ export const NO_MAPPING = 'No vocabulary mapping';
 
 /**
  * Every dataset's mapping of codes to external vocabularies, through the parent codes in its code metadata, as one
- * heatmap. The first columns give the share of measurements mapped to any vocabulary and the share of distinct
- * codes with a parent code, each counted once. Then, after a gap, one column per vocabulary gives the share of
- * measurements whose code has a parent in it. A code can map into several vocabularies, so a row's vocabulary
- * shares can add up to more than its share mapped to any. Vocabularies used by the most datasets come first. A
- * dataset whose code metadata maps no codes is a row of 0% with a note in place of vocabulary cells.
+ * heatmap. The first columns give the share of events mapped to any vocabulary and the share of distinct codes
+ * with a parent code, each counted once. Then, after a gap, one column per vocabulary gives the share of events
+ * whose code has a parent in it. A code can map into several vocabularies, so a row's vocabulary shares can add up
+ * to more than its share mapped to any. Vocabularies used by the most datasets come first. A dataset whose code
+ * metadata maps no codes is a row of 0% with a note in place of vocabulary cells.
  */
 export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
-  type Row = { ontology: EtlStats['ontology']; measurements: number | null };
+  type Row = { ontology: EtlStats['ontology']; events: number | null };
   const { drawn, skipped } = partition<Row>(orderDatasets(entries), stats =>
     stats.codeMetadata
-      ? { ontology: stats.ontology, measurements: stats.counts.measurements }
+      ? { ontology: stats.ontology, events: stats.counts.events }
       : { skip: 'Its stats file does not report on its code metadata.' }
   );
 
   // What each row shows in place of vocabulary cells, if it has none, and notes on what is missing.
   const markers = new Map<string, string>();
   for (const { entry, value } of drawn) {
-    const { ontology, measurements } = value;
+    const { ontology, events } = value;
     if (!ontology) {
       markers.set(entry.label, NO_MAPPING);
       continue;
@@ -1275,10 +1366,10 @@ export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
       });
       continue;
     }
-    if (!measurements) {
+    if (!events) {
       skipped.push({
         label: entry.label,
-        reason: 'Its stats file has no measurement count, so its vocabulary shares are unknown.',
+        reason: 'Its stats file has no event count, so its vocabulary shares are unknown.',
       });
     }
     if (suppressed !== undefined) {
@@ -1313,7 +1404,7 @@ export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
 
   type Cell = { share: number | null; hover: string } | null;
   const shareText = (share: number | null) => (share === null ? 'n/a' : formatPercent(share));
-  const rows: Cell[][] = drawn.map(({ value: { ontology, measurements } }) => [
+  const rows: Cell[][] = drawn.map(({ value: { ontology, events } }) => [
     ...MAPPING_COLUMNS.map(column => {
       // Code metadata without a mapping maps nothing: 0%.
       const share = ontology ? ontology[column.key] : 0;
@@ -1323,10 +1414,9 @@ export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
     ...vocabularies.map(column => {
       const vocabulary = ontology?.vocabularies.find(v => v.name === column.name);
       if (!vocabulary) return null;
-      const share =
-        vocabulary.measurements === null || !measurements ? null : vocabulary.measurements / measurements;
+      const share = vocabulary.events === null || !events ? null : vocabulary.events / events;
       const name = column.recognized ? `${column.name} (a standard OMOP vocabulary)` : column.name;
-      return { share, hover: `${name}: ${shareText(share)} of measurements` };
+      return { share, hover: `${name}: ${shareText(share)} of events` };
     }),
   ]);
 

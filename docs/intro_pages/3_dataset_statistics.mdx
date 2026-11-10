@@ -1,17 +1,24 @@
 ---
 sidebar_label: Dataset statistics
-hide_table_of_contents: true
 description: Size, coverage and structure of the datasets that public MEDS ETLs produce, from the summary statistics their maintainers publish.
 ---
 
 # Dataset statistics
 
-import DatasetStatistics from '@site/src/components/etlSummaryStats/DatasetStatistics';
+import DatasetStatistics, {
+  DATASET_STATISTICS_TOC,
+} from '@site/src/components/etlSummaryStats/DatasetStatistics';
+
+export const toc = [
+  ...DATASET_STATISTICS_TOC,
+  { value: 'Add your dataset', id: 'add-your-dataset', level: 2 },
+];
 
 How large are the datasets that the public [MEDS ETLs](./3_ecosystem.mdx) produce, and how do they differ? Several
 ETL maintainers publish a summary of their converted dataset, computed with
 [`meds_summary_stats`](https://github.com/Medical-Event-Data-Standard/meds_summary_stats). This page collects those
-files each time the site is built and charts them side by side.
+files each time the site is built, together with the summaries committed to this site's repository for datasets
+whose ETL repository doesn't publish one, and charts them side by side.
 
 The files are safe to publish by design: `meds_summary_stats` never writes out a code, reports no minimum or
 maximum value (only percentiles), and suppresses every split, calendar year or vocabulary that fewer than 20
@@ -21,7 +28,7 @@ them.
 
 <DatasetStatistics />
 
-## Add your dataset
+## Add your dataset {#add-your-dataset}
 
 If you maintain a MEDS ETL, run `meds_summary_stats` on its output and commit the result to your repository with a
 file name containing `summary_stats` and ending in `.json`, e.g. `tests/regression/full_summary_stats.json`:
@@ -36,3 +43,6 @@ name the file `*demo*summary_stats*.json` for a demo dataset. Otherwise, add you
 The same file is also a regression baseline: `compare_MEDS_summary_stats` and the
 [`meds_summary_stats` GitHub Action](https://github.com/Medical-Event-Data-Standard/meds_summary_stats#in-ci) check
 new ETL versions against it.
+
+If there is no ETL repository to commit the file to, open a pull request that adds it to this site's repository
+under `static/data/etl_summary_stats/` and lists it under `local_files` in the same YAML file.

@@ -3,8 +3,12 @@ import { Box, Link, Paper, TextField, ToggleButton, ToggleButtonGroup, Typograph
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import WarningIcon from '@mui/icons-material/Warning';
+import Heading from '@theme/Heading';
 import PlotlyWrapper from '@site/src/components/MEDS-DEV/plots/PlotlyWrapper';
 import {
+  AXIS_SCALES,
+  type Axis,
+  type AxisScale,
   BUBBLE_FILL,
   type BubbleChartModel,
   type CheckCell,
@@ -113,7 +117,7 @@ export function DatasetSelect({
       onChange={event => onChange(event.target.value)}
       // Keep the label above the field even when the value is empty ("None"), so the two never overlap.
       slotProps={{ select: { native: true }, inputLabel: { shrink: true } }}
-      sx={{ mb: 1.5, minWidth: 220 }}
+      sx={{ mt: 1, minWidth: 220 }}
     >
       {emptyOption !== undefined && <option value="">{emptyOption}</option>}
       {options.map(option => (
@@ -202,12 +206,19 @@ export function ExternalLink({
 }
 
 /** Lists the datasets a chart leaves out, and why, so a missing bar is never silent. */
-export function SkippedNote({ skipped }: { skipped: Skipped[] }): React.JSX.Element | null {
+export function SkippedNote({
+  skipped,
+  hasChart,
+}: {
+  skipped: Skipped[];
+  /** False if no dataset could be drawn, so there is no chart. */
+  hasChart: boolean;
+}): React.JSX.Element | null {
   if (skipped.length === 0) return null;
   return (
     <Box sx={{ mt: 1, color: 'text.secondary', fontSize: '0.875rem' }}>
       <Typography variant="body2" component="p" sx={{ mb: 0.5 }}>
-        Not shown in this chart:
+        {hasChart ? 'Not shown in this chart:' : 'No dataset can be drawn in this chart:'}
       </Typography>
       <Box component="ul" sx={{ mt: 0, mb: 0, pl: 3 }}>
         {skipped.map(({ label, reason }) => (
@@ -285,7 +296,10 @@ export interface MetricOption<T extends string> {
   label: string;
 }
 
-/** A row of mutually exclusive buttons choosing what a chart shows. */
+/**
+ * A row of mutually exclusive buttons choosing what a chart shows, after a short visible label that also names the
+ * group for screen readers. Every control on the page that switches between a few choices is one of these.
+ */
 export function MetricToggle<T extends string>({
   label,
   options,
@@ -298,27 +312,49 @@ export function MetricToggle<T extends string>({
   onChange: (value: T) => void;
 }): React.JSX.Element {
   return (
-    <ToggleButtonGroup
-      exclusive
-      size="small"
-      color="primary"
-      aria-label={label}
-      value={value}
-      onChange={(_event, next: T | null) => next && onChange(next)}
-      sx={{ flexWrap: 'wrap', mb: 1.5 }}
-    >
-      {options.map(option => (
-        <ToggleButton key={option.key} value={option.key} sx={{ textTransform: 'none', py: 0.25 }}>
-          {option.label}
-        </ToggleButton>
-      ))}
-    </ToggleButtonGroup>
+    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+      <Typography variant="body2" component="span" color="text.secondary" aria-hidden="true">
+        {label}
+      </Typography>
+      <ToggleButtonGroup
+        exclusive
+        size="small"
+        color="primary"
+        aria-label={label}
+        value={value}
+        onChange={(_event, next: T | null) => next && onChange(next)}
+        sx={{ flexWrap: 'wrap' }}
+      >
+        {options.map(option => (
+          <ToggleButton key={option.key} value={option.key} sx={{ textTransform: 'none', py: 0.25 }}>
+            {option.label}
+          </ToggleButton>
+        ))}
+      </ToggleButtonGroup>
+    </Box>
   );
 }
 
+/** The names of a chart's axes on their scale toggles. */
+export const AXIS_NAMES: Record<Axis, string> = { x: 'Horizontal axis', y: 'Vertical axis' };
+
+/** The log/linear toggle that every logarithmic axis on the page has. */
+export function ScaleToggle({
+  axis,
+  value,
+  onChange,
+}: {
+  axis: Axis;
+  value: AxisScale;
+  onChange: (value: AxisScale) => void;
+}): React.JSX.Element {
+  return <MetricToggle label={AXIS_NAMES[axis]} options={AXIS_SCALES} value={value} onChange={onChange} />;
+}
+
 /**
- * A titled chart section: description, optional controls, the chart, what it leaves out, and (unless the chart
- * already prints every number, like a labelled heatmap) its numbers as a table.
+ * A titled chart section: a heading with a permalink, the description, optional controls, the chart, what it
+ * leaves out, and (unless the chart already prints every number, like a labelled heatmap) its numbers as a table.
+ * Without a chart (no dataset can be drawn) there is no empty frame, only the note on why.
  */
 export function ChartSection({
   id,
@@ -336,15 +372,27 @@ export function ChartSection({
   skipped: Skipped[];
   table?: TableView;
 }>): React.JSX.Element {
+  const hasChart = React.Children.toArray(children).length > 0;
+  const hasControls = React.Children.toArray(controls).length > 0;
   return (
     <Box component="section" aria-labelledby={id} sx={{ mb: 5 }}>
-      <h2 id={id}>{title}</h2>
+      <Heading as="h2" id={id}>
+        {title}
+      </Heading>
       <p>{description}</p>
-      {controls}
-      <Paper variant="outlined" sx={{ p: { xs: 1, sm: 2 } }}>
-        {children}
-      </Paper>
-      <SkippedNote skipped={skipped} />
+      {hasControls && (
+        <Box
+          sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: 3, rowGap: 1, mb: 1.5 }}
+        >
+          {controls}
+        </Box>
+      )}
+      {hasChart && (
+        <Paper variant="outlined" sx={{ p: { xs: 1, sm: 2 } }}>
+          {children}
+        </Paper>
+      )}
+      <SkippedNote skipped={skipped} hasChart={hasChart} />
       {table && <TableDetails table={table} caption={`${title}: the numbers`} />}
     </Box>
   );

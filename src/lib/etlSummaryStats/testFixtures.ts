@@ -116,8 +116,7 @@ export function etlStats(subjects: number, overrides: Partial<EtlStats> = {}): E
   return {
     counts: {
       subjects,
-      events: subjects * 10,
-      measurements: subjects * 100,
+      events: subjects * 100,
       uniqueCodes: 50,
       subjectsWithBirth: subjects,
       subjectsWithDeath: subjects / 10,
@@ -126,8 +125,7 @@ export function etlStats(subjects: number, overrides: Partial<EtlStats> = {}): E
     },
     checks: { emptyCodes: 0, nullCodes: 0, nullSubjectIds: 0, nanValues: 0, infiniteValues: 0 },
     perSubject: {
-      measurements: quantiles(10),
-      events: quantiles(2),
+      events: quantiles(10),
       uniqueCodes: quantiles(1),
       spanDays: quantiles(30),
     },
@@ -140,9 +138,9 @@ export function etlStats(subjects: number, overrides: Partial<EtlStats> = {}): E
     },
     concentration: { top10: 0.3, top100: 0.8, top1000: 0.99, codesFor50: 4, codesFor90: 20, codesFor99: 45 },
     ontology: {
-      measurementsMapped: 0.6,
+      eventsMapped: 0.6,
       codesWithParents: 0.25,
-      vocabularies: [{ name: 'LOINC', measurements: subjects * 50, recognized: true }],
+      vocabularies: [{ name: 'LOINC', events: subjects * 50, recognized: true }],
       suppressed: null,
     },
     ...overrides,
@@ -155,6 +153,7 @@ export function statsEntry(label: string, overrides: Partial<EtlStatsEntry> = {}
     id: `org/${label.toLowerCase()}/stats/full_summary_stats.json`,
     label,
     variant: 'full',
+    host: 'etl',
     githubRepo: `org/${label}`,
     path: 'stats/full_summary_stats.json',
     extractedAt: '2026-11-04T22:16:51.111265',

@@ -1,8 +1,9 @@
 {
-  "updatedAt": "2026-11-07T19:26:19.892Z",
+  "updatedAt": "2026-11-10T19:21:03.777Z",
   "datasets": [
     {
       "id": "medical-event-data-standard/mimic_iv_meds/tests/regression/demo_summary_stats.json",
+      "host": "etl",
       "githubRepo": "Medical-Event-Data-Standard/MIMIC_IV_MEDS",
       "path": "tests/regression/demo_summary_stats.json",
       "label": "MIMIC-IV demo",
@@ -21,8 +22,7 @@
       "stats": {
         "counts": {
           "subjects": 100,
-          "events": 96949,
-          "measurements": 1024925,
+          "events": 1024925,
           "uniqueCodes": 10249,
           "subjectsWithBirth": 100,
           "subjectsWithDeath": 31,
@@ -37,7 +37,7 @@
           "infiniteValues": 0
         },
         "perSubject": {
-          "measurements": {
+          "events": {
             "suppressed": false,
             "n": 100,
             "mean": 10249.2,
@@ -46,16 +46,6 @@
             "p50": 4712.5,
             "p75": 11297.2,
             "p95": 38785
-          },
-          "events": {
-            "suppressed": false,
-            "n": 100,
-            "mean": 969.49,
-            "p5": 140.95,
-            "p25": 280.25,
-            "p50": 517.5,
-            "p75": 1217.75,
-            "p95": 3204.4
           },
           "uniqueCodes": {
             "suppressed": false,
@@ -76,7 +66,8 @@
             "p50": 23693.5,
             "p75": 27194,
             "p95": 32233.7
-          }
+          },
+          "eventsPerDay": null
         },
         "codeMetadata": {
           "present": true,
@@ -94,57 +85,57 @@
           "codesFor99": 4523
         },
         "ontology": {
-          "measurementsMapped": 0.513963,
+          "eventsMapped": 0.513963,
           "codesWithParents": 0.770709,
           "vocabularies": [
             {
               "name": "APR-DRG",
-              "measurements": 221,
+              "events": 221,
               "recognized": false
             },
             {
               "name": "ICD10CM",
-              "measurements": 2313,
+              "events": 2313,
               "recognized": true
             },
             {
               "name": "ICD10PCS",
-              "measurements": 297,
+              "events": 297,
               "recognized": true
             },
             {
               "name": "ICD9CM",
-              "measurements": 2193,
+              "events": 2193,
               "recognized": true
             },
             {
               "name": "ICD9Proc",
-              "measurements": 370,
+              "events": 370,
               "recognized": true
             },
             {
               "name": "LOINC",
-              "measurements": 424219,
+              "events": 424219,
               "recognized": true
             },
             {
               "name": "MS-DRG",
-              "measurements": 233,
+              "events": 233,
               "recognized": false
             },
             {
               "name": "NDC",
-              "measurements": 50960,
+              "events": 50960,
               "recognized": true
             },
             {
               "name": "RxNorm",
-              "measurements": 20078,
+              "events": 20078,
               "recognized": true
             },
             {
               "name": "SNOMED",
-              "measurements": 25890,
+              "events": 25890,
               "recognized": true
             }
           ],
@@ -155,6 +146,7 @@
     },
     {
       "id": "medical-event-data-standard/mimic_iv_meds/tests/regression/full_summary_stats.json",
+      "host": "etl",
       "githubRepo": "Medical-Event-Data-Standard/MIMIC_IV_MEDS",
       "path": "tests/regression/full_summary_stats.json",
       "label": "MIMIC-IV",
@@ -173,8 +165,7 @@
       "stats": {
         "counts": {
           "subjects": 364627,
-          "events": 95967753,
-          "measurements": 881400075,
+          "events": 881400075,
           "uniqueCodes": 148193,
           "subjectsWithBirth": 364627,
           "subjectsWithDeath": 38301,
@@ -189,7 +180,7 @@
           "infiniteValues": 0
         },
         "perSubject": {
-          "measurements": {
+          "events": {
             "suppressed": false,
             "n": 364627,
             "mean": 2417.26,
@@ -198,16 +189,6 @@
             "p50": 306,
             "p75": 1477,
             "p95": 10856.7
-          },
-          "events": {
-            "suppressed": false,
-            "n": 364627,
-            "mean": 263.194,
-            "p5": 3,
-            "p25": 11,
-            "p50": 48,
-            "p75": 213,
-            "p95": 1183
           },
           "uniqueCodes": {
             "suppressed": false,
@@ -228,7 +209,8 @@
             "p50": 18612.4,
             "p75": 24973,
             "p95": 31934.4
-          }
+          },
+          "eventsPerDay": null
         },
         "codeMetadata": {
           "present": true,
@@ -246,57 +228,57 @@
           "codesFor99": 10282
         },
         "ontology": {
-          "measurementsMapped": 0.594223,
+          "eventsMapped": 0.594223,
           "codesWithParents": 0.798668,
           "vocabularies": [
             {
               "name": "APR-DRG",
-              "measurements": 366931,
+              "events": 366931,
               "recognized": false
             },
             {
               "name": "ICD10CM",
-              "measurements": 3455689,
+              "events": 3455689,
               "recognized": true
             },
             {
               "name": "ICD10PCS",
-              "measurements": 369215,
+              "events": 369215,
               "recognized": true
             },
             {
               "name": "ICD9CM",
-              "measurements": 2908411,
+              "events": 2908411,
               "recognized": true
             },
             {
               "name": "ICD9Proc",
-              "measurements": 447276,
+              "events": 447276,
               "recognized": true
             },
             {
               "name": "LOINC",
-              "measurements": 431415617,
+              "events": 431415617,
               "recognized": true
             },
             {
               "name": "MS-DRG",
-              "measurements": 394925,
+              "events": 394925,
               "recognized": false
             },
             {
               "name": "NDC",
-              "measurements": 59777968,
+              "events": 59777968,
               "recognized": true
             },
             {
               "name": "RxNorm",
-              "measurements": 10497700,
+              "events": 10497700,
               "recognized": true
             },
             {
               "name": "SNOMED",
-              "measurements": 14114800,
+              "events": 14114800,
               "recognized": true
             }
           ],
@@ -307,6 +289,7 @@
     },
     {
       "id": "prockenschaub/aumcdb_meds/tests/regression/full_summary_stats.json",
+      "host": "etl",
       "githubRepo": "prockenschaub/AUMCdb_MEDS",
       "path": "tests/regression/full_summary_stats.json",
       "label": "AUMCdb",
@@ -325,8 +308,7 @@
       "stats": {
         "counts": {
           "subjects": 20109,
-          "events": 25461980,
-          "measurements": 194203035,
+          "events": 194203035,
           "uniqueCodes": 14225,
           "subjectsWithBirth": 20109,
           "subjectsWithDeath": 6241,
@@ -341,7 +323,7 @@
           "infiniteValues": 0
         },
         "perSubject": {
-          "measurements": {
+          "events": {
             "suppressed": false,
             "n": 20109,
             "mean": 9657.52,
@@ -350,16 +332,6 @@
             "p50": 645,
             "p75": 2362,
             "p95": 22281.6
-          },
-          "events": {
-            "suppressed": false,
-            "n": 20109,
-            "mean": 1266.2,
-            "p5": 48,
-            "p25": 81,
-            "p50": 149,
-            "p75": 638,
-            "p95": 4985.2
           },
           "uniqueCodes": {
             "suppressed": false,
@@ -380,7 +352,8 @@
             "p50": 23580.7,
             "p75": 27232,
             "p95": 29110.9
-          }
+          },
+          "eventsPerDay": null
         },
         "codeMetadata": {
           "present": true,
@@ -398,22 +371,22 @@
           "codesFor99": 1922
         },
         "ontology": {
-          "measurementsMapped": 0.512924,
+          "eventsMapped": 0.512924,
           "codesWithParents": 0.14348,
           "vocabularies": [
             {
               "name": "ATC",
-              "measurements": 17997037,
+              "events": 17997037,
               "recognized": true
             },
             {
               "name": "LOINC",
-              "measurements": 80681155,
+              "events": 80681155,
               "recognized": true
             },
             {
               "name": "SNOMED",
-              "measurements": 933133,
+              "events": 933133,
               "recognized": true
             }
           ],
@@ -424,6 +397,7 @@
     },
     {
       "id": "rvandewater/nwicu_meds/tests/regression/full_summary_stats.json",
+      "host": "etl",
       "githubRepo": "rvandewater/NWICU_MEDS",
       "path": "tests/regression/full_summary_stats.json",
       "label": "NWICU",
@@ -442,8 +416,7 @@
       "stats": {
         "counts": {
           "subjects": 25923,
-          "events": 17014114,
-          "measurements": 51018616,
+          "events": 51018616,
           "uniqueCodes": 27463,
           "subjectsWithBirth": 25923,
           "subjectsWithDeath": 5213,
@@ -458,7 +431,7 @@
           "infiniteValues": 0
         },
         "perSubject": {
-          "measurements": {
+          "events": {
             "suppressed": false,
             "n": 25923,
             "mean": 1968.08,
@@ -467,16 +440,6 @@
             "p50": 1178,
             "p75": 2333,
             "p95": 6347.9
-          },
-          "events": {
-            "suppressed": false,
-            "n": 25923,
-            "mean": 656.333,
-            "p5": 67,
-            "p25": 191,
-            "p50": 390,
-            "p75": 788,
-            "p95": 2116.9
           },
           "uniqueCodes": {
             "suppressed": false,
@@ -497,7 +460,8 @@
             "p50": 24086.9,
             "p75": 27797.6,
             "p95": 32220
-          }
+          },
+          "eventsPerDay": null
         },
         "codeMetadata": {
           "present": true,
@@ -515,17 +479,17 @@
           "codesFor99": 6316
         },
         "ontology": {
-          "measurementsMapped": 0.0681619,
+          "eventsMapped": 0.0681619,
           "codesWithParents": 0.487019,
           "vocabularies": [
             {
               "name": "ICD10CM",
-              "measurements": 313070,
+              "events": 313070,
               "recognized": true
             },
             {
               "name": "NDC",
-              "measurements": 3164458,
+              "events": 3164458,
               "recognized": true
             }
           ],
@@ -536,6 +500,7 @@
     },
     {
       "id": "rvandewater/sicdb_meds/tests/regression/full_summary_stats.json",
+      "host": "etl",
       "githubRepo": "rvandewater/SICdb_MEDS",
       "path": "tests/regression/full_summary_stats.json",
       "label": "SICdb",
@@ -554,8 +519,7 @@
       "stats": {
         "counts": {
           "subjects": 21566,
-          "events": 7941577,
-          "measurements": 68584759,
+          "events": 68584759,
           "uniqueCodes": 4547,
           "subjectsWithBirth": 21563,
           "subjectsWithDeath": 4142,
@@ -570,7 +534,7 @@
           "infiniteValues": 0
         },
         "perSubject": {
-          "measurements": {
+          "events": {
             "suppressed": false,
             "n": 21566,
             "mean": 3180.23,
@@ -579,16 +543,6 @@
             "p50": 1523,
             "p75": 3111.75,
             "p95": 11942.8
-          },
-          "events": {
-            "suppressed": false,
-            "n": 21566,
-            "mean": 368.245,
-            "p5": 52,
-            "p25": 106,
-            "p50": 206,
-            "p75": 394,
-            "p95": 1277.5
           },
           "uniqueCodes": {
             "suppressed": false,
@@ -609,7 +563,8 @@
             "p50": 25756.6,
             "p75": 28392.3,
             "p95": 33061.1
-          }
+          },
+          "eventsPerDay": null
         },
         "codeMetadata": {
           "present": true,
@@ -627,17 +582,17 @@
           "codesFor99": 683
         },
         "ontology": {
-          "measurementsMapped": 0.238318,
+          "eventsMapped": 0.238318,
           "codesWithParents": 0.565648,
           "vocabularies": [
             {
               "name": "ICD10GM",
-              "measurements": 27059,
+              "events": 27059,
               "recognized": false
             },
             {
               "name": "LOINC",
-              "measurements": 16317895,
+              "events": 16317895,
               "recognized": true
             }
           ],
@@ -648,6 +603,7 @@
     },
     {
       "id": "rvandewater/inspire_meds/tests/regression/full_summary_stats.json",
+      "host": "etl",
       "githubRepo": "rvandewater/INSPIRE_MEDS",
       "path": "tests/regression/full_summary_stats.json",
       "label": "INSPIRE",
@@ -666,8 +622,7 @@
       "stats": {
         "counts": {
           "subjects": 99900,
-          "events": 19783903,
-          "measurements": 140689363,
+          "events": 140689363,
           "uniqueCodes": 4515,
           "subjectsWithBirth": 99886,
           "subjectsWithDeath": 13323,
@@ -682,7 +637,7 @@
           "infiniteValues": 0
         },
         "perSubject": {
-          "measurements": {
+          "events": {
             "suppressed": false,
             "n": 99900,
             "mean": 1408.3,
@@ -691,16 +646,6 @@
             "p50": 810,
             "p75": 1505,
             "p95": 4132
-          },
-          "events": {
-            "suppressed": false,
-            "n": 99900,
-            "mean": 198.037,
-            "p5": 42,
-            "p25": 69,
-            "p50": 110,
-            "p75": 198,
-            "p95": 578
           },
           "uniqueCodes": {
             "suppressed": false,
@@ -721,7 +666,8 @@
             "p50": 20701,
             "p75": 25586.3,
             "p95": 29551.6
-          }
+          },
+          "eventsPerDay": null
         },
         "codeMetadata": {
           "present": true,
@@ -744,6 +690,7 @@
     },
     {
       "id": "medical-event-data-standard/eicu_meds/tests/regression/demo_summary_stats.json",
+      "host": "etl",
       "githubRepo": "Medical-Event-Data-Standard/eICU_MEDS",
       "path": "tests/regression/demo_summary_stats.json",
       "label": "eICU demo",
@@ -762,8 +709,7 @@
       "stats": {
         "counts": {
           "subjects": 2174,
-          "events": 2230411,
-          "measurements": 11443674,
+          "events": 11443674,
           "uniqueCodes": 8122,
           "subjectsWithBirth": 2170,
           "subjectsWithDeath": 182,
@@ -778,7 +724,7 @@
           "infiniteValues": 0
         },
         "perSubject": {
-          "measurements": {
+          "events": {
             "suppressed": false,
             "n": 2174,
             "mean": 5263.88,
@@ -787,16 +733,6 @@
             "p50": 2840.5,
             "p75": 5670.25,
             "p95": 18838.8
-          },
-          "events": {
-            "suppressed": false,
-            "n": 2174,
-            "mean": 1025.95,
-            "p5": 109.65,
-            "p25": 340.25,
-            "p50": 614,
-            "p75": 1140.75,
-            "p95": 3316.7
           },
           "uniqueCodes": {
             "suppressed": false,
@@ -817,7 +753,8 @@
             "p50": 24290.2,
             "p75": 28309.7,
             "p95": 32693.3
-          }
+          },
+          "eventsPerDay": null
         },
         "codeMetadata": {
           "present": true,
@@ -835,17 +772,17 @@
           "codesFor99": 1297
         },
         "ontology": {
-          "measurementsMapped": 0.00182817,
+          "eventsMapped": 0.00182817,
           "codesWithParents": 0.105885,
           "vocabularies": [
             {
               "name": "ICD10CM",
-              "measurements": 20089,
+              "events": 20089,
               "recognized": true
             },
             {
               "name": "ICD9CM",
-              "measurements": 20651,
+              "events": 20651,
               "recognized": true
             }
           ],
@@ -856,6 +793,7 @@
     },
     {
       "id": "medical-event-data-standard/eicu_meds/tests/regression/full_summary_stats.json",
+      "host": "etl",
       "githubRepo": "Medical-Event-Data-Standard/eICU_MEDS",
       "path": "tests/regression/full_summary_stats.json",
       "label": "eICU",
@@ -874,8 +812,7 @@
       "stats": {
         "counts": {
           "subjects": 166355,
-          "events": 203435999,
-          "measurements": 1112756293,
+          "events": 1112756293,
           "uniqueCodes": 15528,
           "subjectsWithBirth": 166271,
           "subjectsWithDeath": 14623,
@@ -890,7 +827,7 @@
           "infiniteValues": 0
         },
         "perSubject": {
-          "measurements": {
+          "events": {
             "suppressed": false,
             "n": 166355,
             "mean": 6689.05,
@@ -899,16 +836,6 @@
             "p50": 3565,
             "p75": 7104,
             "p95": 23294
-          },
-          "events": {
-            "suppressed": false,
-            "n": 166355,
-            "mean": 1222.9,
-            "p5": 172,
-            "p25": 396,
-            "p50": 708,
-            "p75": 1338,
-            "p95": 4014
           },
           "uniqueCodes": {
             "suppressed": false,
@@ -929,7 +856,8 @@
             "p50": 23928.7,
             "p75": 27950.2,
             "p95": 32333.7
-          }
+          },
+          "eventsPerDay": null
         },
         "codeMetadata": {
           "present": true,
@@ -947,17 +875,17 @@
           "codesFor99": 1671
         },
         "ontology": {
-          "measurementsMapped": 0.00202451,
+          "eventsMapped": 0.00202451,
           "codesWithParents": 0.201507,
           "vocabularies": [
             {
               "name": "ICD10CM",
-              "measurements": 2169993,
+              "events": 2169993,
               "recognized": true
             },
             {
               "name": "ICD9CM",
-              "measurements": 2220344,
+              "events": 2220344,
               "recognized": true
             }
           ],
@@ -968,6 +896,7 @@
     },
     {
       "id": "rvandewater/hirid_meds/tests/regression/full_summary_stats.json",
+      "host": "etl",
       "githubRepo": "rvandewater/HIRID_MEDS",
       "path": "tests/regression/full_summary_stats.json",
       "label": "HiRID",
@@ -986,8 +915,7 @@
       "stats": {
         "counts": {
           "subjects": 33905,
-          "events": 325402655,
-          "measurements": 775040967,
+          "events": 775040967,
           "uniqueCodes": 654,
           "subjectsWithBirth": 33905,
           "subjectsWithDeath": 2062,
@@ -1002,7 +930,7 @@
           "infiniteValues": 0
         },
         "perSubject": {
-          "measurements": {
+          "events": {
             "suppressed": false,
             "n": 33905,
             "mean": 22859.2,
@@ -1011,16 +939,6 @@
             "p50": 9232,
             "p75": 19083,
             "p95": 95767.2
-          },
-          "events": {
-            "suppressed": false,
-            "n": 33905,
-            "mean": 9597.48,
-            "p5": 953,
-            "p25": 1851,
-            "p50": 3330,
-            "p75": 7812,
-            "p95": 39095.8
           },
           "uniqueCodes": {
             "suppressed": false,
@@ -1041,7 +959,8 @@
             "p50": 23742.9,
             "p75": 27394.7,
             "p95": 31047.1
-          }
+          },
+          "eventsPerDay": null
         },
         "codeMetadata": {
           "present": true,
@@ -1064,6 +983,7 @@
     },
     {
       "id": "rvandewater/cdsl_meds/tests/regression/full_summary_stats.json",
+      "host": "etl",
       "githubRepo": "rvandewater/CDSL_MEDS",
       "path": "tests/regression/full_summary_stats.json",
       "label": "CDSL",
@@ -1082,8 +1002,7 @@
       "stats": {
         "counts": {
           "subjects": 4479,
-          "events": 223304,
-          "measurements": 3988718,
+          "events": 3988718,
           "uniqueCodes": 5621,
           "subjectsWithBirth": 0,
           "subjectsWithDeath": 0,
@@ -1098,7 +1017,7 @@
           "infiniteValues": 0
         },
         "perSubject": {
-          "measurements": {
+          "events": {
             "suppressed": false,
             "n": 4479,
             "mean": 890.538,
@@ -1107,16 +1026,6 @@
             "p50": 449,
             "p75": 893,
             "p95": 3327.7
-          },
-          "events": {
-            "suppressed": false,
-            "n": 4479,
-            "mean": 49.8558,
-            "p5": 11,
-            "p25": 26,
-            "p50": 41,
-            "p75": 62,
-            "p95": 119.1
           },
           "uniqueCodes": {
             "suppressed": false,
@@ -1137,7 +1046,8 @@
             "p50": 65204.7,
             "p75": 73732.4,
             "p95": 80494.7
-          }
+          },
+          "eventsPerDay": null
         },
         "codeMetadata": {
           "present": true,
@@ -1160,6 +1070,7 @@
     },
     {
       "id": "rvandewater/alott_meds/tests/regression/full_summary_stats.json",
+      "host": "etl",
       "githubRepo": "rvandewater/ALOTT_MEDS",
       "path": "tests/regression/full_summary_stats.json",
       "label": "ALOTT",
@@ -1178,8 +1089,7 @@
       "stats": {
         "counts": {
           "subjects": 18472,
-          "events": 23764573,
-          "measurements": 52592412,
+          "events": 52592412,
           "uniqueCodes": 47130,
           "subjectsWithBirth": 0,
           "subjectsWithDeath": 0,
@@ -1194,7 +1104,7 @@
           "infiniteValues": 0
         },
         "perSubject": {
-          "measurements": {
+          "events": {
             "suppressed": false,
             "n": 18472,
             "mean": 2847.14,
@@ -1203,16 +1113,6 @@
             "p50": 1466,
             "p75": 3278.5,
             "p95": 9782
-          },
-          "events": {
-            "suppressed": false,
-            "n": 18472,
-            "mean": 1286.52,
-            "p5": 143,
-            "p25": 309,
-            "p50": 649,
-            "p75": 1493,
-            "p95": 4493
           },
           "uniqueCodes": {
             "suppressed": false,
@@ -1233,7 +1133,8 @@
             "p50": 105,
             "p75": 246.206,
             "p95": 491
-          }
+          },
+          "eventsPerDay": null
         },
         "codeMetadata": {
           "present": true,
@@ -1256,6 +1157,7 @@
     },
     {
       "id": "rvandewater/picdb_meds/tests/regression/full_summary_stats.json",
+      "host": "etl",
       "githubRepo": "rvandewater/PICdb_MEDS",
       "path": "tests/regression/full_summary_stats.json",
       "label": "PIC",
@@ -1274,8 +1176,7 @@
       "stats": {
         "counts": {
           "subjects": 12881,
-          "events": 2778453,
-          "measurements": 16442378,
+          "events": 16442378,
           "uniqueCodes": 9876,
           "subjectsWithBirth": 12881,
           "subjectsWithDeath": 971,
@@ -1290,7 +1191,7 @@
           "infiniteValues": 0
         },
         "perSubject": {
-          "measurements": {
+          "events": {
             "suppressed": false,
             "n": 12881,
             "mean": 1276.48,
@@ -1299,16 +1200,6 @@
             "p50": 903,
             "p75": 1473,
             "p95": 3557
-          },
-          "events": {
-            "suppressed": false,
-            "n": 12881,
-            "mean": 215.702,
-            "p5": 38,
-            "p25": 87,
-            "p50": 143,
-            "p75": 243,
-            "p95": 635
           },
           "uniqueCodes": {
             "suppressed": false,
@@ -1329,7 +1220,8 @@
             "p50": 307.412,
             "p75": 1291.05,
             "p95": 4167.49
-          }
+          },
+          "eventsPerDay": null
         },
         "codeMetadata": {
           "present": true,
@@ -1347,17 +1239,17 @@
           "codesFor99": 1268
         },
         "ontology": {
-          "measurementsMapped": 0.269729,
+          "eventsMapped": 0.269729,
           "codesWithParents": 0.268327,
           "vocabularies": [
             {
               "name": "ICD10",
-              "measurements": 32837,
+              "events": 32837,
               "recognized": true
             },
             {
               "name": "LOINC",
-              "measurements": 4402143,
+              "events": 4402143,
               "recognized": true
             }
           ],
@@ -1368,6 +1260,7 @@
     },
     {
       "id": "rvandewater/zigong_meds/tests/regression/full_summary_stats.json",
+      "host": "etl",
       "githubRepo": "rvandewater/Zigong_MEDS",
       "path": "tests/regression/full_summary_stats.json",
       "label": "Zigong",
@@ -1386,8 +1279,7 @@
       "stats": {
         "counts": {
           "subjects": 2790,
-          "events": 344458,
-          "measurements": 5136602,
+          "events": 5136602,
           "uniqueCodes": 4979,
           "subjectsWithBirth": 0,
           "subjectsWithDeath": 1274,
@@ -1402,7 +1294,7 @@
           "infiniteValues": 0
         },
         "perSubject": {
-          "measurements": {
+          "events": {
             "suppressed": false,
             "n": 2790,
             "mean": 1841.08,
@@ -1411,16 +1303,6 @@
             "p50": 1056,
             "p75": 2049,
             "p95": 5738.5
-          },
-          "events": {
-            "suppressed": false,
-            "n": 2790,
-            "mean": 123.462,
-            "p5": 23,
-            "p25": 51,
-            "p50": 90,
-            "p75": 153,
-            "p95": 343.55
           },
           "uniqueCodes": {
             "suppressed": false,
@@ -1441,7 +1323,8 @@
             "p50": 432.432,
             "p75": 673.083,
             "p95": 902.47
-          }
+          },
+          "eventsPerDay": null
         },
         "codeMetadata": {
           "present": true,
@@ -1464,16 +1347,17 @@
     },
     {
       "id": "rvandewater/mc_med_meds/tests/regression/full_summary_stats.json",
+      "host": "etl",
       "githubRepo": "rvandewater/MC_MED_MEDS",
       "path": "tests/regression/full_summary_stats.json",
       "label": "MC-MED",
       "variant": "full",
-      "extractedAt": "2026-11-05T20:26:18.411376",
+      "extractedAt": "2026-11-08T00:37:27.197501",
       "schemaVersion": 1,
       "toolVersion": "0.0.3",
       "dataset": {
         "name": "MC-MED",
-        "version": "1.0.1:0.0.1.dev6+gc2d9f4cc0",
+        "version": "1.0.1:0.1.0",
         "etlName": "MEDS_transforms",
         "etlVersion": "0.7.1",
         "medsVersion": "0.4.1"
@@ -1482,8 +1366,7 @@
       "stats": {
         "counts": {
           "subjects": 70545,
-          "events": 14223204,
-          "measurements": 60573081,
+          "events": 60573081,
           "uniqueCodes": 56444,
           "subjectsWithBirth": 0,
           "subjectsWithDeath": 810,
@@ -1498,7 +1381,7 @@
           "infiniteValues": 0
         },
         "perSubject": {
-          "measurements": {
+          "events": {
             "suppressed": false,
             "n": 70545,
             "mean": 858.645,
@@ -1507,16 +1390,6 @@
             "p50": 498,
             "p75": 1063,
             "p95": 2802.8
-          },
-          "events": {
-            "suppressed": false,
-            "n": 70545,
-            "mean": 201.619,
-            "p5": 13,
-            "p25": 44,
-            "p50": 128,
-            "p75": 246,
-            "p95": 632
           },
           "uniqueCodes": {
             "suppressed": false,
@@ -1537,7 +1410,8 @@
             "p50": 750,
             "p75": 3270,
             "p95": 5354.64
-          }
+          },
+          "eventsPerDay": null
         },
         "codeMetadata": {
           "present": true,
@@ -1555,27 +1429,27 @@
           "codesFor99": 3579
         },
         "ontology": {
-          "measurementsMapped": 0.0165904,
+          "eventsMapped": 0.0165904,
           "codesWithParents": 0.426334,
           "vocabularies": [
             {
               "name": "ED_DIAGNOSIS",
-              "measurements": 1086,
+              "events": 1086,
               "recognized": false
             },
             {
               "name": "ICD10CM",
-              "measurements": 877190,
+              "events": 877190,
               "recognized": true
             },
             {
               "name": "ICD9CM",
-              "measurements": 127744,
+              "events": 127744,
               "recognized": true
             },
             {
               "name": "PMH",
-              "measurements": 11134,
+              "events": 11134,
               "recognized": false
             }
           ],
@@ -1586,6 +1460,7 @@
     },
     {
       "id": "ji-ch01/k-mimic-meds/meds_summary_stats.json",
+      "host": "etl",
       "githubRepo": "ji-ch01/K-MIMIC-MEDS",
       "path": "meds_summary_stats.json",
       "label": "K-MIMIC (synthetic)",
@@ -1604,8 +1479,7 @@
       "stats": {
         "counts": {
           "subjects": 1328,
-          "events": 413242,
-          "measurements": 1381580,
+          "events": 1381580,
           "uniqueCodes": 204,
           "subjectsWithBirth": 1249,
           "subjectsWithDeath": 88,
@@ -1620,7 +1494,7 @@
           "infiniteValues": 0
         },
         "perSubject": {
-          "measurements": {
+          "events": {
             "suppressed": false,
             "n": 1328,
             "mean": 1040.35,
@@ -1629,16 +1503,6 @@
             "p50": 1057,
             "p75": 1204,
             "p95": 1437.9
-          },
-          "events": {
-            "suppressed": false,
-            "n": 1328,
-            "mean": 311.176,
-            "p5": 202.8,
-            "p25": 260,
-            "p50": 330,
-            "p75": 366,
-            "p95": 368
           },
           "uniqueCodes": {
             "suppressed": false,
@@ -1659,7 +1523,8 @@
             "p50": 21386.3,
             "p75": 26097.3,
             "p95": 30840.4
-          }
+          },
+          "eventsPerDay": null
         },
         "codeMetadata": {
           "present": true,
@@ -1677,16 +1542,293 @@
           "codesFor99": 118
         },
         "ontology": {
-          "measurementsMapped": 0.0500159,
+          "eventsMapped": 0.0500159,
           "codesWithParents": 0.156863,
           "vocabularies": [
             {
               "name": "EDI",
-              "measurements": 69101,
+              "events": 69101,
               "recognized": false
             }
           ],
           "suppressed": null
+        }
+      },
+      "problem": null
+    },
+    {
+      "id": "medical-event-data-standard/medical-event-data-standard.github.io/static/data/etl_summary_stats/ehrshot_full_summary_stats.json",
+      "host": "site",
+      "githubRepo": "Medical-Event-Data-Standard/medical-event-data-standard.github.io",
+      "path": "static/data/etl_summary_stats/ehrshot_full_summary_stats.json",
+      "label": "EHRSHOT",
+      "variant": "full",
+      "extractedAt": "2026-11-10T18:56:57.765215",
+      "schemaVersion": 1,
+      "toolVersion": "0.0.3",
+      "dataset": {
+        "name": "ehrshot",
+        "version": "0.9:0.3.1.dev9+gbdb5dfa30.d20261030:OMOP_5.4",
+        "etlName": "MEDS_transforms",
+        "etlVersion": "0.6.7",
+        "medsVersion": "0.4.1"
+      },
+      "minCellSize": 20,
+      "stats": {
+        "counts": {
+          "subjects": 6731,
+          "events": 19643798,
+          "uniqueCodes": 55872,
+          "subjectsWithBirth": 6731,
+          "subjectsWithDeath": 0,
+          "subjectsWithStatic": 6731,
+          "numericValues": 7017380
+        },
+        "checks": {
+          "emptyCodes": 0,
+          "nullCodes": 0,
+          "nullSubjectIds": 0,
+          "nanValues": 0,
+          "infiniteValues": 0
+        },
+        "perSubject": {
+          "events": {
+            "suppressed": false,
+            "n": 6731,
+            "mean": 2918.41,
+            "p5": 47,
+            "p25": 396,
+            "p50": 1279,
+            "p75": 3296.5,
+            "p95": 11110
+          },
+          "uniqueCodes": {
+            "suppressed": false,
+            "n": 6731,
+            "mean": 425.412,
+            "p5": 14,
+            "p25": 134,
+            "p50": 314,
+            "p75": 571,
+            "p95": 1260.5
+          },
+          "spanDays": {
+            "suppressed": false,
+            "n": 6731,
+            "mean": 21758.9,
+            "p5": 10351.5,
+            "p25": 16430.5,
+            "p50": 22668.3,
+            "p75": 27042.2,
+            "p95": 31280.8
+          },
+          "eventsPerDay": null
+        },
+        "codeMetadata": {
+          "present": true,
+          "codes": 56992,
+          "withDescription": 56979,
+          "dataCodesMissing": 0,
+          "metadataCodesUnused": 0
+        },
+        "concentration": {
+          "top10": 0.319296,
+          "top100": 0.521618,
+          "top1000": 0.75443,
+          "codesFor50": 78,
+          "codesFor90": 3871,
+          "codesFor99": 19797
+        },
+        "ontology": {
+          "eventsMapped": 0.560378,
+          "codesWithParents": 0.594645,
+          "vocabularies": [
+            {
+              "name": "CMS Place of Service",
+              "events": 117780,
+              "recognized": false
+            },
+            {
+              "name": "Ethnicity",
+              "events": 6274,
+              "recognized": true
+            },
+            {
+              "name": "ICDO3",
+              "events": 333,
+              "recognized": true
+            },
+            {
+              "name": "LOINC",
+              "events": 901680,
+              "recognized": true
+            },
+            {
+              "name": "Medicare Specialty",
+              "events": 357058,
+              "recognized": true
+            },
+            {
+              "name": "NUCC",
+              "events": 377106,
+              "recognized": true
+            },
+            {
+              "name": "OMOP Extension",
+              "events": 155420,
+              "recognized": true
+            },
+            {
+              "name": "Race",
+              "events": 5188,
+              "recognized": true
+            },
+            {
+              "name": "RxNorm",
+              "events": 5810553,
+              "recognized": true
+            },
+            {
+              "name": "RxNorm Extension",
+              "events": 11122,
+              "recognized": true
+            },
+            {
+              "name": "SNOMED",
+              "events": 2381174,
+              "recognized": true
+            },
+            {
+              "name": "Type Concept",
+              "events": 6830,
+              "recognized": true
+            },
+            {
+              "name": "Visit",
+              "events": 878530,
+              "recognized": true
+            }
+          ],
+          "suppressed": {
+            "cells": 3,
+            "events": 22
+          }
+        }
+      },
+      "problem": null
+    },
+    {
+      "id": "medical-event-data-standard/medical-event-data-standard.github.io/static/data/etl_summary_stats/inspect_full_summary_stats.json",
+      "host": "site",
+      "githubRepo": "Medical-Event-Data-Standard/medical-event-data-standard.github.io",
+      "path": "static/data/etl_summary_stats/inspect_full_summary_stats.json",
+      "label": "INSPECT",
+      "variant": "full",
+      "extractedAt": "2026-11-10T18:57:03.796583",
+      "schemaVersion": 1,
+      "toolVersion": "0.0.3",
+      "dataset": {
+        "name": "Epic Clarity SHC|Epic Clarity LPCH|Stanford vocabulary version",
+        "version": "2024-08-27|2024-08-27|2024-08-27",
+        "etlName": "meds_etl.omop",
+        "etlVersion": "0.3.9.dev11+gba0eec1.d20250131",
+        "medsVersion": "0.3.3"
+      },
+      "minCellSize": 20,
+      "stats": {
+        "counts": {
+          "subjects": 19390,
+          "events": 225029469,
+          "uniqueCodes": 55672,
+          "subjectsWithBirth": 19390,
+          "subjectsWithDeath": 3148,
+          "subjectsWithStatic": 0,
+          "numericValues": 168198572
+        },
+        "checks": {
+          "emptyCodes": 0,
+          "nullCodes": 0,
+          "nullSubjectIds": 0,
+          "nanValues": 0,
+          "infiniteValues": 0
+        },
+        "perSubject": {
+          "events": {
+            "suppressed": false,
+            "n": 19390,
+            "mean": 11605.4,
+            "p5": 185,
+            "p25": 1575,
+            "p50": 5758,
+            "p75": 15245.5,
+            "p95": 40710.6
+          },
+          "uniqueCodes": {
+            "suppressed": false,
+            "n": 19390,
+            "mean": 383.031,
+            "p5": 73,
+            "p25": 195,
+            "p50": 334,
+            "p75": 514,
+            "p95": 877
+          },
+          "spanDays": {
+            "suppressed": false,
+            "n": 19390,
+            "mean": 22951.9,
+            "p5": 11128.7,
+            "p25": 18793.2,
+            "p50": 23808.3,
+            "p75": 27958,
+            "p95": 32318.2
+          },
+          "eventsPerDay": null
+        },
+        "codeMetadata": {
+          "present": true,
+          "codes": 95414,
+          "withDescription": 95414,
+          "dataCodesMissing": 55286,
+          "metadataCodesUnused": 95028
+        },
+        "concentration": {
+          "top10": 0.37072,
+          "top100": 0.825587,
+          "top1000": 0.94695,
+          "codesFor50": 19,
+          "codesFor90": 327,
+          "codesFor99": 5950
+        },
+        "ontology": {
+          "eventsMapped": 0.0173066,
+          "codesWithParents": 0.00678977,
+          "vocabularies": [
+            {
+              "name": "CMS Place of Service",
+              "events": 285372,
+              "recognized": false
+            },
+            {
+              "name": "Medicare Specialty",
+              "events": 803949,
+              "recognized": true
+            },
+            {
+              "name": "NUCC",
+              "events": 736647,
+              "recognized": true
+            },
+            {
+              "name": "Visit",
+              "events": 2068535,
+              "recognized": true
+            }
+          ],
+          "suppressed": {
+            "cells": 19,
+            "events": 0
+          }
         }
       },
       "problem": null
