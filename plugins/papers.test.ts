@@ -199,6 +199,7 @@ describe('fetchFromSemanticScholar', () => {
     ],
     exclude: [],
     affiliations: [],
+    institutions: [],
   };
 
   it('fetches the seeds and included papers in one batch, then every page of citations', async () => {
@@ -357,6 +358,7 @@ describe('parsePapersConfig', () => {
       include: [{ id: 'DOI:10.1/X' }, { id: 'ARXIV:2401.00001' }, { id: OTHER_SEED }],
       exclude: [],
       affiliations: [],
+      institutions: [],
     });
   });
 
@@ -379,7 +381,44 @@ describe('parsePapersConfig', () => {
       include: [{ id: 'DOI:10.1/thesis', overrides: { ...details, title: 'A Thesis' } }],
       exclude: ['DOI:10.1/other'],
       affiliations: [],
+      institutions: [],
     });
+  });
+
+  it("parses institutions' renames and homepages", () => {
+    expect(
+      parsePapersConfig({
+        seeds: [{ id: SEED, label: 'Seed' }],
+        institutions: [
+          { name: ' Institut national ', rename: ' Inria ', note: 'why' },
+          { name: 'GSK plc', homepage: ' https://www.gsk.com ' },
+        ],
+      }).institutions
+    ).toEqual([
+      { name: 'Institut national', rename: 'Inria' },
+      { name: 'GSK plc', homepage: 'https://www.gsk.com' },
+    ]);
+  });
+
+  it.each([
+    [{ institutions: 'x' }, '`institutions` must be a list'],
+    [{ institutions: [{ rename: 'X' }] }, '`institutions[0].name` must be a non-empty string'],
+    [{ institutions: [null] }, '`institutions[0].name` must be a non-empty string'],
+    [{ institutions: [{ name: 'X', rename: ' ' }] }, '`institutions[0].rename` must be a non-empty string'],
+    [
+      { institutions: [{ name: 'X', homepage: 'www.x.org' }] },
+      '`institutions[0].homepage` must be an http(s) URL',
+    ],
+    [{ institutions: [{ name: 'X', homepage: 5 }] }, '`institutions[0].homepage` must be an http(s) URL'],
+    [{ institutions: [{ name: 'X' }] }, '`institutions[0]` must set `rename` or `homepage`'],
+    [
+      { institutions: [{ name: 'X', rename: 'Y', icon: 'z' }] },
+      '`institutions[0]` has an unknown field `icon`',
+    ],
+  ])('rejects invalid institutions %j', (fields, error) => {
+    expect(() => parsePapersConfig({ seeds: [{ id: SEED, label: 'S' }], ...fields })).toThrow(
+      `Invalid static/data/papers.yaml: ${error}`
+    );
   });
 
   it("parses papers' affiliations, without duplicate institutions", () => {
@@ -740,6 +779,18 @@ describe('with a site directory', () => {
       expect(newSeed.message).not.toContain('SEMANTIC_SCHOLAR_API_KEY');
     });
 
+    it('renames institutions as papers.yaml says, and passes on their ids and configured homepages', async () => {
+      await writeYaml(
+        [SEED],
+        "institutions:\n  - name: 'Live University'\n    rename: 'LU'\n    homepage: 'https://lu.example/'\n"
+      );
+      const result = await loadPapers(siteDir, { source: 'live', client: fastClient(mockFetch()), now });
+
+      expect(result.data.papers.map(paper => paper.institutions)).toEqual([['LU']]);
+      expect([...result.institutionIds]).toEqual([['LU', 'ILiveUniversity']]);
+      expect([...result.institutionHomepages]).toEqual([['LU', 'https://lu.example/']]);
+    });
+
     it("lists an included paper that Semantic Scholar doesn't have from its details, without a warning", async () => {
       await writeYaml([SEED], "include:\n  - id: 'DOI:10.1/thesis'\n    title: 'A Thesis'\n    year: 2026\n");
       const fetchFn = mockFetch({ '/paper/batch': () => json(200, [s2(SEED), null]) });
@@ -837,6 +888,13 @@ describe('with a site directory', () => {
 
     it('downloads missing icons from the first service that has one, and deletes icons no longer needed', async () => {
       const openAlex = jest.fn(async (pathAndQuery: string) => {
+        if (pathAndQuery.includes('display_name.search:')) {
+          // No Id University is looked up by name; a similar name doesn't count.
+          expect(pathAndQuery).toContain('display_name.search:no%20id%20university&');
+          return {
+            results: [{ display_name: 'No Id University Hospital', homepage_url: 'https://wrong.example/' }],
+          };
+        }
         expect(pathAndQuery).toMatch(/^\/institutions\?filter=id:IIconUniversity\|IJPEGUniversity\|/);
         expect(pathAndQuery).not.toContain('IKeptUniversity');
         expect(pathAndQuery).toContain('&select=id,homepage_url&api_key=key');
@@ -874,19 +932,22 @@ describe('with a site directory', () => {
         'kept-university.ico',
         'notes.txt',
       ]);
-      expect(jest.mocked(openAlex)).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(openAlex)).toHaveBeenCalledTimes(2);
       const asked = fetchFn.mock.calls.map(([url]) => url);
       // The host without `www.` is tried after the host itself, and DuckDuckGo after Google.
       expect(asked.filter(url => url.includes('bareuniversity'))).toEqual([
         google('www.bareuniversity.example'),
         google('bareuniversity.example'),
       ]);
+      // DuckDuckGo after Google, then the homepage's own icons.
       expect(asked.filter(url => url.includes('noicon'))).toEqual([
         google('noicon.example'),
         duck('noicon.example'),
+        'https://noicon.example/',
+        'https://noicon.example/favicon.ico',
       ]);
       // Kept University has an icon; No Homepage and No Id University have no website to ask about.
-      expect(asked.some(url => /kept|nohomepage|noid/.test(url))).toBe(false);
+      expect(asked.some(url => /kept|nohomepage|noid|wrong/.test(url))).toBe(false);
       expect(fetchFn.mock.calls[0][1]?.headers).toEqual({ 'User-Agent': expect.any(String) });
     });
 
@@ -903,10 +964,68 @@ describe('with a site directory', () => {
         downloaded: 0,
         removed: 0,
         without: 10,
-        failures: ['homepages of 9 institutions: HTTP 503'],
+        failures: ['homepages of 9 institutions: HTTP 503', 'homepage of No Id University: HTTP 503'],
       });
       expect(fetchFn).not.toHaveBeenCalled();
       expect(await fs.readdir(iconsDir())).toEqual([]);
+    });
+
+    it('uses homepages from papers.yaml and OpenAlex names, and the icons homepages link to', async () => {
+      const openAlex = jest.fn(async (pathAndQuery: string) => {
+        if (pathAndQuery.includes('filter=id:')) {
+          expect(pathAndQuery).toContain('filter=id:ILinked|IDown|IUnsafe&');
+          return {
+            results: ['Linked', 'Down', 'Unsafe'].map(name => ({
+              id: `https://openalex.org/I${name}`,
+              homepage_url: `https://${name.toLowerCase()}.example/`,
+            })),
+          };
+        }
+        expect(pathAndQuery).toContain('display_name.search:named%20university&');
+        return {
+          results: [
+            { display_name: 'Named University Hospital', homepage_url: 'https://hospital.example/' },
+            { display_name: 'Named University', homepage_url: 'https://named.example/' },
+          ],
+        };
+      }) as unknown as ApiRequest;
+      const fetchFn = jest.fn<FetchFn>(async url => {
+        if (url === google('configured.example') || url === google('named.example')) return png();
+        // Some sites answer scripts with a 404 page that still links to their icons.
+        if (url === 'https://linked.example/') {
+          return new Response(
+            '<link rel="icon" href="data:image/png;base64,AAAA"><link rel="apple-touch-icon" href="/touch.png">',
+            { status: 404 }
+          );
+        }
+        if (url === 'https://linked.example/touch.png') return png();
+        if (url === 'https://down.example/') throw new Error('unreachable');
+        if (url === 'https://unsafe.example/') return new Response('<link rel="icon" href="/logo.svg">');
+        if (url === 'https://unsafe.example/logo.svg') return new Response('<svg onload="alert(1)"></svg>');
+        return new Response('', { status: 404 });
+      });
+      const names = ['Linked', 'Configured', 'Named University', 'Down', 'Unsafe'];
+
+      const result = await updateInstitutionIcons(
+        siteDir,
+        names,
+        new Map(['Linked', 'Down', 'Unsafe'].map(n => [n, `I${n}`])),
+        {
+          openAlex,
+          fetchFn,
+          homepages: new Map([['Configured', 'https://configured.example/']]),
+        }
+      );
+
+      // An unreachable homepage, or an icon that can't be used, just means no icon.
+      expect(result).toEqual({ downloaded: 3, removed: 2, without: 2, failures: [] });
+      expect((await fs.readdir(iconsDir())).sort()).toEqual([
+        'configured.png',
+        'linked.png',
+        'named-university.png',
+        'notes.txt',
+      ]);
+      expect(fetchFn.mock.calls.map(([url]) => url)).not.toContain('https://hospital.example/');
     });
 
     it('finds the committed icons of institutions, whatever their image type', async () => {
@@ -1041,6 +1160,21 @@ describe("this repository's papers.yaml and snapshot", () => {
     expect(snapshot?.seeds.map(({ id }) => id)).toEqual(seeds.map(({ id }) => id));
     expect(include.map(({ id }) => id).filter(id => !listed(id))).toEqual([]);
     expect(exclude.filter(listed)).toEqual([]);
+  });
+
+  it('renames and gives homepages only to listed institutions', async () => {
+    const { institutions } = await readConfig();
+    const { snapshot } = await readSnapshot(path.join(dataDir, 'papers.snapshot.json'));
+    const listed = new Set(snapshot?.papers.flatMap(paper => paper.institutions));
+
+    expect(institutions.length).toBeGreaterThan(0);
+    for (const { name, rename } of institutions) {
+      expect([name, listed.has(rename ?? name), rename !== undefined && listed.has(name)]).toEqual([
+        name,
+        true,
+        false,
+      ]);
+    }
   });
 
   it('has affiliations only for listed papers, and a snapshot with those institutions', async () => {

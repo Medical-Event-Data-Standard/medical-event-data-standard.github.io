@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-10T19:39:06.985Z",
+  "updatedAt": "2026-11-10T19:52:24.524Z",
   "seeds": [
     {
       "id": "50846012e25acae4aebf1d2b2953655a19fe2e93",
@@ -1125,13 +1125,7 @@
       "arxivId": "2601.04164",
       "url": "https://doi.org/10.48550/arXiv.2601.04164",
       "cites": ["f4b471a712d135aa606281e5061415657adb7085"],
-      "institutions": [
-        "Institut national de recherche en sciences et technologies du numérique",
-        "Inserm",
-        "Université Paris Cité",
-        "Heka : Méthodes basées sur les données et modèles en santé pour l'acquisition de connaissances",
-        "University of Bologna"
-      ]
+      "institutions": ["Inria", "Inserm", "Université Paris Cité", "HeKA", "University of Bologna"]
     },
     {
       "id": "DOI:10.25932/publishup-70445",

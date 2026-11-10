@@ -10,7 +10,9 @@ import {
   emptyLiveFetch,
   ICON_EXTENSIONS,
   iconExtension,
+  iconLinks,
   institutionIconSlug,
+  institutionRenamer,
   institutionRecordsOfWork,
   institutionsOfWork,
   isPapersData,
@@ -18,6 +20,7 @@ import {
   normalizeText,
   openAlexDoi,
   paperMatchesId,
+  renameInstitutions,
   type LiveFetch,
   type OpenAlexWork,
   type PaperOverrides,
@@ -346,23 +349,34 @@ export interface InstitutionIconsResult {
   downloaded: number;
   /** Icons of institutions no longer listed, which were deleted. */
   removed: number;
-  /** Institutions that have no icon, e.g. because OpenAlex has no homepage for them or no service has an icon. */
+  /** Institutions that have no icon, e.g. because no homepage is known for them or no icon was found. */
   without: number;
   failures: string[];
 }
 
+/** The largest web page read when looking for the icons it links to. */
+const MAX_PAGE_BYTES = 2_000_000;
+
 /**
  * Downloads an icon for every institution that has none in static/img/institutions yet, and deletes the icons of
- * institutions no longer listed. An institution's icon is its website's icon (favicon): its homepage comes from
- * OpenAlex (by the institution's OpenAlex id, in `ids`), and the icon from the first of `FAVICON_SERVICES` that has
- * one, asking about the homepage's host with and without `www.`. Only PNG, JPEG, GIF and ICO images are kept.
- * Institutions without an OpenAlex id, homepage or icon get none. Never throws.
+ * institutions no longer listed. An institution's icon is its website's icon (favicon).
+ *
+ * Its homepage is the one given in papers.yaml (`homepages`, by name), else OpenAlex's: found by the institution's
+ * OpenAlex id (`ids`, by name), or else by searching OpenAlex for an institution of exactly that name. The icon
+ * comes from the first of `FAVICON_SERVICES` that has one, asking about the homepage's host with and without
+ * `www.`, or else from the icons the homepage itself links to, or its `/favicon.ico`. Only PNG, JPEG, GIF, ICO and
+ * script-free SVG images are kept. Institutions with no known homepage, or no icon, get none. Never throws.
  */
 export async function updateInstitutionIcons(
   siteDir: string,
   names: readonly string[],
   ids: ReadonlyMap<string, string>,
-  { openAlex, fetchFn = fetch, apiKey }: { openAlex: ApiRequest; fetchFn?: FetchFn; apiKey?: string }
+  {
+    openAlex,
+    fetchFn = fetch,
+    apiKey,
+    homepages: configured = new Map(),
+  }: { openAlex: ApiRequest; fetchFn?: FetchFn; apiKey?: string; homepages?: ReadonlyMap<string, string> }
 ): Promise<InstitutionIconsResult> {
   const dir = path.join(siteDir, INSTITUTION_ICONS_DIR);
   await fs.mkdir(dir, { recursive: true });
@@ -378,39 +392,86 @@ export async function updateInstitutionIcons(
     }
   }
 
-  const missing = names.filter(name => !existing.has(institutionIconSlug(name)) && ids.has(name));
-  const homepages = new Map<string, string>();
-  const idList = [...new Set(missing.map(name => ids.get(name) as string))];
+  const missing = names.filter(name => !existing.has(institutionIconSlug(name)));
+  const homepages = new Map(
+    missing.flatMap(name => (configured.has(name) ? [[name, configured.get(name) as string]] : []))
+  );
   const key = apiKey ? `&api_key=${encodeURIComponent(apiKey)}` : '';
+  type InstitutionRecord = { id?: string | null; display_name?: string | null; homepage_url?: string | null };
+  const shortId = (id: string): string => id.replace(/^https?:\/\/openalex\.org\//i, '');
+
+  // By OpenAlex id, many at a time.
+  const byId = missing.filter(name => !homepages.has(name) && ids.has(name));
+  const idList = [...new Set(byId.map(name => ids.get(name) as string))];
+  const homepageById = new Map<string, string>();
   for (let start = 0; start < idList.length; start += OPENALEX_BATCH_SIZE) {
     const batch = idList.slice(start, start + OPENALEX_BATCH_SIZE);
     try {
-      const { results } = await openAlex<{
-        results?: { id?: string | null; homepage_url?: string | null }[];
-      }>(
+      const { results } = await openAlex<{ results?: InstitutionRecord[] }>(
         `/institutions?filter=id:${batch.join('|')}&per_page=${OPENALEX_BATCH_SIZE}&select=id,homepage_url${key}`
       );
       for (const { id, homepage_url } of results ?? []) {
-        if (id && homepage_url) homepages.set(id.replace(/^https?:\/\/openalex\.org\//i, ''), homepage_url);
+        if (id && homepage_url) homepageById.set(shortId(id), homepage_url);
       }
     } catch (err) {
       failures.push(`homepages of ${batch.length} institutions: ${errorMessage(err)}`);
     }
   }
+  for (const name of byId) {
+    const homepage = homepageById.get(ids.get(name) as string);
+    if (homepage) homepages.set(name, homepage);
+  }
 
-  /** The first icon a service has for one of the hosts, or null. */
-  const fetchIcon = async (hosts: string[]): Promise<{ bytes: Uint8Array; extension: string } | null> => {
+  // By name, one at a time, for institutions without an OpenAlex id (e.g. those only in papers.yaml).
+  for (const name of missing.filter(name => !homepages.has(name) && !ids.has(name))) {
+    try {
+      const { results } = await openAlex<{ results?: InstitutionRecord[] }>(
+        `/institutions?filter=display_name.search:${encodeURIComponent(normalizeText(name))}&per_page=5` +
+          `&select=id,display_name,homepage_url${key}`
+      );
+      const match = (results ?? []).find(
+        record => normalizeText(record.display_name ?? '') === normalizeText(name) && record.homepage_url
+      );
+      if (match?.homepage_url) homepages.set(name, match.homepage_url);
+    } catch (err) {
+      failures.push(`homepage of ${name}: ${errorMessage(err)}`);
+    }
+  }
+
+  const get = (url: string): Promise<Response> =>
+    fetchFn(url, { headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+  /** The image at `url`, if it is one an icon can be; else null. */
+  const image = async (url: string): Promise<{ bytes: Uint8Array; extension: string } | null> => {
+    const res = await get(url);
+    if (!res.ok) return null;
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const extension = iconExtension(bytes);
+    return extension ? { bytes, extension } : null;
+  };
+  /** The first icon found for the homepage, or null. */
+  const fetchIcon = async (homepage: string): Promise<{ bytes: Uint8Array; extension: string } | null> => {
+    const hosts = hostsOf(homepage);
     for (const service of FAVICON_SERVICES) {
       for (const host of hosts) {
-        const res = await fetchFn(service(host), {
-          headers: { 'User-Agent': USER_AGENT },
-          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-        });
-        if (!res.ok) continue; // This service has no icon for this host.
-        const bytes = new Uint8Array(await res.arrayBuffer());
-        const extension = iconExtension(bytes);
-        if (extension) return { bytes, extension };
+        const icon = await image(service(host));
+        if (icon) return icon;
       }
+    }
+    // Neither service has one: try the icons the homepage links to, then its /favicon.ico. A homepage that can't
+    // be reached just has no icon. Its HTML is read whatever the status, as some sites answer scripts with a 404
+    // page that still links to their icons.
+    let html = '';
+    let base = homepage;
+    try {
+      const page = await get(homepage);
+      html = new TextDecoder().decode((await page.arrayBuffer()).slice(0, MAX_PAGE_BYTES));
+      base = page.url || homepage;
+    } catch {
+      return null;
+    }
+    for (const url of [...iconLinks(html, base), new URL('/favicon.ico', base).href]) {
+      const icon = await image(url).catch(() => null);
+      if (icon) return icon;
     }
     return null;
   };
@@ -419,11 +480,10 @@ export async function updateInstitutionIcons(
   let failedIcons = 0;
   let iconError = '';
   for (const name of missing) {
-    const homepage = homepages.get(ids.get(name) as string);
-    const hosts = homepage ? hostsOf(homepage) : [];
-    if (hosts.length === 0) continue;
+    const homepage = homepages.get(name);
+    if (!homepage || hostsOf(homepage).length === 0) continue;
     try {
-      const icon = await fetchIcon(hosts);
+      const icon = await fetchIcon(homepage);
       if (!icon) continue;
       await fs.writeFile(path.join(dir, `${institutionIconSlug(name)}.${icon.extension}`), icon.bytes);
       downloaded++;
@@ -503,10 +563,38 @@ const affiliationList = (value: unknown): PapersConfig['affiliations'] =>
     return { id, institutions: [...new Set(institutions.map(name => (name as string).trim()))] };
   });
 
+/** Parses the `institutions` list: each entry's `name`, and its `rename` and/or `homepage`. */
+const institutionList = (value: unknown): PapersConfig['institutions'] => {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) throw new Error('`institutions` must be a list');
+  return value.map((entry, i) => {
+    const where = `institutions[${i}]`;
+    const fields = (entry ?? {}) as Record<string, unknown>;
+    const unknown = Object.keys(fields).find(key => !['name', 'rename', 'homepage', 'note'].includes(key));
+    if (unknown) throw new Error(`\`${where}\` has an unknown field \`${unknown}\``);
+    const { name, rename, homepage } = fields;
+    const text = (value: unknown): value is string => typeof value === 'string' && value.trim() !== '';
+    if (!text(name)) throw new Error(`\`${where}.name\` must be a non-empty string`);
+    if (rename !== undefined && !text(rename))
+      throw new Error(`\`${where}.rename\` must be a non-empty string`);
+    if (homepage !== undefined && !(text(homepage) && /^https?:\/\/\S+$/i.test(homepage.trim()))) {
+      throw new Error(`\`${where}.homepage\` must be an http(s) URL`);
+    }
+    if (rename === undefined && homepage === undefined) {
+      throw new Error(`\`${where}\` must set \`rename\` or \`homepage\``);
+    }
+    return {
+      name: name.trim(),
+      ...(text(rename) ? { rename: rename.trim() } : {}),
+      ...(text(homepage) ? { homepage: homepage.trim() } : {}),
+    };
+  });
+};
+
 /** Validates the parsed papers.yaml. A malformed file is a mistake in the repository, so this throws. */
 export function parsePapersConfig(raw: unknown): PapersConfig {
   try {
-    const { seeds, include, exclude, affiliations } = (raw ?? {}) as Record<string, unknown>;
+    const { seeds, include, exclude, affiliations, institutions } = (raw ?? {}) as Record<string, unknown>;
     if (!Array.isArray(seeds) || seeds.length === 0) throw new Error('`seeds` must be a non-empty list');
     return {
       seeds: seeds.map((seed, i) => {
@@ -524,6 +612,7 @@ export function parsePapersConfig(raw: unknown): PapersConfig {
       }),
       exclude: identifierList(exclude, 'exclude').map(([id]) => id),
       affiliations: affiliationList(affiliations),
+      institutions: institutionList(institutions),
     };
   } catch (err) {
     throw new Error(`Invalid ${PAPERS_YAML}: ${errorMessage(err)}`);
@@ -566,8 +655,10 @@ export interface LoadPapersOptions {
 
 export interface LoadPapersResult {
   data: PapersData;
-  /** OpenAlex id of each institution found on OpenAlex, by name; empty unless fetched live. */
+  /** OpenAlex id of each institution found on OpenAlex, by (shown) name; empty unless fetched live. */
   institutionIds: Map<string, string>;
+  /** Homepages of institutions set in papers.yaml, by (shown) name. */
+  institutionHomepages: Map<string, string>;
   /** True if something went wrong: a live fetch was incomplete, or the snapshot lacked something. */
   warning: boolean;
   /** Human-readable summary, logged by the plugin and the update script. */
@@ -608,12 +699,14 @@ export async function loadPapers(
           env.OPENALEX_API_KEY?.trim() || undefined
         )
       : { institutions: new Map<string, string[]>(), ids: new Map<string, string>(), failures: [] };
-  const { papers, notFetched } = attachInstitutions(
+  const { papers: attached, notFetched } = attachInstitutions(
     built.papers,
     config.affiliations,
     openAlex.institutions,
     snapshot
   );
+  const papers = renameInstitutions(attached, config.institutions);
+  const rename = institutionRenamer(config.institutions);
   const fromSnapshot = [
     ...built.fromSnapshot,
     ...(source === 'live' && notFetched > 0 ? [`institutions of ${notFetched} papers`] : []),
@@ -656,7 +749,15 @@ export async function loadPapers(
         ? '\nSEMANTIC_SCHOLAR_API_KEY is not set, so requests were unauthenticated and are often rate-limited.'
         : '');
   }
-  return { data, institutionIds: openAlex.ids, warning, message };
+  return {
+    data,
+    institutionIds: new Map([...openAlex.ids].map(([name, id]) => [rename(name), id])),
+    institutionHomepages: new Map(
+      config.institutions.flatMap(({ name, homepage }) => (homepage ? [[rename(name), homepage]] : []))
+    ),
+    warning,
+    message,
+  };
 }
 
 /**
@@ -675,6 +776,7 @@ export async function updatePapersSnapshot(
   const icons = await updateInstitutionIcons(siteDir, institutionNames(result.data), result.institutionIds, {
     openAlex: createApiClient({ ...OPENALEX_CLIENT_OPTIONS, ...client }),
     fetchFn: client.fetchFn,
+    homepages: result.institutionHomepages,
     apiKey: (options.env ?? process.env).OPENALEX_API_KEY?.trim() || undefined,
   });
   const iconSummary =

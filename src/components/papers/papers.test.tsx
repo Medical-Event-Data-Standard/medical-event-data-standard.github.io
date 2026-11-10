@@ -51,7 +51,7 @@ const seeds: SeedPaper[] = [
     id: 'seed-meds',
     label: 'MEDS (KDD 2025)',
     title: 'MEDS: Building Models and Tools',
-    authors: ['A', 'B', 'C', 'D'],
+    authors: ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
     venue: 'KDD',
     year: 2025,
     url: 'https://doi.org/10.1145/meds',
@@ -161,7 +161,7 @@ describe('Papers page', () => {
       'href',
       'https://doi.org/10.1145/meds'
     );
-    expect(within(core).getByText('A, B, C et al.')).toBeInTheDocument();
+    expect(within(core).getByText('A, B, C, D, E, F et al.')).toBeInTheDocument();
     expect(within(core).getByText('KDD · 2025')).toBeInTheDocument();
     expect(within(core).getByText('MEDS (KDD 2025)')).toBeInTheDocument();
     expect(screen.queryByText(/\d+ citations?/)).not.toBeInTheDocument();
@@ -183,7 +183,7 @@ describe('Papers page', () => {
       'href',
       'https://arxiv.org/abs/2601.00001'
     );
-    expect(list.getByText('Alan Turing, Grace Hopper, Edsger Dijkstra et al.')).toBeInTheDocument();
+    expect(list.getByText('Alan Turing, Grace Hopper, Edsger Dijkstra, Barbara Liskov')).toBeInTheDocument();
     expect(list.getByText('ML4H · 2024')).toBeInTheDocument();
     expect(list.getByText('Columbia University · Stanford University')).toBeInTheDocument();
     expect(list.getByText('Columbia University')).toBeInTheDocument();

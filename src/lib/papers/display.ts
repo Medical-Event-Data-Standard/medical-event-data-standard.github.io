@@ -60,7 +60,7 @@ export function countInstitutions(papers: readonly Pick<CitingPaper, 'institutio
 }
 
 /** Formats an author list, truncating long ones to the first `max` authors and "et al.". */
-export function formatAuthors(authors: readonly string[], max = 3): string {
+export function formatAuthors(authors: readonly string[], max = 6): string {
   if (authors.length <= max) return authors.join(', ');
   return `${authors.slice(0, max).join(', ')} et al.`;
 }

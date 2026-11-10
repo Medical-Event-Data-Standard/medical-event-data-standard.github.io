@@ -5,7 +5,9 @@ import {
   doiFromUrl,
   emptyLiveFetch,
   iconExtension,
+  iconLinks,
   institutionIconSlug,
+  institutionRenamer,
   institutionRecordsOfWork,
   institutionsOfWork,
   isPapersData,
@@ -15,6 +17,7 @@ import {
   openAlexDoi,
   paperFromDetails,
   paperMatchesId,
+  renameInstitutions,
   semanticScholarUrl,
   type LiveFetch,
   type OpenAlexWork,
@@ -163,6 +166,7 @@ describe('buildPapersData', () => {
     include: [],
     exclude: [],
     affiliations: [],
+    institutions: [],
   };
 
   const liveWith = (overrides: Partial<LiveFetch>): LiveFetch => ({ ...emptyLiveFetch(), ...overrides });
@@ -533,6 +537,67 @@ describe('OpenAlex helpers', () => {
     expect(iconExtension(new Uint8Array([0x00, 0x00, 0x01, 0x00, 0x01]))).toBe('ico');
     expect(iconExtension(new TextEncoder().encode('<html>'))).toBeNull();
     expect(iconExtension(new Uint8Array([]))).toBeNull();
+  });
+
+  it('accepts SVG icons only without scripts, event handlers or links to other resources', () => {
+    const svg = (body: string) => new TextEncoder().encode(body);
+    expect(
+      iconExtension(
+        svg(
+          '<?xml version="1.0"?>\n<!-- logo --><svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0"/></svg>'
+        )
+      )
+    ).toBe('svg');
+    expect(iconExtension(svg('<svg><use href="#a"/></svg>'))).toBe('svg');
+    for (const unsafe of [
+      '<svg><script>alert(1)</script></svg>',
+      '<svg onload="alert(1)"></svg>',
+      '<svg><foreignObject></foreignObject></svg>',
+      '<svg><a href="javascript:alert(1)"/></svg>',
+      '<svg><image xlink:href="https://example.org/x.png"/></svg>',
+      '<html><svg></svg></html>',
+    ]) {
+      expect([unsafe, iconExtension(svg(unsafe))]).toEqual([unsafe, null]);
+    }
+  });
+
+  it('lists the icons a page links to, best first', () => {
+    const html = `
+      <link rel="stylesheet" href="/style.css">
+      <link rel="icon" href="/favicon-16.png" sizes="16x16">
+      <link href='/favicon-96.png' rel='icon' sizes='96x96'>
+      <link rel="shortcut icon" href="favicon.ico">
+      <link rel="mask-icon" href="/mask.svg">
+      <link rel="icon" href="data:image/png;base64,AAAA">
+      <link rel=apple-touch-icon href=/touch.png>
+      <link rel="icon" href="http://[bad">
+      <link rel="icon" href="/favicon-16.png">`;
+    expect(iconLinks(html, 'https://example.org/en/')).toEqual([
+      'https://example.org/touch.png',
+      'https://example.org/favicon-96.png',
+      'https://example.org/favicon-16.png',
+      'https://example.org/en/favicon.ico',
+    ]);
+    expect(iconLinks('', 'https://example.org/')).toEqual([]);
+  });
+
+  it('renames institutions as papers.yaml says, without duplicates', () => {
+    const institutions = [
+      { name: 'Institut national de recherche', rename: 'Inria' },
+      { name: 'GSK plc', homepage: 'https://www.gsk.com' },
+    ];
+    const rename = institutionRenamer(institutions);
+    expect([rename('Institut national de recherche'), rename('GSK plc'), rename('Other')]).toEqual([
+      'Inria',
+      'GSK plc',
+      'Other',
+    ]);
+    expect(
+      renameInstitutions(
+        [paper('p', { institutions: ['Institut national de recherche', 'Inria', 'GSK plc'] })],
+        institutions
+      ).map(p => p.institutions)
+    ).toEqual([['Inria', 'GSK plc']]);
   });
 
   it('reduces text to lower-case words without accents, markup or punctuation', () => {

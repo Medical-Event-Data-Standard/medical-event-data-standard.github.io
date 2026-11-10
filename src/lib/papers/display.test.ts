@@ -101,8 +101,9 @@ describe('countInstitutions', () => {
 describe('formatAuthors', () => {
   it('lists up to `max` authors and truncates longer lists with "et al."', () => {
     expect(formatAuthors([])).toBe('');
-    expect(formatAuthors(['A', 'B', 'C'])).toBe('A, B, C');
-    expect(formatAuthors(['A', 'B', 'C', 'D'])).toBe('A, B, C et al.');
+    expect(formatAuthors(['A', 'B', 'C', 'D', 'E', 'F'])).toBe('A, B, C, D, E, F');
+    expect(formatAuthors(['A', 'B', 'C', 'D', 'E', 'F', 'G'])).toBe('A, B, C, D, E, F et al.');
+    expect(formatAuthors(['A', 'B', 'C', 'D'], 3)).toBe('A, B, C et al.');
     expect(formatAuthors(['A', 'B'], 1)).toBe('A et al.');
   });
 });

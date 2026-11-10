@@ -16,6 +16,10 @@
 #                 the papers themselves; they replace OpenAlex's. Use OpenAlex's name for an institution where it
 #                 has one (search https://api.openalex.org/institutions?search=<name>), so that its papers are
 #                 counted together.
+#   institutions: institutions shown differently from OpenAlex: `name` is the name OpenAlex (or `affiliations`)
+#                 gives; `rename` is shown instead, e.g. the name the institution goes by; `homepage` is used to
+#                 find its icon when OpenAlex has no (working) homepage for it. Icons are refreshed by
+#                 `npm run papers:update`.
 #
 # `include`, `exclude` and `affiliations` entries identify a paper by `id`: its Semantic Scholar paperId,
 # `DOI:<doi>` or `ARXIV:<arXiv id>`. Add a `note` saying why, for reviewers. An `include` entry can also set
@@ -278,3 +282,20 @@ affiliations:
       A Collection of Innovations in Medical AI: "University of the Chinese Academy of Sciences" and "Columbia
       University" (arXiv PDF).
     institutions: ['University of Chinese Academy of Sciences', 'Columbia University']
+
+institutions:
+  - name: 'Institut national de recherche en sciences et technologies du numérique'
+    rename: 'Inria'
+    note: 'The name the institute goes by; OpenAlex gives its full French name.'
+  - name: "Heka : Méthodes basées sur les données et modèles en santé pour l'acquisition de connaissances"
+    rename: 'HeKA'
+    note: "A research team at Inria Paris; HeKA is OpenAlex's acronym for it."
+  - name: 'VA Connecticut Healthcare System'
+    homepage: 'https://www.va.gov/connecticut-health-care/'
+    note: "OpenAlex's homepage for it, www.connecticut.va.gov, no longer resolves."
+  - name: 'GSK plc'
+    homepage: 'https://www.gsk.com'
+    note: 'Only in `affiliations`, so OpenAlex has no homepage for it.'
+  - name: 'Samsung Research America'
+    homepage: 'https://sra.samsung.com'
+    note: 'Only in `affiliations`, so OpenAlex has no homepage for it.'

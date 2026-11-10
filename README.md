@@ -150,6 +150,8 @@ API calls, and it is configured in [`static/data/papers.yaml`](static/data/paper
 - `exclude`: papers that cite a seed but don't belong on the list.
 - `affiliations`: institutions of papers that OpenAlex has no (or wrong) author affiliations for, taken from
   the papers themselves.
+- `institutions`: institutions shown differently from OpenAlex: a `rename` (e.g. "Inria" instead of its full
+  French name) and/or a `homepage` to find its icon by, when OpenAlex has no working one.
 
 OpenAlex is searched by DOI (or arXiv's DOI for arXiv papers), and, for papers it has no institutions for that
 way, by title: a record with the same title and an author with the same surname counts, which finds e.g. the
@@ -157,9 +159,11 @@ published version of a preprint.
 
 Each institution is shown with its website's icon, committed under
 [`static/img/institutions/`](static/img/institutions) so that neither builds nor visitors fetch them.
-`npm run papers:update` downloads the icons of new institutions and deletes those no longer listed: it looks up
-the institution's homepage on OpenAlex and asks Google's favicon service, then DuckDuckGo's, for that site's
-icon. Institutions without one (e.g. those only in `affiliations`) are shown with their initial.
+`npm run papers:update` downloads the icons of new institutions and deletes those no longer listed. It takes
+the institution's homepage from `institutions` in `papers.yaml`, else from OpenAlex (by the institution's id, or
+by its exact name), and asks Google's favicon service, then DuckDuckGo's, for that site's icon; failing both, it
+reads the icons the homepage itself links to. Only PNG, JPEG, GIF, ICO and script-free SVG images are kept.
+Institutions without an icon are shown with their initial.
 
 Semantic Scholar rate-limits unauthenticated requests heavily, so the plugin makes one request at a time,
 retries HTTP 429 and 5xx responses with exponential backoff (honouring `Retry-After`), and stops retrying after

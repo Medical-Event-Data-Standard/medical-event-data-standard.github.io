@@ -127,7 +127,8 @@ export default function Papers(): React.JSX.Element {
               Institutions are the author affiliations that <Link href="https://openalex.org/">OpenAlex</Link>{' '}
               records for each paper, found by DOI or arXiv ID, or else by title. Where OpenAlex has none,
               they can be added by hand in the <code>affiliations</code> list of papers.yaml. An
-              institution&rsquo;s icon is its website&rsquo;s icon, from the homepage OpenAlex lists for it.
+              institution&rsquo;s icon is its website&rsquo;s icon, found through the homepage that OpenAlex,
+              or papers.yaml, lists for it.
               {withoutInstitutions > 0 && (
                 <>
                   {' '}

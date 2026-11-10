@@ -61,6 +61,16 @@ export interface AffiliationConfig {
   institutions: string[];
 }
 
+/** An entry of the `institutions` list of papers.yaml. */
+export interface InstitutionConfig {
+  /** The institution's name, as OpenAlex or the `affiliations` list has it. */
+  name: string;
+  /** The name shown instead, e.g. the one the institution goes by. */
+  rename?: string;
+  /** Its homepage, used to find its icon if OpenAlex has none (or a wrong one). */
+  homepage?: string;
+}
+
 /** The parsed contents of static/data/papers.yaml. */
 export interface PapersConfig {
   seeds: SeedConfig[];
@@ -70,6 +80,8 @@ export interface PapersConfig {
   exclude: string[];
   /** Institutions of papers that OpenAlex has no (or wrong) affiliations for. */
   affiliations: AffiliationConfig[];
+  /** Names and homepages of institutions, used instead of OpenAlex's. */
+  institutions: InstitutionConfig[];
 }
 
 /** What a (possibly failed or partial) Semantic Scholar fetch returned. */
@@ -299,6 +311,21 @@ export function buildPapersData(
   return { seeds, papers: sortPapers(listed), fromSnapshot, missing };
 }
 
+/** A function giving the name an institution is shown by: its `rename` in papers.yaml, else its own. */
+export function institutionRenamer(institutions: readonly InstitutionConfig[]): (name: string) => string {
+  const renames = new Map(institutions.flatMap(({ name, rename }) => (rename ? [[name, rename]] : [])));
+  return name => renames.get(name) ?? name;
+}
+
+/** The papers with their institutions renamed as papers.yaml says, without duplicates. */
+export function renameInstitutions(
+  papers: readonly CitingPaper[],
+  institutions: readonly InstitutionConfig[]
+): CitingPaper[] {
+  const rename = institutionRenamer(institutions);
+  return papers.map(paper => ({ ...paper, institutions: [...new Set(paper.institutions.map(rename))] }));
+}
+
 /** The DOI OpenAlex knows a paper by: its own DOI, else the DOI arXiv assigns it; in lower case. */
 export function openAlexDoi(paper: Paper): string | null {
   if (paper.doi) return paper.doi.toLowerCase();
@@ -346,13 +373,53 @@ const IMAGE_SIGNATURES: [string, number[]][] = [
   ['ico', [0x00, 0x00, 0x01, 0x00]],
 ];
 
-/** The file extensions an institution's icon can have. */
-export const ICON_EXTENSIONS = IMAGE_SIGNATURES.map(([extension]) => extension);
+/** SVG features that can run code or load other resources when the file is opened on its own. */
+const UNSAFE_SVG =
+  /<script|<foreignobject|\bon[a-z]+\s*=|javascript:|<iframe|<embed|<object|\bhref\s*=\s*(?!["']?#)/i;
 
-/** The extension of the image type that `bytes` start with, if it is one an icon can have; else null. */
+/** The file extensions an institution's icon can have. */
+export const ICON_EXTENSIONS = [...IMAGE_SIGNATURES.map(([extension]) => extension), 'svg'];
+
+/**
+ * The extension of the image type of `bytes`, if it is one an icon can have: PNG, JPEG, GIF or ICO, or an SVG
+ * without scripts, event handlers or links to other resources. Else null.
+ */
 export function iconExtension(bytes: Uint8Array): string | null {
   const match = IMAGE_SIGNATURES.find(([, signature]) => signature.every((byte, i) => bytes[i] === byte));
-  return match ? match[0] : null;
+  if (match) return match[0];
+  const text = new TextDecoder().decode(bytes.slice(0, 200_000));
+  return /^\s*(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*(<!doctype svg[^>]*>\s*)?<svg[\s>]/i.test(text) &&
+    !UNSAFE_SVG.test(text)
+    ? 'svg'
+    : null;
+}
+
+/**
+ * The URLs of the icons a web page links to (`<link rel="icon">`, `apple-touch-icon` and the like), resolved
+ * against `pageUrl`, best first: Apple touch icons (usually 180 pixels), then other icons, larger sizes first.
+ * Data URLs and mask icons are left out.
+ */
+export function iconLinks(html: string, pageUrl: string): string[] {
+  const attribute = (tag: string, name: string): string | null =>
+    new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i')
+      .exec(tag)
+      ?.slice(1)
+      .find(value => value !== undefined) ?? null;
+  const links = (html.match(/<link\b[^>]*>/gi) ?? []).flatMap(tag => {
+    const rel = attribute(tag, 'rel')?.toLowerCase() ?? '';
+    const href = attribute(tag, 'href');
+    if (!href || !/\bicon\b/.test(rel) || rel.includes('mask-icon') || /^\s*data:/i.test(href)) return [];
+    let url: string;
+    try {
+      url = new URL(href.trim(), pageUrl).href;
+    } catch {
+      return [];
+    }
+    const size = Math.max(0, ...(attribute(tag, 'sizes') ?? '').split(/\s+/).map(s => parseInt(s, 10) || 0));
+    return [{ url, apple: rel.includes('apple-touch-icon'), size }];
+  });
+  links.sort((a, b) => Number(b.apple) - Number(a.apple) || b.size - a.size);
+  return [...new Set(links.map(({ url }) => url))];
 }
 
 /**
