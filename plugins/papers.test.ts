@@ -7,11 +7,13 @@ import papersPlugin, {
   createApiClient,
   fetchFromSemanticScholar,
   fetchInstitutionsFromOpenAlex,
+  findInstitutionIcons,
   loadPapers,
   papersSource,
   parsePapersConfig,
   readSnapshot,
   retryAfterMs,
+  updateInstitutionIcons,
   updatePapersSnapshot,
   type ApiClientOptions,
   type ApiRequest,
@@ -45,6 +47,13 @@ const s2 = (paperId: string, overrides: Partial<S2Paper> = {}): S2Paper => ({
   ...overrides,
 });
 
+/** A made-up OpenAlex institution id, as a URL. */
+const openAlexId = (name: string): string => `https://openalex.org/I${name.replace(/\W/g, '')}`;
+
+/** A PNG's signature and a few more bytes, as the favicon service returns. */
+const png = (): Response =>
+  new Response(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]), { status: 200 });
+
 /** An OpenAlex work by Ada Lovelace, with an author at each of `institutions`. */
 const work = (title: string, institutions: string[], doi: string | null = null): OpenAlexWork => ({
   doi: doi && `https://doi.org/${doi}`,
@@ -52,7 +61,7 @@ const work = (title: string, institutions: string[], doi: string | null = null):
   authorships: [
     {
       author: { display_name: 'Ada Lovelace' },
-      institutions: institutions.map(name => ({ display_name: name })),
+      institutions: institutions.map(name => ({ id: openAlexId(name), display_name: name })),
     },
   ],
 });
@@ -291,7 +300,7 @@ describe('fetchInstitutionsFromOpenAlex', () => {
       return { results: pathAndQuery.includes('odd%20doi') ? [work('Odd DOI', ['Odd University'])] : [] };
     }) as unknown as ApiRequest;
 
-    const { institutions, failures } = await fetchInstitutionsFromOpenAlex(papers, request, 'key');
+    const { institutions, ids, failures } = await fetchInstitutionsFromOpenAlex(papers, request, 'key');
 
     expect(failures).toEqual([]);
     expect([...institutions]).toEqual([
@@ -299,6 +308,13 @@ describe('fetchInstitutionsFromOpenAlex', () => {
       ['preprint', ['Published University']],
       ['nowhere', []],
       ['odd-doi', ['Odd University']],
+    ]);
+    // Only institutions of the records used, not of rejected title matches.
+    expect([...ids]).toEqual([
+      ['University A', 'IUniversityA'],
+      ['University B', 'IUniversityB'],
+      ['Published University', 'IPublishedUniversity'],
+      ['Odd University', 'IOddUniversity'],
     ]);
     const paths = jest.mocked(request).mock.calls.map(([pathAndQuery]) => pathAndQuery);
     expect(paths).toEqual([
@@ -534,8 +550,15 @@ describe('with a site directory', () => {
         return json(200, { data: [{ citingPaper: s2('live') }] });
       if (route.startsWith(`${OPENALEX}/works`))
         return json(200, { results: [work('Paper live', ['Live University'])] });
+      if (route.startsWith(`${OPENALEX}/institutions`)) {
+        return json(200, {
+          results: [{ id: openAlexId('Live University'), homepage_url: 'https://live.example.edu/' }],
+        });
+      }
+      if (route.startsWith('https://www.google.com/s2/favicons?domain=live.example.edu&sz=64')) return png();
       return json(404);
     });
+  const iconsDir = () => path.join(siteDir, 'static', 'img', 'institutions');
 
   const fastClient = (fetchFn: FetchFn): ApiClientOptions => ({ fetchFn, ...fakeClock() });
   const now = () => new Date('2026-11-06T12:00:00.000Z');
@@ -750,6 +773,24 @@ describe('with a site directory', () => {
       const written = JSON.parse(await fs.readFile(snapshotPath, 'utf8'));
       expect(written).toEqual(result.data);
       expect(written.papers.map((paper: { id: string }) => paper.id)).toEqual(['live']);
+      expect(written).not.toHaveProperty('institutionIcons');
+      expect(await fs.readdir(iconsDir())).toEqual(['live-university.png']);
+      expect(result.message).toContain(
+        'Institution icons: 1 downloaded, 0 removed; 0 institutions have none.'
+      );
+    });
+
+    it('warns when icons could not be fetched', async () => {
+      const fetchFn = mockFetch({ [`${OPENALEX}/institutions`]: () => json(500) });
+      const result = await updatePapersSnapshot(siteDir, {
+        client: { ...fastClient(fetchFn), maxRetries: 0 },
+        now,
+      });
+      expect(result.warning).toBe(true);
+      expect(result.message).toContain(
+        'Institution icons: 0 downloaded, 0 removed; 1 institutions have none.'
+      );
+      expect(result.message).toContain('  homepages of 1 institutions: HTTP 500');
     });
 
     it('uses the global fetch by default, as `npm run papers:update` does', async () => {
@@ -757,8 +798,124 @@ describe('with a site directory', () => {
       globalThis.fetch = fetchFn as unknown as typeof fetch;
       const { data } = await updatePapersSnapshot(siteDir);
 
-      expect(fetchFn).toHaveBeenCalledTimes(3);
+      // Semantic Scholar twice, then OpenAlex for the paper and its institution's homepage, then the icon.
+      expect(fetchFn).toHaveBeenCalledTimes(5);
       expect(JSON.parse(await fs.readFile(snapshotPath, 'utf8'))).toEqual(data);
+    });
+  });
+
+  describe('institution icons', () => {
+    // Each institution's homepage is https://<first two words>.example/, or www.<that> for Bare University.
+    const names = [
+      'Kept University',
+      'Icon University',
+      'JPEG University',
+      'Duck University',
+      'Bare University',
+      'No Icon University',
+      'Not Image University',
+      'No Homepage University',
+      'No Id University',
+      'Broken University',
+    ];
+    const ids = new Map(
+      names.filter(name => name !== 'No Id University').map(name => [name, `I${name.replace(/\W/g, '')}`])
+    );
+    const host = (name: string) => name.split(' ').slice(0, 2).join('').toLowerCase() + '.example';
+    const homepage = (name: string) =>
+      name === 'Bare University' ? `https://www.${host(name)}/` : `https://${host(name)}/`;
+    const google = (h: string) => `https://www.google.com/s2/favicons?domain=${h}&sz=64`;
+    const duck = (h: string) => `https://icons.duckduckgo.com/ip3/${h}.ico`;
+    const bytes = (...values: number[]) => new Response(new Uint8Array(values), { status: 200 });
+
+    beforeEach(async () => {
+      await fs.mkdir(iconsDir(), { recursive: true });
+      await fs.writeFile(path.join(iconsDir(), 'kept-university.ico'), 'kept');
+      await fs.writeFile(path.join(iconsDir(), 'gone-university.png'), 'gone');
+      await fs.writeFile(path.join(iconsDir(), 'notes.txt'), 'not an icon');
+    });
+
+    it('downloads missing icons from the first service that has one, and deletes icons no longer needed', async () => {
+      const openAlex = jest.fn(async (pathAndQuery: string) => {
+        expect(pathAndQuery).toMatch(/^\/institutions\?filter=id:IIconUniversity\|IJPEGUniversity\|/);
+        expect(pathAndQuery).not.toContain('IKeptUniversity');
+        expect(pathAndQuery).toContain('&select=id,homepage_url&api_key=key');
+        return {
+          results: names
+            .filter(name => name !== 'No Homepage University')
+            .map(name => ({ id: openAlexId(name), homepage_url: homepage(name) })),
+        };
+      }) as unknown as ApiRequest;
+      const responses: Record<string, () => Response> = {
+        [google('iconuniversity.example')]: png,
+        [google('jpeguniversity.example')]: () => bytes(0xff, 0xd8, 0xff, 0xe0, 1),
+        [duck('duckuniversity.example')]: () => bytes(0x00, 0x00, 0x01, 0x00, 1),
+        [google('bareuniversity.example')]: png,
+        [google('notimage.example')]: () => new Response('<html>', { status: 200 }),
+      };
+      const fetchFn = jest.fn<FetchFn>(async url => {
+        if (url.includes('brokenuniversity')) throw new Error('boom');
+        return responses[url]?.() ?? new Response('', { status: 404 });
+      });
+
+      const result = await updateInstitutionIcons(siteDir, names, ids, { openAlex, fetchFn, apiKey: 'key' });
+
+      expect(result).toEqual({
+        downloaded: 4,
+        removed: 1,
+        without: 5,
+        failures: ['icons of 1 institutions: boom'],
+      });
+      expect((await fs.readdir(iconsDir())).sort()).toEqual([
+        'bare-university.png',
+        'duck-university.ico',
+        'icon-university.png',
+        'jpeg-university.jpg',
+        'kept-university.ico',
+        'notes.txt',
+      ]);
+      expect(jest.mocked(openAlex)).toHaveBeenCalledTimes(1);
+      const asked = fetchFn.mock.calls.map(([url]) => url);
+      // The host without `www.` is tried after the host itself, and DuckDuckGo after Google.
+      expect(asked.filter(url => url.includes('bareuniversity'))).toEqual([
+        google('www.bareuniversity.example'),
+        google('bareuniversity.example'),
+      ]);
+      expect(asked.filter(url => url.includes('noicon'))).toEqual([
+        google('noicon.example'),
+        duck('noicon.example'),
+      ]);
+      // Kept University has an icon; No Homepage and No Id University have no website to ask about.
+      expect(asked.some(url => /kept|nohomepage|noid/.test(url))).toBe(false);
+      expect(fetchFn.mock.calls[0][1]?.headers).toEqual({ 'User-Agent': expect.any(String) });
+    });
+
+    it('reports a failed homepage lookup, and creates the icon directory if needed', async () => {
+      await fs.rm(iconsDir(), { recursive: true });
+      const openAlex = jest.fn(async () => {
+        throw new Error('HTTP 503');
+      }) as unknown as ApiRequest;
+      const fetchFn = jest.fn<FetchFn>();
+
+      const result = await updateInstitutionIcons(siteDir, names, ids, { openAlex, fetchFn });
+
+      expect(result).toEqual({
+        downloaded: 0,
+        removed: 0,
+        without: 10,
+        failures: ['homepages of 9 institutions: HTTP 503'],
+      });
+      expect(fetchFn).not.toHaveBeenCalled();
+      expect(await fs.readdir(iconsDir())).toEqual([]);
+    });
+
+    it('finds the committed icons of institutions, whatever their image type', async () => {
+      expect(await findInstitutionIcons(siteDir, ['Kept University', 'Gone University', 'Notes'])).toEqual({
+        'Kept University': '/img/institutions/kept-university.ico',
+        'Gone University': '/img/institutions/gone-university.png',
+      });
+      await fs.rm(iconsDir(), { recursive: true });
+      expect(await findInstitutionIcons(siteDir, ['Kept University'])).toEqual({});
     });
   });
 
@@ -781,6 +938,7 @@ describe('with a site directory', () => {
       expect(plugin.getPathsToWatch?.()).toEqual([
         path.join(siteDir, 'static', 'data', 'papers.yaml'),
         snapshotPath,
+        iconsDir(),
       ]);
 
       const content = (await plugin.loadContent?.()) as PapersData;
@@ -818,7 +976,7 @@ describe('with a site directory', () => {
       }) as unknown as typeof fetch;
 
       const content = await papersPlugin({ siteDir } as LoadContext).loadContent?.();
-      expect(content).toEqual(snapshot);
+      expect(content).toEqual({ ...snapshot, institutionIcons: {} });
       expect(console.warn).toHaveBeenCalledTimes(1);
       expect(jest.mocked(console.warn).mock.calls[0][0]).toContain('[papers] Could not fetch everything');
       expect(jest.mocked(console.warn).mock.calls[0][0]).toContain('papers citing Seed a: fetch failed');
@@ -830,7 +988,12 @@ describe('with a site directory', () => {
       const fetchFn = jest.fn<FetchFn>();
       globalThis.fetch = fetchFn as unknown as typeof fetch;
 
-      expect(await papersPlugin({ siteDir } as LoadContext).loadContent?.()).toEqual(snapshot);
+      await fs.mkdir(iconsDir(), { recursive: true });
+      await fs.writeFile(path.join(iconsDir(), 'saved-university.png'), 'icon');
+      expect(await papersPlugin({ siteDir } as LoadContext).loadContent?.()).toEqual({
+        ...snapshot,
+        institutionIcons: { 'Saved University': '/img/institutions/saved-university.png' },
+      });
       expect(fetchFn).not.toHaveBeenCalled();
       expect(console.info).toHaveBeenCalledWith(expect.stringContaining('[papers] Using the snapshot'));
     });

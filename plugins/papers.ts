@@ -2,12 +2,16 @@ import fs from 'fs/promises';
 import path from 'path';
 import { parse } from 'yaml';
 import type { LoadContext, Plugin } from '@docusaurus/types';
-import { PAPERS_PLUGIN, type Paper, type PapersData } from '../src/lib/papers/types';
+import { PAPERS_PLUGIN, type Paper, type PapersData, type PapersPageData } from '../src/lib/papers/types';
 import {
   attachInstitutions,
   buildPapersData,
   doiFromUrl,
   emptyLiveFetch,
+  ICON_EXTENSIONS,
+  iconExtension,
+  institutionIconSlug,
+  institutionRecordsOfWork,
   institutionsOfWork,
   isPapersData,
   isSameWork,
@@ -31,6 +35,10 @@ import {
 
 export const PAPERS_YAML = path.join('static', 'data', 'papers.yaml');
 export const PAPERS_SNAPSHOT = path.join('static', 'data', 'papers.snapshot.json');
+/** Committed icons of the institutions, named by `institutionIconSlug`; `npm run papers:update` refreshes them. */
+export const INSTITUTION_ICONS_DIR = path.join('static', 'img', 'institutions');
+/** Where the icons are served. */
+export const INSTITUTION_ICONS_URL = '/img/institutions';
 
 const S2_API = 'https://api.semanticscholar.org/graph/v1';
 /** Only the fields the page renders. */
@@ -40,6 +48,15 @@ const OPENALEX_API = 'https://api.openalex.org';
 export const OPENALEX_FIELDS = 'doi,title,authorships';
 /** DOIs looked up per OpenAlex request (OpenAlex allows up to 100 values in one filter). */
 const OPENALEX_BATCH_SIZE = 50;
+/**
+ * Services that return a website's icon, or HTTP 404 if they have none, tried in this order: Google's (an image
+ * of up to 64 pixels), then DuckDuckGo's.
+ */
+export const FAVICON_SERVICES = [
+  (host: string) => `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`,
+  (host: string) => `https://icons.duckduckgo.com/ip3/${encodeURIComponent(host)}.ico`,
+];
+const USER_AGENT = 'medical-event-data-standard.github.io';
 /** The largest page the citations endpoint allows. */
 const CITATIONS_PAGE_SIZE = 1000;
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -126,7 +143,7 @@ export function createApiClient(options: ApiClientOptions): ApiRequest {
       const res = await fetchFn(`${baseUrl}${pathAndQuery}`, {
         method: body === undefined ? 'GET' : 'POST',
         headers: {
-          'User-Agent': 'medical-event-data-standard.github.io',
+          'User-Agent': USER_AGENT,
           ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
           ...(apiKey ? { 'x-api-key': apiKey } : {}),
         },
@@ -208,15 +225,25 @@ interface OpenAlexList {
  * then, for papers not found that way or without institutions there, by title, one request each. A title search
  * can find another record of the same paper, e.g. the published version of a preprint; it only counts if the
  * title is the same and an author's surname is shared. Never throws: returns the institutions of every paper whose
- * lookup finished (empty if OpenAlex has none), by paper id, and what failed.
+ * lookup finished (empty if OpenAlex has none), by paper id, the OpenAlex id of each institution found, by name,
+ * and what failed.
  */
 export async function fetchInstitutionsFromOpenAlex(
   papers: readonly Paper[],
   request: ApiRequest,
   apiKey?: string
-): Promise<{ institutions: Map<string, string[]>; failures: string[] }> {
+): Promise<{ institutions: Map<string, string[]>; ids: Map<string, string>; failures: string[] }> {
   const institutions = new Map<string, string[]>();
+  const ids = new Map<string, string>();
   const failures: string[] = [];
+  const record = (paperId: string, work: OpenAlexWork | undefined): void => {
+    const records = institutionRecordsOfWork(work);
+    for (const { name, id } of records) if (id && !ids.has(name)) ids.set(name, id);
+    institutions.set(
+      paperId,
+      records.map(({ name }) => name)
+    );
+  };
   const key = apiKey ? `&api_key=${encodeURIComponent(apiKey)}` : '';
   const search = async (filter: string, perPage: number): Promise<OpenAlexWork[]> =>
     (
@@ -249,15 +276,17 @@ export async function fetchInstitutionsFromOpenAlex(
   for (const paper of papers) {
     const doi = openAlexDoi(paper);
     if (doi && failedDois.has(doi)) continue;
-    const found = doi ? institutionsOfWork(byDoi.get(doi)) : [];
-    if (found.length > 0) {
-      institutions.set(paper.id, found);
+    const work = doi ? byDoi.get(doi) : undefined;
+    if (institutionsOfWork(work).length > 0) {
+      record(paper.id, work);
       continue;
     }
     try {
       const works = await search(`title.search:${encodeURIComponent(normalizeText(paper.title))}`, 5);
-      const match = works.find(work => isSameWork(paper, work) && institutionsOfWork(work).length > 0);
-      institutions.set(paper.id, institutionsOfWork(match));
+      record(
+        paper.id,
+        works.find(candidate => isSameWork(paper, candidate) && institutionsOfWork(candidate).length > 0)
+      );
     } catch (err) {
       failedTitles.push(paper.id);
       titleError ||= errorMessage(err);
@@ -266,7 +295,147 @@ export async function fetchInstitutionsFromOpenAlex(
   if (failedTitles.length > 0) {
     failures.push(`institutions of ${failedTitles.length} papers, by title: ${titleError}`);
   }
-  return { institutions, failures };
+  return { institutions, ids, failures };
+}
+
+/** Every institution of the papers, without duplicates. */
+export const institutionNames = (data: PapersData): string[] => [
+  ...new Set(data.papers.flatMap(paper => paper.institutions)),
+];
+
+/** The committed icon files, by slug (file name without extension). */
+async function iconFiles(dir: string): Promise<Map<string, string>> {
+  const files = await fs.readdir(dir).catch(() => [] as string[]);
+  return new Map(
+    files
+      .filter(file => ICON_EXTENSIONS.includes(path.extname(file).slice(1)))
+      .map(file => [file.slice(0, -path.extname(file).length), file])
+  );
+}
+
+/** The committed icons of the given institutions, as URL paths by name; institutions without one are left out. */
+export async function findInstitutionIcons(
+  siteDir: string,
+  names: readonly string[]
+): Promise<Record<string, string>> {
+  const files = await iconFiles(path.join(siteDir, INSTITUTION_ICONS_DIR));
+  return Object.fromEntries(
+    names.flatMap(name => {
+      const file = files.get(institutionIconSlug(name));
+      return file ? [[name, `${INSTITUTION_ICONS_URL}/${file}`]] : [];
+    })
+  );
+}
+
+const hostOf = (url: string): string | null => {
+  try {
+    return new URL(url).hostname || null;
+  } catch {
+    return null;
+  }
+};
+
+/** The hosts to ask the favicon services about: the homepage's, then the same without `www.`. */
+const hostsOf = (homepage: string): string[] => {
+  const host = hostOf(homepage);
+  if (!host) return [];
+  return host.startsWith('www.') ? [host, host.slice(4)] : [host];
+};
+
+export interface InstitutionIconsResult {
+  downloaded: number;
+  /** Icons of institutions no longer listed, which were deleted. */
+  removed: number;
+  /** Institutions that have no icon, e.g. because OpenAlex has no homepage for them or no service has an icon. */
+  without: number;
+  failures: string[];
+}
+
+/**
+ * Downloads an icon for every institution that has none in static/img/institutions yet, and deletes the icons of
+ * institutions no longer listed. An institution's icon is its website's icon (favicon): its homepage comes from
+ * OpenAlex (by the institution's OpenAlex id, in `ids`), and the icon from the first of `FAVICON_SERVICES` that has
+ * one, asking about the homepage's host with and without `www.`. Only PNG, JPEG, GIF and ICO images are kept.
+ * Institutions without an OpenAlex id, homepage or icon get none. Never throws.
+ */
+export async function updateInstitutionIcons(
+  siteDir: string,
+  names: readonly string[],
+  ids: ReadonlyMap<string, string>,
+  { openAlex, fetchFn = fetch, apiKey }: { openAlex: ApiRequest; fetchFn?: FetchFn; apiKey?: string }
+): Promise<InstitutionIconsResult> {
+  const dir = path.join(siteDir, INSTITUTION_ICONS_DIR);
+  await fs.mkdir(dir, { recursive: true });
+  const existing = await iconFiles(dir);
+  const wanted = new Set(names.map(institutionIconSlug));
+  const failures: string[] = [];
+
+  let removed = 0;
+  for (const [slug, file] of existing) {
+    if (!wanted.has(slug)) {
+      await fs.rm(path.join(dir, file));
+      removed++;
+    }
+  }
+
+  const missing = names.filter(name => !existing.has(institutionIconSlug(name)) && ids.has(name));
+  const homepages = new Map<string, string>();
+  const idList = [...new Set(missing.map(name => ids.get(name) as string))];
+  const key = apiKey ? `&api_key=${encodeURIComponent(apiKey)}` : '';
+  for (let start = 0; start < idList.length; start += OPENALEX_BATCH_SIZE) {
+    const batch = idList.slice(start, start + OPENALEX_BATCH_SIZE);
+    try {
+      const { results } = await openAlex<{
+        results?: { id?: string | null; homepage_url?: string | null }[];
+      }>(
+        `/institutions?filter=id:${batch.join('|')}&per_page=${OPENALEX_BATCH_SIZE}&select=id,homepage_url${key}`
+      );
+      for (const { id, homepage_url } of results ?? []) {
+        if (id && homepage_url) homepages.set(id.replace(/^https?:\/\/openalex\.org\//i, ''), homepage_url);
+      }
+    } catch (err) {
+      failures.push(`homepages of ${batch.length} institutions: ${errorMessage(err)}`);
+    }
+  }
+
+  /** The first icon a service has for one of the hosts, or null. */
+  const fetchIcon = async (hosts: string[]): Promise<{ bytes: Uint8Array; extension: string } | null> => {
+    for (const service of FAVICON_SERVICES) {
+      for (const host of hosts) {
+        const res = await fetchFn(service(host), {
+          headers: { 'User-Agent': USER_AGENT },
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        });
+        if (!res.ok) continue; // This service has no icon for this host.
+        const bytes = new Uint8Array(await res.arrayBuffer());
+        const extension = iconExtension(bytes);
+        if (extension) return { bytes, extension };
+      }
+    }
+    return null;
+  };
+
+  let downloaded = 0;
+  let failedIcons = 0;
+  let iconError = '';
+  for (const name of missing) {
+    const homepage = homepages.get(ids.get(name) as string);
+    const hosts = homepage ? hostsOf(homepage) : [];
+    if (hosts.length === 0) continue;
+    try {
+      const icon = await fetchIcon(hosts);
+      if (!icon) continue;
+      await fs.writeFile(path.join(dir, `${institutionIconSlug(name)}.${icon.extension}`), icon.bytes);
+      downloaded++;
+    } catch (err) {
+      failedIcons++;
+      iconError ||= errorMessage(err);
+    }
+  }
+  if (failedIcons > 0) failures.push(`icons of ${failedIcons} institutions: ${iconError}`);
+
+  const kept = [...wanted].filter(slug => existing.has(slug)).length;
+  return { downloaded, removed, without: wanted.size - kept - downloaded, failures };
 }
 
 /**
@@ -397,6 +566,8 @@ export interface LoadPapersOptions {
 
 export interface LoadPapersResult {
   data: PapersData;
+  /** OpenAlex id of each institution found on OpenAlex, by name; empty unless fetched live. */
+  institutionIds: Map<string, string>;
   /** True if something went wrong: a live fetch was incomplete, or the snapshot lacked something. */
   warning: boolean;
   /** Human-readable summary, logged by the plugin and the update script. */
@@ -436,7 +607,7 @@ export async function loadPapers(
           createApiClient({ ...OPENALEX_CLIENT_OPTIONS, ...client }),
           env.OPENALEX_API_KEY?.trim() || undefined
         )
-      : { institutions: new Map<string, string[]>(), failures: [] };
+      : { institutions: new Map<string, string[]>(), ids: new Map<string, string>(), failures: [] };
   const { papers, notFetched } = attachInstitutions(
     built.papers,
     config.affiliations,
@@ -485,22 +656,35 @@ export async function loadPapers(
         ? '\nSEMANTIC_SCHOLAR_API_KEY is not set, so requests were unauthenticated and are often rate-limited.'
         : '');
   }
-  return { data, warning, message };
+  return { data, institutionIds: openAlex.ids, warning, message };
 }
 
-/** Refreshes the committed snapshot from Semantic Scholar (`npm run papers:update`). */
+/**
+ * Refreshes the committed snapshot from Semantic Scholar and OpenAlex, and the institutions' icons
+ * (`npm run papers:update`).
+ */
 export async function updatePapersSnapshot(
   siteDir: string,
   options: LoadPapersOptions = {}
 ): Promise<LoadPapersResult> {
-  const result = await loadPapers(siteDir, {
-    ...options,
-    source: 'live',
-    // Nobody is waiting on a build here, so allow for more rate-limit retries.
-    client: { budgetMs: 600_000, maxRetries: 8, ...options.client },
-  });
+  // Nobody is waiting on a build here, so allow for more rate-limit retries.
+  const client = { budgetMs: 600_000, maxRetries: 8, ...options.client };
+  const result = await loadPapers(siteDir, { ...options, source: 'live', client });
   await fs.writeFile(path.join(siteDir, PAPERS_SNAPSHOT), `${JSON.stringify(result.data, null, 2)}\n`);
-  return result;
+
+  const icons = await updateInstitutionIcons(siteDir, institutionNames(result.data), result.institutionIds, {
+    openAlex: createApiClient({ ...OPENALEX_CLIENT_OPTIONS, ...client }),
+    fetchFn: client.fetchFn,
+    apiKey: (options.env ?? process.env).OPENALEX_API_KEY?.trim() || undefined,
+  });
+  const iconSummary =
+    `Institution icons: ${icons.downloaded} downloaded, ${icons.removed} removed; ` +
+    `${icons.without} institutions have none.`;
+  return {
+    ...result,
+    warning: result.warning || icons.failures.length > 0,
+    message: [result.message, iconSummary, ...icons.failures.map(failure => `  ${failure}`)].join('\n'),
+  };
 }
 
 // Typed as `Plugin` (i.e. `Plugin<unknown>`) because that is what Docusaurus accepts for plugins listed in the config.
@@ -509,14 +693,21 @@ export default function papersPlugin(context: LoadContext): Plugin {
     name: PAPERS_PLUGIN,
 
     getPathsToWatch() {
-      return [path.join(context.siteDir, PAPERS_YAML), path.join(context.siteDir, PAPERS_SNAPSHOT)];
+      return [
+        path.join(context.siteDir, PAPERS_YAML),
+        path.join(context.siteDir, PAPERS_SNAPSHOT),
+        path.join(context.siteDir, INSTITUTION_ICONS_DIR),
+      ];
     },
 
-    async loadContent(): Promise<PapersData> {
+    async loadContent(): Promise<PapersPageData> {
       const { data, warning, message } = await loadPapers(context.siteDir);
       if (warning) console.warn(`[${PAPERS_PLUGIN}] ${message}`);
       else console.info(`[${PAPERS_PLUGIN}] ${message}`);
-      return data;
+      return {
+        ...data,
+        institutionIcons: await findInstitutionIcons(context.siteDir, institutionNames(data)),
+      };
     },
 
     async contentLoaded({ content, actions }) {

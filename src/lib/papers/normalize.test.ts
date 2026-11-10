@@ -4,6 +4,9 @@ import {
   buildPapersData,
   doiFromUrl,
   emptyLiveFetch,
+  iconExtension,
+  institutionIconSlug,
+  institutionRecordsOfWork,
   institutionsOfWork,
   isPapersData,
   isSameWork,
@@ -501,6 +504,35 @@ describe('OpenAlex helpers', () => {
     ).toEqual([]);
     expect(institutionsOfWork({})).toEqual([]);
     expect(institutionsOfWork(undefined)).toEqual([]);
+  });
+
+  it("records each institution's OpenAlex id, preferring one that has it", () => {
+    expect(
+      institutionRecordsOfWork({
+        authorships: [
+          { institutions: [{ display_name: 'University A' }] },
+          { institutions: [{ display_name: 'University A', id: 'https://openalex.org/I1' }] },
+          { institutions: [{ display_name: 'University B', id: 'https://openalex.org/I2' }] },
+        ],
+      })
+    ).toEqual([
+      { name: 'University A', id: 'I1' },
+      { name: 'University B', id: 'I2' },
+    ]);
+  });
+
+  it("names an institution's icon after it, and recognises the image types an icon can have", () => {
+    expect(institutionIconSlug('Charité – Universitätsmedizin Berlin')).toBe(
+      'charite-universitatsmedizin-berlin'
+    );
+    expect(institutionIconSlug("Children's Healthcare of Atlanta")).toBe('children-s-healthcare-of-atlanta');
+    expect(institutionIconSlug('???')).toBe('institution');
+    expect(iconExtension(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0]))).toBe('png');
+    expect(iconExtension(new Uint8Array([0xff, 0xd8, 0xff, 0xe0]))).toBe('jpg');
+    expect(iconExtension(new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]))).toBe('gif');
+    expect(iconExtension(new Uint8Array([0x00, 0x00, 0x01, 0x00, 0x01]))).toBe('ico');
+    expect(iconExtension(new TextEncoder().encode('<html>'))).toBeNull();
+    expect(iconExtension(new Uint8Array([]))).toBeNull();
   });
 
   it('reduces text to lower-case words without accents, markup or punctuation', () => {

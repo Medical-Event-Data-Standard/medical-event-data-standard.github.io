@@ -5,9 +5,23 @@ function dateKey(paper: Paper): string {
   return paper.publicationDate ?? (paper.year === null ? '' : String(paper.year));
 }
 
-/** Returns a copy sorted newest first, with undated papers last; ties are broken by title. */
-export function sortPapers<T extends Paper>(papers: readonly T[]): T[] {
-  return [...papers].sort((a, b) => dateKey(b).localeCompare(dateKey(a)) || a.title.localeCompare(b.title));
+export type SortOrder = 'newest' | 'oldest' | 'title';
+
+const byTitle = (a: Paper, b: Paper): number =>
+  a.title.localeCompare(b.title, 'en', { sensitivity: 'base', ignorePunctuation: true });
+
+/**
+ * Returns a sorted copy: newest or oldest first (undated papers last either way, ties broken by title), or by
+ * title, A to Z.
+ */
+export function sortPapers<T extends Paper>(papers: readonly T[], order: SortOrder = 'newest'): T[] {
+  const dated = (paper: Paper): boolean => dateKey(paper) !== '';
+  return [...papers].sort((a, b) => {
+    if (order === 'title') return byTitle(a, b) || dateKey(b).localeCompare(dateKey(a));
+    if (dated(a) !== dated(b)) return dated(a) ? -1 : 1;
+    const byDate = dateKey(a).localeCompare(dateKey(b));
+    return (order === 'oldest' ? byDate : -byDate) || byTitle(a, b);
+  });
 }
 
 /**

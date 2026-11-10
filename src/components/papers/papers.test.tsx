@@ -5,7 +5,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { usePluginData } from '@docusaurus/useGlobalData';
 
 import Papers from '@site/src/pages/papers';
-import type { CitingPaper, PapersData, SeedPaper } from '@site/src/lib/papers/types';
+import type { CitingPaper, PapersPageData, SeedPaper } from '@site/src/lib/papers/types';
 
 // `@docusaurus/*` and `@theme/*` modules are webpack aliases that only exist inside a Docusaurus build.
 jest.mock('@docusaurus/useGlobalData', () => ({ usePluginData: jest.fn() }), { virtual: true });
@@ -27,6 +27,11 @@ jest.mock(
     __esModule: true,
     default: ({ href, children }: React.PropsWithChildren<{ href: string }>) => <a href={href}>{children}</a>,
   }),
+  { virtual: true }
+);
+jest.mock(
+  '@docusaurus/useBaseUrl',
+  () => ({ __esModule: true, useBaseUrlUtils: () => ({ withBaseUrl: (url: string) => `/base${url}` }) }),
   { virtual: true }
 );
 const mockUsePluginData = jest.mocked(usePluginData);
@@ -90,7 +95,12 @@ const papers: CitingPaper[] = [
   },
 ];
 
-const data: PapersData = { updatedAt: '2026-11-02T03:04:05.000Z', seeds, papers };
+const data: PapersPageData = {
+  updatedAt: '2026-11-02T03:04:05.000Z',
+  seeds,
+  papers,
+  institutionIcons: { 'Columbia University': '/img/institutions/columbia-university.png' },
+};
 
 const listRegion = () => screen.getByRole('region', { name: 'Papers citing or using MEDS' });
 
@@ -185,7 +195,7 @@ describe('Papers page', () => {
     render(<Papers />);
 
     const institutions = within(screen.getByRole('region', { name: 'Institutions' }));
-    const chips = institutions.getAllByRole('button');
+    const chips = institutions.getAllByRole('button', { name: /: \d+ papers?$/ });
     expect(chips.map(chip => chip.getAttribute('aria-label'))).toEqual([
       'Columbia University: 2 papers',
       'Stanford University: 1 paper',
@@ -207,6 +217,57 @@ describe('Papers page', () => {
     fireEvent.click(chips[0]);
     expect(chips[0]).toHaveAttribute('aria-pressed', 'false');
     expect(listedTitles()).toHaveLength(3);
+  });
+
+  it("shows each institution's icon, or its initial if it has none, and sorts institutions by name", () => {
+    mockUsePluginData.mockReturnValue(data);
+    const { container } = render(<Papers />);
+    const region = screen.getByRole('region', { name: 'Institutions' });
+
+    const icon = container.querySelector('img[src="/base/img/institutions/columbia-university.png"]');
+    expect(icon).toHaveAttribute('alt', '');
+    expect(
+      within(screen.getByRole('button', { name: 'Stanford University: 1 paper' })).getByText('S')
+    ).toBeInTheDocument();
+
+    const chipNames = () =>
+      within(region)
+        .getAllByRole('button')
+        .map(chip => chip.getAttribute('aria-label'))
+        .filter(Boolean);
+    expect(chipNames()).toEqual(['Columbia University: 2 papers', 'Stanford University: 1 paper']);
+    fireEvent.click(within(region).getByRole('button', { name: 'A–Z' }));
+    fireEvent.click(within(region).getByRole('button', { name: 'A–Z' })); // Selecting it again keeps it.
+    expect(within(region).getByRole('button', { name: 'A–Z' })).toHaveAttribute('aria-pressed', 'true');
+    expect(chipNames()).toEqual(['Columbia University: 2 papers', 'Stanford University: 1 paper']);
+  });
+
+  it('sorts papers newest first, oldest first or by title', () => {
+    mockUsePluginData.mockReturnValue(data);
+    render(<Papers />);
+    const sortBy = (name: string) => {
+      fireEvent.mouseDown(screen.getByRole('combobox', { name: /Sort by/ }));
+      fireEvent.click(screen.getByRole('option', { name }));
+    };
+
+    sortBy('Oldest first');
+    expect(listedTitles()).toEqual([
+      'An Older Paper About Foundation Models',
+      'Uses MEDS Without Citing It',
+      'A Newer Paper',
+    ]);
+    sortBy('Title (A–Z)');
+    expect(listedTitles()).toEqual([
+      'A Newer Paper',
+      'An Older Paper About Foundation Models',
+      'Uses MEDS Without Citing It',
+    ]);
+    sortBy('Newest first');
+    expect(listedTitles()).toEqual([
+      'A Newer Paper',
+      'Uses MEDS Without Citing It',
+      'An Older Paper About Foundation Models',
+    ]);
   });
 
   it('clears the institution filter from the chip above the list', () => {
@@ -237,8 +298,12 @@ describe('Papers page', () => {
         .map(chip => chip.getAttribute('aria-label'))
         .filter(Boolean);
 
-    // The institution with two papers comes first.
+    // The institution with two papers comes first, or in its place by name.
     expect(chipNames()).toHaveLength(24);
+    expect(chipNames()[0]).toBe('Institution 29: 2 papers');
+    fireEvent.click(institutions.getByRole('button', { name: 'A–Z' }));
+    expect(chipNames().slice(0, 2)).toEqual(['Institution 00: 1 paper', 'Institution 01: 1 paper']);
+    fireEvent.click(institutions.getByRole('button', { name: 'Most papers' }));
     expect(chipNames()[0]).toBe('Institution 29: 2 papers');
 
     fireEvent.click(institutions.getByRole('button', { name: 'Show all 30 institutions' }));

@@ -1,11 +1,17 @@
 import React, { useMemo, useState } from 'react';
 import { Box, Button, Chip, MenuItem, Stack, TextField, Typography } from '@mui/material';
-import { matchesQuery, sortPapers } from '@site/src/lib/papers/display';
+import { matchesQuery, sortPapers, type SortOrder } from '@site/src/lib/papers/display';
 import type { CitingPaper, SeedPaper } from '@site/src/lib/papers/types';
 import PaperCard from './PaperCard';
 
+const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
+  { value: 'newest', label: 'Newest first' },
+  { value: 'oldest', label: 'Oldest first' },
+  { value: 'title', label: 'Title (A–Z)' },
+];
+
 /**
- * Searchable list of the papers citing or using MEDS, newest first, filtered by how they were found and by an
+ * Searchable, sortable list of the papers citing or using MEDS, filtered by how they were found and by an
  * institution (chosen with `InstitutionList`, whose state the page holds).
  */
 export default function PaperBrowser({
@@ -22,6 +28,7 @@ export default function PaperBrowser({
   const [query, setQuery] = useState('');
   // Why a paper is listed: 'all', a seed's id (it cites that seed), or 'manual' (it was added by hand).
   const [source, setSource] = useState('all');
+  const [order, setOrder] = useState<SortOrder>('newest');
 
   const sourceOptions = useMemo(() => {
     const options = seeds.map(seed => ({
@@ -39,13 +46,13 @@ export default function PaperBrowser({
 
   const shown = useMemo(
     () =>
-      sortPapers(papers).filter(
+      sortPapers(papers, order).filter(
         paper =>
           (source === 'all' || (source === 'manual' ? !!paper.manual : paper.cites.includes(source))) &&
           (!institution || paper.institutions.includes(institution)) &&
           matchesQuery(paper, query)
       ),
-    [papers, source, institution, query]
+    [papers, order, source, institution, query]
   );
 
   if (papers.length === 0) {
@@ -81,6 +88,19 @@ export default function PaperBrowser({
           {sourceOptions.map(option => (
             <MenuItem key={option.value} value={option.value}>
               {option.label} ({option.count})
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          select
+          label="Sort by"
+          value={order}
+          onChange={event => setOrder(event.target.value as SortOrder)}
+          sx={{ minWidth: { sm: 170 } }}
+        >
+          {SORT_OPTIONS.map(option => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
             </MenuItem>
           ))}
         </TextField>

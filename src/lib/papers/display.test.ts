@@ -26,6 +26,26 @@ describe('sortPapers', () => {
 
   it('sorts newest first, with year-only dates before dated papers of that year and undated papers last', () => {
     expect(sortPapers(papers).map(p => p.id)).toEqual(['dated', 'year-only', 'tie-a', 'old', 'undated']);
+    expect(sortPapers(papers, 'newest')).toEqual(sortPapers(papers));
+  });
+
+  it('sorts oldest first, still with undated papers last and ties broken by title', () => {
+    expect(sortPapers(papers, 'oldest').map(p => p.id)).toEqual([
+      'tie-a',
+      'old',
+      'year-only',
+      'dated',
+      'undated',
+    ]);
+  });
+
+  it('sorts by title, ignoring case and punctuation, then newest first', () => {
+    const titled = [
+      paper({ id: 'b', title: 'beta' }),
+      paper({ id: 'quoted', title: '"Alpha" study', year: 2024 }),
+      paper({ id: 'a-new', title: 'Alpha study', year: 2026 }),
+    ];
+    expect(sortPapers(titled, 'title').map(p => p.id)).toEqual(['a-new', 'quoted', 'b']);
   });
 
   it('keeps the input order of papers that tie on everything', () => {

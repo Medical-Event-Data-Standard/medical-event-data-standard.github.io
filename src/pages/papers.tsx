@@ -7,7 +7,7 @@ import InstitutionList from '@site/src/components/papers/InstitutionList';
 import PaperBrowser from '@site/src/components/papers/PaperBrowser';
 import PaperCard from '@site/src/components/papers/PaperCard';
 import { countInstitutions, formatDate } from '@site/src/lib/papers/display';
-import { PAPERS_PLUGIN, type PapersData } from '@site/src/lib/papers/types';
+import { PAPERS_PLUGIN, type PapersPageData } from '@site/src/lib/papers/types';
 
 const REPO = 'https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io';
 const PAPERS_YAML = `${REPO}/blob/main/static/data/papers.yaml`;
@@ -17,7 +17,7 @@ const PAPERS_YAML = `${REPO}/blob/main/static/data/papers.yaml`;
  * their authors' institutions from OpenAlex.
  */
 export default function Papers(): React.JSX.Element {
-  const data = usePluginData(PAPERS_PLUGIN) as PapersData | undefined;
+  const data = usePluginData(PAPERS_PLUGIN) as PapersPageData | undefined;
   const seeds = data?.seeds ?? [];
   const papers = data?.papers ?? [];
   const updated = formatDate(data?.updatedAt ?? null);
@@ -94,6 +94,7 @@ export default function Papers(): React.JSX.Element {
             </p>
             <InstitutionList
               institutions={institutions}
+              icons={data?.institutionIcons ?? {}}
               selected={institution}
               onSelect={selectInstitution}
             />
@@ -125,7 +126,8 @@ export default function Papers(): React.JSX.Element {
             <li>
               Institutions are the author affiliations that <Link href="https://openalex.org/">OpenAlex</Link>{' '}
               records for each paper, found by DOI or arXiv ID, or else by title. Where OpenAlex has none,
-              they can be added by hand in the <code>affiliations</code> list of papers.yaml.
+              they can be added by hand in the <code>affiliations</code> list of papers.yaml. An
+              institution&rsquo;s icon is its website&rsquo;s icon, from the homepage OpenAlex lists for it.
               {withoutInstitutions > 0 && (
                 <>
                   {' '}

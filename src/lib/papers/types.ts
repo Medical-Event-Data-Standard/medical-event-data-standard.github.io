@@ -41,10 +41,16 @@ export interface CitingPaper extends Paper {
   institutions: string[];
 }
 
-/** The plugin's global data, and the format of static/data/papers.snapshot.json. */
+/** The format of static/data/papers.snapshot.json. */
 export interface PapersData {
   /** ISO timestamp of the Semantic Scholar fetch the data comes from, or null if it was never fetched. */
   updatedAt: string | null;
   seeds: SeedPaper[];
   papers: CitingPaper[];
+}
+
+/** The plugin's global data: the snapshot's format, plus the institutions' icons. */
+export interface PapersPageData extends PapersData {
+  /** URL path of each institution's icon (in static/img/institutions), by name; institutions without one are left out. */
+  institutionIcons: Record<string, string>;
 }

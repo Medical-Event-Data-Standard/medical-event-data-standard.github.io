@@ -25,7 +25,8 @@ export interface OpenAlexWork {
   authorships?:
     | {
         author?: { display_name?: string | null } | null;
-        institutions?: { display_name?: string | null }[] | null;
+        /** `id` is a URL, e.g. `https://openalex.org/I78577930`. */
+        institutions?: { id?: string | null; display_name?: string | null }[] | null;
       }[]
     | null;
 }
@@ -310,12 +311,48 @@ export function doiFromUrl(doi: string | null | undefined): string | null {
   return text ? text.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').toLowerCase() : null;
 }
 
-/** The institutions of a work's authors, without duplicates, in author order. */
+/** The institutions of a work's authors, without duplicates, in author order: their names and OpenAlex ids. */
+export function institutionRecordsOfWork(
+  work: OpenAlexWork | null | undefined
+): { name: string; id: string | null }[] {
+  const records = new Map<string, string | null>();
+  for (const authorship of work?.authorships ?? []) {
+    for (const institution of authorship?.institutions ?? []) {
+      const name = cleanText(institution?.display_name);
+      const id = cleanText(institution?.id)?.replace(/^https?:\/\/openalex\.org\//i, '') ?? null;
+      if (name && !records.get(name)) records.set(name, id);
+    }
+  }
+  return [...records].map(([name, id]) => ({ name, id }));
+}
+
+/** The names of the institutions of a work's authors, without duplicates, in author order. */
 export function institutionsOfWork(work: OpenAlexWork | null | undefined): string[] {
-  const names = (work?.authorships ?? []).flatMap(authorship =>
-    (authorship?.institutions ?? []).map(institution => cleanText(institution?.display_name))
-  );
-  return [...new Set(names.filter((name): name is string => !!name))];
+  return institutionRecordsOfWork(work).map(({ name }) => name);
+}
+
+/**
+ * The base name of an institution's icon in static/img/institutions, e.g. `columbia-university` (the file is
+ * `columbia-university.png`, `.jpg`, `.gif` or `.ico`).
+ */
+export function institutionIconSlug(name: string): string {
+  return normalizeText(name).replace(/ /g, '-') || 'institution';
+}
+
+const IMAGE_SIGNATURES: [string, number[]][] = [
+  ['png', [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]],
+  ['jpg', [0xff, 0xd8, 0xff]],
+  ['gif', [0x47, 0x49, 0x46, 0x38]],
+  ['ico', [0x00, 0x00, 0x01, 0x00]],
+];
+
+/** The file extensions an institution's icon can have. */
+export const ICON_EXTENSIONS = IMAGE_SIGNATURES.map(([extension]) => extension);
+
+/** The extension of the image type that `bytes` start with, if it is one an icon can have; else null. */
+export function iconExtension(bytes: Uint8Array): string | null {
+  const match = IMAGE_SIGNATURES.find(([, signature]) => signature.every((byte, i) => bytes[i] === byte));
+  return match ? match[0] : null;
 }
 
 /**

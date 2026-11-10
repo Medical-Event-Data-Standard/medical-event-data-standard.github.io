@@ -155,6 +155,12 @@ OpenAlex is searched by DOI (or arXiv's DOI for arXiv papers), and, for papers i
 way, by title: a record with the same title and an author with the same surname counts, which finds e.g. the
 published version of a preprint.
 
+Each institution is shown with its website's icon, committed under
+[`static/img/institutions/`](static/img/institutions) so that neither builds nor visitors fetch them.
+`npm run papers:update` downloads the icons of new institutions and deletes those no longer listed: it looks up
+the institution's homepage on OpenAlex and asks Google's favicon service, then DuckDuckGo's, for that site's
+icon. Institutions without one (e.g. those only in `affiliations`) are shown with their initial.
+
 Semantic Scholar rate-limits unauthenticated requests heavily, so the plugin makes one request at a time,
 retries HTTP 429 and 5xx responses with exponential backoff (honouring `Retry-After`), and stops retrying after
 two minutes. Whatever it can't fetch is taken from the committed snapshot,
