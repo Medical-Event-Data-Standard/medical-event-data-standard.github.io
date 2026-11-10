@@ -33,7 +33,9 @@ export default function Papers(): React.JSX.Element {
 
   const selectInstitution = (name: string | null): void => {
     setInstitution(name);
-    if (name) document.getElementById('citing-papers')?.scrollIntoView?.({ behavior: 'smooth' });
+    // The list's section is always rendered; jsdom, used in tests, has no scrollIntoView.
+    if (name)
+      (document.getElementById('citing-papers') as HTMLElement).scrollIntoView?.({ behavior: 'smooth' });
   };
 
   const stats = [

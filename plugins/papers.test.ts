@@ -331,6 +331,35 @@ describe('fetchInstitutionsFromOpenAlex', () => {
     ]);
   });
 
+  it('records each institution id once, skips institutions without one, and copes with empty responses', async () => {
+    const request = jest.fn(async (pathAndQuery: string) => {
+      if (pathAndQuery.includes('filter=doi:')) {
+        const second = work('Second', ['University A', 'No Id University'], '10.1/second');
+        // OpenAlex doesn't always know an institution's id.
+        delete (second.authorships?.[0].institutions?.[1] as { id?: string }).id;
+        return { results: [work('First', ['University A'], '10.1/first'), second] };
+      }
+      return {}; // No `results` at all.
+    }) as unknown as ApiRequest;
+
+    const { institutions, ids, failures } = await fetchInstitutionsFromOpenAlex(
+      [
+        paper('first', 'First', { DOI: '10.1/first' }),
+        paper('second', 'Second', { DOI: '10.1/second' }),
+        paper('untitled', 'Not Found'),
+      ],
+      request
+    );
+
+    expect(failures).toEqual([]);
+    expect([...institutions]).toEqual([
+      ['first', ['University A']],
+      ['second', ['University A', 'No Id University']],
+      ['untitled', []],
+    ]);
+    expect([...ids]).toEqual([['University A', 'IUniversityA']]);
+  });
+
   it('reports failures, leaving out the papers whose lookup failed', async () => {
     const request = jest.fn(async (pathAndQuery: string) => {
       if (pathAndQuery.includes('filter=doi:')) throw new Error('HTTP 429');
@@ -409,6 +438,35 @@ describe('fetchInstitutionRecords', () => {
       '/institutions?filter=display_name.search:named%20hospital&per_page=5' +
         '&select=id,display_name,lineage,geo,homepage_url&api_key=key'
     );
+  });
+
+  it('copes with records and responses that lack fields', async () => {
+    const request = jest.fn(async (pathAndQuery: string) => {
+      if (pathAndQuery.includes('filter=id:')) {
+        return {
+          results: [
+            institution('I1', 'No Homepage', { homepage_url: null }),
+            { display_name: 'No Id' },
+            null,
+          ],
+        };
+      }
+      if (pathAndQuery.includes('nameless')) return { results: [null, { id: 'https://openalex.org/I9' }] };
+      return {}; // No `results` at all.
+    }) as unknown as ApiRequest;
+
+    const lookup = await fetchInstitutionRecords(
+      ['No Homepage', 'Missing', 'Nameless', 'Empty'],
+      new Map([
+        ['No Homepage', 'I1'],
+        ['Missing', 'I2'],
+      ]),
+      request
+    );
+
+    expect([...lookup.records.keys()]).toEqual(['No Homepage']);
+    expect(lookup.homepages.size).toBe(0);
+    expect(lookup.failures).toEqual([]);
   });
 
   it('reports the institutions whose lookup failed', async () => {
@@ -1101,6 +1159,20 @@ describe('with a site directory', () => {
       expect(result.message).toContain('details of 1 institutions: HTTP 500');
     });
 
+    it('reports icons that could not be fetched', async () => {
+      const fetchFn = mockFetch({
+        'https://www.google.com/s2/favicons?domain=live.example.edu': () => {
+          throw new Error('offline');
+        },
+      });
+      const result = await updatePapersSnapshot(siteDir, { client: fastClient(fetchFn), now });
+      expect(result.warning).toBe(true);
+      expect(result.message).toContain(
+        'Institution icons: 0 downloaded, 0 removed; 1 institutions have none.'
+      );
+      expect(result.message).toContain('\n  icons of 1 institutions: offline');
+    });
+
     it('uses the global fetch by default, as `npm run papers:update` does', async () => {
       const fetchFn = mockFetch();
       globalThis.fetch = fetchFn as unknown as typeof fetch;
@@ -1228,6 +1300,29 @@ describe('with a site directory', () => {
       // An unreachable homepage, or an icon that can't be used, just means no icon.
       expect(result).toEqual({ downloaded: 2, removed: 2, without: 2, failures: [] });
       expect((await fs.readdir(iconsDir())).sort()).toEqual(['configured.png', 'linked.png', 'notes.txt']);
+    });
+
+    it("skips homepages that aren't web addresses, and icon links that can't be fetched", async () => {
+      const fetchFn = jest.fn<FetchFn>(async url => {
+        if (url === 'https://flaky.example/') return new Response('<link rel="icon" href="/icon.png">');
+        if (url === 'https://flaky.example/icon.png') throw new Error('reset');
+        if (url === 'https://flaky.example/favicon.ico') return png();
+        return new Response('', { status: 404 });
+      });
+
+      const result = await updateInstitutionIcons(siteDir, ['Not A URL', 'No Host', 'Flaky'], {
+        homepages: new Map([
+          ['Not A URL', 'not a web address'],
+          ['No Host', 'mailto:someone@example.org'],
+          ['Flaky', 'https://flaky.example/'],
+        ]),
+        fetchFn,
+      });
+
+      // The icon link that failed is skipped for the next candidate, /favicon.ico.
+      expect(result).toEqual({ downloaded: 1, removed: 2, without: 2, failures: [] });
+      expect((await fs.readdir(iconsDir())).sort()).toEqual(['flaky.png', 'notes.txt']);
+      expect(fetchFn.mock.calls.some(([url]) => /not a web|someone/.test(url))).toBe(false);
     });
 
     it('finds the committed icons of institutions, whatever their image type', async () => {

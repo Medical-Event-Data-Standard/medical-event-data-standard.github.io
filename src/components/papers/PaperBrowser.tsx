@@ -20,14 +20,14 @@ export default function PaperBrowser({
   seeds,
   institution,
   onInstitutionChange,
-  icons = {},
+  icons,
 }: {
   papers: CitingPaper[];
   seeds: SeedPaper[];
   institution: string | null;
   onInstitutionChange: (name: string | null) => void;
   /** URL path of each institution's icon, by name. */
-  icons?: Readonly<Record<string, string>>;
+  icons: Readonly<Record<string, string>>;
 }): React.JSX.Element {
   const [query, setQuery] = useState('');
   // Why a paper is listed: 'all', a seed's id (it cites that seed), or 'manual' (it was added by hand).
