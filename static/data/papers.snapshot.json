@@ -320,7 +320,6 @@
       "cites": [],
       "manual": true,
       "institutions": [
-        "Hasso Plattner Institute",
         "University of Potsdam",
         "Charité – Universitätsmedizin Berlin",
         "Icahn School of Medicine at Mount Sinai"
@@ -556,7 +555,6 @@
       "cites": ["96f609fa94bfdbb85f0be595c575d64865c0cf66"],
       "institutions": [
         "Great Ormond Street Hospital",
-        "NIHR Great Ormond Street Hospital Biomedical Research Centre",
         "University College London",
         "UK Dementia Research Institute",
         "Imperial College London"
@@ -630,7 +628,7 @@
       "url": "https://doi.org/10.48550/arXiv.2606.22692",
       "cites": [],
       "manual": true,
-      "institutions": ["Stanford Medicine", "Stanford University"]
+      "institutions": ["Stanford University"]
     },
     {
       "id": "f88fd6798446f8e6a085411baa7fb066db54490c",
@@ -654,11 +652,7 @@
       "url": "https://doi.org/10.1038/s44401-026-00095-y",
       "cites": [],
       "manual": true,
-      "institutions": [
-        "University of Pittsburgh",
-        "UPMC Hillman Cancer Center",
-        "University of Pittsburgh Medical Center"
-      ]
+      "institutions": ["University of Pittsburgh", "University of Pittsburgh Medical Center"]
     },
     {
       "id": "05a2857393d199f1b197c63c827b9113a6659374",
@@ -685,11 +679,7 @@
       "arxivId": "2605.17765",
       "url": "https://doi.org/10.48550/arXiv.2605.17765",
       "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
-      "institutions": [
-        "Chinese Academy of Sciences",
-        "University of Chinese Academy of Sciences",
-        "Columbia University"
-      ]
+      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
     },
     {
       "id": "635851eabdf1b80e7253c2da2c5ec2de5e63eeca",
@@ -750,7 +740,7 @@
       "arxivId": "2605.12335",
       "url": "https://arxiv.org/abs/2605.12335",
       "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5"],
-      "institutions": ["New York University", "New York University Abu Dhabi"]
+      "institutions": ["New York University"]
     },
     {
       "id": "41985f1c6538aaf944e21029297bb6746dd46b47",
@@ -777,7 +767,7 @@
       "arxivId": "2605.09765",
       "url": "https://doi.org/10.48550/arXiv.2605.09765",
       "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5"],
-      "institutions": ["University of Science and Technology of China", "Columbia University"]
+      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
     },
     {
       "id": "9461eb9b7f395e97fb203280fd1d0d1d8645847c",
@@ -790,7 +780,7 @@
       "arxivId": "2605.08685",
       "url": "https://doi.org/10.48550/arXiv.2605.08685",
       "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
-      "institutions": ["University of Science and Technology of China", "Columbia University"]
+      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
     },
     {
       "id": "e9b6fd982136a9b219a33db655d82ea0d84c03b6",
@@ -826,11 +816,7 @@
       "arxivId": "2604.04175",
       "url": "https://doi.org/10.48550/arXiv.2604.04175",
       "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
-      "institutions": [
-        "Chinese Academy of Sciences",
-        "University of Chinese Academy of Sciences",
-        "Columbia University"
-      ]
+      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
     },
     {
       "id": "e03b10b76c8c07ef0d46001519b976d9b2d30711",
@@ -879,11 +865,7 @@
       "arxivId": "2603.07348",
       "url": "https://doi.org/10.48550/arXiv.2603.07348",
       "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
-      "institutions": [
-        "Chinese Academy of Sciences",
-        "University of Chinese Academy of Sciences",
-        "Columbia University"
-      ]
+      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
     },
     {
       "id": "e00a70991805a18bd2d0ddeb1db9a43313bece8b",
@@ -969,7 +951,7 @@
       "url": "https://doi.org/10.48550/arXiv.2601.20906",
       "cites": [],
       "manual": true,
-      "institutions": ["F. Hoffmann-La Roche AG", "Genentech", "Stanford University", "New York University"]
+      "institutions": ["F. Hoffmann-La Roche AG", "Stanford University", "New York University"]
     },
     {
       "id": "0eb752374dc73a621bb99b59cc5b87c2fd634b3b",
@@ -1057,10 +1039,7 @@
       "cites": ["ce0eaffb67ef48c8309e97df05b33f6fc7294d5f"],
       "institutions": [
         "University of Helsinki",
-        "Hasso Plattner Institute",
         "University of Potsdam",
-        "Institute for Molecular Medicine Finland",
-        "HiLIFE – Elämäntieteiden Instituutti",
         "Icahn School of Medicine at Mount Sinai",
         "Massachusetts General Hospital"
       ]
@@ -1108,11 +1087,7 @@
       "arxivId": "2601.12227",
       "url": "https://doi.org/10.48550/arXiv.2601.12227",
       "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
-      "institutions": [
-        "Chinese Academy of Sciences",
-        "University of Chinese Academy of Sciences",
-        "Columbia University"
-      ]
+      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
     },
     {
       "id": "fe750689b02b906ce28ba569ac20e86c941c197a",
@@ -1125,7 +1100,7 @@
       "arxivId": "2601.04164",
       "url": "https://doi.org/10.48550/arXiv.2601.04164",
       "cites": ["f4b471a712d135aa606281e5061415657adb7085"],
-      "institutions": ["Inria", "Inserm", "Université Paris Cité", "HeKA", "University of Bologna"]
+      "institutions": ["Inria", "Inserm", "Université Paris Cité", "University of Bologna"]
     },
     {
       "id": "DOI:10.25932/publishup-70445",
@@ -1139,24 +1114,7 @@
       "url": "https://doi.org/10.25932/publishup-70445",
       "cites": [],
       "manual": true,
-      "institutions": ["Hasso Plattner Institute", "University of Potsdam"]
-    },
-    {
-      "id": "1cd554240469d93bbbb51f01989f643657f752e5",
-      "title": "EveryQuery: Zero-Shot Clinical Prediction via Task-Conditioned Pretraining over Electronic Health Records",
-      "authors": ["Payal Chandak", "Gregory Kondas", "I. Kohane", "M. McDermott"],
-      "venue": "arXiv",
-      "year": 2026,
-      "publicationDate": null,
-      "doi": "10.48550/arXiv.2603.07900",
-      "arxivId": null,
-      "url": "https://doi.org/10.48550/arXiv.2603.07900",
-      "cites": ["27689dd149c473d24cdf22124c2a29d187c960b8"],
-      "institutions": [
-        "Harvard–MIT Division of Health Sciences and Technology",
-        "Columbia University",
-        "Harvard University"
-      ]
+      "institutions": ["University of Potsdam"]
     },
     {
       "id": "DOI:10.21203/rs.3.rs-8819405/v1",
@@ -1193,8 +1151,7 @@
       "institutions": [
         "Massachusetts Institute of Technology",
         "Technical University of Munich",
-        "Université Paris-Saclay",
-        "CentraleSupélec"
+        "Université Paris-Saclay"
       ]
     },
     {
@@ -1215,7 +1172,6 @@
       "institutions": [
         "Technical University of Munich",
         "Université Paris-Saclay",
-        "CentraleSupélec",
         "Massachusetts Institute of Technology"
       ]
     },
@@ -1232,23 +1188,6 @@
       "cites": [],
       "manual": true,
       "institutions": ["Carnegie Mellon University", "University of Pittsburgh"]
-    },
-    {
-      "id": "80914fd5d5216ba9e7e5131e71bc8a10290e4fbd",
-      "title": "Temporally annotated textual time series from PubMed Open Access clinical case reports",
-      "authors": ["Shahriar Noroozizadeh", "Sayantan Kumar", "George H. Chen", "Jeremy C. Weiss"],
-      "venue": "medRxiv",
-      "year": 2025,
-      "publicationDate": "2025-11-04",
-      "doi": "10.1101/2025.11.01.25339297",
-      "arxivId": null,
-      "url": "https://doi.org/10.1101/2025.11.01.25339297",
-      "cites": ["ce0eaffb67ef48c8309e97df05b33f6fc7294d5f"],
-      "institutions": [
-        "Carnegie Mellon University",
-        "National Institutes of Health",
-        "United States National Library of Medicine"
-      ]
     },
     {
       "id": "24198ff0aafdc8ce583cadbc7e7b156c15c00119",
@@ -1368,12 +1307,7 @@
       "url": "https://doi.org/10.1101/2025.09.08.25335368",
       "cites": [],
       "manual": true,
-      "institutions": [
-        "Hospital da Luz",
-        "Stanford University",
-        "University of Lisbon",
-        "Instituto Superior Técnico"
-      ]
+      "institutions": ["Hospital da Luz", "Stanford University", "University of Lisbon"]
     },
     {
       "id": "5aafd493d9a8808340aa6ee6aabcf6d6989296d3",
@@ -1422,11 +1356,7 @@
       "arxivId": "2505.20323",
       "url": "https://doi.org/10.48550/arXiv.2505.20323",
       "cites": ["ce0eaffb67ef48c8309e97df05b33f6fc7294d5f"],
-      "institutions": [
-        "Carnegie Mellon University",
-        "National Institutes of Health",
-        "United States National Library of Medicine"
-      ]
+      "institutions": ["Carnegie Mellon University", "National Institutes of Health"]
     },
     {
       "id": "ae943be2991f4e8d4ca5dc0185747fa1d5915dba",
@@ -1494,7 +1424,7 @@
       "arxivId": "2504.07373",
       "url": "https://doi.org/10.48550/arXiv.2504.07373",
       "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
-      "institutions": ["University of Chinese Academy of Sciences", "Columbia University"]
+      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
     },
     {
       "id": "a1de898ce28bdfc5c1cb65c3d010941885907dc2",
@@ -1520,7 +1450,7 @@
       "arxivId": "2503.05768",
       "url": "https://doi.org/10.48550/arXiv.2503.05768",
       "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf", "27689dd149c473d24cdf22124c2a29d187c960b8"],
-      "institutions": ["University of Chinese Academy of Sciences", "Columbia University"]
+      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
     },
     {
       "id": "2be3376c90365292548d8c8039b97145f2832f1a",
@@ -1544,13 +1474,10 @@
       "cites": [],
       "manual": true,
       "institutions": [
-        "Deutsches Herzzentrum der Charité",
-        "Berlin Institute of Health at Charité - Universitätsmedizin Berlin",
+        "Charité – Universitätsmedizin Berlin",
         "Freie Universität Berlin",
-        "MIT Computer Science and Artificial Intelligence Laboratory",
         "Massachusetts Institute of Technology",
-        "Fudan University",
-        "Charité – Universitätsmedizin Berlin"
+        "Fudan University"
       ]
     },
     {
@@ -1660,5 +1587,967 @@
       "cites": ["96f609fa94bfdbb85f0be595c575d64865c0cf66"],
       "institutions": []
     }
-  ]
+  ],
+  "institutions": {
+    "AGH University of Krakow": {
+      "id": "I686019",
+      "partOf": [],
+      "location": {
+        "latitude": 50.061431884765625,
+        "longitude": 19.936580657958984,
+        "city": "Krakow",
+        "country": "PL"
+      }
+    },
+    "Ajou University": {
+      "id": "I57664883",
+      "partOf": [],
+      "location": {
+        "latitude": 37.29111,
+        "longitude": 127.00889,
+        "city": "Suwon",
+        "country": "KR"
+      }
+    },
+    "Bangladesh University of Engineering and Technology": {
+      "id": "I183697816",
+      "partOf": [],
+      "location": {
+        "latitude": 23.7104,
+        "longitude": 90.40744,
+        "city": "Dhaka",
+        "country": "BD"
+      }
+    },
+    "Barcelona Supercomputing Center": {
+      "id": "I2799803557",
+      "partOf": ["I9617848"],
+      "location": {
+        "latitude": 41.38879,
+        "longitude": 2.15899,
+        "city": "Barcelona",
+        "country": "ES"
+      }
+    },
+    "Bayer (Germany)": {
+      "id": "I67348948",
+      "partOf": [],
+      "location": {
+        "latitude": 51.0303,
+        "longitude": 6.98432,
+        "city": "Leverkusen",
+        "country": "DE"
+      }
+    },
+    "Brigham and Women's Hospital": {
+      "id": "I1283280774",
+      "partOf": ["I121934306", "I48633490"],
+      "location": {
+        "latitude": 42.35843,
+        "longitude": -71.05977,
+        "city": "Boston",
+        "country": "US"
+      }
+    },
+    "Broad Institute": {
+      "id": "I107606265",
+      "partOf": [],
+      "location": {
+        "latitude": 42.3751,
+        "longitude": -71.10561,
+        "city": "Cambridge",
+        "country": "US"
+      }
+    },
+    "Carnegie Mellon University": {
+      "id": "I74973139",
+      "partOf": [],
+      "location": {
+        "latitude": 40.44062,
+        "longitude": -79.99589,
+        "city": "Pittsburgh",
+        "country": "US"
+      }
+    },
+    "Centre Hospitalier Universitaire de Liège": {
+      "id": "I4210134544",
+      "partOf": [],
+      "location": {
+        "latitude": 50.633731842041016,
+        "longitude": 5.567490100860596,
+        "city": "Liège",
+        "country": "BE"
+      }
+    },
+    "Charité – Universitätsmedizin Berlin": {
+      "id": "I7877124",
+      "partOf": [],
+      "location": {
+        "latitude": 52.52437,
+        "longitude": 13.41053,
+        "city": "Berlin",
+        "country": "DE"
+      }
+    },
+    "Children's Healthcare of Atlanta": {
+      "id": "I4210146983",
+      "partOf": [],
+      "location": {
+        "latitude": 33.749,
+        "longitude": -84.38798,
+        "city": "Atlanta",
+        "country": "US"
+      }
+    },
+    "Chinese Academy of Sciences": {
+      "id": "I19820366",
+      "partOf": [],
+      "location": {
+        "latitude": 39.9075,
+        "longitude": 116.39723,
+        "city": "Beijing",
+        "country": "CN"
+      }
+    },
+    "Chinese University of Hong Kong": {
+      "id": "I177725633",
+      "partOf": [],
+      "location": {
+        "latitude": 22.27832,
+        "longitude": 114.17469,
+        "city": "Hong Kong",
+        "country": "HK"
+      }
+    },
+    "Clalit Health Services": {
+      "id": "I64767286",
+      "partOf": [],
+      "location": {
+        "latitude": 32.08088,
+        "longitude": 34.78057,
+        "city": "Tel Aviv",
+        "country": "IL"
+      }
+    },
+    "Cleveland Clinic": {
+      "id": "I1316902750",
+      "partOf": [],
+      "location": {
+        "latitude": 41.4995,
+        "longitude": -81.69541,
+        "city": "Cleveland",
+        "country": "US"
+      }
+    },
+    "Columbia University": {
+      "id": "I78577930",
+      "partOf": [],
+      "location": {
+        "latitude": 40.71427,
+        "longitude": -74.00597,
+        "city": "New York",
+        "country": "US"
+      }
+    },
+    "Columbia University Irving Medical Center": {
+      "id": "I2799503643",
+      "partOf": [],
+      "location": {
+        "latitude": 40.71427,
+        "longitude": -74.00597,
+        "city": "New York",
+        "country": "US"
+      }
+    },
+    "Duke Medical Center": {
+      "id": "I4210126298",
+      "partOf": ["I4210144876"],
+      "location": {
+        "latitude": 35.9940299987793,
+        "longitude": -78.89862060546875,
+        "city": "Durham",
+        "country": "US"
+      }
+    },
+    "Duke University": {
+      "id": "I170897317",
+      "partOf": [],
+      "location": {
+        "latitude": 35.99403,
+        "longitude": -78.89862,
+        "city": "Durham",
+        "country": "US"
+      }
+    },
+    "Eindhoven University of Technology": {
+      "id": "I83019370",
+      "partOf": [],
+      "location": {
+        "latitude": 51.44083,
+        "longitude": 5.47778,
+        "city": "Eindhoven",
+        "country": "NL"
+      }
+    },
+    "Epic Systems (United States)": {
+      "id": "I72509657",
+      "partOf": [],
+      "location": {
+        "latitude": 42.996238708496094,
+        "longitude": -89.5692367553711,
+        "city": "Verona",
+        "country": "US"
+      }
+    },
+    "F. Hoffmann-La Roche AG": {
+      "id": "I118019719",
+      "partOf": [],
+      "location": {
+        "latitude": 47.55839,
+        "longitude": 7.57327,
+        "city": "Basel",
+        "country": "CH"
+      }
+    },
+    "Freie Universität Berlin": {
+      "id": "I75951250",
+      "partOf": [],
+      "location": {
+        "latitude": 52.52437,
+        "longitude": 13.41053,
+        "city": "Berlin",
+        "country": "DE"
+      }
+    },
+    "Fudan University": {
+      "id": "I24943067",
+      "partOf": [],
+      "location": {
+        "latitude": 31.22222,
+        "longitude": 121.45806,
+        "city": "Shanghai",
+        "country": "CN"
+      }
+    },
+    "Georgia Institute of Technology": {
+      "id": "I130701444",
+      "partOf": [],
+      "location": {
+        "latitude": 33.749,
+        "longitude": -84.38798,
+        "city": "Atlanta",
+        "country": "US"
+      }
+    },
+    "Great Ormond Street Hospital": {
+      "id": "I2800129641",
+      "partOf": ["I2800349819"],
+      "location": {
+        "latitude": 51.50852966308594,
+        "longitude": -0.12574000656604767,
+        "city": "London",
+        "country": "GB"
+      }
+    },
+    "Harvard Pilgrim Health Care": {
+      "id": "I4210111543",
+      "partOf": [],
+      "location": {
+        "latitude": 43.00298309326172,
+        "longitude": -71.25765228271484,
+        "city": "Boston",
+        "country": "US"
+      }
+    },
+    "Harvard University": {
+      "id": "I136199984",
+      "partOf": [],
+      "location": {
+        "latitude": 42.3751,
+        "longitude": -71.10561,
+        "city": "Cambridge",
+        "country": "US"
+      }
+    },
+    "Harvard–MIT Division of Health Sciences and Technology": {
+      "id": "I4210092658",
+      "partOf": [],
+      "location": {
+        "latitude": 42.361778259277344,
+        "longitude": -71.0869140625,
+        "city": "Cambridge",
+        "country": "US"
+      }
+    },
+    "Hasso Plattner Institute": {
+      "id": "I143288331",
+      "partOf": ["I176453806"],
+      "location": {
+        "latitude": 52.39886,
+        "longitude": 13.06566,
+        "city": "Potsdam",
+        "country": "DE"
+      }
+    },
+    "Health Data Research UK": {
+      "id": "I4210142469",
+      "partOf": [],
+      "location": {
+        "latitude": 51.50853,
+        "longitude": -0.12574,
+        "city": "London",
+        "country": "GB"
+      }
+    },
+    "Heka : Méthodes basées sur les données et modèles en santé pour l'acquisition de connaissances": {
+      "id": "I4405258428",
+      "partOf": ["I1326498283", "I154526488", "I204730241", "I4405257605"],
+      "location": {
+        "latitude": 48.85341,
+        "longitude": 2.3488,
+        "city": "Paris",
+        "country": "FR"
+      }
+    },
+    "Helmholtz Munich": {
+      "id": "I3018134672",
+      "partOf": ["I1305996414"],
+      "location": {
+        "latitude": 48.13743,
+        "longitude": 11.57549,
+        "city": "Munich",
+        "country": "DE"
+      }
+    },
+    "Hospital Universitario Virgen Macarena": {
+      "id": "I4210090436",
+      "partOf": [],
+      "location": {
+        "latitude": 37.38283,
+        "longitude": -5.97317,
+        "city": "Seville",
+        "country": "ES"
+      }
+    },
+    "Hospital da Luz": {
+      "id": "I4210128540",
+      "partOf": [],
+      "location": {
+        "latitude": 38.756221771240234,
+        "longitude": -9.19263744354248,
+        "city": "Lisbon",
+        "country": "PT"
+      }
+    },
+    "Hospital for Sick Children": {
+      "id": "I2801317318",
+      "partOf": [],
+      "location": {
+        "latitude": 43.70643,
+        "longitude": -79.39864,
+        "city": "Toronto",
+        "country": "CA"
+      }
+    },
+    "Icahn School of Medicine at Mount Sinai": {
+      "id": "I98704320",
+      "partOf": ["I1320796813"],
+      "location": {
+        "latitude": 40.71427,
+        "longitude": -74.00597,
+        "city": "New York",
+        "country": "US"
+      }
+    },
+    "Imperial College London": {
+      "id": "I47508984",
+      "partOf": [],
+      "location": {
+        "latitude": 51.50853,
+        "longitude": -0.12574,
+        "city": "London",
+        "country": "GB"
+      }
+    },
+    "Inserm": {
+      "id": "I154526488",
+      "partOf": [],
+      "location": {
+        "latitude": 48.85341,
+        "longitude": 2.3488,
+        "city": "Paris",
+        "country": "FR"
+      }
+    },
+    "Institut national de recherche en sciences et technologies du numérique": {
+      "id": "I1326498283",
+      "partOf": [],
+      "location": {
+        "latitude": 48.8205,
+        "longitude": 2.1311,
+        "city": "Le Chesnay-Rocquencourt",
+        "country": "FR"
+      }
+    },
+    "Instituto de Biomedicina de Sevilla": {
+      "id": "I4210133602",
+      "partOf": ["I134820265", "I158283456", "I79238269", "I918821925"],
+      "location": {
+        "latitude": 37.38283157348633,
+        "longitude": -5.973169803619385,
+        "city": "Seville",
+        "country": "ES"
+      }
+    },
+    "Istituti Clinici Scientifici Maugeri": {
+      "id": "I4210091499",
+      "partOf": ["I4210105320", "I4210153126"],
+      "location": {
+        "latitude": 45.19205,
+        "longitude": 9.15917,
+        "city": "Pavia",
+        "country": "IT"
+      }
+    },
+    "Johns Hopkins Medicine": {
+      "id": "I2799853436",
+      "partOf": [],
+      "location": {
+        "latitude": 39.29038,
+        "longitude": -76.61219,
+        "city": "Baltimore",
+        "country": "US"
+      }
+    },
+    "Johns Hopkins University": {
+      "id": "I145311948",
+      "partOf": [],
+      "location": {
+        "latitude": 39.29038,
+        "longitude": -76.61219,
+        "city": "Baltimore",
+        "country": "US"
+      }
+    },
+    "Korea Advanced Institute of Science and Technology": {
+      "id": "I157485424",
+      "partOf": [],
+      "location": {
+        "latitude": 36.34913,
+        "longitude": 127.38493,
+        "city": "Daejeon",
+        "country": "KR"
+      }
+    },
+    "Massachusetts General Hospital": {
+      "id": "I4210087915",
+      "partOf": ["I48633490"],
+      "location": {
+        "latitude": 42.35843,
+        "longitude": -71.05977,
+        "city": "Boston",
+        "country": "US"
+      }
+    },
+    "Massachusetts Institute of Technology": {
+      "id": "I63966007",
+      "partOf": [],
+      "location": {
+        "latitude": 42.3751,
+        "longitude": -71.10561,
+        "city": "Cambridge",
+        "country": "US"
+      }
+    },
+    "Medical University of Lodz": {
+      "id": "I4210122071",
+      "partOf": [],
+      "location": {
+        "latitude": 51.77058029174805,
+        "longitude": 19.473949432373047,
+        "city": "Lodz",
+        "country": "PL"
+      }
+    },
+    "Nanjing University": {
+      "id": "I881766915",
+      "partOf": [],
+      "location": {
+        "latitude": 32.06167,
+        "longitude": 118.77778,
+        "city": "Nanjing",
+        "country": "CN"
+      }
+    },
+    "National Institutes of Health": {
+      "id": "I1299303238",
+      "partOf": ["I1299022934"],
+      "location": {
+        "latitude": 38.98067,
+        "longitude": -77.10026,
+        "city": "Bethesda",
+        "country": "US"
+      }
+    },
+    "New York University": {
+      "id": "I57206974",
+      "partOf": [],
+      "location": {
+        "latitude": 40.71427,
+        "longitude": -74.00597,
+        "city": "New York",
+        "country": "US"
+      }
+    },
+    "Newton Wellesley Hospital": {
+      "id": "I2801622001",
+      "partOf": [],
+      "location": {
+        "latitude": 42.33285140991211,
+        "longitude": -71.24620056152344,
+        "city": "Newton",
+        "country": "US"
+      }
+    },
+    "Nutanix (United States)": {
+      "id": "I4210153414",
+      "partOf": [],
+      "location": {
+        "latitude": 37.361114501953125,
+        "longitude": -121.9012222290039,
+        "city": "San Jose",
+        "country": "US"
+      }
+    },
+    "Osakidetza": {
+      "id": "I4210125364",
+      "partOf": [],
+      "location": {
+        "latitude": 42.84998,
+        "longitude": -2.67268,
+        "city": "Vitoria-Gasteiz",
+        "country": "ES"
+      }
+    },
+    "Peking University": {
+      "id": "I20231570",
+      "partOf": [],
+      "location": {
+        "latitude": 39.9075,
+        "longitude": 116.39723,
+        "city": "Beijing",
+        "country": "CN"
+      }
+    },
+    "Sage Bionetworks": {
+      "id": "I1323236076",
+      "partOf": [],
+      "location": {
+        "latitude": 47.60621,
+        "longitude": -122.33207,
+        "city": "Seattle",
+        "country": "US"
+      }
+    },
+    "Southern University of Science and Technology": {
+      "id": "I3045169105",
+      "partOf": [],
+      "location": {
+        "latitude": 22.54554,
+        "longitude": 114.0683,
+        "city": "Shenzhen",
+        "country": "CN"
+      }
+    },
+    "Stanford University": {
+      "id": "I97018004",
+      "partOf": [],
+      "location": {
+        "latitude": 37.42411,
+        "longitude": -122.16608,
+        "city": "Stanford",
+        "country": "US"
+      }
+    },
+    "Technical University of Munich": {
+      "id": "I62916508",
+      "partOf": [],
+      "location": {
+        "latitude": 48.13743,
+        "longitude": 11.57549,
+        "city": "Munich",
+        "country": "DE"
+      }
+    },
+    "Tufts University": {
+      "id": "I121934306",
+      "partOf": [],
+      "location": {
+        "latitude": 42.41843,
+        "longitude": -71.10616,
+        "city": "Medford",
+        "country": "US"
+      }
+    },
+    "UCLA Health": {
+      "id": "I2799798094",
+      "partOf": [],
+      "location": {
+        "latitude": 34.05223,
+        "longitude": -118.24368,
+        "city": "Los Angeles",
+        "country": "US"
+      }
+    },
+    "UK Dementia Research Institute": {
+      "id": "I4210126463",
+      "partOf": [],
+      "location": {
+        "latitude": 51.50853,
+        "longitude": -0.12574,
+        "city": "London",
+        "country": "GB"
+      }
+    },
+    "University College London": {
+      "id": "I45129253",
+      "partOf": ["I124357947"],
+      "location": {
+        "latitude": 51.50853,
+        "longitude": -0.12574,
+        "city": "London",
+        "country": "GB"
+      }
+    },
+    "University Health Network": {
+      "id": "I1325899441",
+      "partOf": [],
+      "location": {
+        "latitude": 43.70643,
+        "longitude": -79.39864,
+        "city": "Toronto",
+        "country": "CA"
+      }
+    },
+    "University of Bologna": {
+      "id": "I9360294",
+      "partOf": [],
+      "location": {
+        "latitude": 44.49381,
+        "longitude": 11.33875,
+        "city": "Bologna",
+        "country": "IT"
+      }
+    },
+    "University of California, Los Angeles": {
+      "id": "I161318765",
+      "partOf": [],
+      "location": {
+        "latitude": 34.05223,
+        "longitude": -118.24368,
+        "city": "Los Angeles",
+        "country": "US"
+      }
+    },
+    "University of Chicago": {
+      "id": "I40347166",
+      "partOf": [],
+      "location": {
+        "latitude": 41.85003,
+        "longitude": -87.65005,
+        "city": "Chicago",
+        "country": "US"
+      }
+    },
+    "University of Chinese Academy of Sciences": {
+      "id": "I4210165038",
+      "partOf": ["I19820366"],
+      "location": {
+        "latitude": 39.9075,
+        "longitude": 116.39723,
+        "city": "Beijing",
+        "country": "CN"
+      }
+    },
+    "University of Colorado Anschutz": {
+      "id": "I51713134",
+      "partOf": [],
+      "location": {
+        "latitude": 39.72943,
+        "longitude": -104.83192,
+        "city": "Aurora",
+        "country": "US"
+      }
+    },
+    "University of Copenhagen": {
+      "id": "I124055696",
+      "partOf": [],
+      "location": {
+        "latitude": 55.67594,
+        "longitude": 12.56553,
+        "city": "Copenhagen",
+        "country": "DK"
+      }
+    },
+    "University of Edinburgh": {
+      "id": "I98677209",
+      "partOf": [],
+      "location": {
+        "latitude": 55.95206,
+        "longitude": -3.19648,
+        "city": "Edinburgh",
+        "country": "GB"
+      }
+    },
+    "University of Göttingen": {
+      "id": "I74656192",
+      "partOf": [],
+      "location": {
+        "latitude": 51.53443,
+        "longitude": 9.93228,
+        "city": "Göttingen",
+        "country": "DE"
+      }
+    },
+    "University of Helsinki": {
+      "id": "I133731052",
+      "partOf": [],
+      "location": {
+        "latitude": 60.16952,
+        "longitude": 24.93545,
+        "city": "Helsinki",
+        "country": "FI"
+      }
+    },
+    "University of Hong Kong": {
+      "id": "I889458895",
+      "partOf": [],
+      "location": {
+        "latitude": 22.26861,
+        "longitude": 114.12924,
+        "city": "Pok Fu Lam",
+        "country": "HK"
+      }
+    },
+    "University of Illinois Chicago": {
+      "id": "I39422238",
+      "partOf": [],
+      "location": {
+        "latitude": 41.85003,
+        "longitude": -87.65005,
+        "city": "Chicago",
+        "country": "US"
+      }
+    },
+    "University of Illinois Urbana-Champaign": {
+      "id": "I157725225",
+      "partOf": [],
+      "location": {
+        "latitude": 40.11059,
+        "longitude": -88.20727,
+        "city": "Urbana",
+        "country": "US"
+      }
+    },
+    "University of Lisbon": {
+      "id": "I141596103",
+      "partOf": [],
+      "location": {
+        "latitude": 38.72509,
+        "longitude": -9.1498,
+        "city": "Lisbon",
+        "country": "PT"
+      }
+    },
+    "University of Maryland, Baltimore County": {
+      "id": "I79272384",
+      "partOf": [],
+      "location": {
+        "latitude": 39.29037857055664,
+        "longitude": -76.61219024658203,
+        "city": "Baltimore",
+        "country": "US"
+      }
+    },
+    "University of Missouri": {
+      "id": "I76835614",
+      "partOf": [],
+      "location": {
+        "latitude": 38.95171,
+        "longitude": -92.33407,
+        "city": "Columbia",
+        "country": "US"
+      }
+    },
+    "University of Oxford": {
+      "id": "I40120149",
+      "partOf": [],
+      "location": {
+        "latitude": 51.75222,
+        "longitude": -1.25596,
+        "city": "Oxford",
+        "country": "GB"
+      }
+    },
+    "University of Pavia": {
+      "id": "I25217355",
+      "partOf": [],
+      "location": {
+        "latitude": 45.19205,
+        "longitude": 9.15917,
+        "city": "Pavia",
+        "country": "IT"
+      }
+    },
+    "University of Pennsylvania": {
+      "id": "I79576946",
+      "partOf": [],
+      "location": {
+        "latitude": 39.95238,
+        "longitude": -75.16362,
+        "city": "Philadelphia",
+        "country": "US"
+      }
+    },
+    "University of Pittsburgh": {
+      "id": "I170201317",
+      "partOf": [],
+      "location": {
+        "latitude": 40.44062,
+        "longitude": -79.99589,
+        "city": "Pittsburgh",
+        "country": "US"
+      }
+    },
+    "University of Pittsburgh Medical Center": {
+      "id": "I4210134769",
+      "partOf": ["I4210098814"],
+      "location": {
+        "latitude": 40.44062,
+        "longitude": -79.99589,
+        "city": "Pittsburgh",
+        "country": "US"
+      }
+    },
+    "University of Potsdam": {
+      "id": "I176453806",
+      "partOf": [],
+      "location": {
+        "latitude": 52.39886,
+        "longitude": 13.06566,
+        "city": "Potsdam",
+        "country": "DE"
+      }
+    },
+    "University of Southern Denmark": {
+      "id": "I177969490",
+      "partOf": [],
+      "location": {
+        "latitude": 55.39594,
+        "longitude": 10.38831,
+        "city": "Odense",
+        "country": "DK"
+      }
+    },
+    "University of Ulster": {
+      "id": "I138801177",
+      "partOf": [],
+      "location": {
+        "latitude": 55.13333,
+        "longitude": -6.66667,
+        "city": "Coleraine",
+        "country": "GB"
+      }
+    },
+    "University of the Basque Country": {
+      "id": "I169108374",
+      "partOf": [],
+      "location": {
+        "latitude": 43.32686,
+        "longitude": -2.98884,
+        "city": "Leioa",
+        "country": "ES"
+      }
+    },
+    "Universität Hamburg": {
+      "id": "I159176309",
+      "partOf": [],
+      "location": {
+        "latitude": 53.55073,
+        "longitude": 9.99302,
+        "city": "Hamburg",
+        "country": "DE"
+      }
+    },
+    "Université Paris Cité": {
+      "id": "I204730241",
+      "partOf": [],
+      "location": {
+        "latitude": 48.85341,
+        "longitude": 2.3488,
+        "city": "Paris",
+        "country": "FR"
+      }
+    },
+    "Université Paris-Saclay": {
+      "id": "I277688954",
+      "partOf": [],
+      "location": {
+        "latitude": 48.68333,
+        "longitude": 2.13333,
+        "city": "Gif-sur-Yvette",
+        "country": "FR"
+      }
+    },
+    "VA Connecticut Healthcare System": {
+      "id": "I4210086971",
+      "partOf": ["I1322918889", "I2799886695", "I4210095851"],
+      "location": {
+        "latitude": 41.27065,
+        "longitude": -72.94705,
+        "city": "West Haven",
+        "country": "US"
+      }
+    },
+    "Vicomtech": {
+      "id": "I4210092551",
+      "partOf": [],
+      "location": {
+        "latitude": 43.31283187866211,
+        "longitude": -1.9749900102615356,
+        "city": "Donostia / San Sebastian",
+        "country": "ES"
+      }
+    },
+    "Washington University in St. Louis": {
+      "id": "I204465549",
+      "partOf": [],
+      "location": {
+        "latitude": 38.62727,
+        "longitude": -90.19789,
+        "city": "St Louis",
+        "country": "US"
+      }
+    },
+    "Yale New Haven Health System": {
+      "id": "I4210117499",
+      "partOf": [],
+      "location": {
+        "latitude": 41.30815124511719,
+        "longitude": -72.92816162109375,
+        "city": "New Haven",
+        "country": "US"
+      }
+    },
+    "Yale University": {
+      "id": "I32971472",
+      "partOf": [],
+      "location": {
+        "latitude": 41.30815,
+        "longitude": -72.92816,
+        "city": "New Haven",
+        "country": "US"
+      }
+    }
+  }
 }
