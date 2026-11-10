@@ -107,6 +107,18 @@ describe('parseEtlStatsConfig', () => {
     ]);
   });
 
+  it('parses the dataset name and version a local file shows instead of its own, null for none', () => {
+    expect(
+      parseEtlStatsConfig({
+        local_files: [
+          { path: 'a.json', label: 'A', dataset_name: ' Alpha ', dataset_version: ' 1.2 ' },
+          { path: 'b.json', label: 'B', dataset_version: null },
+          { path: 'c.json', label: 'C', dataset_name: 'Gamma' },
+        ],
+      }).localFiles.map(file => file.datasetOverride)
+    ).toEqual([{ name: 'Alpha', version: '1.2' }, { version: null }, { name: 'Gamma' }]);
+  });
+
   it('accepts an empty file or empty lists', () => {
     const empty = { repos: [], exclude: [], localFiles: [] };
     expect(parseEtlStatsConfig(null)).toEqual(empty);
@@ -165,6 +177,16 @@ describe('parseEtlStatsConfig', () => {
       'a local file with an unknown variant',
       { local_files: [{ path: 'a.json', label: 'A', variant: 'sample' }] },
       '`local_files[0].variant` must be full or demo',
+    ],
+    [
+      'a local dataset version that is a number',
+      { local_files: [{ path: 'a.json', label: 'A', dataset_version: 1.2 }] },
+      "`local_files[0].dataset_version` must be a string (quote a number, e.g. '1.2') or null",
+    ],
+    [
+      'an empty local dataset name',
+      { local_files: [{ path: 'a.json', label: 'A', dataset_name: ' ' }] },
+      '`local_files[0].dataset_name` must be a string',
     ],
     [
       'a local file listed twice',
@@ -610,6 +632,17 @@ describe('loading', () => {
       await fs.rm(path.join(siteDir, HERE));
       const dev = await loadEtlStats(siteDir, { env: {} });
       expect(dev.data.datasets.map(d => d.label)).toEqual(['Alpha', 'Here']);
+    });
+
+    it("keeps the file's dataset name and version, and the ones configured to show instead", async () => {
+      await write(ETL_STATS_YAML, `${config()}    dataset_name: Shown\n    dataset_version: '2.0'\n`);
+      await write(HERE, JSON.stringify(statsDocument()));
+      const result = await loadEtlStats(siteDir, { source: 'live', env: {}, fetchFn: github(), now });
+      expect(result.data.datasets[1]).toMatchObject({
+        dataset: { name: 'Example', version: '1.0' },
+        datasetOverride: { name: 'Shown', version: '2.0' },
+      });
+      expect(result.data.datasets[0]).not.toHaveProperty('datasetOverride');
     });
 
     it('keeps one with a schema version the page cannot read, as a problem', async () => {

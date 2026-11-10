@@ -15,7 +15,10 @@
 #   local_files:  stats files committed to this repository, for datasets whose stats no ETL repository publishes.
 #                 Each entry has a `path` (relative to the repository root, conventionally under
 #                 static/data/etl_summary_stats/), a `label`, and optionally a `variant` (`full` or `demo`; by
-#                 default from the file name, as above).
+#                 default from the file name, as above). If the file's metadata/dataset.json doesn't name the
+#                 dataset or its version usefully, `dataset_name` and `dataset_version` set what the page shows
+#                 instead (a string; quote a number, e.g. '1.2'; or null to show none); the page marks them as
+#                 set here. Say where they come from in a `note`.
 #
 # A `note` for reviewers is allowed in any entry and ignored.
 #
@@ -37,13 +40,32 @@ local_files:
   - path: static/data/etl_summary_stats/ehrshot_full_summary_stats.json
     label: EHRSHOT
     variant: full
+    # The file's dataset_version (0.9:<ETL version>:OMOP_5.4) starts with OMOP_MEDS's default RAW_DATASET_VERSION,
+    # 0.9, not with a version of EHRSHOT.
+    dataset_name: EHRSHOT
+    dataset_version: '3.2'
     note: >-
       Written by meds_summary_stats 0.0.3 (git tag 0.0.3) with the default suppression (min_cell_size 20,
-      min_numeric_cell_size 20), from a MEDS_transforms 0.6.7 build of EHRSHOT (MEDS 0.4.1).
+      min_numeric_cell_size 20), from a MEDS_transforms 0.6.7 build of EHRSHOT (MEDS 0.4.1). The version is
+      EHRSHOT's current version on Redivis, v3.2 (https://stanford.redivis.com/datasets/53gc-8rhx41kgt,
+      DOI 10.57761/0gv9-nd83; versions and release notes from
+      https://redivis.com/api/v1/datasets/ShahLab.ehrshot/versions, checked 2026-11-10). The file's subject count
+      equals the person table's row count in v3.0 to v3.2 only, and its Visit events outnumber all the
+      visit_occurrence and visit_detail rows of v3.0 and v3.1, but not those of v3.2, whose release note is
+      "Various fixes to OMOP tables".
   - path: static/data/etl_summary_stats/inspect_full_summary_stats.json
-    # The file's dataset.json names the source systems, not INSPECT, so the label is set here.
+    # The file's dataset.json names INSPECT's source systems and their release dates, not INSPECT and its version,
+    # so the label, name and version are set here.
     label: INSPECT
     variant: full
+    dataset_name: INSPECT
+    dataset_version: '1.2'
     note: >-
       Written by meds_summary_stats 0.0.3 (git tag 0.0.3) with the default suppression (min_cell_size 20,
-      min_numeric_cell_size 20), from a meds_etl.omop build of INSPECT (MEDS 0.3.3).
+      min_numeric_cell_size 20), from a meds_etl.omop build of INSPECT (MEDS 0.3.3). The version is the current
+      version of INSPECT EHR on Redivis, v1.2 (https://stanford.redivis.com/datasets/dzc6-9jyt6gapt,
+      DOI 10.57761/ak51-d519; versions and release notes from
+      https://redivis.com/api/v1/datasets/ShahLab.inspect_ehr/versions, checked 2026-11-10). Its MEDS files are
+      those of v1.1 (the MEDS file index has the same hash in both versions; v1.2 only adds identifier mappings),
+      uploaded on 2025-02-12. The file's ETL version, meds_etl 0.3.9.dev11 built on 2025-01-31, is later than
+      v1.0's MEDS file index, created on 2024-12-10.

@@ -5,6 +5,7 @@ import type { LoadContext, Plugin } from '@docusaurus/types';
 import { repoKey } from '../src/lib/ecosystem/githubMetadata';
 import { isEtlStatsData, normalizeStatsDocument } from '../src/lib/etlSummaryStats/normalize';
 import {
+  type DatasetOverride,
   ETL_SUMMARY_STATS_PLUGIN,
   type EtlStatsData,
   type EtlStatsEntry,
@@ -29,7 +30,9 @@ import {
 // Stats files of datasets that no ETL repository publishes can be committed to this repository instead (under
 // static/data/etl_summary_stats/) and listed under `local_files` in etl_summary_stats.yaml. They are read from disk
 // whenever the GitHub files are fetched, and normalised and snapshotted the same way. A listed file that is missing
-// or isn't a stats document is a mistake in this repository, so it fails the build.
+// or isn't a stats document is a mistake in this repository, so it fails the build. An entry can set the dataset
+// name and version that the page shows (`dataset_name`, `dataset_version`), for a file whose dataset.json states
+// something else; the file's own values are kept alongside.
 //
 // The network never fails the build: whatever can't be fetched is taken from the committed snapshot
 // (static/data/etl_summary_stats.snapshot.json), with a single warning in the build log. Where the data comes from
@@ -75,6 +78,8 @@ export interface LocalStatsFile {
   path: string;
   label: string;
   variant: StatsVariant;
+  /** The dataset name and version to show instead of those the file states (`dataset_name`, `dataset_version`). */
+  datasetOverride?: DatasetOverride;
 }
 
 export interface EtlStatsConfig {
@@ -147,7 +152,9 @@ function parseLocalFile(value: unknown, i: number): LocalStatsFile {
     throw new Error(`\`${where}\` must be a mapping with a \`path\` and a \`label\``);
   }
   const fields = value as Record<string, unknown>;
-  const unknown = Object.keys(fields).find(key => !['path', 'label', 'variant', 'note'].includes(key));
+  const unknown = Object.keys(fields).find(
+    key => !['path', 'label', 'variant', 'dataset_name', 'dataset_version', 'note'].includes(key)
+  );
   if (unknown) throw new Error(`\`${where}\` has an unknown field \`${unknown}\``);
   const { path: file, label, variant } = fields;
   // A plain relative path inside the site directory, so it also names the file in this repository on GitHub.
@@ -167,7 +174,25 @@ function parseLocalFile(value: unknown, i: number): LocalStatsFile {
   if (variant !== undefined && variant !== 'full' && variant !== 'demo') {
     throw new Error(`\`${where}.variant\` must be full or demo`);
   }
-  return { path: file.trim(), label: label.trim(), variant: variant ?? variantFromName(file.trim()) };
+  // Each is shown instead of what the file's dataset.json states; null shows nothing.
+  const datasetOverride: DatasetOverride = {};
+  for (const [key, field] of [
+    ['name', 'dataset_name'],
+    ['version', 'dataset_version'],
+  ] as const) {
+    if (!(field in fields)) continue;
+    const text = fields[field];
+    if (text !== null && (typeof text !== 'string' || !text.trim())) {
+      throw new Error(`\`${where}.${field}\` must be a string (quote a number, e.g. '1.2') or null`);
+    }
+    datasetOverride[key] = text === null ? null : text.trim();
+  }
+  return {
+    path: file.trim(),
+    label: label.trim(),
+    variant: variant ?? variantFromName(file.trim()),
+    ...(Object.keys(datasetOverride).length > 0 ? { datasetOverride } : {}),
+  };
 }
 
 /** Validates the parsed etl_summary_stats.yaml. A malformed file is a mistake in this repository, so this throws. */
@@ -468,6 +493,7 @@ export async function readLocalStats(
         label: file.label,
         variant: file.variant,
         ...normalized,
+        ...(file.datasetOverride ? { datasetOverride: file.datasetOverride } : {}),
       });
     } catch (err) {
       throw new Error(`${file.path}, listed under local_files in ${ETL_STATS_YAML}: ${errorMessage(err)}`);

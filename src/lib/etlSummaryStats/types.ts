@@ -148,6 +148,16 @@ export type StatsHost = 'etl' | 'site';
 /** The GitHub repository of this site, which hosts the stats files configured under `local_files`. */
 export const SITE_GITHUB_REPO = 'Medical-Event-Data-Standard/medical-event-data-standard.github.io';
 
+/**
+ * A dataset name and version set in this site's configuration (`dataset_name` and `dataset_version` of a
+ * `local_files` entry), shown instead of what the file's dataset.json states. A field that is absent is taken from
+ * the file; one that is null shows nothing.
+ */
+export interface DatasetOverride {
+  name?: string | null;
+  version?: string | null;
+}
+
 /** One published stats file, as shown on the page. */
 export interface EtlStatsEntry {
   /** `owner/repo/path`, unique per file. */
@@ -163,6 +173,8 @@ export interface EtlStatsEntry {
   schemaVersion: number | null;
   toolVersion: string | null;
   dataset: DatasetInfo | null;
+  /** The dataset name and version that this site's configuration shows instead of `dataset`'s, if any. */
+  datasetOverride?: DatasetOverride;
   /** Cells backed by fewer distinct subjects than this were suppressed by `meds_summary_stats`. */
   minCellSize: number | null;
   /** Null if the file could not be read, e.g. because its schema version is not supported. */
