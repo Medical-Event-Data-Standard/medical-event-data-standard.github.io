@@ -127,6 +127,23 @@ describe('normalizeStats', () => {
         { name: 'LOINC', events: 10, recognized: true },
       ],
       suppressed: { cells: 2, events: 3 },
+      mappedEvents: 16000,
+      noVocabularyEvents: 2,
+      codesInMultipleVocabularies: 4,
+    });
+  });
+
+  it('counts no events under no vocabulary when the file lists none, and unknown when it lists no count', () => {
+    const ontology = (byVocabulary: unknown) =>
+      normalizeStats(
+        statsDocument({ code_metadata: { ontology: { present: true, by_vocabulary: byVocabulary } } })
+      ).ontology;
+    expect(ontology({ LOINC: { n_measurements: 10 } })?.noVocabularyEvents).toBe(0);
+    expect(ontology({ '<no-vocabulary>': { n_subjects: 30 } })?.noVocabularyEvents).toBeNull();
+    expect(ontology(undefined)).toMatchObject({
+      noVocabularyEvents: null,
+      mappedEvents: null,
+      codesInMultipleVocabularies: null,
     });
   });
 
@@ -222,7 +239,15 @@ describe('normalizeStats', () => {
           code_metadata: { ontology: { present: true, coverage: { frac_measurements_mapped: null } } },
         })
       ).ontology
-    ).toEqual({ eventsMapped: null, codesWithParents: null, vocabularies: [], suppressed: null });
+    ).toEqual({
+      eventsMapped: null,
+      codesWithParents: null,
+      vocabularies: [],
+      suppressed: null,
+      mappedEvents: null,
+      noVocabularyEvents: null,
+      codesInMultipleVocabularies: null,
+    });
     expect(
       normalizeStats(
         statsDocument({

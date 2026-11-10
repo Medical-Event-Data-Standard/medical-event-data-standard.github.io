@@ -85,7 +85,12 @@ export function statsDocument(overrides: Record<string, unknown> = {}): Record<s
       description_length: { n: 300, mean: 40, std: 9 },
       ontology: {
         present: true,
-        coverage: { frac_measurements_mapped: 0.4, frac_observed_codes_with_parents: 0.2 },
+        n_codes_in_multiple_vocabularies: 4,
+        coverage: {
+          frac_measurements_mapped: 0.4,
+          frac_observed_codes_with_parents: 0.2,
+          n_measurements_mapped: 16000,
+        },
         by_vocabulary: {
           LOINC: { n_measurements: 10, n_subjects: 30, recognized: true, keys_digest: 'sha256:def' },
           ICD10CM: { n_measurements: 5, n_subjects: 25, recognized: 'yes' },

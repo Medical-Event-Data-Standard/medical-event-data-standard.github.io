@@ -16,6 +16,9 @@ export const SUPPORTED_SCHEMA_VERSIONS: readonly number[] = [1];
 /** The key under which `meds_summary_stats` rolls up cells backed by too few subjects. */
 export const SUPPRESSED_KEY = '<suppressed>';
 
+/** The key under which `meds_summary_stats` pools parent codes that name no vocabulary. */
+export const NO_VOCABULARY_KEY = '<no-vocabulary>';
+
 /** Whether a stats file describes the full dataset or a small, openly available demo of it. */
 export type StatsVariant = 'full' | 'demo';
 
@@ -127,6 +130,17 @@ export interface EtlStats {
     vocabularies: VocabularyCell[];
     /** Vocabularies withheld because fewer than the suppression floor of subjects reach each. */
     suppressed: SuppressedRollup | null;
+    // The three fields below bound shares of events across several vocabularies. They are absent (not just null)
+    // in stats collected before the page read them.
+    /** Events whose code has a parent code in any vocabulary (`coverage.n_measurements_mapped`). */
+    mappedEvents?: number | null;
+    /**
+     * Events whose code has a parent code that names no vocabulary (`<no-vocabulary>`): 0 if the file has no such
+     * entry, since then there are none outside the suppressed rollup.
+     */
+    noVocabularyEvents?: number | null;
+    /** Codes in the code metadata with parent codes in more than one vocabulary (`n_codes_in_multiple_vocabularies`). */
+    codesInMultipleVocabularies?: number | null;
   } | null;
 }
 

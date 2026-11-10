@@ -6,6 +6,7 @@ import {
   type EtlStatsEntry,
   type SuppressedRollup,
   type VocabularyCell,
+  NO_VOCABULARY_KEY,
   SUPPORTED_SCHEMA_VERSIONS,
   SUPPRESSED_KEY,
 } from './types';
@@ -124,12 +125,22 @@ export function normalizeStats(doc: JsonObject): EtlStats {
   const ontologyBlock = dig(codeMetadataBlock, 'ontology');
   let ontology: EtlStats['ontology'] = null;
   if (isObject(ontologyBlock) && ontologyBlock.present === true) {
-    const vocabularies = normalizeKeyed(ontologyBlock.by_vocabulary, parseVocabulary, 'n_vocabularies');
+    const byVocabulary = ontologyBlock.by_vocabulary;
+    const vocabularies = normalizeKeyed(byVocabulary, parseVocabulary, 'n_vocabularies');
+    // Without a `<no-vocabulary>` entry, no events fall outside the named and suppressed vocabularies.
+    const noVocabulary = isObject(byVocabulary) ? byVocabulary[NO_VOCABULARY_KEY] : undefined;
     ontology = {
       eventsMapped: num(dig(ontologyBlock, 'coverage', 'frac_measurements_mapped')),
       codesWithParents: num(dig(ontologyBlock, 'coverage', 'frac_observed_codes_with_parents')),
       vocabularies: (vocabularies?.cells ?? []).sort((a, b) => a.name.localeCompare(b.name)),
       suppressed: vocabularies?.suppressed ?? null,
+      mappedEvents: num(dig(ontologyBlock, 'coverage', 'n_measurements_mapped')),
+      noVocabularyEvents: !vocabularies
+        ? null
+        : noVocabulary === undefined
+          ? 0
+          : num(dig(noVocabulary, 'n_measurements')),
+      codesInMultipleVocabularies: num(ontologyBlock.n_codes_in_multiple_vocabularies),
     };
   }
 
