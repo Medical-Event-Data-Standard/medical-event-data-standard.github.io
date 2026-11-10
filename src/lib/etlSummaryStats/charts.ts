@@ -87,6 +87,8 @@ const trace = (attributes: Record<string, unknown>): Data => attributes as Data;
 
 const ROW_HEIGHT = 34;
 const MARGIN = { l: 8, r: 24, t: 8, b: 40 };
+/** The charts' font, 12px, also for text the page sets beside a chart. */
+export const CHART_FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 
 // ─── Formatting ─────────────────────────────────────────────────
 
@@ -248,11 +250,7 @@ export function baseLayout(rows: number, overrides: Partial<Layout> = {}): Parti
     margin: { ...MARGIN },
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
-    font: {
-      family: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-      size: 12,
-      color: INK.secondary,
-    },
+    font: { family: CHART_FONT, size: 12, color: INK.secondary },
     hoverlabel: { bgcolor: '#ffffff', bordercolor: INK.grid, font: { color: INK.primary } },
     showlegend: false,
     // Nothing can be zoomed or panned, and without a drag mode Plotly leaves touch gestures alone, so a finger on a
@@ -1356,6 +1354,12 @@ export interface VocabularyModel {
   skipped: Skipped[];
   /** The narrowest the heatmap can be with legible columns; narrower screens scroll it sideways. */
   minWidth: number;
+  /**
+   * The datasets' names, one per row from the top, which the page sets beside the heatmap rather than in it, so
+   * that they stay in view when it scrolls: the first `top` pixels down, then one every `rowHeight` pixels, and
+   * about `width` pixels wide.
+   */
+  rowLabels: { labels: string[]; top: number; rowHeight: number; width: number };
   /** Whether any column is marked as a standard OMOP vocabulary. */
   anyRecognized: boolean;
   /** The ICD vocabularies that the drawn datasets' files name, which the ICD column groups, by name. */
@@ -1497,7 +1501,12 @@ export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
       });
     }
   }
-  const empty = { icdVocabularies: [], icdRanges: [], icdWithSuppressed: false };
+  const empty = {
+    rowLabels: { labels: [], top: 0, rowHeight: ROW_HEIGHT, width: 0 },
+    icdVocabularies: [],
+    icdRanges: [],
+    icdWithSuppressed: false,
+  };
   if (drawn.length === 0) return { figure: null, skipped, minWidth: 0, anyRecognized: false, ...empty };
 
   // Vocabulary columns: every vocabulary any dataset uses, the ICD ones as one column, the most widely used first,
@@ -1587,11 +1596,20 @@ export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
     16;
   // A row's marker starts at the first vocabulary column; if those can't hold it, the plot gets room on the right.
   const markerTexts = [...markers.values()];
-  const right =
-    8 +
-    (markerTexts.length > 0
+  const markerRoom =
+    markerTexts.length > 0
       ? Math.max(0, longest(markerTexts) * 7 + 12 - vocabularies.length * columnWidth)
-      : 0);
+      : 0;
+  // A slanted label also reaches about 0.72 of its length right of its column's centre, so the last ones need room.
+  const labelRoom = Math.max(
+    0,
+    ...vocabularies.map(
+      (c, i) =>
+        Math.ceil((c.name.length + (c.recognized ? 1 : 0)) * 7 * 0.72) -
+        (vocabularies.length - i - 0.5) * columnWidth
+    )
+  );
+  const right = 8 + Math.max(markerRoom, labelRoom);
   const firstVocabulary = (x.length - vocabularies.length) / x.length;
   return {
     figure: {
@@ -1637,7 +1655,7 @@ export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
       ],
       layout: baseLayout(drawn.length, {
         height: drawn.length * ROW_HEIGHT + top + 8,
-        margin: { l: 8, r: right, t: top, b: 8 },
+        margin: { l: 4, r: right, t: top, b: 8 },
         annotations: [...markers].map(([label, text]) => ({
           xref: 'paper',
           x: firstVocabulary,
@@ -1660,11 +1678,13 @@ export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
           linecolor: 'rgba(0,0,0,0)',
           tickfont: { color: INK.primary },
         },
-        yaxis: { ticks: '', linecolor: 'rgba(0,0,0,0)' },
+        // The page sets the datasets' names beside the heatmap (`rowLabels`).
+        yaxis: { ticks: '', linecolor: 'rgba(0,0,0,0)', showticklabels: false },
       } as Partial<Layout>),
     },
     skipped,
-    minWidth: longest(y) * 7 + 24 + x.length * columnWidth + right - 8,
+    minWidth: 4 + x.length * columnWidth + right,
+    rowLabels: { labels: y, top, rowHeight: ROW_HEIGHT, width: longest(y) * 7 + 8 },
     anyRecognized: vocabularies.some(c => c.recognized),
     icdVocabularies: [...icdVocabularies].sort((a, b) => a.localeCompare(b)),
     icdRanges,

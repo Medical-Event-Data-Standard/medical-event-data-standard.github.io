@@ -1172,8 +1172,17 @@ describe('vocabularyChart', () => {
       }),
     ]);
     // The longest column label, "Codes with a parent", sets the top margin; the vocabulary columns hold the note.
-    expect(model.figure?.layout.margin).toEqual({ l: 8, r: 8, t: 112, b: 8 });
-    expect(model.minWidth).toBe(8 * 7 + 24 + 7 * 44);
+    // The last label, "MAYBE", reaches 0.72 of its 5 characters of 7px past the centre of its 44px column.
+    expect(model.figure?.layout.margin).toEqual({ l: 4, r: 8 + Math.ceil(5 * 7 * 0.72) - 22, t: 112, b: 8 });
+    expect(model.minWidth).toBe(4 + 7 * 44 + 12);
+    // The datasets' names are set beside the heatmap, row by row, not in it.
+    expect(model.figure?.layout.yaxis).toMatchObject({ showticklabels: false });
+    expect(model.rowLabels).toEqual({
+      labels: ['Big', 'Small', 'Unmapped', 'Other'],
+      top: 112,
+      rowHeight: 34,
+      width: 8 * 7 + 8,
+    });
     expect(model.anyRecognized).toBe(true);
     expect(model).toMatchObject({ icdVocabularies: ['ICD10CM'], icdRanges: [], icdWithSuppressed: true });
     expect(model.skipped).toEqual([
@@ -1278,12 +1287,13 @@ describe('vocabularyChart', () => {
     // The note starts right of the plot, which makes room for it.
     expect(model.figure?.layout.annotations).toEqual([expect.objectContaining({ x: 1 })]);
     expect(layoutOf(model).margin.r).toBe(8 + 21 * 7 + 12);
-    // Without any note, the plot needs no extra room.
-    expect(layoutOf(vocabularyChart([big])).margin.r).toBe(8);
+    // Without any note, the plot needs room only for its last label, "LOINC*".
+    expect(layoutOf(vocabularyChart([big])).margin.r).toBe(8 + Math.ceil(6 * 7 * 0.72) - 22);
     expect(vocabularyChart([])).toEqual({
       figure: null,
       skipped: [],
       minWidth: 0,
+      rowLabels: { labels: [], top: 0, rowHeight: 34, width: 0 },
       anyRecognized: false,
       icdVocabularies: [],
       icdRanges: [],
@@ -1357,7 +1367,7 @@ describe('vocabularyChart', () => {
       icdRanges: ['Bounded'],
       icdWithSuppressed: false,
     });
-    expect(model.minWidth).toBe(8 * 7 + 24 + 7 * 44);
+    expect(model.minWidth).toBe(4 + 7 * 44 + 8);
     // Columns are wide enough for the longest line of a range.
     const tiny = entryWith('Tiny', 1000, {
       ontology: mapping([icd('ICD10CM', 40), icd('ICD9CM', 30), icd('LOINC', 1000)], {
@@ -1366,7 +1376,8 @@ describe('vocabularyChart', () => {
     });
     const tinyModel = vocabularyChart([tiny]);
     expect(icdColumn(attrs(tinyModel.figure?.data[1]).text)).toEqual(['<0.1%–<br>0.1%']);
-    expect(tinyModel.minWidth).toBe(4 * 7 + 24 + 5 * Math.ceil(6 * 6.5 + 10));
+    const tinyColumn = Math.ceil(6 * 6.5 + 10);
+    expect(tinyModel.minWidth).toBe(4 + 5 * tinyColumn + 8 + Math.ceil(6 * 7 * 0.72) - tinyColumn / 2);
     expect(isIcdVocabulary('icd10')).toBe(true);
     expect(isIcdVocabulary('NDC')).toBe(false);
   });

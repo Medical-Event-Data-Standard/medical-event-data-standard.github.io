@@ -8,6 +8,7 @@ import {
   type AxisScales,
   BREADTH_MEASURES,
   type BreadthMeasure,
+  CHART_FONT,
   type ChartModel,
   DESCRIPTION_THRESHOLD,
   ICD_GROUP,
@@ -27,6 +28,7 @@ import {
   formatPercent,
   githubRepoUrl,
   healthCheck,
+  INK,
   orderDatasets,
   paceChart,
   perSubjectChart,
@@ -204,6 +206,40 @@ function SummaryTable({ entries }: { entries: EtlStatsEntry[] }): React.JSX.Elem
           ))}
         </tbody>
       </table>
+    </Box>
+  );
+}
+
+/**
+ * A chart's row names, set beside it rather than in it, so that they stay in view when it scrolls sideways, in
+ * the chart's font. Screen readers get the chart's own label instead.
+ */
+function RowLabels({
+  labels,
+  top,
+  rowHeight,
+}: {
+  labels: string[];
+  top: number;
+  rowHeight: number;
+}): React.JSX.Element {
+  return (
+    <Box
+      aria-hidden="true"
+      sx={{
+        flex: 'none',
+        pt: `${top}px`,
+        pr: 1,
+        textAlign: 'right',
+        font: `12px ${CHART_FONT}`,
+        color: INK.primary,
+      }}
+    >
+      {labels.map(label => (
+        <Box key={label} sx={{ height: rowHeight, lineHeight: `${rowHeight}px`, whiteSpace: 'nowrap' }}>
+          {label}
+        </Box>
+      ))}
     </Box>
   );
 }
@@ -534,16 +570,23 @@ export default function DatasetStatistics(): React.JSX.Element {
                   display: 'none',
                   mt: 0,
                   mb: 1,
-                  [`@container (max-width: ${vocabularies.minWidth - 1}px)`]: { display: 'block' },
+                  [`@container (max-width: ${vocabularies.rowLabels.width + vocabularies.minWidth - 1}px)`]: {
+                    display: 'block',
+                  },
                 }}
               >
                 Scroll the heatmap sideways to see every vocabulary.
               </Typography>
-              <Plot
-                figure={vocabularies.figure}
-                minWidth={vocabularies.minWidth}
-                label="Share of events mapped to any vocabulary and to each vocabulary, per dataset, heatmap"
-              />
+              <Box sx={{ display: 'flex' }}>
+                <RowLabels {...vocabularies.rowLabels} />
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Plot
+                    figure={vocabularies.figure}
+                    minWidth={vocabularies.minWidth}
+                    label="Share of events mapped to any vocabulary and to each vocabulary, per dataset, heatmap"
+                  />
+                </Box>
+              </Box>
             </Box>
             {vocabularies.anyRecognized && (
               <Typography variant="body2" color="text.secondary" component="p" sx={{ mt: 1, mb: 0 }}>

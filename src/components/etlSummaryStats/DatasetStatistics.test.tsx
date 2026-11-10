@@ -527,6 +527,9 @@ describe('DatasetStatistics', () => {
       mapping.getByText(/and the range otherwise\. Suppressed vocabularies are not named/)
     ).toBeInTheDocument();
     expect(mapping.getByText('Scroll the heatmap sideways to see every vocabulary.')).toBeInTheDocument();
+    // The datasets' names are beside the heatmap, for sighted readers only; the heatmap has its own label.
+    const names = mapping.getByText('Coded', { selector: '[aria-hidden="true"] > *' }).parentElement;
+    expect(names?.textContent).toBe('BigCoded');
 
     const row = within(sectionOf('Datasets and their stats files')).getByRole('row', { name: /^Coded/ });
     expect(within(row).getAllByRole('cell')[0]).toHaveTextContent('Coded 3.2†');
