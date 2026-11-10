@@ -5,10 +5,14 @@ import type { LoadContext, Plugin } from '@docusaurus/types';
 import { repoKey } from '../src/lib/ecosystem/githubMetadata';
 import { isEtlStatsData, normalizeStatsDocument } from '../src/lib/etlSummaryStats/normalize';
 import {
+  type DatasetLocation,
+  type DatasetLocations,
   type DatasetOverride,
   ETL_SUMMARY_STATS_PLUGIN,
   type EtlStatsData,
   type EtlStatsEntry,
+  type EtlStatsPageData,
+  type LocatedDataset,
   type RepoWithoutStats,
   SITE_GITHUB_REPO,
   type StatsHost,
@@ -42,8 +46,12 @@ import {
 //
 //   GITHUB_TOKEN=$(gh auth token) npx ts-node --transpile-only -O '{"module":"commonjs"}' \
 //     scripts/update-etl-summary-stats-snapshot.ts && npx prettier --write static/data/etl_summary_stats.snapshot.json
+//
+// Where the datasets come from, for the page's map, is read from static/data/dataset_locations.yaml on every build
+// (it is not part of the snapshot); a malformed file fails the build.
 
 export const ECOSYSTEM_YAML = path.join('static', 'data', 'ecosystem.yaml');
+export const DATASET_LOCATIONS_YAML = path.join('static', 'data', 'dataset_locations.yaml');
 export const ETL_STATS_YAML = path.join('static', 'data', 'etl_summary_stats.yaml');
 export const ETL_STATS_SNAPSHOT = path.join('static', 'data', 'etl_summary_stats.snapshot.json');
 
@@ -318,6 +326,145 @@ export function planStatsFiles(repo: EtlRepo, files: string[], exclude: string[]
     const duplicate = !explicitLabel && targets.filter(other => other.label === target.label).length > 1;
     return duplicate ? { ...target, label: `${target.label} (${target.path.split('/').pop()})` } : target;
   });
+}
+
+// ─── Dataset locations ──────────────────────────────────────────
+
+type Fields = Record<string, unknown>;
+
+/** The entry's fields, if it is a mapping with only the `allowed` ones (and `note`, which is ignored). */
+function mapping(value: unknown, where: string, allowed: string[]): Fields {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(`\`${where}\` must be a mapping`);
+  }
+  const unknown = Object.keys(value).find(key => key !== 'note' && !allowed.includes(key));
+  if (unknown) throw new Error(`\`${where}\` has an unknown field \`${unknown}\``);
+  return value as Fields;
+}
+
+function text(fields: Fields, key: string, where: string): string {
+  const value = fields[key];
+  if (typeof value !== 'string' || !value.trim()) throw new Error(`\`${where}.${key}\` must be a string`);
+  return value.trim();
+}
+
+const optionalText = (fields: Fields, key: string, where: string): string | null =>
+  fields[key] === undefined ? null : text(fields, key, where);
+
+function url(fields: Fields, key: string, where: string): string {
+  const value = text(fields, key, where);
+  if (!/^https:\/\/[^\s/]+\/\S*$/.test(value)) throw new Error(`\`${where}.${key}\` must be an https URL`);
+  return value;
+}
+
+function coordinate(fields: Fields, key: string, where: string, limit: number): number {
+  const value = fields[key];
+  if (typeof value !== 'number' || !Number.isFinite(value) || Math.abs(value) > limit) {
+    throw new Error(`\`${where}.${key}\` must be a number from -${limit} to ${limit}`);
+  }
+  return value;
+}
+
+function list(fields: Fields, key: string, where: string): unknown[] {
+  const value = fields[key];
+  if (!Array.isArray(value) || value.length === 0)
+    throw new Error(`\`${where}.${key}\` must be a non-empty list`);
+  return value;
+}
+
+function parseLocatedDataset(value: unknown, where: string): LocatedDataset {
+  const fields = mapping(value, where, ['label', 'source', 'caveat']);
+  return {
+    label: text(fields, 'label', where),
+    source: url(fields, 'source', where),
+    caveat: optionalText(fields, 'caveat', where),
+  };
+}
+
+function parseLocation(value: unknown, i: number): DatasetLocation {
+  const where = `locations[${i}]`;
+  const fields = mapping(value, where, [
+    'institution',
+    'openalex',
+    'city',
+    'country',
+    'latitude',
+    'longitude',
+    'caveat',
+    'datasets',
+  ]);
+  const openalexId = text(fields, 'openalex', where);
+  if (!/^I\d+$/.test(openalexId))
+    throw new Error(`\`${where}.openalex\` must be an OpenAlex id, such as I123`);
+  const country = text(fields, 'country', where);
+  if (!/^[A-Z]{2}$/.test(country)) throw new Error(`\`${where}.country\` must be an ISO 3166-1 alpha-2 code`);
+  return {
+    institution: text(fields, 'institution', where),
+    openalexId,
+    city: text(fields, 'city', where),
+    country,
+    latitude: coordinate(fields, 'latitude', where, 90),
+    longitude: coordinate(fields, 'longitude', where, 180),
+    caveat: optionalText(fields, 'caveat', where),
+    datasets: list(fields, 'datasets', where).map((dataset, j) =>
+      parseLocatedDataset(dataset, `${where}.datasets[${j}]`)
+    ),
+  };
+}
+
+/**
+ * Validates the parsed dataset_locations.yaml. A malformed file, an institution listed twice, or a dataset listed
+ * more than once (at two locations, or both at one and as unplaced) is a mistake in this repository, so this throws.
+ */
+export function parseDatasetLocations(raw: unknown): DatasetLocations {
+  try {
+    if (raw === null || raw === undefined) return { locations: [], unplaced: [] };
+    const fields = mapping(raw, 'the file', ['locations', 'unplaced']);
+    for (const key of ['locations', 'unplaced']) {
+      if (fields[key] !== undefined && fields[key] !== null && !Array.isArray(fields[key])) {
+        throw new Error(`\`${key}\` must be a list`);
+      }
+    }
+    const locations = ((fields.locations ?? []) as unknown[]).map(parseLocation);
+    const unplaced = ((fields.unplaced ?? []) as unknown[]).map((value, i) => {
+      const where = `unplaced[${i}]`;
+      const entry = mapping(value, where, ['datasets', 'reason', 'source']);
+      return {
+        datasets: list(entry, 'datasets', where).map((label, j) => {
+          if (typeof label !== 'string' || !label.trim()) {
+            throw new Error(`\`${where}.datasets[${j}]\` must be a dataset's label`);
+          }
+          return label.trim();
+        }),
+        reason: text(entry, 'reason', where),
+        source: url(entry, 'source', where),
+      };
+    });
+    const institutions = locations.map(location => location.institution);
+    const twice = institutions.find((name, i) => institutions.indexOf(name) !== i);
+    if (twice) throw new Error(`\`locations\` lists ${twice} more than once`);
+    const labels = [
+      ...locations.flatMap(location => location.datasets.map(dataset => dataset.label)),
+      ...unplaced.flatMap(entry => entry.datasets),
+    ];
+    const again = labels.find((label, i) => labels.indexOf(label) !== i);
+    if (again) throw new Error(`the dataset ${again} is listed more than once`);
+    return { locations, unplaced };
+  } catch (err) {
+    throw new Error(`Invalid ${DATASET_LOCATIONS_YAML}: ${errorMessage(err)}`);
+  }
+}
+
+/** Reads and validates dataset_locations.yaml; a missing file means no locations. */
+export async function readDatasetLocations(siteDir: string): Promise<DatasetLocations> {
+  let content: string;
+  try {
+    content = await fs.readFile(path.join(siteDir, DATASET_LOCATIONS_YAML), 'utf8');
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return { locations: [], unplaced: [] };
+    throw err;
+  }
+  return parseDatasetLocations(parse(content));
 }
 
 // ─── Fetching ───────────────────────────────────────────────────
@@ -631,14 +778,16 @@ export default function etlSummaryStatsPlugin(context: LoadContext): Plugin {
     name: ETL_SUMMARY_STATS_PLUGIN,
 
     getPathsToWatch() {
-      return [ETL_STATS_YAML, ETL_STATS_SNAPSHOT].map(file => path.join(context.siteDir, file));
+      return [ETL_STATS_YAML, ETL_STATS_SNAPSHOT, DATASET_LOCATIONS_YAML].map(file =>
+        path.join(context.siteDir, file)
+      );
     },
 
-    async loadContent(): Promise<EtlStatsData> {
+    async loadContent(): Promise<EtlStatsPageData> {
       const { data, warning, message } = await loadEtlStats(context.siteDir);
       if (warning) console.warn(`[${ETL_SUMMARY_STATS_PLUGIN}] ${message}`);
       else console.info(`[${ETL_SUMMARY_STATS_PLUGIN}] ${message}`);
-      return data;
+      return { ...data, locations: await readDatasetLocations(context.siteDir) };
     },
 
     async contentLoaded({ content, actions }) {

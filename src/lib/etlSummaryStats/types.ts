@@ -225,10 +225,57 @@ export interface RepoWithoutStats {
   name: string;
 }
 
-/** The plugin's global data, and the format of the committed snapshot. */
+/** The collected stats files: the format of the committed snapshot, and most of the plugin's global data. */
 export interface EtlStatsData {
   /** When the files were last collected from GitHub (ISO 8601), or null if never. */
   updatedAt: string | null;
   datasets: EtlStatsEntry[];
   reposWithoutStats: RepoWithoutStats[];
+}
+
+/** A dataset on the page, from an institution on its map, with the documentation that names the institution. */
+export interface LocatedDataset {
+  /** The dataset's label on the page. */
+  label: string;
+  /** URL of the dataset's documentation that names the institution. */
+  source: string;
+  /** Shown with the dataset, e.g. that it is synthetic; null if none. */
+  caveat: string | null;
+}
+
+/** An institution that datasets come from, at its OpenAlex location (static/data/dataset_locations.yaml). */
+export interface DatasetLocation {
+  /** As the datasets' documentation names it. */
+  institution: string;
+  /** The OpenAlex id of the record that gives its coordinates, e.g. `I1316535847`. */
+  openalexId: string;
+  city: string;
+  /** ISO 3166-1 alpha-2 code, e.g. `US`. */
+  country: string;
+  latitude: number;
+  longitude: number;
+  /** Shown with the location, e.g. for a multi-centre dataset; null if none. */
+  caveat: string | null;
+  datasets: LocatedDataset[];
+}
+
+/** Datasets left off the map, and why. */
+export interface UnplacedDatasets {
+  /** The datasets' labels on the page. */
+  datasets: string[];
+  reason: string;
+  /** URL of the documentation the reason rests on. */
+  source: string;
+}
+
+/** Where the datasets come from, for the page's map (static/data/dataset_locations.yaml). */
+export interface DatasetLocations {
+  locations: DatasetLocation[];
+  unplaced: UnplacedDatasets[];
+}
+
+/** The plugin's global data: the collected stats files, and where the datasets come from. */
+export interface EtlStatsPageData extends EtlStatsData {
+  /** Absent in global data that doesn't come from the plugin, e.g. in tests. */
+  locations?: DatasetLocations;
 }

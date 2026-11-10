@@ -49,3 +49,7 @@ under `static/data/etl_summary_stats/` and lists it under `local_files` in the s
 `metadata/dataset.json` doesn't give its name or version as the dataset is published, set them there with
 `dataset_name` and `dataset_version`, and say where they come from in a `note`; the page marks them as set in
 the configuration.
+
+To put the dataset on the map, add the institution that its documentation names as the source of its records to
+[`static/data/dataset_locations.yaml`](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/blob/main/static/data/dataset_locations.yaml),
+with the coordinates of the institution's OpenAlex record and a link to that documentation.

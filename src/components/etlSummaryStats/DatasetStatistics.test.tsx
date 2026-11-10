@@ -6,7 +6,12 @@ import { usePluginData } from '@docusaurus/useGlobalData';
 
 import DatasetStatistics, { DATASET_STATISTICS_TOC } from './DatasetStatistics';
 import { etlStats, statsEntry } from '@site/src/lib/etlSummaryStats/testFixtures';
-import { type EtlStats, type EtlStatsData, SITE_GITHUB_REPO } from '@site/src/lib/etlSummaryStats/types';
+import {
+  type DatasetLocation,
+  type EtlStats,
+  type EtlStatsData,
+  SITE_GITHUB_REPO,
+} from '@site/src/lib/etlSummaryStats/types';
 
 // `@docusaurus/*` and `@theme/*` modules are webpack aliases that only exist inside a Docusaurus build, and Plotly
 // needs a real browser, so the wrapper is replaced by a stub that exposes the figure it was given, and the theme's
@@ -31,6 +36,14 @@ jest.mock(
     default: ({ data, layout }: { data: unknown[]; layout: unknown }) => (
       <div data-testid="plot" data-figure={JSON.stringify({ data, layout })} />
     ),
+  }),
+  { virtual: true }
+);
+jest.mock(
+  '@docusaurus/Link',
+  () => ({
+    __esModule: true,
+    default: ({ href, children }: React.PropsWithChildren<{ href: string }>) => <a href={href}>{children}</a>,
   }),
   { virtual: true }
 );
@@ -152,6 +165,7 @@ describe('DatasetStatistics', () => {
     const headings = screen.getAllByRole('heading', { level: 2 });
     expect(headings.map(heading => heading.textContent)).toEqual([
       'Datasets and their stats files',
+      'Where the datasets come from',
       'Dataset size',
       'Depth vs. breadth',
       'How much data each subject has',
@@ -660,5 +674,105 @@ describe('DatasetStatistics', () => {
     // The per-subject measure stays, since another measure may have data.
     expect(screen.getByRole('group', { name: 'Per-subject measure' })).toBeInTheDocument();
     expect(within(sectionOf('Health check')).getAllByRole('row')).toHaveLength(1);
+  });
+  it('shows where the datasets come from, with a map when asked, and the sources', async () => {
+    const location = (institution: string, city: string, labels: string[]): DatasetLocation => ({
+      institution,
+      openalexId: 'I1',
+      city,
+      country: 'US',
+      latitude: 42.34,
+      longitude: -71.11,
+      caveat: null,
+      datasets: labels.map(label => ({
+        label,
+        source: `https://physionet.org/content/${label}/`,
+        caveat: null,
+      })),
+    });
+    const locations = {
+      locations: [
+        { ...location('General Hospital', 'Boston', ['Big']), caveat: 'Several hospitals.' },
+        location('Far Clinic', 'Stanford', ['Future']),
+      ],
+      unplaced: [{ datasets: ['Demo'], reason: 'Many hospitals.', source: 'https://www.example.org/demo' }],
+    };
+    mockUsePluginData.mockReturnValue({ ...data, locations });
+    render(<DatasetStatistics />);
+    const section = () => within(sectionOf('Where the datasets come from'));
+    expect(section().getByText(/2 of the 3 datasets shown, at 2 institutions\./)).toBeInTheDocument();
+    expect(section().getByRole('link', { name: 'static/data/dataset_locations.yaml' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('/static/data/dataset_locations.yaml')
+    );
+
+    // What isn't on the map, and why.
+    const offMap = section().getByText('Not on the map:').nextElementSibling as HTMLElement;
+    expect(offMap).toHaveTextContent('Demo: Many hospitals. (example.org)');
+
+    // Each placed dataset's institution and source.
+    const table = section().getByRole('table', {
+      name: 'Where the datasets come from: institutions and sources',
+    });
+    expect(
+      within(table)
+        .getAllByRole('row')
+        .map(row => row.textContent)
+    ).toEqual([
+      'DatasetInstitutionLocationSource',
+      'BigGeneral HospitalSeveral hospitals.Boston, United Statesphysionet.org',
+      'FutureFar ClinicStanford, United Statesphysionet.org',
+    ]);
+    expect(within(table).getAllByRole('link')[0]).toHaveAttribute(
+      'href',
+      'https://physionet.org/content/Big/'
+    );
+
+    // The map is hidden until asked for; its pins name their institutions and datasets.
+    const toggle = section().getByRole('button', { name: 'Show map' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(toggle);
+    const map = within(await screen.findByRole('group', { name: 'Map of where the datasets come from' }));
+    expect(section().getByRole('button', { name: 'Hide map' })).toHaveAttribute(
+      'aria-controls',
+      'dataset-map'
+    );
+    expect(
+      map.getByRole('button', {
+        name: '2 institutions: General Hospital, Far Clinic',
+      })
+    ).toBeInTheDocument();
+    expect(section().getByText(/Each pin marks an institution at its OpenAlex location/)).toBeInTheDocument();
+    fireEvent.click(map.getByRole('button', { name: /^2 institutions/ }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Far Clinic' }));
+    expect(map.getByText('Far Clinic')).toBeInTheDocument();
+    fireEvent.mouseOver(map.getByRole('button', { name: /^2 institutions/ }));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      'General Hospital (Boston, United States): Big'
+    );
+    fireEvent.click(section().getByRole('button', { name: 'Hide map' }));
+    expect(
+      screen.queryByRole('group', { name: 'Map of where the datasets come from' })
+    ).not.toBeInTheDocument();
+
+    // Leaving out the demo leaves it off the list; one institution is counted as one.
+    fireEvent.click(screen.getByLabelText(/Include demo datasets/));
+    expect(section().queryByText('Not on the map:')).not.toBeInTheDocument();
+    mockUsePluginData.mockReturnValue({
+      ...data,
+      locations: { locations: [locations.locations[0]], unplaced: [] },
+    });
+    render(<DatasetStatistics />);
+    expect(screen.getByText(/1 of the 3 datasets shown, at 1 institution\./)).toBeInTheDocument();
+  });
+
+  it('has no map without recorded locations, and names the datasets without one', () => {
+    mockUsePluginData.mockReturnValue(data);
+    render(<DatasetStatistics />);
+    const section = within(sectionOf('Where the datasets come from'));
+    expect(section.getByText(/0 of the 3 datasets shown, at 0 institutions\./)).toBeInTheDocument();
+    expect(section.queryByRole('button', { name: 'Show map' })).not.toBeInTheDocument();
+    expect(section.queryByRole('table')).not.toBeInTheDocument();
+    expect(section.getByText('Big').closest('li')).toHaveTextContent('Big: No location is recorded for it.');
   });
 });

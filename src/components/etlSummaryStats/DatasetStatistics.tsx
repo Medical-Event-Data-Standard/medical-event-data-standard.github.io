@@ -38,10 +38,12 @@ import {
   vocabularyChart,
 } from '@site/src/lib/etlSummaryStats/charts';
 import {
+  type DatasetLocations as DatasetLocationsConfig,
   ETL_SUMMARY_STATS_PLUGIN,
-  type EtlStatsData,
   type EtlStatsEntry,
+  type EtlStatsPageData,
 } from '@site/src/lib/etlSummaryStats/types';
+import DatasetLocations from './DatasetLocations';
 import {
   BubbleKey,
   COMPACT_TABLE,
@@ -68,6 +70,7 @@ const NARROW_SCREEN = '(max-width: 760px)';
 /** The page's sections, in order: their heading and its anchor. */
 export const SECTIONS = {
   files: { id: 'stats-files', title: 'Datasets and their stats files' },
+  locations: { id: 'dataset-locations', title: 'Where the datasets come from' },
   size: { id: 'dataset-size', title: 'Dataset size' },
   depth: { id: 'depth-breadth', title: 'Depth vs. breadth' },
   perSubject: { id: 'per-subject', title: 'How much data each subject has' },
@@ -244,11 +247,14 @@ function RowLabels({
   );
 }
 
+/** No recorded locations, for global data without them. */
+const NO_LOCATIONS: DatasetLocationsConfig = { locations: [], unplaced: [] };
+
 /** Marks a dataset name and version set in this site's configuration rather than taken from the stats file. */
 const OVERRIDE_MARK = '†';
 
 export default function DatasetStatistics(): React.JSX.Element {
-  const data = usePluginData(ETL_SUMMARY_STATS_PLUGIN) as EtlStatsData | undefined;
+  const data = usePluginData(ETL_SUMMARY_STATS_PLUGIN) as EtlStatsPageData | undefined;
   const [includeDemo, setIncludeDemo] = useState(true);
   const [perSubjectMetric, setPerSubjectMetric] = useState<PerSubjectMetric>('events');
   const [breadth, setBreadth] = useState<BreadthMeasure>('subjects');
@@ -277,6 +283,7 @@ export default function DatasetStatistics(): React.JSX.Element {
   const pace = useMemo(() => paceChart(entries, scales.pace?.x), [entries, scales.pace]);
   const coverage = useMemo(() => coverageChart(entries), [entries]);
   const datasetLabels = useMemo(() => allEntries.map(entry => entry.label), [allEntries]);
+  const shownLabels = useMemo(() => entries.map(entry => entry.label), [entries]);
   const codeTail = useMemo(
     () => codeTailChart(entries, highlight, datasetLabels, { narrow, scales: scales.tail }),
     [entries, highlight, datasetLabels, narrow, scales.tail]
@@ -386,6 +393,12 @@ export default function DatasetStatistics(): React.JSX.Element {
           </Typography>
         )}
       </Box>
+
+      <DatasetLocations
+        {...SECTIONS.locations}
+        config={data.locations ?? NO_LOCATIONS}
+        labels={shownLabels}
+      />
 
       <ChartSection
         {...SECTIONS.size}

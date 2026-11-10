@@ -107,11 +107,11 @@ export interface MapPlace {
   weight: number;
 }
 
-export interface MapMarker {
+export interface MapMarker<P extends MapPlace = MapPlace> {
   /** Where the marker is: the location of its first place. */
   location: GeoLocation;
   /** The places it stands for, in the order given (largest weight first). */
-  places: MapPlace[];
+  places: P[];
   /** What it stands for, which sets a pin's size: by default the sum of its places' weights. */
   weight: number;
 }
@@ -122,12 +122,12 @@ export interface MapMarker {
  * gets a marker of its own, at its location. `weigh` gives a marker's weight from its places, e.g. the number of
  * distinct papers of a group of institutions, which the sum of their papers would overcount.
  */
-export function mapMarkers(
-  places: readonly MapPlace[],
+export function mapMarkers<P extends MapPlace>(
+  places: readonly P[],
   near: number,
-  weigh: (places: MapPlace[]) => number = members => members.reduce((sum, place) => sum + place.weight, 0)
-): MapMarker[] {
-  const pins: { location: GeoLocation; point: MapPoint; places: MapPlace[] }[] = [];
+  weigh: (places: P[]) => number = members => members.reduce((sum, place) => sum + place.weight, 0)
+): MapMarker<P>[] {
+  const pins: { location: GeoLocation; point: MapPoint; places: P[] }[] = [];
   for (const place of places) {
     const point = project(place.location);
     const pin = pins.find(other => Math.hypot(other.point.x - point.x, other.point.y - point.y) < near);
