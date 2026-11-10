@@ -8,6 +8,12 @@
 # ETL targets, or wherever else it is hosted. The other package fields are those of `RawPackage` in
 # src/lib/ecosystem/types.ts; any other key fails the build.
 #
+# The top right corner of a package's card shows the GitHub avatar of the organization that owns its
+# `github_repo`. The avatars are committed in static/img/ecosystem-logos; after adding a package from a new owner,
+# run `npm run ecosystem:logos` and commit the result. Packages without a `github_repo`, and those owned by a
+# personal account (see `PERSONAL_ACCOUNT_LOGOS` in plugins/ecosystemMetadata.ts) or by an organization without an
+# uploaded avatar, show the MEDS logo.
+#
 # Each category's `stage` places its packages in the flowchart on the "Which tool do I use for what?" page
 # (https://medical-event-data-standard.github.io/docs/intro_pages/ecosystem_workflow); a subcategory without a
 # `stage` uses its parent's. The stages are: convert, explore, preprocess, task, model, evaluate, benchmark (the

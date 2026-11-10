@@ -7,6 +7,8 @@
 # Generated files
 .docusaurus
 .cache-loader
+# The ecosystem owners' logos, downloaded at build time by plugins/ecosystemMetadata.ts
+/static/img/ecosystem-logos/
 
 # Misc
 .DS_Store
