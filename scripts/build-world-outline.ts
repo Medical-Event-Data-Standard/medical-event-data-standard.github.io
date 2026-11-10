@@ -1,17 +1,17 @@
-// Writes src/lib/papers/worldOutline.ts, the land outline of the institutions map on the papers page, from Natural
-// Earth's 1:110m land polygons (public domain, https://www.naturalearthdata.com/). Run it with the path or URL of
-// ne_110m_land.geojson:
+// Writes src/lib/worldMap/worldOutline.ts, the land outline of the world map on the papers and dataset statistics
+// pages (src/components/common/WorldMap.tsx), from Natural Earth's 1:110m land polygons (public domain,
+// https://www.naturalearthdata.com/). Run it with the path or URL of ne_110m_land.geojson:
 //
 //   npx ts-node --transpile-only -O '{"module":"commonjs"}' scripts/build-world-outline.ts \
 //     https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_110m_land.geojson
 import fs from 'fs/promises';
 import path from 'path';
-import { MAP_BOUNDS } from '../src/lib/papers/map';
+import { MAP_BOUNDS } from '../src/lib/worldMap/map';
 
 type Ring = [number, number][];
 type Geometry = { type: 'Polygon'; coordinates: Ring[] } | { type: 'MultiPolygon'; coordinates: Ring[][] };
 
-const OUTPUT = path.join('src', 'lib', 'papers', 'worldOutline.ts');
+const OUTPUT = path.join('src', 'lib', 'worldMap', 'worldOutline.ts');
 
 /** A number with one decimal, without a trailing `.0`. */
 const format = (value: number): string => String(Math.round(value * 10) / 10);
