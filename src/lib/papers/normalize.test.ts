@@ -619,6 +619,7 @@ describe('OpenAlex helpers', () => {
 
   it('lists the icons a page links to, best first', () => {
     const html = `
+      <link href="/no-rel.png">
       <link rel="stylesheet" href="/style.css">
       <link rel="icon" href="/favicon-16.png" sizes="16x16">
       <link href='/favicon-96.png' rel='icon' sizes='96x96'>
@@ -667,6 +668,14 @@ describe('OpenAlex helpers', () => {
     const p = paper('p', { title: 'MEDS: A Standard', authors: ['E. Steinberg', 'Robin P. van de Water'] });
     expect(isSameWork(p, work('MEDS - a standard', [['Robin van de Water', []]]))).toBe(true);
     expect(isSameWork(p, work('MEDS: A Standard', [['Ethan Steinberg', []]]))).toBe(true);
+    // Authorships without an author or name count as listing no authors, as does a work without authorships.
+    expect(isSameWork(p, { title: 'MEDS: A Standard' })).toBe(true);
+    expect(
+      isSameWork(p, {
+        title: 'MEDS: A Standard',
+        authorships: [null as never, { author: null }, { author: { display_name: null } }],
+      })
+    ).toBe(true);
     expect(isSameWork(p, work('MEDS: A Standard', []))).toBe(true);
     expect(isSameWork({ ...p, authors: [] }, work('MEDS: A Standard', [['Ada Lovelace', []]]))).toBe(true);
     expect(isSameWork(p, work('MEDS: A Standard', [['Ada Lovelace', []]]))).toBe(false);
@@ -740,6 +749,14 @@ describe('institution records', () => {
     expect(
       rollUpInstitutions(['University', 'Medical School'], { 'Medical School': record('I2', ['I1']) }).size
     ).toBe(0);
+    // An institution whose only listed ancestor is rolled up itself stays as it is.
+    expect([
+      ...rollUpInstitutions(['Group', 'Department', 'University'], {
+        Group: record('I1', ['I2']),
+        Department: record('I2', ['I3']),
+        University: record('I3', []),
+      }),
+    ]).toEqual([['Department', ['University']]]);
     // A kept-apart institution can still have others rolled up into it.
     expect([
       ...rollUpInstitutions(['University', 'Medical School', 'Lab'], records, new Set(['Medical School'])),

@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 import React from 'react';
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { usePluginData } from '@docusaurus/useGlobalData';
 
 import Papers from '@site/src/pages/papers';
@@ -141,6 +141,10 @@ describe('Papers page', () => {
       'https://openalex.org/'
     );
     expect(within(how).getByText(/1 of the 3 papers has no institutions listed/)).toBeInTheDocument();
+    cleanup();
+    mockUsePluginData.mockReturnValue({ ...data, papers: papers.map(p => ({ ...p, institutions: [] })) });
+    render(<Papers />);
+    expect(screen.getByText(/3 of the 3 papers have no institutions listed/)).toBeInTheDocument();
     expect(within(how).getByRole('link', { name: 'open an issue' })).toHaveAttribute(
       'href',
       'https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/issues/new/choose'

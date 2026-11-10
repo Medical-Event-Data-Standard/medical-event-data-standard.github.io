@@ -407,11 +407,14 @@ export function rollUpInstitutions(
   records: Readonly<Record<string, InstitutionRecord>>,
   separate: ReadonlySet<string> = new Set()
 ): Map<string, string[]> {
-  const recordOf = new Map(Object.entries(records));
-  const listed = [...new Set(names)].filter(name => recordOf.has(name));
-  const nameOf = new Map(listed.map(name => [recordOf.get(name)?.id, name]));
+  // The listed institutions that have a record, which is all that can be rolled up or rolled into.
+  const recordOf = new Map(
+    [...new Set(names)].flatMap(name => (records[name] ? [[name, records[name]] as const] : []))
+  );
+  const listed = [...recordOf.keys()];
+  const nameOf = new Map([...recordOf].map(([name, record]) => [record.id, name]));
   const ancestors = (name: string): string[] =>
-    (recordOf.get(name)?.partOf ?? []).flatMap(id => {
+    (recordOf.get(name) as InstitutionRecord).partOf.flatMap(id => {
       const ancestor = nameOf.get(id);
       return ancestor && ancestor !== name ? [ancestor] : [];
     });
@@ -591,7 +594,10 @@ export function normalizeText(text: string): string {
     .trim();
 }
 
-const surname = (name: string): string => normalizeText(name).split(' ').pop() ?? '';
+const surname = (name: string): string => {
+  const words = normalizeText(name).split(' ');
+  return words[words.length - 1];
+};
 
 /**
  * True if an OpenAlex work (found by searching for the paper's title) is the paper: it has the same title and, if

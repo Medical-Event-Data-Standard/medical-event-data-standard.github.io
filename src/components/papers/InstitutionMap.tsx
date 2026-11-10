@@ -37,10 +37,10 @@ const papersText = (count: number): string => `${count} paper${count === 1 ? '' 
 const TOOLTIP_ROWS = 8;
 
 /** The point on the map under a position on the screen, given the map's frame. */
-function pointAt(frame: HTMLElement | null, view: MapView, clientX: number, clientY: number): MapPoint {
-  const rect = frame?.getBoundingClientRect();
+function pointAt(frame: HTMLElement, view: MapView, clientX: number, clientY: number): MapPoint {
+  const rect = frame.getBoundingClientRect();
   const { width, height } = viewSize(view.zoom);
-  if (!rect?.width || !rect.height) return viewCentre(view);
+  if (!rect.width || !rect.height) return viewCentre(view);
   return {
     x: view.x + ((clientX - rect.left) / rect.width) * width,
     y: view.y + ((clientY - rect.top) / rect.height) * height,
@@ -51,8 +51,8 @@ function pointAt(frame: HTMLElement | null, view: MapView, clientX: number, clie
 function useWidth(ref: React.RefObject<HTMLElement | null>): number {
   const [width, setWidth] = useState(1000);
   useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
+    // The element is rendered unconditionally, so it exists by the time effects run.
+    const element = ref.current as HTMLElement;
     if (element.clientWidth) setWidth(element.clientWidth);
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(([entry]) => {
@@ -117,8 +117,7 @@ export default function InstitutionMap({
   // A trackpad pinch, or Ctrl and the scroll wheel, zooms in or out around the pointer. The listener is added by
   // hand because React's wheel listeners can't stop the page from zooming or scrolling.
   useEffect(() => {
-    const element = frame.current;
-    if (!element) return;
+    const element = frame.current as HTMLDivElement;
     const onWheel = (event: WheelEvent): void => {
       if (!event.ctrlKey) return;
       event.preventDefault();
@@ -189,7 +188,8 @@ export default function InstitutionMap({
         onDoubleClick={event => {
           if (!onBackground(event)) return;
           const { clientX, clientY } = event;
-          setView(current => zoomView(current, 2, pointAt(frame.current, current, clientX, clientY)));
+          const element = event.currentTarget;
+          setView(current => zoomView(current, 2, pointAt(element, current, clientX, clientY)));
         }}
         sx={{
           position: 'relative',

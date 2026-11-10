@@ -170,6 +170,12 @@ describe('fitView', () => {
         { x: 0, y: 1 },
       ])?.zoom
     ).toBe(MAX_ZOOM);
+    expect(
+      fitView([
+        { x: 0, y: 0 },
+        { x: 1, y: 0 },
+      ])?.zoom
+    ).toBe(MAX_ZOOM);
   });
 
   it('gives nothing for points at one place, which no zoom separates', () => {
