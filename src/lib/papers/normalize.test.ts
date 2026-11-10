@@ -2,11 +2,14 @@ import { describe, expect, it } from '@jest/globals';
 import {
   attachInstitutions,
   buildPapersData,
+  byShownName,
   doiFromUrl,
   emptyLiveFetch,
   iconExtension,
   iconLinks,
   institutionIconSlug,
+  institutionLocations,
+  institutionRecord,
   institutionRenamer,
   institutionRecordsOfWork,
   institutionsOfWork,
@@ -17,14 +20,15 @@ import {
   openAlexDoi,
   paperFromDetails,
   paperMatchesId,
-  renameInstitutions,
+  rollUpInstitutions,
   semanticScholarUrl,
+  showInstitutions,
   type LiveFetch,
   type OpenAlexWork,
   type PapersConfig,
   type S2Paper,
 } from './normalize';
-import type { CitingPaper, Paper, PapersData } from './types';
+import type { CitingPaper, InstitutionLocation, InstitutionRecord, Paper, PapersData } from './types';
 
 const SEED_A = 'a'.repeat(40);
 const SEED_B = 'b'.repeat(40);
@@ -165,6 +169,7 @@ describe('buildPapersData', () => {
     ],
     include: [],
     exclude: [],
+    merge: [],
     affiliations: [],
     institutions: [],
   };
@@ -213,6 +218,37 @@ describe('buildPapersData', () => {
     ]);
     expect(result.fromSnapshot).toEqual([]);
     expect(result.missing).toEqual([]);
+  });
+
+  it('lists a merged record as the record it is merged into, citing every seed either cites', () => {
+    const live = liveWith({
+      citations: new Map([
+        [SEED_A, [s2('preprint', { externalIds: { DOI: '10.1101/X' } })]],
+        [SEED_B, [s2('kept', { year: 2026 }), s2('orphan'), s2('also-merged')]],
+      ]),
+      included: new Map([['also-merged', s2('also-merged')]]),
+    });
+    const merge = [
+      { id: 'DOI:10.1101/x', into: 'kept' },
+      { id: 'also-merged', into: 'kept' },
+      // A record merged into one that isn't listed stays listed.
+      { id: 'orphan', into: 'missing' },
+    ];
+
+    const result = buildPapersData({ ...config, include: [{ id: 'also-merged' }], merge }, live, null);
+
+    expect(result.papers.map(p => [p.id, p.cites, p.manual])).toEqual([
+      ['kept', [SEED_A, SEED_B], true],
+      ['orphan', [SEED_B], undefined],
+    ]);
+
+    // A seed whose citations come from the snapshot finds the kept record there, with the merged record's seeds.
+    const fromSnapshot = buildPapersData(
+      { ...config, merge },
+      liveWith({ citations: new Map([[SEED_B, [s2('kept', { year: 2026 })]]]) }),
+      { updatedAt: null, seeds: [], papers: [paper('kept', { cites: [SEED_A, SEED_B] })] }
+    );
+    expect(fromSnapshot.papers.map(p => [p.id, p.cites])).toEqual([['kept', [SEED_A, SEED_B]]]);
   });
 
   it('lists the cited seeds in configuration order, whatever order the citations came in', () => {
@@ -449,9 +485,29 @@ describe('isPapersData', () => {
     papers: [paper('p', { cites: ['s'] })],
   };
 
+  const record: InstitutionRecord = {
+    id: 'I1',
+    partOf: ['I2'],
+    location: { latitude: 52.4, longitude: 13.1, city: 'Potsdam', country: 'DE' },
+  };
+
   it('accepts well-formed data', () => {
     expect(isPapersData(valid)).toBe(true);
     expect(isPapersData({ ...valid, updatedAt: '2026-01-01T00:00:00Z' })).toBe(true);
+    expect(isPapersData({ ...valid, institutions: { A: record, B: { ...record, location: null } } })).toBe(
+      true
+    );
+  });
+
+  it('rejects malformed institution records', () => {
+    expect(isPapersData({ ...valid, institutions: null })).toBe(false);
+    expect(isPapersData({ ...valid, institutions: { A: null } })).toBe(false);
+    expect(isPapersData({ ...valid, institutions: { A: { ...record, id: 1 } } })).toBe(false);
+    expect(isPapersData({ ...valid, institutions: { A: { ...record, partOf: 'I2' } } })).toBe(false);
+    expect(
+      isPapersData({ ...valid, institutions: { A: { ...record, location: { latitude: 91, longitude: 0 } } } })
+    ).toBe(false);
+    expect(isPapersData({ ...valid, institutions: { A: { ...record, location: 'Potsdam' } } })).toBe(false);
   });
 
   it('rejects malformed data', () => {
@@ -593,8 +649,9 @@ describe('OpenAlex helpers', () => {
       'Other',
     ]);
     expect(
-      renameInstitutions(
+      showInstitutions(
         [paper('p', { institutions: ['Institut national de recherche', 'Inria', 'GSK plc'] })],
+        {},
         institutions
       ).map(p => p.institutions)
     ).toEqual([['Inria', 'GSK plc']]);
@@ -616,6 +673,120 @@ describe('OpenAlex helpers', () => {
     expect(isSameWork(p, work('MEDS: A Standard, Extended', [['Ethan Steinberg', []]]))).toBe(false);
     expect(isSameWork(p, { authorships: null })).toBe(false);
     expect(isSameWork({ ...p, title: '???' }, work('!!!', []))).toBe(false);
+  });
+});
+
+describe('institution records', () => {
+  const at = (latitude: number, longitude: number) => ({ latitude, longitude, city: null, country: null });
+  const record = (
+    id: string,
+    partOf: string[] = [],
+    location: InstitutionLocation | null = at(0, 0)
+  ): InstitutionRecord => ({
+    id,
+    partOf,
+    location,
+  });
+
+  it("records an OpenAlex institution's id, the institutions it is part of, its location and homepage", () => {
+    expect(
+      institutionRecord({
+        id: 'https://openalex.org/I4210137306',
+        display_name: 'Stanford Medicine',
+        lineage: ['https://openalex.org/I4210137306', 'https://openalex.org/I97018004', null, 'I97018004'],
+        homepage_url: ' https://med.stanford.edu ',
+        geo: { city: 'Stanford', country_code: 'US', latitude: 37.42411, longitude: -122.16608 },
+      })
+    ).toEqual({
+      record: {
+        id: 'I4210137306',
+        partOf: ['I97018004'],
+        location: { latitude: 37.42411, longitude: -122.16608, city: 'Stanford', country: 'US' },
+      },
+      homepage: 'https://med.stanford.edu',
+    });
+    expect(institutionRecord({ id: 'I1', geo: { latitude: 100, longitude: 0 } })).toEqual({
+      record: { id: 'I1', partOf: [], location: null },
+      homepage: null,
+    });
+    expect(
+      institutionRecord({ id: 'I1', geo: { latitude: null, longitude: 5 } })?.record.location
+    ).toBeNull();
+    expect(institutionRecord({ display_name: 'No id' })).toBeNull();
+    expect(institutionRecord(null)).toBeNull();
+  });
+
+  const records = {
+    University: record('I1'),
+    'Medical School': record('I2', ['I1']),
+    // Part of the school, and so of the university.
+    Lab: record('I3', ['I1', 'I2']),
+    // Part of three institutions, two of them listed.
+    'Joint Team': record('I4', ['I1', 'I5', 'I6']),
+    Institute: record('I5'),
+    'Kept Apart': record('I7', ['I1']),
+    'Part Of Unlisted': record('I8', ['I9']),
+    'Not Listed': record('I9'),
+  };
+  const listed = Object.keys(records).filter(name => name !== 'Not Listed');
+
+  it('shows an institution as the listed institutions it is part of, except those kept separate', () => {
+    expect([...rollUpInstitutions(listed, records, new Set(['Kept Apart']))]).toEqual([
+      ['Medical School', ['University']],
+      ['Lab', ['University']],
+      ['Joint Team', ['University', 'Institute']],
+    ]);
+    // Institutions without a record are never rolled up, nor rolled up into.
+    expect(
+      rollUpInstitutions(['University', 'Medical School'], { 'Medical School': record('I2', ['I1']) }).size
+    ).toBe(0);
+    // A kept-apart institution can still have others rolled up into it.
+    expect([
+      ...rollUpInstitutions(['University', 'Medical School', 'Lab'], records, new Set(['Medical School'])),
+    ]).toEqual([['Lab', ['University', 'Medical School']]]);
+  });
+
+  it('shows papers with their institutions rolled up, then renamed, each once', () => {
+    const papers = [
+      paper('p', { institutions: ['Lab', 'Medical School', 'Kept Apart', 'University', 'Institute'] }),
+      paper('q', { institutions: ['Joint Team', 'Other'] }),
+    ];
+    const config = [
+      { name: 'Kept Apart', separate: true },
+      { name: 'Institute', rename: 'The Institute' },
+    ];
+    expect(showInstitutions(papers, records, config).map(p => p.institutions)).toEqual([
+      ['University', 'Kept Apart', 'The Institute'],
+      ['University', 'The Institute', 'Other'],
+    ]);
+  });
+
+  it('gives shown institutions their own values, else those of institutions renamed to them', () => {
+    const config = [
+      { name: 'Institut national', rename: 'Inria' },
+      { name: 'Old Name', rename: 'University' },
+    ];
+    const values = new Map([
+      ['Institut national', 'inria.fr'],
+      ['Old Name', 'old.example'],
+      ['University', 'university.example'],
+      ['Lab', 'lab.example'],
+    ]);
+    expect([...byShownName(['Inria', 'University', 'Unknown'], values, config)]).toEqual([
+      ['University', 'university.example'],
+      ['Inria', 'inria.fr'],
+    ]);
+    expect(
+      institutionLocations(
+        ['Inria', 'University', 'Nowhere'],
+        {
+          'Institut national': record('I10', [], at(48.8, 2.3)),
+          University: record('I1', [], at(1, 2)),
+          Nowhere: record('I11', [], null),
+        },
+        config
+      )
+    ).toEqual({ Inria: at(48.8, 2.3), University: at(1, 2) });
   });
 });
 

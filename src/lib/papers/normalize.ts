@@ -2,7 +2,14 @@
 // by plugins/papers.ts; kept here, free of Node.js imports, so they can be unit-tested on their own.
 
 import { sortPapers } from './display';
-import type { CitingPaper, Paper, PapersData, SeedPaper } from './types';
+import type {
+  CitingPaper,
+  InstitutionLocation,
+  InstitutionRecord,
+  Paper,
+  PapersData,
+  SeedPaper,
+} from './types';
 
 /** A paper as returned by the Semantic Scholar Graph API, limited to the fields we request. */
 export interface S2Paper {
@@ -69,6 +76,16 @@ export interface InstitutionConfig {
   rename?: string;
   /** Its homepage, used to find its icon if OpenAlex has none (or a wrong one). */
   homepage?: string;
+  /** Shown on its own, although OpenAlex records it as part of another listed institution (see `rollUpInstitutions`). */
+  separate?: boolean;
+}
+
+/** An entry of the `merge` list of papers.yaml: a record of the same work as another, listed as that one. */
+export interface MergeConfig {
+  /** Identifier (see `paperMatchesId`) of the record that is not listed. */
+  id: string;
+  /** Identifier of the record it is listed as. */
+  into: string;
 }
 
 /** The parsed contents of static/data/papers.yaml. */
@@ -78,6 +95,8 @@ export interface PapersConfig {
   include: IncludeConfig[];
   /** Identifiers of papers never to list, e.g. ones that cite MEDS without using it. */
   exclude: string[];
+  /** Records that Semantic Scholar has of a work it also has another record of. */
+  merge: MergeConfig[];
   /** Institutions of papers that OpenAlex has no (or wrong) affiliations for. */
   affiliations: AffiliationConfig[];
   /** Names and homepages of institutions, used instead of OpenAlex's. */
@@ -221,6 +240,9 @@ export interface BuildResult {
  * filled in from the snapshot, since papers rarely stop citing something. An included paper that Semantic Scholar
  * doesn't have is listed from its details in papers.yaml. Papers citing several seeds are merged into one entry,
  * the seeds themselves are never listed as citing papers, and `exclude` is applied last.
+ *
+ * A record in the `merge` list is listed as the record it is merged into, which then cites every seed either cites
+ * (and counts as added by hand if either is). If that record isn't listed, the merged one is listed as it is.
  */
 export function buildPapersData(
   config: PapersConfig,
@@ -300,6 +322,16 @@ export function buildPapersData(
       if (paperMatchesId(paper, identifier)) Object.assign(paper, overrides);
     }
   }
+  for (const { id, into } of config.merge) {
+    const all = [...papers.values()];
+    const kept = all.find(paper => paperMatchesId(paper, into) && !paperMatchesId(paper, id));
+    if (!kept) continue;
+    for (const paper of all.filter(paper => paper !== kept && paperMatchesId(paper, id))) {
+      kept.cites = [...new Set([...kept.cites, ...paper.cites])];
+      if (paper.manual) kept.manual = true;
+      papers.delete(paper.id);
+    }
+  }
 
   const seedIds = new Set([...config.seeds.map(seed => seed.id), ...seeds.map(seed => seed.id)]);
   const seedOrder = (id: string): number => config.seeds.findIndex(seed => seed.id === id);
@@ -317,13 +349,135 @@ export function institutionRenamer(institutions: readonly InstitutionConfig[]): 
   return name => renames.get(name) ?? name;
 }
 
-/** The papers with their institutions renamed as papers.yaml says, without duplicates. */
-export function renameInstitutions(
+/** An institution as returned by the OpenAlex API, limited to the fields we request. */
+export interface OpenAlexInstitution {
+  /** A URL, e.g. `https://openalex.org/I97018004`. */
+  id?: string | null;
+  display_name?: string | null;
+  /** URLs of the institution and of every institution it is part of. */
+  lineage?: (string | null)[] | null;
+  homepage_url?: string | null;
+  geo?: {
+    city?: string | null;
+    country_code?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+  } | null;
+}
+
+/** An OpenAlex id without its URL prefix, e.g. `I97018004`. */
+export const openAlexShortId = (id: string): string => id.replace(/^https?:\/\/openalex\.org\//i, '');
+
+const coordinate = (value: unknown, max: number): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= max;
+
+/** An OpenAlex institution as the page records it, and its homepage; null if it has no id. */
+export function institutionRecord(
+  raw: OpenAlexInstitution | null | undefined
+): { record: InstitutionRecord; homepage: string | null } | null {
+  const url = cleanText(raw?.id);
+  if (!raw || !url) return null;
+  const id = openAlexShortId(url);
+  const { latitude, longitude, city, country_code } = raw.geo ?? {};
+  const lineage = (raw.lineage ?? []).flatMap(item => {
+    const text = cleanText(item);
+    return text ? [openAlexShortId(text)] : [];
+  });
+  return {
+    record: {
+      id,
+      partOf: [...new Set(lineage)].filter(other => other !== id),
+      location:
+        coordinate(latitude, 90) && coordinate(longitude, 180)
+          ? { latitude, longitude, city: cleanText(city), country: cleanText(country_code) }
+          : null,
+    },
+    homepage: cleanText(raw.homepage_url),
+  };
+}
+
+/**
+ * What each institution among `names` is shown as, if not as itself: the other listed institutions that OpenAlex
+ * records it as part of (its `lineage`), leaving out those that are themselves shown as others. For example,
+ * "Stanford Medicine" is shown as "Stanford University" when both are listed. Institutions without a record, and
+ * those in `separate`, are shown as themselves.
+ */
+export function rollUpInstitutions(
+  names: Iterable<string>,
+  records: Readonly<Record<string, InstitutionRecord>>,
+  separate: ReadonlySet<string> = new Set()
+): Map<string, string[]> {
+  const recordOf = new Map(Object.entries(records));
+  const listed = [...new Set(names)].filter(name => recordOf.has(name));
+  const nameOf = new Map(listed.map(name => [recordOf.get(name)?.id, name]));
+  const ancestors = (name: string): string[] =>
+    (recordOf.get(name)?.partOf ?? []).flatMap(id => {
+      const ancestor = nameOf.get(id);
+      return ancestor && ancestor !== name ? [ancestor] : [];
+    });
+  const rolledUp = (name: string): boolean => !separate.has(name) && ancestors(name).length > 0;
+
+  const shownAs = new Map<string, string[]>();
+  for (const name of listed.filter(rolledUp)) {
+    const top = ancestors(name).filter(ancestor => !rolledUp(ancestor));
+    if (top.length > 0) shownAs.set(name, top);
+  }
+  return shownAs;
+}
+
+/**
+ * The papers with their institutions as shown: rolled up into the institutions they are part of
+ * (`rollUpInstitutions`, unless papers.yaml keeps them `separate`), then renamed as papers.yaml says, without
+ * duplicates.
+ */
+export function showInstitutions(
   papers: readonly CitingPaper[],
+  records: Readonly<Record<string, InstitutionRecord>>,
   institutions: readonly InstitutionConfig[]
 ): CitingPaper[] {
+  const separate = new Set(institutions.filter(({ separate }) => separate).map(({ name }) => name));
+  const shownAs = rollUpInstitutions(
+    papers.flatMap(paper => paper.institutions),
+    records,
+    separate
+  );
   const rename = institutionRenamer(institutions);
-  return papers.map(paper => ({ ...paper, institutions: [...new Set(paper.institutions.map(rename))] }));
+  return papers.map(paper => ({
+    ...paper,
+    institutions: [...new Set(paper.institutions.flatMap(name => shownAs.get(name) ?? [name]).map(rename))],
+  }));
+}
+
+/**
+ * Values given by institution name (e.g. homepages or locations from OpenAlex), for the shown institutions
+ * `names`: each one's own value, else that of an institution papers.yaml renames to it.
+ */
+export function byShownName<T>(
+  names: Iterable<string>,
+  values: ReadonlyMap<string, T>,
+  institutions: readonly InstitutionConfig[]
+): Map<string, T> {
+  const rename = institutionRenamer(institutions);
+  const shown = new Set(names);
+  const result = new Map<string, T>();
+  for (const name of shown) if (values.has(name)) result.set(name, values.get(name) as T);
+  for (const [name, value] of values) {
+    const as = rename(name);
+    if (as !== name && shown.has(as) && !result.has(as)) result.set(as, value);
+  }
+  return result;
+}
+
+/** The locations of the shown institutions `names`, from their records (see `byShownName`); those without one are left out. */
+export function institutionLocations(
+  names: Iterable<string>,
+  records: Readonly<Record<string, InstitutionRecord>>,
+  institutions: readonly InstitutionConfig[]
+): Record<string, InstitutionLocation> {
+  const locations = new Map(
+    Object.entries(records).flatMap(([name, { location }]) => (location ? [[name, location]] : []))
+  );
+  return Object.fromEntries(byShownName(names, locations, institutions));
 }
 
 /** The DOI OpenAlex knows a paper by: its own DOI, else the DOI arXiv assigns it; in lower case. */
@@ -346,7 +500,8 @@ export function institutionRecordsOfWork(
   for (const authorship of work?.authorships ?? []) {
     for (const institution of authorship?.institutions ?? []) {
       const name = cleanText(institution?.display_name);
-      const id = cleanText(institution?.id)?.replace(/^https?:\/\/openalex\.org\//i, '') ?? null;
+      const url = cleanText(institution?.id);
+      const id = url ? openAlexShortId(url) : null;
       if (name && !records.get(name)) records.set(name, id);
     }
   }
@@ -486,6 +641,18 @@ export function isPapersData(value: unknown): value is PapersData {
     typeof (paper as Paper).id === 'string' &&
     typeof (paper as Paper).title === 'string' &&
     Array.isArray((paper as Paper).authors);
+  const isRecord = (record: unknown): boolean => {
+    if (record === null || typeof record !== 'object') return false;
+    const { id, partOf, location } = record as InstitutionRecord;
+    return (
+      typeof id === 'string' &&
+      Array.isArray(partOf) &&
+      (location === null ||
+        (typeof location === 'object' &&
+          coordinate(location.latitude, 90) &&
+          coordinate(location.longitude, 180)))
+    );
+  };
   return (
     (data.updatedAt === null || typeof data.updatedAt === 'string') &&
     Array.isArray(data.seeds) &&
@@ -496,6 +663,10 @@ export function isPapersData(value: unknown): value is PapersData {
         isPaper(paper) &&
         Array.isArray((paper as CitingPaper).cites) &&
         Array.isArray((paper as CitingPaper).institutions)
-    )
+    ) &&
+    (data.institutions === undefined ||
+      (data.institutions !== null &&
+        typeof data.institutions === 'object' &&
+        Object.values(data.institutions).every(isRecord)))
   );
 }

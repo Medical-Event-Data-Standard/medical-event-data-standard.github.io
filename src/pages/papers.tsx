@@ -124,11 +124,17 @@ export default function Papers(): React.JSX.Element {
               not about using MEDS can be left out with its <code>exclude</code> list.
             </li>
             <li>
+              Two Semantic Scholar records of one paper, such as a preprint under an earlier title, can be
+              listed as one with the <code>merge</code> list of papers.yaml. The paper then counts as citing
+              every core paper that either record cites.
+            </li>
+            <li>
               Institutions are the author affiliations that <Link href="https://openalex.org/">OpenAlex</Link>{' '}
               records for each paper, found by DOI or arXiv ID, or else by title. Where OpenAlex has none,
-              they can be added by hand in the <code>affiliations</code> list of papers.yaml. An
-              institution&rsquo;s icon is its website&rsquo;s icon, found through the homepage that OpenAlex,
-              or papers.yaml, lists for it.
+              they can be added by hand in the <code>affiliations</code> list of papers.yaml. An institution
+              that OpenAlex records as part of another listed institution is shown as that institution, unless
+              papers.yaml keeps it separate. An institution&rsquo;s icon is its website&rsquo;s icon, found
+              through the homepage that OpenAlex, or papers.yaml, lists for it.
               {withoutInstitutions > 0 && (
                 <>
                   {' '}

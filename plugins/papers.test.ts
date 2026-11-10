@@ -6,6 +6,7 @@ import type { LoadContext, PluginContentLoadedActions } from '@docusaurus/types'
 import papersPlugin, {
   createApiClient,
   fetchFromSemanticScholar,
+  fetchInstitutionRecords,
   fetchInstitutionsFromOpenAlex,
   findInstitutionIcons,
   loadPapers,
@@ -20,8 +21,11 @@ import papersPlugin, {
 } from './papers';
 import { parse } from 'yaml';
 import {
+  institutionLocations,
+  institutionRenamer,
   normalizePaper,
   paperMatchesId,
+  showInstitutions,
   type OpenAlexWork,
   type PapersConfig,
   type S2Paper,
@@ -198,6 +202,7 @@ describe('fetchFromSemanticScholar', () => {
       { id: 'DOI:10.1/own', overrides: { title: 'Own' } },
     ],
     exclude: [],
+    merge: [],
     affiliations: [],
     institutions: [],
   };
@@ -345,6 +350,88 @@ describe('fetchInstitutionsFromOpenAlex', () => {
   });
 });
 
+describe('fetchInstitutionRecords', () => {
+  /** An OpenAlex institution record, as the API returns it. */
+  const institution = (id: string, name: string, extra: Record<string, unknown> = {}) => ({
+    id: `https://openalex.org/${id}`,
+    display_name: name,
+    lineage: [`https://openalex.org/${id}`],
+    geo: { city: 'City', country_code: 'XX', latitude: 1, longitude: 2 },
+    homepage_url: `https://${id.toLowerCase()}.example/`,
+    ...extra,
+  });
+
+  it('looks institutions up by id, 50 per request, and the others by exact name', async () => {
+    const names = Array.from({ length: 51 }, (_, i) => `University ${i}`);
+    const ids = new Map(names.map((name, i) => [name, `I${i}`]));
+    const request = jest.fn(async (pathAndQuery: string) => {
+      if (pathAndQuery.includes('filter=id:')) {
+        const batch = /filter=id:([^&]*)/.exec(pathAndQuery)?.[1].split('|') ?? [];
+        // I1 isn't on OpenAlex (any more).
+        return { results: batch.filter(id => id !== 'I1').map(id => institution(id, `Name of ${id}`)) };
+      }
+      if (pathAndQuery.includes('display_name.search:named%20hospital&')) {
+        return {
+          results: [
+            institution('I100', 'Named Hospital Foundation'),
+            institution('I101', 'Named Hospital', { lineage: ['https://openalex.org/I0'], geo: null }),
+          ],
+        };
+      }
+      return { results: [] };
+    }) as unknown as ApiRequest;
+
+    const lookup = await fetchInstitutionRecords(
+      [...names, 'Named Hospital', 'Unknown'],
+      ids,
+      request,
+      'key'
+    );
+
+    expect(lookup.failures).toEqual([]);
+    expect(lookup.failed.size).toBe(0);
+    expect(lookup.records.size).toBe(51);
+    expect(lookup.records.get('University 0')).toEqual({
+      id: 'I0',
+      partOf: [],
+      location: { latitude: 1, longitude: 2, city: 'City', country: 'XX' },
+    });
+    expect(lookup.records.has('University 1')).toBe(false);
+    expect(lookup.records.get('Named Hospital')).toEqual({ id: 'I101', partOf: ['I0'], location: null });
+    expect(lookup.homepages.get('Named Hospital')).toBe('https://i101.example/');
+    expect(lookup.records.has('Unknown')).toBe(false);
+    const paths = jest.mocked(request).mock.calls.map(([pathAndQuery]) => pathAndQuery);
+    expect(paths).toHaveLength(4);
+    expect(paths[0]).toMatch(/^\/institutions\?filter=id:I0\|I1\|.*\|I49&per_page=50&/);
+    expect(paths[0]).toContain('&select=id,display_name,lineage,geo,homepage_url&api_key=key');
+    expect(paths[1]).toMatch(/^\/institutions\?filter=id:I50&/);
+    expect(paths[2]).toBe(
+      '/institutions?filter=display_name.search:named%20hospital&per_page=5' +
+        '&select=id,display_name,lineage,geo,homepage_url&api_key=key'
+    );
+  });
+
+  it('reports the institutions whose lookup failed', async () => {
+    const request = jest.fn(async () => {
+      throw new Error('HTTP 429');
+    }) as unknown as ApiRequest;
+
+    const lookup = await fetchInstitutionRecords(
+      ['By Id', 'By Name', 'Also By Name'],
+      new Map([['By Id', 'I1']]),
+      request
+    );
+
+    expect(lookup.records.size).toBe(0);
+    expect([...lookup.failed]).toEqual(['By Id', 'By Name', 'Also By Name']);
+    expect(lookup.failures).toEqual([
+      'details of 1 institutions: HTTP 429',
+      'details of 2 institutions, by name: HTTP 429',
+    ]);
+    expect(jest.mocked(request).mock.calls[0][0]).not.toContain('api_key');
+  });
+});
+
 describe('parsePapersConfig', () => {
   it('parses seeds and identifier lists given as strings or objects, normalising the identifiers', () => {
     expect(
@@ -357,6 +444,7 @@ describe('parsePapersConfig', () => {
       seeds: [{ id: SEED, label: 'Seed' }],
       include: [{ id: 'DOI:10.1/X' }, { id: 'ARXIV:2401.00001' }, { id: OTHER_SEED }],
       exclude: [],
+      merge: [],
       affiliations: [],
       institutions: [],
     });
@@ -380,23 +468,26 @@ describe('parsePapersConfig', () => {
       seeds: [{ id: SEED, label: 'Seed' }],
       include: [{ id: 'DOI:10.1/thesis', overrides: { ...details, title: 'A Thesis' } }],
       exclude: ['DOI:10.1/other'],
+      merge: [],
       affiliations: [],
       institutions: [],
     });
   });
 
-  it("parses institutions' renames and homepages", () => {
+  it("parses institutions' renames, homepages and whether they are kept separate", () => {
     expect(
       parsePapersConfig({
         seeds: [{ id: SEED, label: 'Seed' }],
         institutions: [
           { name: ' Institut national ', rename: ' Inria ', note: 'why' },
           { name: 'GSK plc', homepage: ' https://www.gsk.com ' },
+          { name: 'Hospital', separate: true, note: 'Wrong lineage.' },
         ],
       }).institutions
     ).toEqual([
       { name: 'Institut national', rename: 'Inria' },
       { name: 'GSK plc', homepage: 'https://www.gsk.com' },
+      { name: 'Hospital', separate: true },
     ]);
   });
 
@@ -410,12 +501,57 @@ describe('parsePapersConfig', () => {
       '`institutions[0].homepage` must be an http(s) URL',
     ],
     [{ institutions: [{ name: 'X', homepage: 5 }] }, '`institutions[0].homepage` must be an http(s) URL'],
-    [{ institutions: [{ name: 'X' }] }, '`institutions[0]` must set `rename` or `homepage`'],
+    [{ institutions: [{ name: 'X' }] }, '`institutions[0]` must set `rename`, `homepage` or `separate`'],
+    [{ institutions: [{ name: 'X', separate: false }] }, '`institutions[0].separate` must be `true`'],
+    [{ institutions: [{ name: 'X', separate: 'yes' }] }, '`institutions[0].separate` must be `true`'],
     [
       { institutions: [{ name: 'X', rename: 'Y', icon: 'z' }] },
       '`institutions[0]` has an unknown field `icon`',
     ],
   ])('rejects invalid institutions %j', (fields, error) => {
+    expect(() => parsePapersConfig({ seeds: [{ id: SEED, label: 'S' }], ...fields })).toThrow(
+      `Invalid static/data/papers.yaml: ${error}`
+    );
+  });
+
+  it('parses the records to merge into others, normalising their identifiers', () => {
+    expect(
+      parsePapersConfig({
+        seeds: [{ id: SEED, label: 'Seed' }],
+        merge: [
+          { id: 'doi:10.1101/X', into: 'arxiv:2505.20323v2', note: 'Same abstract.' },
+          { id: OTHER_SEED.toUpperCase(), into: SEED },
+        ],
+      }).merge
+    ).toEqual([
+      { id: 'DOI:10.1101/X', into: 'ARXIV:2505.20323' },
+      { id: OTHER_SEED, into: SEED },
+    ]);
+  });
+
+  it.each([
+    [{ merge: 'x' }, '`merge` must be a list'],
+    [{ merge: [{ into: 'DOI:10.1/a' }] }, '`merge[0]` must have an `id`'],
+    [{ merge: [{ id: 'DOI:10.1/a' }] }, '`merge[0].into` must be a Semantic Scholar paperId'],
+    [
+      { merge: [{ id: 'DOI:10.1/a', into: 'CorpusId:1' }] },
+      '`merge[0].into` must be a Semantic Scholar paperId',
+    ],
+    [{ merge: [{ id: 'doi:10.1/a', into: 'DOI:10.1/a' }] }, '`merge[0]` merges a paper into itself'],
+    [
+      {
+        merge: [
+          { id: 'DOI:10.1/a', into: 'DOI:10.1/b' },
+          { id: 'DOI:10.1/b', into: 'DOI:10.1/c' },
+        ],
+      },
+      '`merge[0].into` is itself merged into another paper',
+    ],
+    [
+      { merge: [{ id: 'DOI:10.1/a', into: 'DOI:10.1/b', title: 'T' }] },
+      '`merge[0]` has an unknown field `title`',
+    ],
+  ])('rejects invalid merges %j', (fields, error) => {
     expect(() => parsePapersConfig({ seeds: [{ id: SEED, label: 'S' }], ...fields })).toThrow(
       `Invalid static/data/papers.yaml: ${error}`
     );
@@ -591,7 +727,15 @@ describe('with a site directory', () => {
         return json(200, { results: [work('Paper live', ['Live University'])] });
       if (route.startsWith(`${OPENALEX}/institutions`)) {
         return json(200, {
-          results: [{ id: openAlexId('Live University'), homepage_url: 'https://live.example.edu/' }],
+          results: [
+            {
+              id: openAlexId('Live University'),
+              display_name: 'Live University',
+              lineage: [openAlexId('Live University')],
+              geo: { city: 'Live City', country_code: 'XX', latitude: 10, longitude: 20 },
+              homepage_url: 'https://live.example.edu/',
+            },
+          ],
         });
       }
       if (route.startsWith('https://www.google.com/s2/favicons?domain=live.example.edu&sz=64')) return png();
@@ -684,7 +828,11 @@ describe('with a site directory', () => {
       const fromYaml = await loadPapers(siteDir, { source: 'live', client: fastClient(configured), now });
       expect(fromYaml.warning).toBe(false);
       expect(fromYaml.data.papers[0].institutions).toEqual(['From YAML']);
-      expect(configured.mock.calls.some(([url]) => url.startsWith(OPENALEX))).toBe(false);
+      // Its work isn't looked up; its institution is, by name.
+      const openAlexUrls = configured.mock.calls.map(([url]) => url).filter(url => url.startsWith(OPENALEX));
+      expect(openAlexUrls).toEqual([
+        expect.stringContaining('/institutions?filter=display_name.search:from%20yaml&'),
+      ]);
     });
 
     it("takes institutions from the snapshot when OpenAlex can't be reached", async () => {
@@ -715,7 +863,8 @@ describe('with a site directory', () => {
       });
       const result = await loadPapers(siteDir, { source: 'live', client: fastClient(fetchFn), now });
       expect(result.warning).toBe(false);
-      expect(fetchFn).toHaveBeenCalledTimes(5); // 3 batch requests, the citations, and OpenAlex.
+      // 3 batch requests, the citations, and OpenAlex's work and institution.
+      expect(fetchFn).toHaveBeenCalledTimes(6);
     });
 
     it('falls back to the snapshot, keeping its date, when the fetch fails', async () => {
@@ -779,7 +928,15 @@ describe('with a site directory', () => {
       expect(newSeed.message).not.toContain('SEMANTIC_SCHOLAR_API_KEY');
     });
 
-    it('renames institutions as papers.yaml says, and passes on their ids and configured homepages', async () => {
+    it('renames institutions as papers.yaml says, and passes on their locations and homepages', async () => {
+      const location = { latitude: 10, longitude: 20, city: 'Live City', country: 'XX' };
+      const fetched = await loadPapers(siteDir, { source: 'live', client: fastClient(mockFetch()), now });
+      expect(fetched.data.institutions).toEqual({
+        'Live University': { id: 'ILiveUniversity', partOf: [], location },
+      });
+      expect(fetched.institutionLocations).toEqual({ 'Live University': location });
+      expect([...fetched.institutionHomepages]).toEqual([['Live University', 'https://live.example.edu/']]);
+
       await writeYaml(
         [SEED],
         "institutions:\n  - name: 'Live University'\n    rename: 'LU'\n    homepage: 'https://lu.example/'\n"
@@ -787,8 +944,108 @@ describe('with a site directory', () => {
       const result = await loadPapers(siteDir, { source: 'live', client: fastClient(mockFetch()), now });
 
       expect(result.data.papers.map(paper => paper.institutions)).toEqual([['LU']]);
-      expect([...result.institutionIds]).toEqual([['LU', 'ILiveUniversity']]);
+      // Records keep OpenAlex's names; the page gets the names it shows.
+      expect(Object.keys(result.data.institutions ?? {})).toEqual(['Live University']);
+      expect(result.institutionLocations).toEqual({ LU: location });
       expect([...result.institutionHomepages]).toEqual([['LU', 'https://lu.example/']]);
+    });
+
+    describe('with institutions that are part of others', () => {
+      const institution = (name: string, partOf: string[] = [], latitude = 1) => ({
+        id: openAlexId(name),
+        display_name: name,
+        lineage: [name, ...partOf].map(openAlexId),
+        geo: { city: null, country_code: null, latitude, longitude: 2 },
+        homepage_url: `https://${name.split(' ')[0].toLowerCase()}.example/`,
+      });
+      const records = [
+        institution('University', [], 1),
+        institution('Medical School', ['University'], 2),
+        institution('Teaching Hospital', ['University'], 3),
+      ];
+      const fetchWith = (overrides: Record<string, () => Response> = {}) =>
+        mockFetch({
+          [`${OPENALEX}/works`]: () =>
+            json(200, {
+              results: [work('Paper live', ['Medical School', 'University', 'Teaching Hospital'])],
+            }),
+          [`${OPENALEX}/institutions`]: () => json(200, { results: records }),
+          ...overrides,
+        });
+      const yaml = "institutions:\n  - name: 'Teaching Hospital'\n    separate: true\n";
+
+      it('shows them as those, unless papers.yaml keeps them separate, and stores every record', async () => {
+        await writeYaml([SEED], yaml);
+        const result = await loadPapers(siteDir, { source: 'live', client: fastClient(fetchWith()), now });
+
+        expect(result.warning).toBe(false);
+        expect(result.data.papers.map(paper => paper.institutions)).toEqual([
+          ['University', 'Teaching Hospital'],
+        ]);
+        expect(Object.keys(result.data.institutions ?? {})).toEqual([
+          'Medical School',
+          'Teaching Hospital',
+          'University',
+        ]);
+        expect(result.data.institutions?.['Medical School'].partOf).toEqual(['IUniversity']);
+        expect(Object.keys(result.institutionLocations)).toEqual(['University', 'Teaching Hospital']);
+        expect(result.institutionLocations.University.latitude).toBe(1);
+        expect([...result.institutionHomepages.keys()]).toEqual(['University', 'Teaching Hospital']);
+      });
+
+      it("uses the snapshot's records when OpenAlex's institutions can't be reached", async () => {
+        await writeYaml([SEED], yaml);
+        const first = await loadPapers(siteDir, { source: 'live', client: fastClient(fetchWith()), now });
+        await writeSnapshot(first.data);
+
+        const failing = fetchWith({ [`${OPENALEX}/institutions`]: () => json(503) });
+        const result = await loadPapers(siteDir, {
+          source: 'live',
+          client: { ...fastClient(failing), maxRetries: 0 },
+          now,
+        });
+        expect(result.warning).toBe(true);
+        expect(result.data.papers.map(paper => paper.institutions)).toEqual([
+          ['University', 'Teaching Hospital'],
+        ]);
+        expect(result.data.institutions).toEqual(first.data.institutions);
+        expect(result.institutionLocations).toEqual(first.institutionLocations);
+        expect(result.message).toContain('details of 3 institutions: HTTP 503');
+        expect(result.message).toContain('Taken from the snapshot instead: details of 3 institutions.');
+
+        // The dev server rolls up the snapshot's institutions too.
+        const { papers } = first.data;
+        await writeSnapshot({
+          ...first.data,
+          papers: papers.map(p => ({ ...p, institutions: ['Medical School'] })),
+        });
+        const fromSnapshot = await loadPapers(siteDir, { source: 'snapshot' });
+        expect(fromSnapshot.data.papers.map(paper => paper.institutions)).toEqual([['Medical School']]);
+        await writeSnapshot({
+          ...first.data,
+          papers: papers.map(p => ({ ...p, institutions: ['Medical School', 'University'] })),
+        });
+        const rolledUp = await loadPapers(siteDir, { source: 'snapshot' });
+        expect(rolledUp.data.papers.map(paper => paper.institutions)).toEqual([['University']]);
+        expect(rolledUp.institutionLocations).toEqual({ University: first.institutionLocations.University });
+      });
+
+      it('looks institutions up by the id in the snapshot rather than by name', async () => {
+        await writeYaml([SEED], "affiliations:\n  - id: 'DOI:10.1/LIVE'\n    institutions: ['University']\n");
+        await writeSnapshot({
+          ...snapshot,
+          institutions: { University: { id: 'IUniversity', partOf: [], location: null } },
+        });
+        const fetchFn = fetchWith({
+          [`/paper/${SEED}/citations`]: () =>
+            json(200, { data: [{ citingPaper: s2('live', { externalIds: { DOI: '10.1/live' } }) }] }),
+        });
+        const result = await loadPapers(siteDir, { source: 'live', client: fastClient(fetchFn), now });
+
+        const openAlexUrls = fetchFn.mock.calls.map(([url]) => url).filter(url => url.startsWith(OPENALEX));
+        expect(openAlexUrls).toEqual([expect.stringMatching(/\/institutions\?filter=id:IUniversity&/)]);
+        expect(result.data.institutions?.University.location?.latitude).toBe(1);
+      });
     });
 
     it("lists an included paper that Semantic Scholar doesn't have from its details, without a warning", async () => {
@@ -841,7 +1098,7 @@ describe('with a site directory', () => {
       expect(result.message).toContain(
         'Institution icons: 0 downloaded, 0 removed; 1 institutions have none.'
       );
-      expect(result.message).toContain('  homepages of 1 institutions: HTTP 500');
+      expect(result.message).toContain('details of 1 institutions: HTTP 500');
     });
 
     it('uses the global fetch by default, as `npm run papers:update` does', async () => {
@@ -849,7 +1106,7 @@ describe('with a site directory', () => {
       globalThis.fetch = fetchFn as unknown as typeof fetch;
       const { data } = await updatePapersSnapshot(siteDir);
 
-      // Semantic Scholar twice, then OpenAlex for the paper and its institution's homepage, then the icon.
+      // Semantic Scholar twice, then OpenAlex for the paper and its institution, then the icon.
       expect(fetchFn).toHaveBeenCalledTimes(5);
       expect(JSON.parse(await fs.readFile(snapshotPath, 'utf8'))).toEqual(data);
     });
@@ -869,12 +1126,13 @@ describe('with a site directory', () => {
       'No Id University',
       'Broken University',
     ];
-    const ids = new Map(
-      names.filter(name => name !== 'No Id University').map(name => [name, `I${name.replace(/\W/g, '')}`])
-    );
     const host = (name: string) => name.split(' ').slice(0, 2).join('').toLowerCase() + '.example';
     const homepage = (name: string) =>
       name === 'Bare University' ? `https://www.${host(name)}/` : `https://${host(name)}/`;
+    // No Homepage and No Id University have none.
+    const homepages = new Map(
+      names.filter(name => !/No (Homepage|Id)/.test(name)).map(name => [name, homepage(name)])
+    );
     const google = (h: string) => `https://www.google.com/s2/favicons?domain=${h}&sz=64`;
     const duck = (h: string) => `https://icons.duckduckgo.com/ip3/${h}.ico`;
     const bytes = (...values: number[]) => new Response(new Uint8Array(values), { status: 200 });
@@ -887,23 +1145,6 @@ describe('with a site directory', () => {
     });
 
     it('downloads missing icons from the first service that has one, and deletes icons no longer needed', async () => {
-      const openAlex = jest.fn(async (pathAndQuery: string) => {
-        if (pathAndQuery.includes('display_name.search:')) {
-          // No Id University is looked up by name; a similar name doesn't count.
-          expect(pathAndQuery).toContain('display_name.search:no%20id%20university&');
-          return {
-            results: [{ display_name: 'No Id University Hospital', homepage_url: 'https://wrong.example/' }],
-          };
-        }
-        expect(pathAndQuery).toMatch(/^\/institutions\?filter=id:IIconUniversity\|IJPEGUniversity\|/);
-        expect(pathAndQuery).not.toContain('IKeptUniversity');
-        expect(pathAndQuery).toContain('&select=id,homepage_url&api_key=key');
-        return {
-          results: names
-            .filter(name => name !== 'No Homepage University')
-            .map(name => ({ id: openAlexId(name), homepage_url: homepage(name) })),
-        };
-      }) as unknown as ApiRequest;
       const responses: Record<string, () => Response> = {
         [google('iconuniversity.example')]: png,
         [google('jpeguniversity.example')]: () => bytes(0xff, 0xd8, 0xff, 0xe0, 1),
@@ -916,7 +1157,7 @@ describe('with a site directory', () => {
         return responses[url]?.() ?? new Response('', { status: 404 });
       });
 
-      const result = await updateInstitutionIcons(siteDir, names, ids, { openAlex, fetchFn, apiKey: 'key' });
+      const result = await updateInstitutionIcons(siteDir, names, { homepages, fetchFn });
 
       expect(result).toEqual({
         downloaded: 4,
@@ -932,7 +1173,6 @@ describe('with a site directory', () => {
         'kept-university.ico',
         'notes.txt',
       ]);
-      expect(jest.mocked(openAlex)).toHaveBeenCalledTimes(2);
       const asked = fetchFn.mock.calls.map(([url]) => url);
       // The host without `www.` is tried after the host itself, and DuckDuckGo after Google.
       expect(asked.filter(url => url.includes('bareuniversity'))).toEqual([
@@ -947,50 +1187,24 @@ describe('with a site directory', () => {
         'https://noicon.example/favicon.ico',
       ]);
       // Kept University has an icon; No Homepage and No Id University have no website to ask about.
-      expect(asked.some(url => /kept|nohomepage|noid|wrong/.test(url))).toBe(false);
+      expect(asked.some(url => /kept|nohomepage|noid/.test(url))).toBe(false);
       expect(fetchFn.mock.calls[0][1]?.headers).toEqual({ 'User-Agent': expect.any(String) });
     });
 
-    it('reports a failed homepage lookup, and creates the icon directory if needed', async () => {
+    it('creates the icon directory if needed, and gives institutions without a homepage no icon', async () => {
       await fs.rm(iconsDir(), { recursive: true });
-      const openAlex = jest.fn(async () => {
-        throw new Error('HTTP 503');
-      }) as unknown as ApiRequest;
       const fetchFn = jest.fn<FetchFn>();
 
-      const result = await updateInstitutionIcons(siteDir, names, ids, { openAlex, fetchFn });
+      const result = await updateInstitutionIcons(siteDir, names, { homepages: new Map(), fetchFn });
 
-      expect(result).toEqual({
-        downloaded: 0,
-        removed: 0,
-        without: 10,
-        failures: ['homepages of 9 institutions: HTTP 503', 'homepage of No Id University: HTTP 503'],
-      });
+      expect(result).toEqual({ downloaded: 0, removed: 0, without: 10, failures: [] });
       expect(fetchFn).not.toHaveBeenCalled();
       expect(await fs.readdir(iconsDir())).toEqual([]);
     });
 
-    it('uses homepages from papers.yaml and OpenAlex names, and the icons homepages link to', async () => {
-      const openAlex = jest.fn(async (pathAndQuery: string) => {
-        if (pathAndQuery.includes('filter=id:')) {
-          expect(pathAndQuery).toContain('filter=id:ILinked|IDown|IUnsafe&');
-          return {
-            results: ['Linked', 'Down', 'Unsafe'].map(name => ({
-              id: `https://openalex.org/I${name}`,
-              homepage_url: `https://${name.toLowerCase()}.example/`,
-            })),
-          };
-        }
-        expect(pathAndQuery).toContain('display_name.search:named%20university&');
-        return {
-          results: [
-            { display_name: 'Named University Hospital', homepage_url: 'https://hospital.example/' },
-            { display_name: 'Named University', homepage_url: 'https://named.example/' },
-          ],
-        };
-      }) as unknown as ApiRequest;
+    it('uses the icons homepages link to', async () => {
       const fetchFn = jest.fn<FetchFn>(async url => {
-        if (url === google('configured.example') || url === google('named.example')) return png();
+        if (url === google('configured.example')) return png();
         // Some sites answer scripts with a 404 page that still links to their icons.
         if (url === 'https://linked.example/') {
           return new Response(
@@ -1004,28 +1218,16 @@ describe('with a site directory', () => {
         if (url === 'https://unsafe.example/logo.svg') return new Response('<svg onload="alert(1)"></svg>');
         return new Response('', { status: 404 });
       });
-      const names = ['Linked', 'Configured', 'Named University', 'Down', 'Unsafe'];
+      const names = ['Linked', 'Configured', 'Down', 'Unsafe'];
 
-      const result = await updateInstitutionIcons(
-        siteDir,
-        names,
-        new Map(['Linked', 'Down', 'Unsafe'].map(n => [n, `I${n}`])),
-        {
-          openAlex,
-          fetchFn,
-          homepages: new Map([['Configured', 'https://configured.example/']]),
-        }
-      );
+      const result = await updateInstitutionIcons(siteDir, names, {
+        homepages: new Map(names.map(name => [name, `https://${name.toLowerCase()}.example/`])),
+        fetchFn,
+      });
 
       // An unreachable homepage, or an icon that can't be used, just means no icon.
-      expect(result).toEqual({ downloaded: 3, removed: 2, without: 2, failures: [] });
-      expect((await fs.readdir(iconsDir())).sort()).toEqual([
-        'configured.png',
-        'linked.png',
-        'named-university.png',
-        'notes.txt',
-      ]);
-      expect(fetchFn.mock.calls.map(([url]) => url)).not.toContain('https://hospital.example/');
+      expect(result).toEqual({ downloaded: 2, removed: 2, without: 2, failures: [] });
+      expect((await fs.readdir(iconsDir())).sort()).toEqual(['configured.png', 'linked.png', 'notes.txt']);
     });
 
     it('finds the committed icons of institutions, whatever their image type', async () => {
@@ -1082,7 +1284,7 @@ describe('with a site directory', () => {
       globalThis.fetch = fetchFn as unknown as typeof fetch;
 
       const content = (await papersPlugin({ siteDir } as LoadContext).loadContent?.()) as PapersData;
-      expect(fetchFn).toHaveBeenCalledTimes(4);
+      expect(fetchFn).toHaveBeenCalledTimes(5);
       expect(content.papers.map(paper => paper.id)).toEqual(['live']);
       expect(console.warn).not.toHaveBeenCalled();
     });
@@ -1095,7 +1297,7 @@ describe('with a site directory', () => {
       }) as unknown as typeof fetch;
 
       const content = await papersPlugin({ siteDir } as LoadContext).loadContent?.();
-      expect(content).toEqual({ ...snapshot, institutionIcons: {} });
+      expect(content).toEqual({ ...snapshot, institutionIcons: {}, institutionLocations: {} });
       expect(console.warn).toHaveBeenCalledTimes(1);
       expect(jest.mocked(console.warn).mock.calls[0][0]).toContain('[papers] Could not fetch everything');
       expect(jest.mocked(console.warn).mock.calls[0][0]).toContain('papers citing Seed a: fetch failed');
@@ -1109,9 +1311,16 @@ describe('with a site directory', () => {
 
       await fs.mkdir(iconsDir(), { recursive: true });
       await fs.writeFile(path.join(iconsDir(), 'saved-university.png'), 'icon');
+      const location = { latitude: 1, longitude: 2, city: null, country: null };
+      await writeSnapshot({
+        ...snapshot,
+        institutions: { 'Saved University': { id: 'ISaved', partOf: [], location } },
+      });
       expect(await papersPlugin({ siteDir } as LoadContext).loadContent?.()).toEqual({
         ...snapshot,
         institutionIcons: { 'Saved University': '/img/institutions/saved-university.png' },
+        // The records themselves are not sent to the browser.
+        institutionLocations: { 'Saved University': location },
       });
       expect(fetchFn).not.toHaveBeenCalled();
       expect(console.info).toHaveBeenCalledWith(expect.stringContaining('[papers] Using the snapshot'));
@@ -1177,15 +1386,83 @@ describe("this repository's papers.yaml and snapshot", () => {
     }
   });
 
-  it('has affiliations only for listed papers, and a snapshot with those institutions', async () => {
-    const { affiliations } = await readConfig();
+  it('has affiliations only for listed papers, and a snapshot with those institutions, as shown', async () => {
+    const config = await readConfig();
+    const { snapshot } = await readSnapshot(path.join(dataDir, 'papers.snapshot.json'));
+    const papers = snapshot?.papers ?? [];
+    const configured = (paper: Paper) => config.affiliations.find(({ id }) => paperMatchesId(paper, id));
+    // As shown: rolled up into the listed institutions they are part of, and renamed.
+    const shown = showInstitutions(
+      papers.map(paper => ({
+        ...paper,
+        institutions: configured(paper)?.institutions ?? paper.institutions,
+      })),
+      snapshot?.institutions ?? {},
+      config.institutions
+    );
+
+    expect(config.affiliations.length).toBeGreaterThan(0);
+    for (const { id } of config.affiliations) {
+      const listed = papers.filter(paper => paperMatchesId(paper, id)).map(paper => paper.institutions);
+      const expected = shown.filter(paper => paperMatchesId(paper, id)).map(paper => paper.institutions);
+      expect([id, listed.length]).toEqual([id, 1]);
+      expect([id, listed]).toEqual([id, expected]);
+    }
+  });
+
+  it('lists each merged record as the record it is merged into', async () => {
+    const { merge } = await readConfig();
     const { snapshot } = await readSnapshot(path.join(dataDir, 'papers.snapshot.json'));
     const papers = snapshot?.papers ?? [];
 
-    expect(affiliations.length).toBeGreaterThan(0);
-    for (const { id, institutions } of affiliations) {
-      const matching = papers.filter(paper => paperMatchesId(paper, id));
-      expect([id, matching.map(paper => paper.institutions)]).toEqual([id, [institutions]]);
+    expect(merge.length).toBeGreaterThan(0);
+    for (const { id, into } of merge) {
+      expect([id, papers.filter(paper => paperMatchesId(paper, into)).length]).toEqual([id, 1]);
+      expect([id, papers.some(paper => paperMatchesId(paper, id))]).toEqual([id, false]);
     }
+  });
+
+  it('shows no institution as itself that OpenAlex records as part of another, unless kept separate', async () => {
+    const { institutions: config } = await readConfig();
+    const { snapshot } = await readSnapshot(path.join(dataDir, 'papers.snapshot.json'));
+    const records = snapshot?.institutions ?? {};
+    const shown = new Set(snapshot?.papers.flatMap(paper => paper.institutions));
+    const rename = institutionRenamer(config);
+    const separate = new Set(config.filter(({ separate }) => separate).map(({ name }) => name));
+
+    // The records of the shown institutions, by OpenAlex id.
+    const shownIds = new Map(
+      Object.entries(records).flatMap(([name, { id }]) =>
+        shown.has(rename(name)) ? [[id, rename(name)]] : []
+      )
+    );
+    expect(shownIds.size).toBeGreaterThan(50);
+    const partOfShown = Object.entries(records).flatMap(([name, { partOf }]) =>
+      shown.has(rename(name)) && !separate.has(name)
+        ? partOf.flatMap(id =>
+            shownIds.has(id) && shownIds.get(id) !== rename(name) ? [[name, shownIds.get(id)]] : []
+          )
+        : []
+    );
+    expect(partOfShown).toEqual([]);
+
+    // Every institution kept separate is part of a listed one.
+    for (const name of separate) {
+      const ids = records[name]?.partOf ?? [];
+      expect([name, ids.some(id => shownIds.has(id))]).toEqual([name, true]);
+    }
+  });
+
+  it('lists each institution once per paper, with an icon for nearly all, and a location for most', async () => {
+    const { snapshot } = await readSnapshot(path.join(dataDir, 'papers.snapshot.json'));
+    const papers = snapshot?.papers ?? [];
+    const names = [...new Set(papers.flatMap(paper => paper.institutions))];
+    const { institutions: config } = await readConfig();
+
+    for (const paper of papers) expect(new Set(paper.institutions).size).toBe(paper.institutions.length);
+    const icons = await findInstitutionIcons(path.join(dataDir, '..', '..'), names);
+    expect(names.length - Object.keys(icons).length).toBeLessThanOrEqual(3);
+    const located = institutionLocations(names, snapshot?.institutions ?? {}, config);
+    expect(Object.keys(located).length / names.length).toBeGreaterThan(0.9);
   });
 });

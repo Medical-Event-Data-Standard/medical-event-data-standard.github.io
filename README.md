@@ -148,21 +148,32 @@ API calls, and it is configured in [`static/data/papers.yaml`](static/data/paper
 - `include`: papers that use MEDS without citing a seed (with their title, authors, venue and year if Semantic
   Scholar doesn't have them).
 - `exclude`: papers that cite a seed but don't belong on the list.
+- `merge`: records that Semantic Scholar has of a paper it also has another record of (e.g. a preprint under
+  an earlier title). The paper is listed once, as the record `into`, citing every seed that either record cites.
 - `affiliations`: institutions of papers that OpenAlex has no (or wrong) author affiliations for, taken from
   the papers themselves.
 - `institutions`: institutions shown differently from OpenAlex: a `rename` (e.g. "Inria" instead of its full
-  French name) and/or a `homepage` to find its icon by, when OpenAlex has no working one.
+  French name), a `homepage` to find its icon by, when OpenAlex has no working one, and/or `separate: true` (see
+  below).
 
 OpenAlex is searched by DOI (or arXiv's DOI for arXiv papers), and, for papers it has no institutions for that
 way, by title: a record with the same title and an author with the same surname counts, which finds e.g. the
 published version of a preprint.
 
+The institutions themselves are then looked up on OpenAlex, by their OpenAlex ids (50 per request), or by exact
+name for those only in `affiliations`. Their records give each institution's homepage (for its icon), its
+location (for the map), and its `lineage`: the institutions it is part of. An institution that OpenAlex records
+as part of other listed institutions is shown as those, e.g. "Stanford Medicine" as "Stanford University", so the
+same organisation isn't listed twice. Where OpenAlex's lineage is wrong, `separate: true` in `institutions`
+shows the institution on its own. The records are kept in the snapshot, under `institutions`, so the dev server
+and failed lookups use them too.
+
 Each institution is shown with its website's icon, committed under
 [`static/img/institutions/`](static/img/institutions) so that neither builds nor visitors fetch them.
 `npm run papers:update` downloads the icons of new institutions and deletes those no longer listed. It takes
-the institution's homepage from `institutions` in `papers.yaml`, else from OpenAlex (by the institution's id, or
-by its exact name), and asks Google's favicon service, then DuckDuckGo's, for that site's icon; failing both, it
-reads the icons the homepage itself links to. Only PNG, JPEG, GIF, ICO and script-free SVG images are kept.
+the institution's homepage from `institutions` in `papers.yaml`, else from its OpenAlex record, and asks Google's
+favicon service, then DuckDuckGo's, for that site's icon; failing both, it reads the icons the homepage itself
+links to. Only PNG, JPEG, GIF, ICO and script-free SVG images are kept.
 Institutions without an icon are shown with their initial.
 
 Semantic Scholar rate-limits unauthenticated requests heavily, so the plugin makes one request at a time,
@@ -181,11 +192,14 @@ Where the data comes from depends on `PAPERS_SOURCE`:
 
 Set `SEMANTIC_SCHOLAR_API_KEY` (sent as the `x-api-key` header) to avoid most rate limiting; you can
 [request a key](https://www.semanticscholar.org/product/api#api-key-form) for free. In CI it comes from the
-optional repository secret of the same name. OpenAlex's limits are far higher than the plugin needs (about 15
-requests per build), but `OPENALEX_API_KEY` is sent as its `api_key` parameter if set.
+optional repository secret of the same name. Without a key, OpenAlex charges searches and filtered lists (but
+not lookups of single records) to a small free daily budget shared by everyone on the same IP address; a build
+makes a few dozen such requests. Once the budget is used up, as can happen on shared CI runners, OpenAlex answers
+HTTP 429 until midnight UTC, and the build takes the institutions from the snapshot. `OPENALEX_API_KEY`, if set,
+is sent as its `api_key` parameter, which gives the requests the key's own budget.
 
-To refresh the snapshot, e.g. after changing the seeds, `include` or `affiliations`, run the following and
-commit the result:
+To refresh the snapshot, e.g. after changing the seeds, `include`, `merge`, `affiliations` or `institutions`,
+run the following and commit the result:
 
 ```bash
 SEMANTIC_SCHOLAR_API_KEY=... npm run papers:update

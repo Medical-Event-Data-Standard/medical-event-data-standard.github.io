@@ -2,16 +2,26 @@ import fs from 'fs/promises';
 import path from 'path';
 import { parse } from 'yaml';
 import type { LoadContext, Plugin } from '@docusaurus/types';
-import { PAPERS_PLUGIN, type Paper, type PapersData, type PapersPageData } from '../src/lib/papers/types';
+import {
+  PAPERS_PLUGIN,
+  type InstitutionLocation,
+  type InstitutionRecord,
+  type Paper,
+  type PapersData,
+  type PapersPageData,
+} from '../src/lib/papers/types';
 import {
   attachInstitutions,
   buildPapersData,
+  byShownName,
   doiFromUrl,
   emptyLiveFetch,
   ICON_EXTENSIONS,
   iconExtension,
   iconLinks,
   institutionIconSlug,
+  institutionLocations,
+  institutionRecord,
   institutionRenamer,
   institutionRecordsOfWork,
   institutionsOfWork,
@@ -19,9 +29,11 @@ import {
   isSameWork,
   normalizeText,
   openAlexDoi,
+  openAlexShortId,
   paperMatchesId,
-  renameInstitutions,
+  showInstitutions,
   type LiveFetch,
+  type OpenAlexInstitution,
   type OpenAlexWork,
   type PaperOverrides,
   type PapersConfig,
@@ -29,8 +41,9 @@ import {
 } from '../src/lib/papers/normalize';
 
 // This runs in Node.js at build time. It lists the papers that cite the core MEDS papers ("seeds") configured in
-// static/data/papers.yaml, using Semantic Scholar's citation graph, looks up their authors' institutions on
-// OpenAlex, and exposes them to the papers page as plugin global data, so visitors make no API calls.
+// static/data/papers.yaml, using Semantic Scholar's citation graph, looks up their authors' institutions (and those
+// institutions' locations) on OpenAlex, and exposes them to the papers page as plugin global data, so visitors
+// make no API calls.
 //
 // Semantic Scholar rate-limits unauthenticated requests heavily, so requests are made one at a time, 429s and
 // 5xx responses are retried with backoff, and anything that can't be fetched is filled in from the committed
@@ -301,8 +314,94 @@ export async function fetchInstitutionsFromOpenAlex(
   return { institutions, ids, failures };
 }
 
+/** The fields used of an OpenAlex institution: its lineage, location and homepage. */
+export const OPENALEX_INSTITUTION_FIELDS = 'id,display_name,lineage,geo,homepage_url';
+
+export interface InstitutionLookup {
+  /** The record of each institution found, by name. */
+  records: Map<string, InstitutionRecord>;
+  /** The homepage of each institution found that has one, by name. */
+  homepages: Map<string, string>;
+  /** Institutions whose lookup failed. */
+  failed: Set<string>;
+  failures: string[];
+}
+
+/**
+ * Looks up institutions on OpenAlex: those with an OpenAlex id (`ids`, by name) by id, 50 per request, and the
+ * others (e.g. those only in papers.yaml) by searching for an institution of exactly that name, one request each.
+ * Never throws.
+ */
+export async function fetchInstitutionRecords(
+  names: readonly string[],
+  ids: ReadonlyMap<string, string>,
+  request: ApiRequest,
+  apiKey?: string
+): Promise<InstitutionLookup> {
+  const lookup: InstitutionLookup = {
+    records: new Map(),
+    homepages: new Map(),
+    failed: new Set(),
+    failures: [],
+  };
+  const key = apiKey ? `&api_key=${encodeURIComponent(apiKey)}` : '';
+  const search = async (filter: string, perPage: number): Promise<OpenAlexInstitution[]> =>
+    (
+      await request<{ results?: OpenAlexInstitution[] | null }>(
+        `/institutions?filter=${filter}&per_page=${perPage}&select=${OPENALEX_INSTITUTION_FIELDS}${key}`
+      )
+    ).results ?? [];
+  const add = (name: string, raw: OpenAlexInstitution | undefined): void => {
+    const found = institutionRecord(raw);
+    if (!found) return;
+    lookup.records.set(name, found.record);
+    if (found.homepage) lookup.homepages.set(name, found.homepage);
+  };
+
+  const byId = names.filter(name => ids.has(name));
+  const idList = [...new Set(byId.map(name => ids.get(name) as string))];
+  const fetched = new Map<string, OpenAlexInstitution>();
+  const failedIds = new Set<string>();
+  for (let start = 0; start < idList.length; start += OPENALEX_BATCH_SIZE) {
+    const batch = idList.slice(start, start + OPENALEX_BATCH_SIZE);
+    try {
+      for (const raw of await search(`id:${batch.join('|')}`, OPENALEX_BATCH_SIZE)) {
+        if (raw?.id) fetched.set(openAlexShortId(raw.id), raw);
+      }
+    } catch (err) {
+      lookup.failures.push(`details of ${batch.length} institutions: ${errorMessage(err)}`);
+      batch.forEach(id => failedIds.add(id));
+    }
+  }
+  for (const name of byId) {
+    const id = ids.get(name) as string;
+    if (failedIds.has(id)) lookup.failed.add(name);
+    else add(name, fetched.get(id));
+  }
+
+  const byName = names.filter(name => !ids.has(name));
+  let nameError = '';
+  for (const name of byName) {
+    try {
+      const results = await search(`display_name.search:${encodeURIComponent(normalizeText(name))}`, 5);
+      add(
+        name,
+        results.find(raw => normalizeText(raw?.display_name ?? '') === normalizeText(name))
+      );
+    } catch (err) {
+      lookup.failed.add(name);
+      nameError ||= errorMessage(err);
+    }
+  }
+  const failedByName = byName.filter(name => lookup.failed.has(name)).length;
+  if (failedByName > 0) {
+    lookup.failures.push(`details of ${failedByName} institutions, by name: ${nameError}`);
+  }
+  return lookup;
+}
+
 /** Every institution of the papers, without duplicates. */
-export const institutionNames = (data: PapersData): string[] => [
+export const institutionNames = (data: Pick<PapersData, 'papers'>): string[] => [
   ...new Set(data.papers.flatMap(paper => paper.institutions)),
 ];
 
@@ -359,24 +458,17 @@ const MAX_PAGE_BYTES = 2_000_000;
 
 /**
  * Downloads an icon for every institution that has none in static/img/institutions yet, and deletes the icons of
- * institutions no longer listed. An institution's icon is its website's icon (favicon).
+ * institutions no longer listed. An institution's icon is its website's icon (favicon), found through its homepage
+ * (`homepages`, by name: the one given in papers.yaml, else OpenAlex's).
  *
- * Its homepage is the one given in papers.yaml (`homepages`, by name), else OpenAlex's: found by the institution's
- * OpenAlex id (`ids`, by name), or else by searching OpenAlex for an institution of exactly that name. The icon
- * comes from the first of `FAVICON_SERVICES` that has one, asking about the homepage's host with and without
- * `www.`, or else from the icons the homepage itself links to, or its `/favicon.ico`. Only PNG, JPEG, GIF, ICO and
- * script-free SVG images are kept. Institutions with no known homepage, or no icon, get none. Never throws.
+ * The icon comes from the first of `FAVICON_SERVICES` that has one, asking about the homepage's host with and
+ * without `www.`, or else from the icons the homepage itself links to, or its `/favicon.ico`. Only PNG, JPEG, GIF,
+ * ICO and script-free SVG images are kept. Institutions with no known homepage, or no icon, get none. Never throws.
  */
 export async function updateInstitutionIcons(
   siteDir: string,
   names: readonly string[],
-  ids: ReadonlyMap<string, string>,
-  {
-    openAlex,
-    fetchFn = fetch,
-    apiKey,
-    homepages: configured = new Map(),
-  }: { openAlex: ApiRequest; fetchFn?: FetchFn; apiKey?: string; homepages?: ReadonlyMap<string, string> }
+  { homepages, fetchFn = fetch }: { homepages: ReadonlyMap<string, string>; fetchFn?: FetchFn }
 ): Promise<InstitutionIconsResult> {
   const dir = path.join(siteDir, INSTITUTION_ICONS_DIR);
   await fs.mkdir(dir, { recursive: true });
@@ -393,50 +485,6 @@ export async function updateInstitutionIcons(
   }
 
   const missing = names.filter(name => !existing.has(institutionIconSlug(name)));
-  const homepages = new Map(
-    missing.flatMap(name => (configured.has(name) ? [[name, configured.get(name) as string]] : []))
-  );
-  const key = apiKey ? `&api_key=${encodeURIComponent(apiKey)}` : '';
-  type InstitutionRecord = { id?: string | null; display_name?: string | null; homepage_url?: string | null };
-  const shortId = (id: string): string => id.replace(/^https?:\/\/openalex\.org\//i, '');
-
-  // By OpenAlex id, many at a time.
-  const byId = missing.filter(name => !homepages.has(name) && ids.has(name));
-  const idList = [...new Set(byId.map(name => ids.get(name) as string))];
-  const homepageById = new Map<string, string>();
-  for (let start = 0; start < idList.length; start += OPENALEX_BATCH_SIZE) {
-    const batch = idList.slice(start, start + OPENALEX_BATCH_SIZE);
-    try {
-      const { results } = await openAlex<{ results?: InstitutionRecord[] }>(
-        `/institutions?filter=id:${batch.join('|')}&per_page=${OPENALEX_BATCH_SIZE}&select=id,homepage_url${key}`
-      );
-      for (const { id, homepage_url } of results ?? []) {
-        if (id && homepage_url) homepageById.set(shortId(id), homepage_url);
-      }
-    } catch (err) {
-      failures.push(`homepages of ${batch.length} institutions: ${errorMessage(err)}`);
-    }
-  }
-  for (const name of byId) {
-    const homepage = homepageById.get(ids.get(name) as string);
-    if (homepage) homepages.set(name, homepage);
-  }
-
-  // By name, one at a time, for institutions without an OpenAlex id (e.g. those only in papers.yaml).
-  for (const name of missing.filter(name => !homepages.has(name) && !ids.has(name))) {
-    try {
-      const { results } = await openAlex<{ results?: InstitutionRecord[] }>(
-        `/institutions?filter=display_name.search:${encodeURIComponent(normalizeText(name))}&per_page=5` +
-          `&select=id,display_name,homepage_url${key}`
-      );
-      const match = (results ?? []).find(
-        record => normalizeText(record.display_name ?? '') === normalizeText(name) && record.homepage_url
-      );
-      if (match?.homepage_url) homepages.set(name, match.homepage_url);
-    } catch (err) {
-      failures.push(`homepage of ${name}: ${errorMessage(err)}`);
-    }
-  }
 
   const get = (url: string): Promise<Response> =>
     fetchFn(url, { headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
@@ -498,6 +546,18 @@ export async function updateInstitutionIcons(
   return { downloaded, removed, without: wanted.size - kept - downloaded, failures };
 }
 
+const IDENTIFIER_FORMS = 'a Semantic Scholar paperId, `DOI:<doi>` or `ARXIV:<id>`';
+
+/** A paper's identifier in papers.yaml, normalised; null if it isn't one. */
+function parseIdentifier(id: unknown): string | null {
+  const match = typeof id === 'string' ? IDENTIFIER.exec(id.trim()) : null;
+  if (!match) return null;
+  // Semantic Scholar expects upper-case prefixes and arXiv ids without a version.
+  const [, paperId, prefix, value] = match;
+  if (paperId) return paperId.toLowerCase();
+  return prefix.toUpperCase() === 'DOI' ? `DOI:${value}` : `ARXIV:${value.replace(/v\d+$/, '')}`;
+}
+
 /**
  * Parses an `include` or `exclude` list, of identifiers or `{ id, ... }` entries, into `[identifier, fields]`
  * pairs: the normalised identifier, and the entry's other fields.
@@ -508,17 +568,28 @@ const identifierList = (value: unknown, key: string): [string, Record<string, un
   return value.map((entry, i) => {
     const entryFields = typeof entry === 'string' ? { id: entry } : (entry ?? {});
     const { id, ...fields } = entryFields as Record<string, unknown>;
-    const match = typeof id === 'string' ? IDENTIFIER.exec(id.trim()) : null;
-    if (!match) {
-      throw new Error(
-        `\`${key}[${i}]\` must have an \`id\`: a Semantic Scholar paperId, \`DOI:<doi>\` or \`ARXIV:<id>\``
-      );
-    }
-    // Semantic Scholar expects upper-case prefixes and arXiv ids without a version.
-    const [, paperId, prefix, value] = match;
-    if (paperId) return [paperId.toLowerCase(), fields];
-    return [prefix.toUpperCase() === 'DOI' ? `DOI:${value}` : `ARXIV:${value.replace(/v\d+$/, '')}`, fields];
+    const identifier = parseIdentifier(id);
+    if (!identifier) throw new Error(`\`${key}[${i}]\` must have an \`id\`: ${IDENTIFIER_FORMS}`);
+    return [identifier, fields];
   });
+};
+
+/** Parses the `merge` list: each entry's `id`, the paper `into` which it is merged, and an optional `note`. */
+const mergeList = (value: unknown): PapersConfig['merge'] => {
+  const entries = identifierList(value, 'merge').map(([id, fields], i) => {
+    const unknown = Object.keys(fields).find(key => key !== 'into' && key !== 'note');
+    if (unknown) throw new Error(`\`merge[${i}]\` has an unknown field \`${unknown}\``);
+    const into = parseIdentifier(fields.into);
+    if (!into) throw new Error(`\`merge[${i}].into\` must be ${IDENTIFIER_FORMS}`);
+    if (into === id) throw new Error(`\`merge[${i}]\` merges a paper into itself`);
+    return { id, into };
+  });
+  entries.forEach(({ into }, i) => {
+    if (entries.some(({ id }) => id === into)) {
+      throw new Error(`\`merge[${i}].into\` is itself merged into another paper`);
+    }
+  });
+  return entries;
 };
 
 /**
@@ -563,16 +634,18 @@ const affiliationList = (value: unknown): PapersConfig['affiliations'] =>
     return { id, institutions: [...new Set(institutions.map(name => (name as string).trim()))] };
   });
 
-/** Parses the `institutions` list: each entry's `name`, and its `rename` and/or `homepage`. */
+/** Parses the `institutions` list: each entry's `name`, and its `rename`, `homepage` and/or `separate`. */
 const institutionList = (value: unknown): PapersConfig['institutions'] => {
   if (value === undefined || value === null) return [];
   if (!Array.isArray(value)) throw new Error('`institutions` must be a list');
   return value.map((entry, i) => {
     const where = `institutions[${i}]`;
     const fields = (entry ?? {}) as Record<string, unknown>;
-    const unknown = Object.keys(fields).find(key => !['name', 'rename', 'homepage', 'note'].includes(key));
+    const unknown = Object.keys(fields).find(
+      key => !['name', 'rename', 'homepage', 'separate', 'note'].includes(key)
+    );
     if (unknown) throw new Error(`\`${where}\` has an unknown field \`${unknown}\``);
-    const { name, rename, homepage } = fields;
+    const { name, rename, homepage, separate } = fields;
     const text = (value: unknown): value is string => typeof value === 'string' && value.trim() !== '';
     if (!text(name)) throw new Error(`\`${where}.name\` must be a non-empty string`);
     if (rename !== undefined && !text(rename))
@@ -580,13 +653,16 @@ const institutionList = (value: unknown): PapersConfig['institutions'] => {
     if (homepage !== undefined && !(text(homepage) && /^https?:\/\/\S+$/i.test(homepage.trim()))) {
       throw new Error(`\`${where}.homepage\` must be an http(s) URL`);
     }
-    if (rename === undefined && homepage === undefined) {
-      throw new Error(`\`${where}\` must set \`rename\` or \`homepage\``);
+    if (separate !== undefined && separate !== true)
+      throw new Error(`\`${where}.separate\` must be \`true\``);
+    if (rename === undefined && homepage === undefined && separate === undefined) {
+      throw new Error(`\`${where}\` must set \`rename\`, \`homepage\` or \`separate\``);
     }
     return {
       name: name.trim(),
       ...(text(rename) ? { rename: rename.trim() } : {}),
       ...(text(homepage) ? { homepage: homepage.trim() } : {}),
+      ...(separate === true ? { separate } : {}),
     };
   });
 };
@@ -594,7 +670,10 @@ const institutionList = (value: unknown): PapersConfig['institutions'] => {
 /** Validates the parsed papers.yaml. A malformed file is a mistake in the repository, so this throws. */
 export function parsePapersConfig(raw: unknown): PapersConfig {
   try {
-    const { seeds, include, exclude, affiliations, institutions } = (raw ?? {}) as Record<string, unknown>;
+    const { seeds, include, exclude, merge, affiliations, institutions } = (raw ?? {}) as Record<
+      string,
+      unknown
+    >;
     if (!Array.isArray(seeds) || seeds.length === 0) throw new Error('`seeds` must be a non-empty list');
     return {
       seeds: seeds.map((seed, i) => {
@@ -611,6 +690,7 @@ export function parsePapersConfig(raw: unknown): PapersConfig {
         return { id, ...(overrides ? { overrides } : {}) };
       }),
       exclude: identifierList(exclude, 'exclude').map(([id]) => id),
+      merge: mergeList(merge),
       affiliations: affiliationList(affiliations),
       institutions: institutionList(institutions),
     };
@@ -655,10 +735,13 @@ export interface LoadPapersOptions {
 
 export interface LoadPapersResult {
   data: PapersData;
-  /** OpenAlex id of each institution found on OpenAlex, by (shown) name; empty unless fetched live. */
-  institutionIds: Map<string, string>;
-  /** Homepages of institutions set in papers.yaml, by (shown) name. */
+  /**
+   * Homepage of each institution, by (shown) name: as set in papers.yaml, else as fetched from OpenAlex (so only
+   * those set in papers.yaml unless fetched live).
+   */
   institutionHomepages: Map<string, string>;
+  /** Location of each institution that has one, by (shown) name. */
+  institutionLocations: Record<string, InstitutionLocation>;
   /** True if something went wrong: a live fetch was incomplete, or the snapshot lacked something. */
   warning: boolean;
   /** Human-readable summary, logged by the plugin and the update script. */
@@ -691,13 +774,11 @@ export async function loadPapers(
   const toLookUp = built.papers.filter(
     paper => !config.affiliations.some(({ id }) => paperMatchesId(paper, id))
   );
+  const openAlexKey = env.OPENALEX_API_KEY?.trim() || undefined;
+  const openAlexClient = createApiClient({ ...OPENALEX_CLIENT_OPTIONS, ...client });
   const openAlex =
     source === 'live'
-      ? await fetchInstitutionsFromOpenAlex(
-          toLookUp,
-          createApiClient({ ...OPENALEX_CLIENT_OPTIONS, ...client }),
-          env.OPENALEX_API_KEY?.trim() || undefined
-        )
+      ? await fetchInstitutionsFromOpenAlex(toLookUp, openAlexClient, openAlexKey)
       : { institutions: new Map<string, string[]>(), ids: new Map<string, string>(), failures: [] };
   const { papers: attached, notFetched } = attachInstitutions(
     built.papers,
@@ -705,23 +786,50 @@ export async function loadPapers(
     openAlex.institutions,
     snapshot
   );
-  const papers = renameInstitutions(attached, config.institutions);
+
+  // The institutions' OpenAlex records: as looked up now, else as in the snapshot. Institutions whose id the
+  // snapshot knows are looked up by it, rather than by name.
+  const saved = snapshot?.institutions ?? {};
+  const listed = institutionNames({ papers: attached });
+  const ids = new Map(
+    listed.flatMap(name => {
+      const id = openAlex.ids.get(name) ?? (Object.hasOwn(saved, name) ? saved[name].id : undefined);
+      return id ? [[name, id]] : [];
+    })
+  );
+  const lookup =
+    source === 'live'
+      ? await fetchInstitutionRecords(listed, ids, openAlexClient, openAlexKey)
+      : { records: new Map(), homepages: new Map(), failed: new Set<string>(), failures: [] };
+  const records: Record<string, InstitutionRecord> = { ...saved, ...Object.fromEntries(lookup.records) };
+  const recordsFromSnapshot = [...lookup.failed].filter(name => Object.hasOwn(saved, name)).length;
+
+  const papers = showInstitutions(attached, records, config.institutions);
+  const shown = institutionNames({ papers });
   const rename = institutionRenamer(config.institutions);
   const fromSnapshot = [
     ...built.fromSnapshot,
     ...(source === 'live' && notFetched > 0 ? [`institutions of ${notFetched} papers`] : []),
+    ...(recordsFromSnapshot > 0 ? [`details of ${recordsFromSnapshot} institutions`] : []),
   ];
 
   // The list is as fresh as its oldest part: if any seed's citations came from the snapshot, so does the date.
   const fresh = config.seeds.every(({ id }) => live.citations.has(id) && !live.incompleteSeeds.has(id));
+  // The records kept are those of the institutions listed, whether shown as themselves, renamed or rolled up.
+  const keptRecords = Object.keys(records)
+    .filter(name => listed.includes(name) || shown.includes(rename(name)))
+    .sort()
+    .map(name => [name, records[name]] as const);
   const data: PapersData = {
     updatedAt: fresh ? now().toISOString() : (snapshot?.updatedAt ?? null),
     seeds,
     papers,
+    ...(keptRecords.length > 0 ? { institutions: Object.fromEntries(keptRecords) } : {}),
   };
 
   const summary = `${papers.length} papers citing ${seeds.length} MEDS papers`;
-  const allFailures = [...failures, ...openAlex.failures];
+  const openAlexFailures = [...openAlex.failures, ...lookup.failures];
+  const allFailures = [...failures, ...openAlexFailures];
   let message: string;
   let warning = false;
   if (source === 'live' && allFailures.length === 0 && fromSnapshot.length === 0 && missing.length === 0) {
@@ -734,7 +842,7 @@ export async function loadPapers(
     warning = true;
     const failedSources = [
       ...(s2Complete ? [] : ['Semantic Scholar']),
-      ...(openAlex.failures.length > 0 ? ['OpenAlex'] : []),
+      ...(openAlexFailures.length > 0 ? ['OpenAlex'] : []),
     ];
     const lines = [
       ...allFailures,
@@ -751,10 +859,13 @@ export async function loadPapers(
   }
   return {
     data,
-    institutionIds: new Map([...openAlex.ids].map(([name, id]) => [rename(name), id])),
-    institutionHomepages: new Map(
-      config.institutions.flatMap(({ name, homepage }) => (homepage ? [[rename(name), homepage]] : []))
-    ),
+    institutionHomepages: new Map([
+      ...byShownName(shown, lookup.homepages, config.institutions),
+      ...config.institutions.flatMap(({ name, homepage }) =>
+        homepage ? [[rename(name), homepage] as const] : []
+      ),
+    ]),
+    institutionLocations: institutionLocations(shown, records, config.institutions),
     warning,
     message,
   };
@@ -773,11 +884,9 @@ export async function updatePapersSnapshot(
   const result = await loadPapers(siteDir, { ...options, source: 'live', client });
   await fs.writeFile(path.join(siteDir, PAPERS_SNAPSHOT), `${JSON.stringify(result.data, null, 2)}\n`);
 
-  const icons = await updateInstitutionIcons(siteDir, institutionNames(result.data), result.institutionIds, {
-    openAlex: createApiClient({ ...OPENALEX_CLIENT_OPTIONS, ...client }),
-    fetchFn: client.fetchFn,
+  const icons = await updateInstitutionIcons(siteDir, institutionNames(result.data), {
     homepages: result.institutionHomepages,
-    apiKey: (options.env ?? process.env).OPENALEX_API_KEY?.trim() || undefined,
+    fetchFn: client.fetchFn,
   });
   const iconSummary =
     `Institution icons: ${icons.downloaded} downloaded, ${icons.removed} removed; ` +
@@ -803,12 +912,17 @@ export default function papersPlugin(context: LoadContext): Plugin {
     },
 
     async loadContent(): Promise<PapersPageData> {
-      const { data, warning, message } = await loadPapers(context.siteDir);
+      const { data, institutionLocations, warning, message } = await loadPapers(context.siteDir);
       if (warning) console.warn(`[${PAPERS_PLUGIN}] ${message}`);
       else console.info(`[${PAPERS_PLUGIN}] ${message}`);
+      // The institutions' OpenAlex records are only needed here, so they aren't sent to the browser.
+      const { updatedAt, seeds, papers } = data;
       return {
-        ...data,
+        updatedAt,
+        seeds,
+        papers,
         institutionIcons: await findInstitutionIcons(context.siteDir, institutionNames(data)),
+        institutionLocations,
       };
     },
 

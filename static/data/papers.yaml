@@ -12,6 +12,10 @@
 #                 `url` to show those instead.
 #   include:      papers that use MEDS but cite none of the seeds, so would otherwise be missing.
 #   exclude:      papers that cite a seed but are not about using MEDS, e.g. ones mentioning it only in passing.
+#   merge:        records that Semantic Scholar has of a paper it also has another record of, e.g. a preprint
+#                 under an earlier title. The record `id` is not listed; the record `into` is, citing every seed
+#                 that either cites. Keep the more complete or published record. If the record `into` isn't
+#                 listed, the record `id` is listed as it is.
 #   affiliations: the institutions of listed papers that OpenAlex has no (or wrong) affiliations for, taken from
 #                 the papers themselves; they replace OpenAlex's. Use OpenAlex's name for an institution where it
 #                 has one (search https://api.openalex.org/institutions?search=<name>), so that its papers are
@@ -19,12 +23,14 @@
 #   institutions: institutions shown differently from OpenAlex: `name` is the name OpenAlex (or `affiliations`)
 #                 gives; `rename` is shown instead, e.g. the name the institution goes by; `homepage` is used to
 #                 find its icon when OpenAlex has no (working) homepage for it. Icons are refreshed by
-#                 `npm run papers:update`.
+#                 `npm run papers:update`. An institution that OpenAlex records as part of other listed
+#                 institutions (its `lineage`) is shown as those instead, e.g. "Stanford Medicine" as "Stanford
+#                 University"; `separate: true` shows it on its own, e.g. where OpenAlex's lineage is wrong.
 #
-# `include`, `exclude` and `affiliations` entries identify a paper by `id`: its Semantic Scholar paperId,
-# `DOI:<doi>` or `ARXIV:<arXiv id>`. Add a `note` saying why, for reviewers. An `include` entry can also set
-# `title`, `authors`, `venue`, `year` and `url`, shown instead of Semantic Scholar's; with a `title`, a paper that
-# Semantic Scholar doesn't have (yet) is listed from these details. For example:
+# `include`, `exclude`, `merge` and `affiliations` entries identify a paper by `id` (and `into`): its Semantic
+# Scholar paperId, `DOI:<doi>` or `ARXIV:<arXiv id>`. Add a `note` saying why, for reviewers. An `include` entry
+# can also set `title`, `authors`, `venue`, `year` and `url`, shown instead of Semantic Scholar's; with a `title`, a
+# paper that Semantic Scholar doesn't have (yet) is listed from these details. For example:
 #
 #   include:
 #     - id: 'ARXIV:2401.00001'
@@ -42,9 +48,13 @@
 #     - id: 'ARXIV:2401.00001'
 #       note: 'From the author list of the arXiv PDF; OpenAlex has no affiliations for it.'
 #       institutions: ['Stanford University', 'Columbia University']
+#   merge:
+#     - id: 'DOI:10.1101/2026.01.01.00000001'
+#       into: 'ARXIV:2401.00001'
+#       note: 'The medRxiv version of the arXiv paper: same authors, and the same abstract.'
 #
-# After changing the seeds, `include` or `affiliations`, refresh the committed fallback snapshot with
-# `npm run papers:update`.
+# After changing the seeds, `include`, `merge`, `affiliations` or `institutions`, refresh the committed fallback
+# snapshot with `npm run papers:update`.
 
 seeds:
   - id: '50846012e25acae4aebf1d2b2953655a19fe2e93'
@@ -236,6 +246,25 @@ exclude:
       Event Extraction in Large Language Model: a survey of event extraction from text, citing ACES only in a list
       of document-level argument extraction methods. Not about health AI or MEDS.
 
+# Checked in November 2026 against arXiv, medRxiv and Semantic Scholar. Comparing the abstracts of all listed
+# papers found no other pair of records of one paper.
+merge:
+  - id: '1cd554240469d93bbbb51f01989f643657f752e5'
+    into: 'daac83a997466a11064ea218d579b68faaf53346'
+    note: >-
+      EveryQuery: both records are arXiv:2603.07900. Versions 1 and 2 (9 March and 18 May 2026) are titled
+      "EveryQuery: Zero-Shot Clinical Prediction via Task-Conditioned Pretraining over Electronic Health Records",
+      the title of the merged record (which has arXiv's DOI, 10.48550/arXiv.2603.07900, and cites ACES). Version 3
+      (26 September 2026) is retitled "EveryQuery: A Promptable Foundation Model for Clinical Prediction Tasks over
+      Electronic Health Records", the title of the kept record, which also has version 2's fifth author.
+  - id: 'DOI:10.1101/2025.11.01.25339297'
+    into: 'ARXIV:2505.20323'
+    note: >-
+      PMOA-TTS: the medRxiv preprint "Temporally annotated textual time series from PubMed Open Access clinical case
+      reports" (4 November 2025) has the same four authors as arXiv:2505.20323, "PMOA-TTS: Introducing the PubMed
+      Open Access Textual Times Series Corpus", and its abstract is that of the arXiv paper's first version, word
+      for word. The arXiv record is kept: its latest version (15 January 2026) is newer. Both cite MEDS-Torch.
+
 # Checked against each paper's author list in November 2026: OpenAlex has no affiliations for these papers.
 # Two more listed papers have none either, and are not here because they print none ("Temporal Entailment
 # Pretraining for Clinical Language Models over EHR Data", ARXIV:2504.18128) or have no full text available
@@ -287,9 +316,6 @@ institutions:
   - name: 'Institut national de recherche en sciences et technologies du numérique'
     rename: 'Inria'
     note: 'The name the institute goes by; OpenAlex gives its full French name.'
-  - name: "Heka : Méthodes basées sur les données et modèles en santé pour l'acquisition de connaissances"
-    rename: 'HeKA'
-    note: "A research team at Inria Paris; HeKA is OpenAlex's acronym for it."
   - name: 'VA Connecticut Healthcare System'
     homepage: 'https://www.va.gov/connecticut-health-care/'
     note: "OpenAlex's homepage for it, www.connecticut.va.gov, no longer resolves."
@@ -299,3 +325,8 @@ institutions:
   - name: 'Samsung Research America'
     homepage: 'https://sra.samsung.com'
     note: 'Only in `affiliations`, so OpenAlex has no homepage for it.'
+  - name: "Brigham and Women's Hospital"
+    separate: true
+    note: >-
+      OpenAlex's lineage of it (I1283280774) includes Tufts University, which would show it as Tufts. It is a
+      Harvard Medical School teaching hospital in Boston and a member of Mass General Brigham, not part of Tufts.

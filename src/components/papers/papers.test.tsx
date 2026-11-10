@@ -100,6 +100,7 @@ const data: PapersPageData = {
   seeds,
   papers,
   institutionIcons: { 'Columbia University': '/img/institutions/columbia-university.png' },
+  institutionLocations: {},
 };
 
 const listRegion = () => screen.getByRole('region', { name: 'Papers citing or using MEDS' });
