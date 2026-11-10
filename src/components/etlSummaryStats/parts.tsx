@@ -28,8 +28,32 @@ import {
 const PLOT_CONFIG = { displayModeBar: false, responsive: true };
 
 /**
+ * Styles for a box whose content scrolls sideways when it is wider than the box, and only then. Overlay scrollbars
+ * (macOS, phones) stay hidden until one scrolls, which hides that there is more to the right, so the scrollbar is
+ * styled, like the site's sidebar scrollbar and in its colours: Chrome, Edge and Safari then always draw it.
+ * Firefox, which ignores those styles, gets a thin scrollbar in the same colours.
+ */
+export const SCROLL_X = {
+  overflowX: 'auto',
+  '&::-webkit-scrollbar': { height: 'var(--ifm-scrollbar-size)' },
+  '&::-webkit-scrollbar-track': {
+    background: 'var(--ifm-scrollbar-track-background-color)',
+    borderRadius: '10px',
+  },
+  '&::-webkit-scrollbar-thumb': {
+    background: 'var(--ifm-scrollbar-thumb-background-color)',
+    borderRadius: '10px',
+  },
+  '&::-webkit-scrollbar-thumb:hover': { background: 'var(--ifm-scrollbar-thumb-hover-background-color)' },
+  '@supports not selector(::-webkit-scrollbar)': {
+    scrollbarWidth: 'thin',
+    scrollbarColor: 'var(--ifm-scrollbar-thumb-background-color) var(--ifm-scrollbar-track-background-color)',
+  },
+} as const;
+
+/**
  * A Plotly figure that fills its container's width. Plotly itself is only loaded in the browser. With `minWidth`, a
- * narrower screen scrolls the figure sideways rather than squeezing it.
+ * narrower screen scrolls the figure sideways (see `SCROLL_X`) rather than squeezing it.
  */
 export function Plot({
   figure,
@@ -41,7 +65,7 @@ export function Plot({
   minWidth?: number;
 }): React.JSX.Element {
   return (
-    <Box sx={minWidth ? { overflowX: 'auto' } : undefined}>
+    <Box sx={minWidth ? SCROLL_X : undefined}>
       <Box role="img" aria-label={label} sx={{ minHeight: figure.layout.height, minWidth }}>
         <PlotlyWrapper
           data={figure.data}
@@ -147,22 +171,37 @@ function CheckCellView({ cell }: { cell: CheckCell }): React.JSX.Element {
       sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, verticalAlign: 'middle' }}
     >
       {icon && <icon.Icon titleAccess={icon.title} sx={{ fontSize: 18, color: icon.color }} />}
-      {cell.text}
+      <Box component="span" sx={{ whiteSpace: 'pre-line' }}>
+        {cell.text}
+      </Box>
     </Box>
   );
 }
 
-/** The health-check scorecard: one row per dataset, one column per check, then what each check means. */
+/**
+ * The health-check scorecard: one row per dataset, one column per check, then what each check means. Headings and
+ * cells wrap, so that the table fits beside the page's table of contents; on a narrower screen it scrolls sideways,
+ * with the datasets' names kept in view.
+ */
 export function HealthTable({ model }: { model: HealthCheckModel }): React.JSX.Element {
   return (
     <>
-      <Box sx={COMPACT_TABLE}>
+      <Box
+        sx={{
+          ...COMPACT_TABLE,
+          '& th, & td': { ...COMPACT_TABLE['& th, & td'], px: 1, whiteSpace: 'normal' },
+          '& thead th': { minWidth: '5em', verticalAlign: 'bottom' },
+          // Long ETL versions break anywhere rather than widening their column, which fits an ETL's name, such as
+          // MEDS_transforms. (Chrome counts a cell's padding in its minimum width.)
+          '& td.versions': { minWidth: '10em', overflowWrap: 'anywhere' },
+        }}
+      >
         <table aria-label="Health check of each dataset">
           <thead>
             <tr>
               <th scope="col">Dataset</th>
               {HEALTH_CHECKS.map(check => (
-                <th key={check.key} scope="col" style={{ whiteSpace: 'normal', minWidth: '7.5em' }}>
+                <th key={check.key} scope="col">
                   {check.label}
                 </th>
               ))}
@@ -173,7 +212,7 @@ export function HealthTable({ model }: { model: HealthCheckModel }): React.JSX.E
               <tr key={row.label}>
                 <th scope="row">{row.label}</th>
                 {HEALTH_CHECKS.map(check => (
-                  <td key={check.key}>
+                  <td key={check.key} className={check.key}>
                     <CheckCellView cell={row.cells[check.key]} />
                   </td>
                 ))}
@@ -231,16 +270,33 @@ export function SkippedNote({
   );
 }
 
+/** The site's (Infima's) shading of every other table row, which is translucent. */
+const STRIPE = 'linear-gradient(var(--ifm-table-stripe-background), var(--ifm-table-stripe-background))';
+
 /**
  * Styles for a plain `<table>` inside a Markdown page: the site's table look, tighter, with one line per cell. The
- * wrapper scrolls sideways when the table is wider than the screen.
+ * wrapper scrolls sideways when the table is wider than it (see `SCROLL_X`), and the first column, which names each
+ * row, stays in view while it does. A cell that stays in view needs an opaque background, so the first column's is
+ * white, under the site's row shading, with a line on its right edge.
  */
 export const COMPACT_TABLE = {
-  overflowX: 'auto',
+  ...SCROLL_X,
   fontSize: '0.8125rem',
   fontVariantNumeric: 'tabular-nums',
   '& table': { display: 'table', width: '100%', mb: 0 },
   '& th, & td': { py: 0.75, px: 1.25, whiteSpace: 'nowrap' },
+  // Each row's first cell, its heading: a `th`, unlike the cells after it.
+  '& tr > th:first-of-type': {
+    position: 'sticky',
+    // One pixel past the edge, so that no sliver of the cells scrolling under it shows beside it.
+    left: '-1px',
+    zIndex: 1,
+    backgroundColor: '#ffffff',
+    boxShadow: 'inset -1px 0 0 var(--ifm-table-border-color)',
+  },
+  '& thead tr > th:first-of-type, & tbody tr:nth-of-type(2n) > th:first-of-type': {
+    backgroundImage: STRIPE,
+  },
 } as const;
 
 /** A plain table, styled like the site's Markdown tables. */

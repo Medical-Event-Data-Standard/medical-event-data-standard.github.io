@@ -171,7 +171,9 @@ describe('DatasetStatistics', () => {
     expect(within(sectionOf('Dataset size')).getByRole('img')).toHaveAccessibleName(
       'Events and unique codes per dataset, grouped bars, most events first'
     );
-    expect(within(sectionOf('Dataset size')).getByText(/The axis is logarithmic/)).toBeInTheDocument();
+    expect(
+      within(sectionOf('Dataset size')).getByText(/The axis is logarithmic: .* the fainter gridlines between/)
+    ).toBeInTheDocument();
     // Nothing on the page distinguishes measurements from events; only a source field keeps its name.
     expect(document.body.textContent?.replace(/measurements_per_day/g, '')).not.toMatch(/measurement/i);
 
@@ -181,7 +183,11 @@ describe('DatasetStatistics', () => {
         'Bubble area is proportional to the number of unique codes.'
       )
     ).toBeInTheDocument();
-    expect(within(sectionOf('Depth vs. breadth')).getByText(/how many distinct codes/)).toBeInTheDocument();
+    expect(
+      within(sectionOf('Depth vs. breadth')).getByText(
+        /Across is its breadth: the number of subjects it has\. Up is its depth: the median number of events per subject\. The bubble's area shows the number of unique codes\. Both axes are logarithmic, with fainter gridlines/
+      )
+    ).toBeInTheDocument();
     expect(within(sectionOf('Depth vs. breadth')).queryByText(/Left unlabelled/)).not.toBeInTheDocument();
     expect(figuresIn('How much data each subject has')[0].data[0].y).toEqual(['Big', 'Demo']);
     expect(
@@ -236,7 +242,12 @@ describe('DatasetStatistics', () => {
         .map(group => group.getAttribute('aria-label'))
         .filter(Boolean);
     expect(toggles('Dataset size')).toEqual(['Horizontal axis']);
-    expect(toggles('Depth vs. breadth')).toEqual(['Bubble size', 'Horizontal axis', 'Vertical axis']);
+    expect(toggles('Depth vs. breadth')).toEqual([
+      'Breadth',
+      'Bubble size',
+      'Horizontal axis',
+      'Vertical axis',
+    ]);
     expect(toggles('How much data each subject has')).toEqual(['Per-subject measure', 'Horizontal axis']);
     expect(toggles('How long the tail of codes is')).toEqual(['Horizontal axis', 'Vertical axis']);
     expect(toggles('Record coverage')).toEqual([]);
@@ -335,13 +346,34 @@ describe('DatasetStatistics', () => {
     // Bubbles are sized by unique codes at first, and by subjects on request; the axes switch independently.
     const depth = () => within(sectionOf('Depth vs. breadth'));
     choose('Depth vs. breadth', 'Bubble size', 'Subjects');
-    expect(depth().getByText(/^Bubble area is proportional to the number of subjects\./)).toBeInTheDocument();
+    // Subjects are then both across and the bubble size, and every text says so.
+    expect(
+      depth().getByText(/^Bubble area is proportional to the number of subjects, which the horizontal axis/)
+    ).toBeInTheDocument();
     expect(depth().getByText('1K subjects')).toBeInTheDocument();
-    expect(depth().getByText(/how many subjects the dataset has/)).toBeInTheDocument();
+    expect(
+      depth().getByText(/The bubble's area shows the number of subjects, as the horizontal axis does\./)
+    ).toBeInTheDocument();
     expect(depth().getByRole('img')).toHaveAccessibleName(
       'Subjects against median events per subject, one bubble per dataset, sized by subjects'
     );
-    expect(figuresIn('Depth vs. breadth')[0].data[0].hovertemplate).toContain('Subjects (bubble size)');
+    expect(figuresIn('Depth vs. breadth')[0].data[0].hovertemplate).toContain(
+      'Subjects (across, bubble size)'
+    );
+    // Unique codes across, sized by subjects.
+    choose('Depth vs. breadth', 'Breadth', 'Unique codes');
+    expect(figuresIn('Depth vs. breadth')[0].layout.xaxis).toMatchObject({
+      title: { text: 'Unique codes (log scale)' },
+    });
+    expect(
+      depth().getByText(
+        /Across is its breadth: the number of unique codes it has\..* area shows the number of subjects\./
+      )
+    ).toBeInTheDocument();
+    expect(depth().getByRole('img')).toHaveAccessibleName(
+      'Unique codes against median events per subject, one bubble per dataset, sized by subjects'
+    );
+    choose('Depth vs. breadth', 'Breadth', 'Subjects');
     expect(depth().getByText(/Both axes are logarithmic/)).toBeInTheDocument();
     choose('Depth vs. breadth', 'Vertical axis', 'Linear');
     expect(figuresIn('Depth vs. breadth')[0].layout.xaxis).toMatchObject({ type: 'log' });
@@ -434,7 +466,106 @@ describe('DatasetStatistics', () => {
     expect(screen.queryByText(/A standard OMOP CDM vocabulary/)).not.toBeInTheDocument();
   });
 
-  it('lists stats files committed to this repository without an ETL repository, and says so', () => {
+  it('shows the missing codes as a percentage, or as a number of codes on request', () => {
+    const missing = statsEntry('Missing', {
+      stats: etlStats(1000, {
+        codeMetadata: {
+          present: true,
+          codes: 50,
+          withDescription: 50,
+          dataCodesMissing: 5,
+          metadataCodesUnused: 0,
+        },
+      }),
+    });
+    mockUsePluginData.mockReturnValue({ ...data, datasets: [big, missing] });
+    render(<DatasetStatistics />);
+    const scorecard = within(sectionOf('Health check')).getByRole('table');
+    // 5 of the 50 distinct codes in the data.
+    expect(within(scorecard).getByRole('row', { name: /^Missing/ })).toHaveTextContent('10.0%');
+    expect(
+      within(sectionOf('Health check')).getByText(/as a percentage of the distinct codes/)
+    ).toBeInTheDocument();
+    choose('Health check', 'Missing codes', 'Number of codes');
+    expect(within(scorecard).getByRole('row', { name: /^Missing/ })).toHaveTextContent('5 codes');
+  });
+
+  it('groups the ICD vocabularies and says how, and marks names and versions set in the configuration', () => {
+    const icd = statsEntry('Coded', {
+      datasetOverride: { name: 'Coded', version: '3.2' },
+      stats: etlStats(1000, {
+        ontology: {
+          eventsMapped: 0.6,
+          codesWithParents: 0.25,
+          vocabularies: [
+            { name: 'ICD10CM', events: 600, recognized: true },
+            { name: 'ICD9CM', events: 500, recognized: true },
+          ],
+          suppressed: { cells: 2, events: 9 },
+          mappedEvents: 1000,
+          noVocabularyEvents: 0,
+          codesInMultipleVocabularies: 7,
+        },
+      }),
+    });
+    mockUsePluginData.mockReturnValue({ ...data, datasets: [big, icd] });
+    const { rerender } = render(<DatasetStatistics />);
+    const mapping = within(sectionOf('Mapping to vocabularies'));
+    expect(
+      mapping.getByText(/each column is one vocabulary \(ICD groups several, see below\): the share/)
+    ).toBeInTheDocument();
+    expect(
+      mapping.getByText(/groups the vocabularies whose names start with ICD: ICD10CM and ICD9CM\./)
+    ).toBeInTheDocument();
+    // At least 1,000 - 9 = 991 and at most 1,000 of 100,000 events: 0.99% and 1.0% round alike.
+    // (Big's code metadata maps nothing.)
+    expect(figuresIn('Mapping to vocabularies')[0].data[1].text).toEqual([
+      ['0%', '0%', '', ''],
+      ['60%', '25%', '', '1.0%'],
+    ]);
+    expect(
+      mapping.getByText(/and the range otherwise\. Suppressed vocabularies are not named/)
+    ).toBeInTheDocument();
+    expect(mapping.getByText('Scroll the heatmap sideways to see every vocabulary.')).toBeInTheDocument();
+
+    const row = within(sectionOf('Datasets and their stats files')).getByRole('row', { name: /^Coded/ });
+    expect(within(row).getAllByRole('cell')[0]).toHaveTextContent('Coded 3.2†');
+    expect(
+      screen.getByText(/Set in this site's configuration \(.*\) rather than taken from the stats file\./)
+    ).toBeInTheDocument();
+
+    // A file that only bounds its ICD share, without suppressed vocabularies, is named.
+    const ranged = statsEntry('Ranged', {
+      stats: etlStats(1000, {
+        ontology: {
+          eventsMapped: 0.0188,
+          codesWithParents: 0.25,
+          vocabularies: [
+            { name: 'ICD10CM', events: 1600, recognized: true },
+            { name: 'ICD9CM', events: 300, recognized: true },
+            { name: 'PMH', events: 50, recognized: false },
+          ],
+          suppressed: null,
+          mappedEvents: 1880,
+          noVocabularyEvents: 0,
+          codesInMultipleVocabularies: 90,
+        },
+      }),
+    });
+    mockUsePluginData.mockReturnValue({ ...data, datasets: [ranged] });
+    rerender(<DatasetStatistics />);
+    expect(figuresIn('Mapping to vocabularies')[0].data[1].text).toEqual([
+      ['1.9%', '25%', '', '1.8–<br>1.9%', '0.1%'],
+    ]);
+    expect(
+      within(sectionOf('Mapping to vocabularies')).getByText(
+        /and the range otherwise \(Ranged\)\. Hover over a cell/
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Set in this site's configuration/)).not.toBeInTheDocument();
+  });
+
+  it('lists stats files committed to this repository, saying so in place of an ETL repository', () => {
     const here = (label: string) =>
       statsEntry(label, {
         id: `${SITE_GITHUB_REPO.toLowerCase()}/static/data/etl_summary_stats/${label.toLowerCase()}.json`,
@@ -445,16 +576,15 @@ describe('DatasetStatistics', () => {
     mockUsePluginData.mockReturnValue({ ...data, datasets: [big, here('Alpha')] });
     const { rerender } = render(<DatasetStatistics />);
     const row = within(sectionOf('Datasets and their stats files')).getByRole('row', { name: /^Alpha/ });
-    expect(within(row).getAllByRole('cell')[0]).toHaveTextContent('—');
+    expect(within(row).getAllByRole('cell')[1]).toHaveTextContent(
+      "alpha_full_summary_stats.jsonin this site's repository"
+    );
+    expect(within(row).getAllByRole('link')).toHaveLength(1);
     expect(within(row).getByRole('link', { name: 'alpha_full_summary_stats.json' })).toHaveAttribute(
       'href',
       `https://github.com/${SITE_GITHUB_REPO}/blob/HEAD/static/data/etl_summary_stats/alpha_full_summary_stats.json`
     );
-    expect(
-      screen.getByText(
-        "The stats file of Alpha is committed to this site's repository, so it has no ETL repository in the table."
-      )
-    ).toBeInTheDocument();
+    expect(screen.queryByText(/Set in this site's configuration/)).not.toBeInTheDocument();
     expect(screen.getByText(/some are committed to this site's repository/)).toBeInTheDocument();
     // It is in every comparison.
     expect(figuresIn('Dataset size')[0].data[0].y).toEqual(['Big', 'Alpha']);
@@ -469,10 +599,8 @@ describe('DatasetStatistics', () => {
     });
     rerender(<DatasetStatistics />);
     expect(
-      screen.getByText(
-        "The stats files of Alpha, Beta and Gamma are committed to this site's repository, so they have no ETL repository in the table."
-      )
-    ).toBeInTheDocument();
+      within(sectionOf('Datasets and their stats files')).getAllByText("in this site's repository")
+    ).toHaveLength(3);
   });
 
   it('leaves off bubble labels that would overlap, and says which', () => {

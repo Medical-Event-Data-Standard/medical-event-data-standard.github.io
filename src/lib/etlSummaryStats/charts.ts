@@ -1,5 +1,5 @@
 import type { Data, Layout } from 'plotly.js';
-import type { Distribution, EtlStats, EtlStatsEntry } from './types';
+import type { Distribution, EtlStats, EtlStatsEntry, VocabularyCell } from './types';
 
 // Pure functions that turn the collected stats into Plotly figures, a table view of each chart, and the list of
 // datasets each chart had to leave out (with the reason, which the page shows). No React and no Plotly runtime
@@ -57,6 +57,8 @@ export const INK = {
   secondary: '#52514e',
   muted: '#6f6e69',
   grid: '#e1e0d9',
+  /** The gridlines of a log axis's minor ticks: fainter than `grid`. */
+  minorGrid: '#efeee9',
   axis: '#c3c2b7',
   /** Text on a filled mark: white, or near-black on the light yellow slot. */
   onFill: '#ffffff',
@@ -116,6 +118,10 @@ export const formatPercentSignificant = (fraction: number): string =>
 /** A share rounded down to one decimal, so that a share short of 100% never reads "100%": 55.4%, 99.9%, 100%. */
 export const formatPercentDown = (fraction: number): string =>
   fraction >= 1 ? '100%' : `${(Math.floor(fraction * 1000) / 10).toFixed(1)}%`;
+
+/** Like `formatPercentDown`, but a share above zero never reads "0.0%": it reads "<0.1%". */
+export const formatPercentNonZero = (fraction: number): string =>
+  fraction > 0 && fraction < 0.001 ? '<0.1%' : formatPercentDown(fraction);
 
 /** "1 code", "3 codes". */
 const plural = (count: number, one: string, many: string): string =>
@@ -249,6 +255,9 @@ export function baseLayout(rows: number, overrides: Partial<Layout> = {}): Parti
     },
     hoverlabel: { bgcolor: '#ffffff', bordercolor: INK.grid, font: { color: INK.primary } },
     showlegend: false,
+    // Nothing can be zoomed or panned, and without a drag mode Plotly leaves touch gestures alone, so a finger on a
+    // chart scrolls the page (or a chart that is wider than the page) as anywhere else.
+    dragmode: false,
     ...overrides,
     xaxis: { ...axisStyle, ...overrides.xaxis },
     yaxis: {
@@ -295,14 +304,24 @@ export type AxisScales = Partial<Record<Axis, AxisScale>>;
 export const canBeLog = (values: number[]): boolean => values.length > 0 && values.every(value => value > 0);
 
 /**
- * Tick marks of a log axis: the labelled major ticks, and unlabelled minor ticks at 2 to 9 times each power of ten
- * (Plotly's `D1`), which bunch up towards the next power of ten and so show that the axis is logarithmic.
+ * Ticks and gridlines of a log axis: labelled major ticks, and unlabelled minor ticks at 2 to 9 times each power of
+ * ten (Plotly's `D1`), each with a gridline across the plot, the minor ones fainter. They bunch up towards the next
+ * power of ten, which shows across the whole plot that the axis is logarithmic.
  */
 export const LOG_AXIS_TICKS = {
   ticks: 'outside',
   ticklen: 6,
   tickcolor: INK.axis,
-  minor: { ticks: 'outside', dtick: 'D1', ticklen: 3, tickcolor: INK.axis },
+  showgrid: true,
+  gridcolor: INK.grid,
+  minor: {
+    ticks: 'outside',
+    dtick: 'D1',
+    ticklen: 3,
+    tickcolor: INK.axis,
+    showgrid: true,
+    gridcolor: INK.minorGrid,
+  },
 } as const;
 
 /**
@@ -547,17 +566,33 @@ const SCATTER = {
   lineHeight: 16,
 };
 
-/** What the area of a depth-vs-breadth bubble shows. */
-export type BubbleSize = 'uniqueCodes' | 'subjects';
+/** A dataset's breadth, which a depth-vs-breadth bubble shows across, or by its area: its subjects or its codes. */
+export type BreadthMeasure = 'subjects' | 'uniqueCodes';
 
 /**
- * The choices of what bubble area shows, unique codes first (the default): `label` for the toggle and the hover,
- * `noun` for the note under the chart, `unit` for the reference bubbles.
+ * The measures that the horizontal axis and the bubble area can show, in the order of both toggles: `label` for the
+ * toggles, the axis and the hover, `noun` for the descriptions, `unit` for the reference bubbles, and `count` for
+ * notes on missing or zero counts.
  */
-export const BUBBLE_SIZES: { key: BubbleSize; label: string; noun: string; unit: string }[] = [
-  { key: 'uniqueCodes', label: 'Unique codes', noun: 'unique codes', unit: 'codes' },
-  { key: 'subjects', label: 'Subjects', noun: 'subjects', unit: 'subjects' },
+export const BREADTH_MEASURES: {
+  key: BreadthMeasure;
+  label: string;
+  noun: string;
+  unit: string;
+  count: string;
+}[] = [
+  { key: 'subjects', label: 'Subjects', noun: 'subjects', unit: 'subjects', count: 'subject count' },
+  {
+    key: 'uniqueCodes',
+    label: 'Unique codes',
+    noun: 'unique codes',
+    unit: 'codes',
+    count: 'unique-code count',
+  },
 ];
+
+const breadthMeasure = (key: BreadthMeasure) =>
+  BREADTH_MEASURES.find(measure => measure.key === key) as (typeof BREADTH_MEASURES)[number];
 
 export interface BubbleChartModel extends ChartModel {
   /** Reference bubbles for a size legend, with their diameter in pixels. */
@@ -569,8 +604,10 @@ export interface BubbleChartModel extends ChartModel {
 }
 
 export interface DepthBreadthOptions extends ScreenOptions {
-  /** What bubble area shows; unique codes unless given. */
-  size?: BubbleSize;
+  /** What the horizontal axis shows; subjects unless given. */
+  breadth?: BreadthMeasure;
+  /** What bubble area shows; unique codes unless given. It may be the measure the horizontal axis shows. */
+  size?: BreadthMeasure;
   /** The scales of the two axes; logarithmic unless given. */
   scales?: AxisScales;
 }
@@ -608,17 +645,19 @@ function scatterAxis(range: [number, number], scale: AxisScale, title: string): 
 }
 
 /**
- * One bubble per dataset: how many subjects it has (x) against how much data a typical subject has (y, the median
- * events per subject), with the bubble's area proportional to the dataset's number of distinct codes or, with
- * `size: 'subjects'`, of subjects. Both axes are logarithmic unless `scales` makes them linear; a log axis leaves out
- * datasets with a value of zero. Labels are placed so that none overlap (see `placeLabels`).
+ * One bubble per dataset: its breadth (x), how many subjects or, with `breadth: 'uniqueCodes'`, distinct codes it
+ * has, against its depth (y), how much data a typical subject has (the median events per subject). The bubble's area
+ * is proportional to the dataset's number of distinct codes or, with `size: 'subjects'`, of subjects; if that is the
+ * measure on the horizontal axis too, the note says so. Both axes are logarithmic unless `scales` makes them linear;
+ * a log axis leaves out datasets with a value of zero. Labels are placed so that none overlap (see `placeLabels`).
  */
 export function depthBreadthChart(
   entries: EtlStatsEntry[],
-  { narrow, size = 'uniqueCodes', scales = {} }: DepthBreadthOptions
+  { narrow, breadth = 'subjects', size = 'uniqueCodes', scales = {} }: DepthBreadthOptions
 ): BubbleChartModel {
   const xScale = scales.x ?? 'log';
   const yScale = scales.y ?? 'log';
+  const across = breadthMeasure(breadth);
   type Bubble = { subjects: number; median: number; uniqueCodes: number };
   const { drawn, skipped } = partition<Bubble>(orderDatasets(entries), (stats, entry) => {
     const { subjects, uniqueCodes } = stats.counts;
@@ -629,8 +668,9 @@ export function depthBreadthChart(
     if (dist.suppressed) {
       return { skip: `Suppressed: the median is withheld because it rests on ${floorPhrase(entry)}.` };
     }
-    if ((xScale === 'log' && subjects <= 0) || (yScale === 'log' && dist.p50 <= 0)) {
-      return { skip: 'Its subject count or median is zero, which a logarithmic axis cannot show.' };
+    const breadthValue = breadth === 'subjects' ? subjects : uniqueCodes;
+    if ((xScale === 'log' && breadthValue <= 0) || (yScale === 'log' && dist.p50 <= 0)) {
+      return { skip: `Its ${across.count} or median is zero, which a logarithmic axis cannot show.` };
     }
     return { subjects, median: dist.p50, uniqueCodes };
   });
@@ -646,7 +686,7 @@ export function depthBreadthChart(
   const empty = { figure: null, skipped, table, logAxes: [], sizeKey: [], sizeNote: '', unlabelled: [] };
   if (drawn.length === 0) return empty;
 
-  const sizeMeta = BUBBLE_SIZES.find(s => s.key === size) as (typeof BUBBLE_SIZES)[number];
+  const sizeMeta = breadthMeasure(size);
   const screen = narrow ? 'narrow' : 'wide';
   const bubble = SCATTER.bubble[screen];
   const maxSize = Math.max(...drawn.map(d => d.value[size]), 1);
@@ -664,8 +704,8 @@ export function depthBreadthChart(
   const height = SCATTER.height - SCATTER.margin.t - SCATTER.margin.b;
   const pad = bubble.max / 2 + 4;
   const xRange = paddedRange(
-    Math.min(...points.map(p => p.subjects)),
-    Math.max(...points.map(p => p.subjects)),
+    Math.min(...points.map(p => p[breadth])),
+    Math.max(...points.map(p => p[breadth])),
     pad,
     width,
     xScale
@@ -683,7 +723,7 @@ export function depthBreadthChart(
     ((toAxis(value, scale) - lo) / (hi - lo)) * pixels;
   const placements = placeLabels(
     points.map(p => ({
-      x: toPixels(p.subjects, xScale, xRange, width),
+      x: toPixels(p[breadth], xScale, xRange, width),
       y: height - toPixels(p.median, yScale, yRange, height),
       r: p.diameter / 2,
       width: p.label.length * SCATTER.charWidth,
@@ -695,7 +735,7 @@ export function depthBreadthChart(
     const place = placements[i];
     if (!place) return [];
     const common = {
-      x: toAxis(p.subjects, xScale),
+      x: toAxis(p[breadth], xScale),
       y: toAxis(p.median, yScale),
       text: p.label,
       font: { color: INK.primary, size: SCATTER.font },
@@ -734,8 +774,12 @@ export function depthBreadthChart(
   }
   const floorValue = maxSize * (bubble.min / bubble.max) ** 2;
   const atFloor = points.some(p => p[size] < floorValue);
-  // The hover names the measure that sets the bubble's size.
-  const hoverLabel = (key: BubbleSize, label: string) => (key === size ? `${label} (bubble size)` : label);
+  // The hover names what each measure sets: the position across, the bubble's size, or both.
+  const hoverLabel = (key: BreadthMeasure) => {
+    const roles = [key === breadth && 'across', key === size && 'bubble size'].filter(Boolean);
+    const { label } = breadthMeasure(key);
+    return roles.length > 0 ? `${label} (${roles.join(', ')})` : label;
+  };
 
   return {
     figure: {
@@ -743,7 +787,7 @@ export function depthBreadthChart(
         trace({
           type: 'scatter',
           mode: 'markers',
-          x: bubbles.map(p => p.subjects),
+          x: bubbles.map(p => p[breadth]),
           y: bubbles.map(p => p.median),
           text: bubbles.map(p => p.label),
           marker: {
@@ -754,9 +798,9 @@ export function depthBreadthChart(
           },
           customdata: bubbles.map(p => [p.subjects, p.median, p.uniqueCodes].map(formatCount)),
           hovertemplate:
-            `%{text}<br>${hoverLabel('subjects', 'Subjects')}: %{customdata[0]}` +
-            '<br>Median events per subject: %{customdata[1]}' +
-            `<br>${hoverLabel('uniqueCodes', 'Unique codes')}: %{customdata[2]}<extra></extra>`,
+            `%{text}<br>${hoverLabel('subjects')}: %{customdata[0]}` +
+            '<br>Median events per subject (up): %{customdata[1]}' +
+            `<br>${hoverLabel('uniqueCodes')}: %{customdata[2]}<extra></extra>`,
         }),
       ],
       layout: baseLayout(0, {
@@ -764,7 +808,7 @@ export function depthBreadthChart(
         margin: { ...SCATTER.margin },
         hovermode: 'closest',
         annotations,
-        xaxis: scatterAxis(xRange, xScale, 'Subjects'),
+        xaxis: scatterAxis(xRange, xScale, across.label),
         yaxis: {
           ...scatterAxis(yRange, yScale, 'Median events per subject'),
           autorange: false,
@@ -778,7 +822,8 @@ export function depthBreadthChart(
     logAxes: ['x', 'y'],
     sizeKey,
     sizeNote:
-      `Bubble area is proportional to the number of ${sizeMeta.noun}.` +
+      `Bubble area is proportional to the number of ${sizeMeta.noun}` +
+      (size === breadth ? ', which the horizontal axis also shows.' : '.') +
       (atFloor
         ? ` Datasets with fewer than about ${formatCompact(Math.ceil(floorValue))} ${sizeMeta.unit} are drawn at the smallest size, so they stay visible.`
         : ''),
@@ -1294,8 +1339,16 @@ export function codeTailChart(
 const VOCABULARY_SHADE_FLOOR = 1e-4;
 /** The narrowest a heatmap column can be with its share legible, in pixels. */
 const VOCABULARY_COLUMN_WIDTH = 44;
+/** A generous estimate of the width of a character of the cell text, in pixels. */
+const VOCABULARY_CHAR_WIDTH = 6.5;
 /** The empty column that sets the mapping columns apart from the vocabularies. */
 const VOCABULARY_SPACER = ' ';
+
+/** The column that groups every vocabulary whose name starts with ICD (ICD9CM, ICD10CM, ICD10PCS, ...). */
+export const ICD_GROUP = 'ICD';
+
+/** Whether a vocabulary is one of those in the ICD column: its name starts with ICD. */
+export const isIcdVocabulary = (name: string): boolean => /^ICD/i.test(name);
 
 /** The vocabulary heatmap prints every share in its cells, so it has no separate table. */
 export interface VocabularyModel {
@@ -1305,6 +1358,12 @@ export interface VocabularyModel {
   minWidth: number;
   /** Whether any column is marked as a standard OMOP vocabulary. */
   anyRecognized: boolean;
+  /** The ICD vocabularies that the drawn datasets' files name, which the ICD column groups, by name. */
+  icdVocabularies: string[];
+  /** The datasets whose ICD cell gives a range, because their file only bounds the share. */
+  icdRanges: string[];
+  /** Whether a dataset with ICD vocabularies also has suppressed ones, whose names (ICD or not) are withheld. */
+  icdWithSuppressed: boolean;
 }
 
 /** The marker after a vocabulary's name that `meds_summary_stats` recognises as an OMOP CDM vocabulary. */
@@ -1322,13 +1381,66 @@ export const MAPPING_COLUMNS = [
 /** A row's text in place of vocabulary cells, when it has none. */
 export const NO_MAPPING = 'No vocabulary mapping';
 
+/** Bounds on a share; equal when the share is exact. */
+export interface ShareBounds {
+  low: number;
+  high: number;
+}
+
+const sum = (counts: number[]): number => counts.reduce((total, count) => total + count, 0);
+
+/**
+ * The share of events whose code has a parent code in at least one of `members`, some of the vocabularies that
+ * `ontology` names. Each vocabulary's count is of the events whose code has a parent in it, so an event whose code
+ * has parents in two members is in both counts, and the sum of the counts can exceed the events they cover. The
+ * share is exact where the file reports that no code has parents in more than one vocabulary: then the counts are
+ * disjoint and their sum is exact. Otherwise the file only bounds it:
+ *   - at least the largest member's count, and at least the events mapped to any vocabulary minus the counts of all
+ *     the other vocabularies (named, suppressed, and parent codes naming none), where the file gives all of these;
+ *   - at most the sum of the members' counts, and at most the events mapped to any vocabulary.
+ * Where the bounds meet, the share is exact too. Null if a member's count or the number of events is unknown.
+ */
+export function groupShare(
+  ontology: NonNullable<EtlStats['ontology']>,
+  members: VocabularyCell[],
+  events: number | null
+): ShareBounds | null {
+  const counts = members.map(member => member.events);
+  if (!events || counts.length === 0 || counts.some(count => count === null)) return null;
+  const total = sum(counts as number[]);
+  if (ontology.codesInMultipleVocabularies === 0) return { low: total / events, high: total / events };
+  let low = Math.max(...(counts as number[]));
+  let high = total;
+  const mapped = ontology.mappedEvents ?? null;
+  if (mapped !== null) {
+    high = Math.min(high, mapped);
+    const others = [
+      ...ontology.vocabularies.filter(vocabulary => !members.includes(vocabulary)).map(v => v.events),
+      ontology.suppressed ? ontology.suppressed.events : 0,
+      ontology.noVocabularyEvents ?? null,
+    ];
+    if (others.every(count => count !== null)) low = Math.max(low, mapped - sum(others as number[]));
+  }
+  // Only a file whose counts contradict each other gets crossed bounds; the lower one is never the larger.
+  return { low: Math.min(low, high) / events, high: high / events };
+}
+
+/** "0.8%", or "1.6–1.7%" for bounds that differ when rounded. */
+export function formatShareBounds({ low, high }: ShareBounds): string {
+  const [from, to] = [formatPercent(low), formatPercent(high)];
+  if (from === to) return from;
+  return `${from.startsWith('<') ? from : from.replace(/%$/, '')}–${to}`;
+}
+
 /**
  * Every dataset's mapping of codes to external vocabularies, through the parent codes in its code metadata, as one
  * heatmap. The first columns give the share of events mapped to any vocabulary and the share of distinct codes
  * with a parent code, each counted once. Then, after a gap, one column per vocabulary gives the share of events
- * whose code has a parent in it. A code can map into several vocabularies, so a row's vocabulary shares can add up
- * to more than its share mapped to any. Vocabularies used by the most datasets come first. A dataset whose code
- * metadata maps no codes is a row of 0% with a note in place of vocabulary cells.
+ * whose code has a parent in it, except that the ICD vocabularies share one column, ICD, the share of events whose
+ * code has a parent in any of them (see `groupShare`; a range where the file only bounds it). A code can map into
+ * several vocabularies, so a row's vocabulary shares can add up to more than its share mapped to any. Vocabularies
+ * used by the most datasets come first. A dataset whose code metadata maps no codes is a row of 0% with a note in
+ * place of vocabulary cells.
  */
 export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
   type Row = { ontology: EtlStats['ontology']; events: number | null };
@@ -1385,38 +1497,69 @@ export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
       });
     }
   }
-  if (drawn.length === 0) return { figure: null, skipped, minWidth: 0, anyRecognized: false };
+  const empty = { icdVocabularies: [], icdRanges: [], icdWithSuppressed: false };
+  if (drawn.length === 0) return { figure: null, skipped, minWidth: 0, anyRecognized: false, ...empty };
 
-  // Vocabulary columns: every vocabulary any dataset uses, the most widely used first, then by name.
+  // Vocabulary columns: every vocabulary any dataset uses, the ICD ones as one column, the most widely used first,
+  // then by name. The ICD column is not a single vocabulary, so it is never marked as a standard OMOP one.
+  const columnOf = (name: string) => (isIcdVocabulary(name) ? ICD_GROUP : name);
   const used = new Map<string, { datasets: number; recognized: boolean }>();
   for (const { value } of drawn) {
+    const columns = new Map<string, boolean>();
     for (const vocabulary of value.ontology?.vocabularies ?? []) {
-      const seen = used.get(vocabulary.name) ?? { datasets: 0, recognized: false };
-      used.set(vocabulary.name, {
-        datasets: seen.datasets + 1,
-        recognized: seen.recognized || vocabulary.recognized === true,
-      });
+      const name = columnOf(vocabulary.name);
+      columns.set(name, !!columns.get(name) || (name !== ICD_GROUP && vocabulary.recognized === true));
+    }
+    for (const [name, recognized] of columns) {
+      const seen = used.get(name) ?? { datasets: 0, recognized: false };
+      used.set(name, { datasets: seen.datasets + 1, recognized: seen.recognized || recognized });
     }
   }
   const vocabularies = [...used.entries()]
     .sort(([a, x], [b, y]) => y.datasets - x.datasets || a.localeCompare(b))
     .map(([name, { recognized }]) => ({ name, recognized }));
 
-  type Cell = { share: number | null; hover: string } | null;
+  type Cell = { share: number | null; text: string; hover: string } | null;
   const shareText = (share: number | null) => (share === null ? 'n/a' : formatPercent(share));
-  const rows: Cell[][] = drawn.map(({ value: { ontology, events } }) => [
+  const icdVocabularies = new Set<string>();
+  const icdRanges: string[] = [];
+  let icdWithSuppressed = false;
+  /** The ICD cell of a row: shaded by the lower bound of its share, which it prints as a value or a range. */
+  const icdCell = (label: string, ontology: NonNullable<Row['ontology']>, events: number | null): Cell => {
+    const members = ontology.vocabularies.filter(vocabulary => isIcdVocabulary(vocabulary.name));
+    if (members.length === 0) return null;
+    members.forEach(member => icdVocabularies.add(member.name));
+    icdWithSuppressed ||= ontology.suppressed !== null;
+    const bounds = groupShare(ontology, members, events);
+    const text = bounds ? formatShareBounds(bounds) : 'n/a';
+    if (text.includes('–')) icdRanges.push(label);
+    const own = members.map(
+      m => `${m.name} ${shareText(m.events === null || !events ? null : m.events / events)}`
+    );
+    return {
+      share: bounds?.low ?? null,
+      text,
+      hover:
+        `${ICD_GROUP} (${members.map(m => m.name).join(', ')}): ${text} of events` +
+        (members.length > 1 ? `<br>Each on its own: ${own.join(', ')}` : '') +
+        (bounds && bounds.low !== bounds.high ? '<br>The stats file only bounds this share' : ''),
+    };
+  };
+  const rows: Cell[][] = drawn.map(({ entry, value: { ontology, events } }) => [
     ...MAPPING_COLUMNS.map(column => {
       // Code metadata without a mapping maps nothing: 0%.
       const share = ontology ? ontology[column.key] : 0;
-      return { share, hover: `${column.label}: ${shareText(share)} ${column.of}` };
+      return { share, text: shareText(share), hover: `${column.label}: ${shareText(share)} ${column.of}` };
     }),
     ...(vocabularies.length > 0 ? [null] : []),
     ...vocabularies.map(column => {
-      const vocabulary = ontology?.vocabularies.find(v => v.name === column.name);
+      if (!ontology) return null;
+      if (column.name === ICD_GROUP) return icdCell(entry.label, ontology, events);
+      const vocabulary = ontology.vocabularies.find(v => v.name === column.name);
       if (!vocabulary) return null;
       const share = vocabulary.events === null || !events ? null : vocabulary.events / events;
       const name = column.recognized ? `${column.name} (a standard OMOP vocabulary)` : column.name;
-      return { share, hover: `${name}: ${shareText(share)} of events` };
+      return { share, text: shareText(share), hover: `${name}: ${shareText(share)} of events` };
     }),
   ]);
 
@@ -1431,6 +1574,13 @@ export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
     ...vocabularies.map(c => (c.recognized ? `${c.name}${OMOP_MARK}` : c.name)),
   ];
   const longest = (labels: string[]) => Math.max(...labels.map(label => label.length));
+  // A range takes two lines, so that it fits a column as narrow as a single share does.
+  const cellText = (cell: Cell) => (cell === null ? '' : cell.text.replace('–', '–<br>'));
+  // Wide enough for the longest line in a cell.
+  const columnWidth = Math.max(
+    VOCABULARY_COLUMN_WIDTH,
+    Math.ceil(longest(rows.flat().flatMap(cell => cellText(cell).split('<br>'))) * VOCABULARY_CHAR_WIDTH + 10)
+  );
   // Column labels are slanted at 45°, so they need about 0.7 of their length in height.
   const top =
     Math.ceil(longest([...MAPPING_COLUMNS.map(c => c.label), ...vocabularies.map(c => c.name)]) * 7 * 0.72) +
@@ -1440,7 +1590,7 @@ export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
   const right =
     8 +
     (markerTexts.length > 0
-      ? Math.max(0, longest(markerTexts) * 7 + 12 - vocabularies.length * VOCABULARY_COLUMN_WIDTH)
+      ? Math.max(0, longest(markerTexts) * 7 + 12 - vocabularies.length * columnWidth)
       : 0);
   const firstVocabulary = (x.length - vocabularies.length) / x.length;
   return {
@@ -1479,7 +1629,7 @@ export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
           hoverongaps: false,
           xgap: 2,
           ygap: 2,
-          text: rows.map(row => row.map(cell => (cell === null ? '' : shareText(cell.share)))),
+          text: rows.map(row => row.map(cellText)),
           texttemplate: '%{text}',
           customdata: rows.map(row => row.map(cell => (cell === null ? '' : cell.hover))),
           hovertemplate: '%{y}<br>%{customdata}<extra></extra>',
@@ -1514,8 +1664,11 @@ export function vocabularyChart(entries: EtlStatsEntry[]): VocabularyModel {
       } as Partial<Layout>),
     },
     skipped,
-    minWidth: longest(y) * 7 + 24 + x.length * VOCABULARY_COLUMN_WIDTH + right - 8,
+    minWidth: longest(y) * 7 + 24 + x.length * columnWidth + right - 8,
     anyRecognized: vocabularies.some(c => c.recognized),
+    icdVocabularies: [...icdVocabularies].sort((a, b) => a.localeCompare(b)),
+    icdRanges,
+    icdWithSuppressed,
   };
 }
 
@@ -1526,17 +1679,11 @@ export type CheckStatus = 'pass' | 'warn' | 'info' | 'unknown';
 
 export interface CheckCell {
   status: CheckStatus;
+  /** One or more lines, separated by `\n`. */
   text: string;
 }
 
-export type HealthCheckKey =
-  | 'ids'
-  | 'missingCodes'
-  | 'numeric'
-  | 'descriptions'
-  | 'unusedCodes'
-  | 'medsVersion'
-  | 'etl';
+export type HealthCheckKey = 'ids' | 'missingCodes' | 'numeric' | 'descriptions' | 'unusedCodes' | 'versions';
 
 /** Codes.parquet passes the description check when at least this share of its codes has a description. */
 export const DESCRIPTION_THRESHOLD = 0.9;
@@ -1550,7 +1697,7 @@ export const HEALTH_CHECKS: { key: HealthCheckKey; label: string; help: string }
   {
     key: 'missingCodes',
     label: 'Data codes missing from codes.parquet',
-    help: 'Codes that occur in the data but have no row in metadata/codes.parquet. MEDS requires every code to be listed there, so there should be none.',
+    help: 'Codes that occur in the data but have no row in metadata/codes.parquet, as a percentage of the distinct codes in the data or as a number of codes. MEDS requires every code to be listed there, so there should be none.',
   },
   {
     key: 'numeric',
@@ -1568,21 +1715,27 @@ export const HEALTH_CHECKS: { key: HealthCheckKey; label: string; help: string }
     help: 'Codes in codes.parquet that never occur in the data. MEDS allows this, e.g. for a whole vocabulary, so it is shown as information, not as a problem.',
   },
   {
-    key: 'medsVersion',
-    label: 'MEDS version',
-    help: 'The MEDS version that metadata/dataset.json states.',
-  },
-  {
-    key: 'etl',
-    label: 'ETL and version',
-    help: 'The ETL that wrote the dataset, and its version, as metadata/dataset.json states.',
+    key: 'versions',
+    label: 'MEDS and ETL versions',
+    help: 'The MEDS version, and the ETL that wrote the dataset with its version, as metadata/dataset.json states them.',
   },
 ];
 
 export interface HealthCheckModel {
   rows: { label: string; cells: Record<HealthCheckKey, CheckCell> }[];
   skipped: Skipped[];
+  /** Whether any dataset has data codes missing from codes.parquet, so that how they are shown matters. */
+  anyMissingCodes: boolean;
 }
+
+/** How the data codes missing from codes.parquet are shown: as a share of the distinct codes in the data, or a count. */
+export type MissingCodesView = 'share' | 'count';
+
+/** The choices of the toggle for the missing codes, the default first. */
+export const MISSING_CODES_VIEWS: { key: MissingCodesView; label: string }[] = [
+  { key: 'share', label: 'Percentage' },
+  { key: 'count', label: 'Number of codes' },
+];
 
 const pass = (text: string): CheckCell => ({ status: 'pass', text });
 const warn = (text: string): CheckCell => ({ status: 'warn', text });
@@ -1611,13 +1764,18 @@ const NO_CODES_FILE = 'No codes.parquet';
 
 /**
  * A scorecard of invariants every MEDS dataset should meet, one row per dataset: each cell passes, warns, or says
- * the file doesn't report it. The versions and the codes listed but unused are information, without a verdict.
+ * the file doesn't report it. The versions and the codes listed but unused are information, without a verdict. The
+ * data codes missing from codes.parquet are a share of the distinct codes in the data (`counts.n_unique_codes`, the
+ * set they are taken from), unless `missingCodes` is `count` or the file lacks that number, when they are a count.
  */
-export function healthCheck(entries: EtlStatsEntry[]): HealthCheckModel {
+export function healthCheck(
+  entries: EtlStatsEntry[],
+  { missingCodes = 'share' }: { missingCodes?: MissingCodesView } = {}
+): HealthCheckModel {
   const { drawn, skipped } = partition(orderDatasets(entries), (stats, entry) => {
     const { checks, codeMetadata: cm } = stats;
     const etl = [entry.dataset?.etlName, entry.dataset?.etlVersion].filter(Boolean).join(' ');
-    const medsVersion = entry.dataset?.medsVersion;
+    const meds = entry.dataset?.medsVersion;
     const cells: Record<HealthCheckKey, CheckCell> = {
       ids: zeroCheck([
         [checks.emptyCodes, 'empty code', 'empty codes'],
@@ -1626,7 +1784,13 @@ export function healthCheck(entries: EtlStatsEntry[]): HealthCheckModel {
       ]),
       missingCodes: codeMetadataCheck(cm, warn(NO_CODES_FILE), ({ dataCodesMissing }) => {
         if (dataCodesMissing === null) return NOT_REPORTED;
-        return dataCodesMissing === 0 ? pass('None') : warn(plural(dataCodesMissing, 'code', 'codes'));
+        if (dataCodesMissing === 0) return pass('None');
+        const share = ratio(dataCodesMissing, stats.counts.uniqueCodes);
+        return warn(
+          missingCodes === 'share' && share !== null
+            ? formatPercentNonZero(share)
+            : plural(dataCodesMissing, 'code', 'codes')
+        );
       }),
       numeric: zeroCheck([
         [checks.nanValues, 'NaN', 'NaN'],
@@ -1641,12 +1805,18 @@ export function healthCheck(entries: EtlStatsEntry[]): HealthCheckModel {
         if (unused === null) return NOT_REPORTED;
         return info(unused === 0 ? 'None' : plural(unused, 'code', 'codes'));
       }),
-      medsVersion: medsVersion ? info(medsVersion) : unknown('Not stated'),
-      etl: etl ? info(etl) : unknown('Not stated'),
+      versions:
+        meds || etl
+          ? info(`${meds ? `MEDS ${meds}` : 'MEDS version not stated'}\n${etl || 'ETL not stated'}`)
+          : unknown('Not stated'),
     };
     return cells;
   });
-  return { rows: drawn.map(({ entry, value }) => ({ label: entry.label, cells: value })), skipped };
+  return {
+    rows: drawn.map(({ entry, value }) => ({ label: entry.label, cells: value })),
+    skipped,
+    anyMissingCodes: entries.some(entry => (entry.stats?.codeMetadata?.dataCodesMissing ?? 0) > 0),
+  };
 }
 
 // ─── Summary table ──────────────────────────────────────────────
@@ -1655,16 +1825,25 @@ export const githubRepoUrl = (githubRepo: string): string => `https://github.com
 export const statsFileUrl = (entry: Pick<EtlStatsEntry, 'githubRepo' | 'path'>): string =>
   `https://github.com/${entry.githubRepo}/blob/HEAD/${entry.path}`;
 
-/** "MIMIC-IV 3.1:0.2.1", or whatever part of the name and version the file states. */
+/**
+ * "MIMIC-IV 3.1:0.2.1": the dataset name and version that the file states, or that this site's configuration sets
+ * instead (`datasetOverride`), whichever parts are known.
+ */
 export function datasetName(entry: EtlStatsEntry): string {
-  const { name, version } = entry.dataset ?? { name: null, version: null };
+  const file = entry.dataset ?? { name: null, version: null };
+  const override = entry.datasetOverride ?? {};
+  const name = override.name !== undefined ? override.name : file.name;
+  const version = override.version !== undefined ? override.version : file.version;
   return [name, version].filter(Boolean).join(' ') || '—';
 }
 
-/** "1 (tool 0.0.3)": the stats schema version and the meds_summary_stats version that wrote the file. */
+/**
+ * "1 (tool 0.0.3)": the stats schema version and the meds_summary_stats version that wrote the file, with a
+ * non-breaking space, so that a narrow column breaks before "(tool", not inside it.
+ */
 export function schemaDescription(entry: EtlStatsEntry): string {
   if (entry.schemaVersion === null) return '—';
   return entry.toolVersion
-    ? `${entry.schemaVersion} (tool ${entry.toolVersion})`
+    ? `${entry.schemaVersion} (tool\u00a0${entry.toolVersion})`
     : String(entry.schemaVersion);
 }

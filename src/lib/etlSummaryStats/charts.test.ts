@@ -8,19 +8,25 @@ import {
   codeTailPoints,
   coverageChart,
   datasetName,
-  BUBBLE_SIZES,
+  BREADTH_MEASURES,
   depthBreadthChart,
   formatCompact,
   formatCount,
   formatDate,
   formatPercent,
   formatPercentDown,
+  formatPercentNonZero,
   formatPercentSignificant,
+  formatShareBounds,
+  groupShare,
   formatRatio,
   githubRepoUrl,
   HEALTH_CHECKS,
   healthCheck,
+  ICD_GROUP,
+  isIcdVocabulary,
   LOG_AXIS_TICKS,
+  MISSING_CODES_VIEWS,
   linearTicks,
   logTicks,
   orderDatasets,
@@ -71,6 +77,10 @@ describe('formatting', () => {
     expect(formatPercentDown(0.99987)).toBe('99.9%');
     expect(formatPercentDown(0.5537)).toBe('55.3%');
     expect(formatPercentDown(1)).toBe('100%');
+    // Rounded down too, but a share above zero never reads 0.0%.
+    expect(formatPercentNonZero(0.0004)).toBe('<0.1%');
+    expect(formatPercentNonZero(0.0457)).toBe('4.5%');
+    expect(formatPercentNonZero(0)).toBe('0.0%');
     // Two significant digits, however small, for log axes.
     expect(formatPercentSignificant(1)).toBe('100%');
     expect(formatPercentSignificant(0.061)).toBe('6.1%');
@@ -102,7 +112,7 @@ describe('formatting', () => {
     });
   });
 
-  it('uses a log axis only for positive values, with minor ticks at 2 to 9 times each power of ten', () => {
+  it('uses a log axis only for positive values, with fainter gridlines at 2 to 9 times each power of ten', () => {
     expect(valueAxis([10, 1000], 'Count')).toEqual({
       type: 'log',
       title: { text: 'Count (log scale)' },
@@ -111,7 +121,16 @@ describe('formatting', () => {
       ticks: 'outside',
       ticklen: 6,
       tickcolor: expect.any(String),
-      minor: { ticks: 'outside', dtick: 'D1', ticklen: 3, tickcolor: expect.any(String) },
+      showgrid: true,
+      gridcolor: '#e1e0d9',
+      minor: {
+        ticks: 'outside',
+        dtick: 'D1',
+        ticklen: 3,
+        tickcolor: expect.any(String),
+        showgrid: true,
+        gridcolor: '#efeee9',
+      },
     });
     expect(valueAxis([0, 1000], 'Count')).toEqual({
       title: { text: 'Count' },
@@ -170,7 +189,13 @@ describe('formatting', () => {
     expect(datasetName(big)).toBe('Big 1.0');
     expect(datasetName(statsEntry('Plain'))).toBe('Plain 1.0');
     expect(datasetName(statsEntry('X', { dataset: null }))).toBe('—');
-    expect(schemaDescription(big)).toBe('1 (tool 0.0.3)');
+    // This site's configuration can set either part instead, or hide it.
+    expect(datasetName(statsEntry('X', { datasetOverride: { name: 'Shown', version: '2' } }))).toBe(
+      'Shown 2'
+    );
+    expect(datasetName(statsEntry('X', { datasetOverride: { version: null } }))).toBe('X');
+    expect(datasetName(statsEntry('X', { dataset: null, datasetOverride: { name: 'Shown' } }))).toBe('Shown');
+    expect(schemaDescription(big)).toBe('1 (tool\u00a00.0.3)');
     expect(schemaDescription(statsEntry('X', { toolVersion: null }))).toBe('1');
     expect(schemaDescription(statsEntry('X', { schemaVersion: null }))).toBe('—');
   });
@@ -200,6 +225,8 @@ describe('shared helpers', () => {
   it('sizes a horizontal chart by its rows and lets callers override axes', () => {
     const layout = baseLayout(3, { yaxis: { autorange: true } });
     expect(layout.height).toBe(3 * 34 + 8 + 40);
+    // No drag mode, so touch gestures scroll the page rather than being caught by the chart.
+    expect(layout.dragmode).toBe(false);
     expect(layout.yaxis).toMatchObject({ autorange: true, automargin: true });
     expect(baseLayout(0).height).toBe(34 + 8 + 40);
   });
@@ -543,9 +570,9 @@ describe('depthBreadthChart', () => {
       'Bubble area is proportional to the number of unique codes. Datasets with fewer than about 817 codes are ' +
         'drawn at the smallest size, so they stay visible.'
     );
-    // The hover names the measure that sets the bubble's size.
+    // The hover names what each measure sets: the position across or up, or the bubble's size.
     expect(bubbles.hovertemplate).toBe(
-      '%{text}<br>Subjects: %{customdata[0]}<br>Median events per subject: %{customdata[1]}' +
+      '%{text}<br>Subjects (across): %{customdata[0]}<br>Median events per subject (up): %{customdata[1]}' +
         '<br>Unique codes (bubble size): %{customdata[2]}<extra></extra>'
     );
     expect(model.logAxes).toEqual(['x', 'y']);
@@ -589,19 +616,53 @@ describe('depthBreadthChart', () => {
     const bubbles = attrs(model.figure?.data[0]);
     expect(bubbles.text).toEqual(['Many', 'Quarter', 'Few']);
     expect((bubbles.marker as { size: number[] }).size).toEqual([56, 28, 8]);
-    expect(bubbles.hovertemplate).toContain('Subjects (bubble size): %{customdata[0]}');
+    // Subjects set both the position across and the size, and every text says so.
+    expect(bubbles.hovertemplate).toContain('Subjects (across, bubble size): %{customdata[0]}');
     expect(bubbles.hovertemplate).toContain('<br>Unique codes: %{customdata[2]}');
     expect(model.sizeKey).toEqual([
       { label: '100K subjects', diameter: 56 },
       { label: '10K subjects', diameter: 56 * Math.sqrt(0.1) },
     ]);
     expect(model.sizeNote).toBe(
-      'Bubble area is proportional to the number of subjects. Datasets with fewer than about 2K subjects ' +
-        'are drawn at the smallest size, so they stay visible.'
+      'Bubble area is proportional to the number of subjects, which the horizontal axis also shows. Datasets ' +
+        'with fewer than about 2K subjects are drawn at the smallest size, so they stay visible.'
     );
     // The positions don't change with the size.
     expect(bubbles.x).toEqual([100_000, 25_000, 1000]);
-    expect(BUBBLE_SIZES.map(option => option.key)).toEqual(['uniqueCodes', 'subjects']);
+    expect(BREADTH_MEASURES.map(option => option.key)).toEqual(['subjects', 'uniqueCodes']);
+  });
+
+  it('puts unique codes across when asked, sized by unique codes or subjects', () => {
+    const many = withCodes('Many', 100_000, 100);
+    const quarter = withCodes('Quarter', 25_000, 40_000);
+    const model = depthBreadthChart([many, quarter], { ...wide, breadth: 'uniqueCodes', size: 'subjects' });
+    const bubbles = attrs(model.figure?.data[0]);
+    expect(bubbles.x).toEqual([100, 40_000]);
+    expect(bubbles.hovertemplate).toContain('Subjects (bubble size): %{customdata[0]}');
+    expect(bubbles.hovertemplate).toContain('<br>Unique codes (across): %{customdata[2]}');
+    expect(model.sizeNote).toBe('Bubble area is proportional to the number of subjects.');
+    const layout = model.figure?.layout as Record<string, Record<string, unknown>>;
+    expect(layout.xaxis).toMatchObject({ type: 'log', title: { text: 'Unique codes (log scale)' } });
+    // Labels sit at the codes, in powers of ten on the log axis.
+    const annotations = layout.annotations as unknown as { text: string; x: number }[];
+    expect(annotations.find(a => a.text === 'Quarter')?.x).toBeCloseTo(Math.log10(40_000));
+    // The default size is unique codes, then on both.
+    const both = depthBreadthChart([many, quarter], { ...wide, breadth: 'uniqueCodes' });
+    expect(attrs(both.figure?.data[0]).hovertemplate).toContain('Unique codes (across, bubble size)');
+    expect(both.sizeNote).toMatch(
+      /^Bubble area is proportional to the number of unique codes, which the hor/
+    );
+    // A dataset with no codes can't go on a log axis of codes, but can on a linear one.
+    const none = withCodes('None', 500, 0);
+    expect(depthBreadthChart([many, none], { ...wide, breadth: 'uniqueCodes' }).skipped).toEqual([
+      {
+        label: 'None',
+        reason: 'Its unique-code count or median is zero, which a logarithmic axis cannot show.',
+      },
+    ]);
+    expect(
+      depthBreadthChart([many, none], { ...wide, breadth: 'uniqueCodes', scales: { x: 'linear' } }).skipped
+    ).toEqual([]);
   });
 
   it('draws linear axes when asked, placing labels on them, and keeps datasets a log axis cannot show', () => {
@@ -1065,21 +1126,15 @@ describe('vocabularyChart', () => {
     const model = vocabularyChart([smallVocab, otherVocab, unmapped, bigVocab, unreadable]);
     const [grid, heatmap] = (model.figure?.data ?? []).map(attrs);
     // The mapping columns, an empty column as a gap, then the vocabularies, most widely used first.
-    const x = [...LEAD, ' ', 'ICD10CM', 'LOINC', 'LOCAL', 'MAYBE'];
+    // ICD10CM is in the ICD column.
+    const x = [...LEAD, ' ', 'ICD', 'LOINC', 'LOCAL', 'MAYBE'];
     expect(heatmap.x).toEqual(x);
     expect(heatmap.y).toEqual(['Big', 'Small', 'Unmapped', 'Other']);
     // A faint grid under every cell but the gap, without hover.
     expect(grid).toMatchObject({ x, hoverinfo: 'skip', z: Array(4).fill([0, 0, null, 0, 0, 0, 0]) });
     expect(model.figure?.layout.xaxis).toMatchObject({
-      tickvals: [...LEAD, 'ICD10CM', 'LOINC', 'LOCAL', 'MAYBE'],
-      ticktext: [
-        '<b>Any vocabulary</b>',
-        '<b>Codes with a parent</b>',
-        'ICD10CM*',
-        'LOINC*',
-        'LOCAL',
-        'MAYBE',
-      ],
+      tickvals: [...LEAD, 'ICD', 'LOINC', 'LOCAL', 'MAYBE'],
+      ticktext: ['<b>Any vocabulary</b>', '<b>Codes with a parent</b>', 'ICD', 'LOINC*', 'LOCAL', 'MAYBE'],
     });
     // log10 of the share, floored at 0.01%; a vocabulary a dataset doesn't use has no cell. A dataset without a
     // mapping maps nothing.
@@ -1100,7 +1155,7 @@ describe('vocabularyChart', () => {
       'Any vocabulary: 50% of events map to a vocabulary',
       'Codes with a parent: 50% of the distinct codes have a parent code',
       '',
-      'ICD10CM (a standard OMOP vocabulary): 0.2% of events',
+      'ICD (ICD10CM): 0.2% of events',
       'LOINC (a standard OMOP vocabulary): 50% of events',
       'LOCAL: <0.1% of events',
       'MAYBE: n/a of events',
@@ -1120,6 +1175,7 @@ describe('vocabularyChart', () => {
     expect(model.figure?.layout.margin).toEqual({ l: 8, r: 8, t: 112, b: 8 });
     expect(model.minWidth).toBe(8 * 7 + 24 + 7 * 44);
     expect(model.anyRecognized).toBe(true);
+    expect(model).toMatchObject({ icdVocabularies: ['ICD10CM'], icdRanges: [], icdWithSuppressed: true });
     expect(model.skipped).toEqual([
       { label: 'Future', reason: unreadable.problem },
       {
@@ -1224,7 +1280,160 @@ describe('vocabularyChart', () => {
     expect(layoutOf(model).margin.r).toBe(8 + 21 * 7 + 12);
     // Without any note, the plot needs no extra room.
     expect(layoutOf(vocabularyChart([big])).margin.r).toBe(8);
-    expect(vocabularyChart([])).toEqual({ figure: null, skipped: [], minWidth: 0, anyRecognized: false });
+    expect(vocabularyChart([])).toEqual({
+      figure: null,
+      skipped: [],
+      minWidth: 0,
+      anyRecognized: false,
+      icdVocabularies: [],
+      icdRanges: [],
+      icdWithSuppressed: false,
+    });
+  });
+
+  it('groups the ICD vocabularies into one column, exact where the file allows and a range where it bounds', () => {
+    // Each dataset has 100,000 events (1,000 subjects).
+    const icd = (name: string, events: number | null) => ({ name, events, recognized: true });
+    const mapping = (
+      vocabularies: { name: string; events: number | null; recognized: boolean | null }[],
+      extra: Partial<NonNullable<EtlStats['ontology']>>
+    ) => ({ ...(ontology(vocabularies) as NonNullable<EtlStats['ontology']>), ...extra });
+    const model = vocabularyChart([
+      // No code has parents in two vocabularies: the sum of the ICD shares.
+      entryWith('Disjoint', 1000, {
+        ontology: mapping([icd('ICD10CM', 200), icd('ICD9CM', 300), icd('LOINC', 5000)], {
+          codesInMultipleVocabularies: 0,
+        }),
+      }),
+      // Codes map into both ICD vocabularies; everything mapped is ICD, so the bounds meet at 210 of 99,900.
+      entryWith('Overlap', 999, {
+        ontology: mapping([icd('ICD10CM', 200), icd('ICD9CM', 180)], {
+          codesInMultipleVocabularies: 150,
+          mappedEvents: 210,
+          noVocabularyEvents: 0,
+        }),
+      }),
+      // Only bounded: at least 1,880 mapped - 90 in other vocabularies = 1,790 of 99,800, at most 1,880.
+      entryWith('Bounded', 998, {
+        ontology: mapping([icd('ICD10CM', 1600), icd('ICD9CM', 300), icd('PMH', 50), icd('ED', 40)], {
+          codesInMultipleVocabularies: 90,
+          mappedEvents: 1880,
+          noVocabularyEvents: 0,
+        }),
+      }),
+      entryWith('Unknown', 997, { ontology: mapping([icd('ICD10GM', null)], {}) }),
+      entryWith('No ICD', 996, { ontology: mapping([icd('LOINC', 100)], {}) }),
+    ]);
+    const heatmap = attrs(model.figure?.data[1]);
+    // ICD is used by the most datasets, so it comes first; it is never marked as one OMOP vocabulary.
+    expect((heatmap.x as string[]).slice(3)).toEqual([ICD_GROUP, 'LOINC', 'ED', 'PMH']);
+    expect((model.figure?.layout.xaxis as { ticktext: string[] }).ticktext.slice(2)).toEqual([
+      'ICD',
+      'LOINC*',
+      'ED*',
+      'PMH*',
+    ]);
+    const icdColumn = (rows: unknown) => (rows as unknown[][]).map(row => row[3]);
+    // A range takes two lines.
+    expect(icdColumn(heatmap.text)).toEqual(['0.5%', '0.2%', '1.8–<br>1.9%', 'n/a', '']);
+    // Shaded by the lower bound.
+    expect(icdColumn(heatmap.z)).toEqual([
+      Math.log10(500 / 100_000),
+      Math.log10(210 / 99_900),
+      Math.log10(1790 / 99_800),
+      null,
+      null,
+    ]);
+    expect(icdColumn(heatmap.customdata)).toEqual([
+      'ICD (ICD10CM, ICD9CM): 0.5% of events<br>Each on its own: ICD10CM 0.2%, ICD9CM 0.3%',
+      'ICD (ICD10CM, ICD9CM): 0.2% of events<br>Each on its own: ICD10CM 0.2%, ICD9CM 0.2%',
+      'ICD (ICD10CM, ICD9CM): 1.8–1.9% of events<br>Each on its own: ICD10CM 1.6%, ICD9CM 0.3%' +
+        '<br>The stats file only bounds this share',
+      'ICD (ICD10GM): n/a of events',
+      '',
+    ]);
+    expect(model).toMatchObject({
+      icdVocabularies: ['ICD10CM', 'ICD10GM', 'ICD9CM'],
+      icdRanges: ['Bounded'],
+      icdWithSuppressed: false,
+    });
+    expect(model.minWidth).toBe(8 * 7 + 24 + 7 * 44);
+    // Columns are wide enough for the longest line of a range.
+    const tiny = entryWith('Tiny', 1000, {
+      ontology: mapping([icd('ICD10CM', 40), icd('ICD9CM', 30), icd('LOINC', 1000)], {
+        codesInMultipleVocabularies: 1,
+      }),
+    });
+    const tinyModel = vocabularyChart([tiny]);
+    expect(icdColumn(attrs(tinyModel.figure?.data[1]).text)).toEqual(['<0.1%–<br>0.1%']);
+    expect(tinyModel.minWidth).toBe(4 * 7 + 24 + 5 * Math.ceil(6 * 6.5 + 10));
+    expect(isIcdVocabulary('icd10')).toBe(true);
+    expect(isIcdVocabulary('NDC')).toBe(false);
+  });
+});
+
+describe('groupShare', () => {
+  const vocabulary = (name: string, events: number | null) => ({ name, events, recognized: null });
+  const ontologyOf = (
+    vocabularies: ReturnType<typeof vocabulary>[],
+    extra: Partial<NonNullable<EtlStats['ontology']>> = {}
+  ): NonNullable<EtlStats['ontology']> => ({
+    eventsMapped: null,
+    codesWithParents: null,
+    vocabularies,
+    suppressed: null,
+    ...extra,
+  });
+  const a = vocabulary('ICD10CM', 145);
+  const b = vocabulary('ICD9CM', 21);
+  const others = [vocabulary('ED', 10), vocabulary('PMH', 5)];
+
+  it('sums disjoint counts, and bounds overlapping ones by the largest, the sum and what is mapped', () => {
+    expect(groupShare(ontologyOf([a, b], { codesInMultipleVocabularies: 0 }), [a, b], 1000)).toEqual({
+      low: 0.166,
+      high: 0.166,
+    });
+    // At least 170 - 15 = 155, at most the sum, 166.
+    const overlapping = ontologyOf([a, b, ...others], {
+      codesInMultipleVocabularies: 3,
+      mappedEvents: 170,
+      noVocabularyEvents: 0,
+      suppressed: { cells: 1, events: 0 },
+    });
+    expect(groupShare(overlapping, [a, b], 1000)).toEqual({ low: 0.155, high: 0.166 });
+    // An unknown count of another vocabulary, or of the suppressed or vocabulary-less events, leaves the largest.
+    for (const extra of [
+      { noVocabularyEvents: null },
+      { noVocabularyEvents: undefined },
+      { suppressed: { cells: 1, events: null } },
+    ]) {
+      expect(groupShare({ ...overlapping, ...extra }, [a, b], 1000)).toEqual({ low: 0.145, high: 0.166 });
+    }
+    // Without the events mapped to any vocabulary: the largest and the sum.
+    expect(groupShare(ontologyOf([a, b]), [a, b], 1000)).toEqual({ low: 0.145, high: 0.166 });
+    // A single vocabulary's share is exact.
+    expect(groupShare(ontologyOf([a, ...others], { mappedEvents: 160 }), [a], 1000)).toEqual({
+      low: 0.145,
+      high: 0.145,
+    });
+  });
+
+  it('never lets the lower bound pass the upper one, and is unknown without the counts', () => {
+    // A file whose counts contradict each other: everything mapped is ICD10CM, yet it has fewer events.
+    expect(groupShare(ontologyOf([a], { mappedEvents: 1000, noVocabularyEvents: 0 }), [a], 2000)).toEqual({
+      low: 0.0725,
+      high: 0.0725,
+    });
+    expect(groupShare(ontologyOf([a]), [a], null)).toBeNull();
+    expect(groupShare(ontologyOf([a]), [a], 0)).toBeNull();
+    expect(groupShare(ontologyOf([vocabulary('ICD9CM', null)]), [vocabulary('ICD9CM', null)], 10)).toBeNull();
+    expect(groupShare(ontologyOf([]), [], 10)).toBeNull();
+  });
+
+  it('prints one value where the bounds round alike, and a range otherwise', () => {
+    expect(formatShareBounds({ low: 0.016389, high: 0.01659 })).toBe('1.6–1.7%');
+    expect(formatShareBounds({ low: 0.0161, high: 0.0164 })).toBe('1.6%');
+    expect(formatShareBounds({ low: 0.0002, high: 0.002 })).toBe('<0.1%–0.2%');
   });
 });
 
@@ -1247,8 +1456,7 @@ describe('healthCheck', () => {
       numeric: { status: 'pass', text: 'None' },
       descriptions: { status: 'pass', text: '100%' },
       unusedCodes: { status: 'info', text: 'None' },
-      medsVersion: { status: 'info', text: '0.4.0' },
-      etl: { status: 'info', text: 'etl 0.1' },
+      versions: { status: 'info', text: 'MEDS 0.4.0\netl 0.1' },
     });
   });
 
@@ -1265,7 +1473,8 @@ describe('healthCheck', () => {
     const row = cells([broken]).Broken;
     expect(row.ids).toEqual({ status: 'warn', text: '1 empty code, 2 null codes, 3 null subject IDs' });
     expect(row.numeric).toEqual({ status: 'warn', text: '4 NaN, 1 infinite' });
-    expect(row.missingCodes).toEqual({ status: 'warn', text: '2 codes' });
+    // A share of the 50 distinct codes in the data.
+    expect(row.missingCodes).toEqual({ status: 'warn', text: '4.0%' });
     expect(row.descriptions).toEqual({ status: 'warn', text: '89.5%' });
     expect(row.unusedCodes).toEqual({ status: 'info', text: '1 code' });
     const one = entryWith('One', 10, {
@@ -1277,10 +1486,39 @@ describe('healthCheck', () => {
       }),
     });
     expect(cells([one]).One).toMatchObject({
-      missingCodes: { status: 'warn', text: '1 code' },
+      missingCodes: { status: 'warn', text: '2.0%' },
       descriptions: { status: 'pass', text: '90.0%' },
       unusedCodes: { status: 'info', text: '3 codes' },
     });
+  });
+
+  it('shows the missing codes as a number of codes when asked, or when the share is unknown', () => {
+    // Fewer subjects each, so the rows keep this order.
+    const missing = (subjects: number, dataCodesMissing: number, uniqueCodes: number | null) =>
+      entryWith(`${dataCodesMissing} of ${uniqueCodes}`, subjects, {
+        counts: counts(subjects, { uniqueCodes }),
+        codeMetadata: codeMetadata({ dataCodesMissing }),
+      });
+    const entries = [
+      missing(50, 2, 50),
+      missing(40, 1, 1),
+      missing(30, 1, 10_000),
+      missing(20, 3, null),
+      missing(10, 0, 5),
+    ];
+    const texts = (model: ReturnType<typeof healthCheck>) =>
+      model.rows.map(row => row.cells.missingCodes.text);
+    expect(texts(healthCheck(entries))).toEqual(['4.0%', '100%', '<0.1%', '3 codes', 'None']);
+    expect(texts(healthCheck(entries, { missingCodes: 'count' }))).toEqual([
+      '2 codes',
+      '1 code',
+      '1 code',
+      '3 codes',
+      'None',
+    ]);
+    expect(healthCheck(entries).anyMissingCodes).toBe(true);
+    expect(healthCheck([big, unreadable]).anyMissingCodes).toBe(false);
+    expect(MISSING_CODES_VIEWS.map(view => view.key)).toEqual(['share', 'count']);
   });
 
   it('says what a file does not report, or that the dataset has no codes.parquet', () => {
@@ -1320,8 +1558,7 @@ describe('healthCheck', () => {
       missingCodes: { status: 'warn', text: 'No codes.parquet' },
       descriptions: { status: 'unknown', text: 'No codes.parquet' },
       unusedCodes: { status: 'unknown', text: 'No codes.parquet' },
-      medsVersion: { status: 'unknown', text: 'Not stated' },
-      etl: { status: 'unknown', text: 'Not stated' },
+      versions: { status: 'unknown', text: 'Not stated' },
     });
     expect(rows.Unreported).toMatchObject({
       ids: notReported,
@@ -1336,13 +1573,25 @@ describe('healthCheck', () => {
       missingCodes: notReported,
       descriptions: notReported,
       unusedCodes: notReported,
-      medsVersion: { status: 'unknown', text: 'Not stated' },
-      etl: { status: 'info', text: 'etl' },
+      versions: { status: 'info', text: 'MEDS version not stated\netl' },
     });
     expect(rows['No codes'].descriptions).toEqual(notReported);
+    const medsOnly = entryWith(
+      'MEDS only',
+      5,
+      {},
+      {
+        dataset: { name: 'M', version: null, etlName: null, etlVersion: null, medsVersion: '0.4.1' },
+      }
+    );
+    expect(cells([medsOnly])['MEDS only'].versions).toEqual({
+      status: 'info',
+      text: 'MEDS 0.4.1\nETL not stated',
+    });
     expect(healthCheck([unreadable])).toEqual({
       rows: [],
       skipped: [{ label: 'Future', reason: unreadable.problem }],
+      anyMissingCodes: false,
     });
   });
 
@@ -1353,8 +1602,7 @@ describe('healthCheck', () => {
       'numeric',
       'descriptions',
       'unusedCodes',
-      'medsVersion',
-      'etl',
+      'versions',
     ]);
     expect(HEALTH_CHECKS.find(check => check.key === 'descriptions')?.help).toMatch(/passes at 90% or more/);
   });

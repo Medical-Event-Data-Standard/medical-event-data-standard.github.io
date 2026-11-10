@@ -45,4 +45,7 @@ The same file is also a regression baseline: `compare_MEDS_summary_stats` and th
 new ETL versions against it.
 
 If there is no ETL repository to commit the file to, open a pull request that adds it to this site's repository
-under `static/data/etl_summary_stats/` and lists it under `local_files` in the same YAML file.
+under `static/data/etl_summary_stats/` and lists it under `local_files` in the same YAML file. If the dataset's
+`metadata/dataset.json` doesn't give its name or version as the dataset is published, set them there with
+`dataset_name` and `dataset_version`, and say where they come from in a `note`; the page marks them as set in
+the configuration.
