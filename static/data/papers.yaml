@@ -1,20 +1,26 @@
 # Configuration for the Papers page (/papers), which lists papers that cite the MEDS papers below.
 #
 # The list is built from Semantic Scholar's citation graph when the site is built (see plugins/papers.ts), so
-# new citing papers appear without anyone editing this file. Edit it to change which papers are listed:
+# new citing papers appear without anyone editing this file. The institutions shown for each paper are its
+# authors' affiliations on OpenAlex, also fetched at build time. Edit this file to change which papers are
+# listed:
 #
-#   seeds:   the core MEDS papers. Every paper citing at least one of them is listed. `id` is the paper's
-#            Semantic Scholar paperId (the 40-character hash at the end of its semanticscholar.org URL);
-#            `label` is the short name shown on the chips of the papers that cite it. If Semantic Scholar's
-#            details of a seed are wrong, set any of `title`, `authors`, `venue`, `year` and `url` to show
-#            those instead.
-#   include: papers that use MEDS but cite none of the seeds, so would otherwise be missing.
-#   exclude: papers that cite a seed but are not about using MEDS, e.g. ones mentioning it only in passing.
+#   seeds:        the core MEDS papers. Every paper citing at least one of them is listed. `id` is the paper's
+#                 Semantic Scholar paperId (the 40-character hash at the end of its semanticscholar.org URL);
+#                 `label` is the short name shown on its card and in the "Why listed" filter. If Semantic
+#                 Scholar's details of a seed are wrong, set any of `title`, `authors`, `venue`, `year` and
+#                 `url` to show those instead.
+#   include:      papers that use MEDS but cite none of the seeds, so would otherwise be missing.
+#   exclude:      papers that cite a seed but are not about using MEDS, e.g. ones mentioning it only in passing.
+#   affiliations: the institutions of listed papers that OpenAlex has no (or wrong) affiliations for, taken from
+#                 the papers themselves; they replace OpenAlex's. Use OpenAlex's name for an institution where it
+#                 has one (search https://api.openalex.org/institutions?search=<name>), so that its papers are
+#                 counted together.
 #
-# `include` and `exclude` entries identify a paper by `id`: its Semantic Scholar paperId, `DOI:<doi>` or
-# `ARXIV:<arXiv id>`. Add a `note` saying why, for reviewers. An `include` entry can also set `title`, `authors`,
-# `venue`, `year` and `url`, shown instead of Semantic Scholar's; with a `title`, a paper that Semantic Scholar
-# doesn't have (yet) is listed from these details. For example:
+# `include`, `exclude` and `affiliations` entries identify a paper by `id`: its Semantic Scholar paperId,
+# `DOI:<doi>` or `ARXIV:<arXiv id>`. Add a `note` saying why, for reviewers. An `include` entry can also set
+# `title`, `authors`, `venue`, `year` and `url`, shown instead of Semantic Scholar's; with a `title`, a paper that
+# Semantic Scholar doesn't have (yet) is listed from these details. For example:
 #
 #   include:
 #     - id: 'ARXIV:2401.00001'
@@ -28,8 +34,13 @@
 #   exclude:
 #     - id: 'DOI:10.1234/example'
 #       note: 'Survey that mentions MEDS only in passing.'
+#   affiliations:
+#     - id: 'ARXIV:2401.00001'
+#       note: 'From the author list of the arXiv PDF; OpenAlex has no affiliations for it.'
+#       institutions: ['Stanford University', 'Columbia University']
 #
-# After changing the seeds or `include`, refresh the committed fallback snapshot with `npm run papers:update`.
+# After changing the seeds, `include` or `affiliations`, refresh the committed fallback snapshot with
+# `npm run papers:update`.
 
 seeds:
   - id: '50846012e25acae4aebf1d2b2953655a19fe2e93'
@@ -220,3 +231,50 @@ exclude:
     note: >-
       Event Extraction in Large Language Model: a survey of event extraction from text, citing ACES only in a list
       of document-level argument extraction methods. Not about health AI or MEDS.
+
+# Checked against each paper's author list in November 2026: OpenAlex has no affiliations for these papers.
+# Two more listed papers have none either, and are not here because they print none ("Temporal Entailment
+# Pretraining for Clinical Language Models over EHR Data", ARXIV:2504.18128) or have no full text available
+# ("Resilient Systems for Capturing Tacit Knowledge", 8b270d7d03c422be39b1bf9c549bf76c5a0c0ff0).
+affiliations:
+  - id: 'DOI:10.7759/cureus.117234'
+    note: >-
+      Digital Twins and Offline RL for Mechanical Circulatory Support: "Zweistein Innovation Lab, Active Care and
+      Education in Sports and Outreach (ACESO) Foundation, Dublin, USA" (PMC full text). Not on OpenAlex.
+    institutions: ['Active Care and Education in Sports and Outreach (ACESO) Foundation']
+  - id: 'ARXIV:2607.01391'
+    note: >-
+      How Should Transformers Encode Numeric Values in EHRs?: "University of Copenhagen" and "Copenhagen
+      University Hospital - Rigshospitalet" (arXiv PDF). On other papers, OpenAlex records the latter as both
+      "Copenhagen University Hospital" and "Rigshospitalet".
+    institutions: ['University of Copenhagen', 'Copenhagen University Hospital', 'Rigshospitalet']
+  - id: 'ARXIV:2601.21340'
+    note: 'EHR-RAG: "University of Illinois Urbana-Champaign" and "Yale University" (arXiv PDF).'
+    institutions: ['University of Illinois Urbana-Champaign', 'Yale University']
+  - id: 'DOI:10.64898/2026.01.23.26344677'
+    note: >-
+      Hepatitis B EHR foundation model: the authors are at "gsk.ai" (medRxiv PDF), and medRxiv gives the
+      corresponding author's institution as "gsk plc". OpenAlex has GSK only per country, and the paper names none.
+    institutions: ['GSK plc']
+  - id: 'DOI:10.25932/publishup-70445'
+    note: 'PhD thesis: "Hasso Plattner Institute, University of Potsdam" (title page).'
+    institutions: ['Hasso Plattner Institute', 'University of Potsdam']
+  - id: 'ARXIV:2510.25785'
+    note: >-
+      HiMAE: "Samsung Research America" and "University of California Los, Angeles" (sic; arXiv PDF). OpenAlex has
+      no record of Samsung Research America of its own.
+    institutions: ['Samsung Research America', 'University of California, Los Angeles']
+  - id: 'ARXIV:2505.16941'
+    note: 'FoMoH: "Department of Biomedical Informatics, Columbia University" (arXiv PDF).'
+    institutions: ['Columbia University']
+  - id: 'ARXIV:2504.14657'
+    note: 'Synthetic medical record generation case study: "University of California, Los Angeles" (arXiv PDF).'
+    institutions: ['University of California, Los Angeles']
+  - id: 'ARXIV:2504.07373'
+    note: 'ChronoFormer: "University of the Chinese Academy of Sciences" and "Columbia University" (arXiv PDF).'
+    institutions: ['University of Chinese Academy of Sciences', 'Columbia University']
+  - id: 'ARXIV:2503.05768'
+    note: >-
+      A Collection of Innovations in Medical AI: "University of the Chinese Academy of Sciences" and "Columbia
+      University" (arXiv PDF).
+    institutions: ['University of Chinese Academy of Sciences', 'Columbia University']

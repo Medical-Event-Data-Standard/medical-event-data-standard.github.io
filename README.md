@@ -138,15 +138,22 @@ import nb from './converting_to_MEDS.ipynb';
 
 The [papers page](https://medical-event-data-standard.github.io/papers) (`src/pages/papers.tsx`) lists the
 papers that cite one of the core MEDS papers ("seeds"), from
-[Semantic Scholar](https://www.semanticscholar.org/)'s citation graph. Citing MEDS doesn't always mean using
-it, so the page says so. The list is fetched at build time by `plugins/papers.ts`, so visitors make no API
-calls, and it is configured in [`static/data/papers.yaml`](static/data/papers.yaml):
+[Semantic Scholar](https://www.semanticscholar.org/)'s citation graph, with the institutions of their authors
+from [OpenAlex](https://openalex.org/), which visitors can filter the list by. Citing MEDS doesn't always mean
+using it, so the page says so. The list is fetched at build time by `plugins/papers.ts`, so visitors make no
+API calls, and it is configured in [`static/data/papers.yaml`](static/data/papers.yaml):
 
-- `seeds`: the core MEDS papers, by Semantic Scholar paperId, with the short label shown on chips (and, where
-  Semantic Scholar has them wrong, corrected details).
+- `seeds`: the core MEDS papers, by Semantic Scholar paperId, with the short label shown on their cards and in
+  the "Why listed" filter (and, where Semantic Scholar has them wrong, corrected details).
 - `include`: papers that use MEDS without citing a seed (with their title, authors, venue and year if Semantic
   Scholar doesn't have them).
 - `exclude`: papers that cite a seed but don't belong on the list.
+- `affiliations`: institutions of papers that OpenAlex has no (or wrong) author affiliations for, taken from
+  the papers themselves.
+
+OpenAlex is searched by DOI (or arXiv's DOI for arXiv papers), and, for papers it has no institutions for that
+way, by title: a record with the same title and an author with the same surname counts, which finds e.g. the
+published version of a preprint.
 
 Semantic Scholar rate-limits unauthenticated requests heavily, so the plugin makes one request at a time,
 retries HTTP 429 and 5xx responses with exponential backoff (honouring `Retry-After`), and stops retrying after
@@ -164,9 +171,11 @@ Where the data comes from depends on `PAPERS_SOURCE`:
 
 Set `SEMANTIC_SCHOLAR_API_KEY` (sent as the `x-api-key` header) to avoid most rate limiting; you can
 [request a key](https://www.semanticscholar.org/product/api#api-key-form) for free. In CI it comes from the
-optional repository secret of the same name.
+optional repository secret of the same name. OpenAlex's limits are far higher than the plugin needs (about 15
+requests per build), but `OPENALEX_API_KEY` is sent as its `api_key` parameter if set.
 
-To refresh the snapshot, e.g. after changing the seeds or `include`, run the following and commit the result:
+To refresh the snapshot, e.g. after changing the seeds, `include` or `affiliations`, run the following and
+commit the result:
 
 ```bash
 SEMANTIC_SCHOLAR_API_KEY=... npm run papers:update

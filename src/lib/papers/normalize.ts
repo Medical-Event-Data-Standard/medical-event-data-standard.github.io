@@ -1,5 +1,5 @@
-// Pure functions that turn Semantic Scholar responses into the papers page's data. Used at build time by
-// plugins/papers.ts; kept here, free of Node.js imports, so they can be unit-tested on their own.
+// Pure functions that turn Semantic Scholar and OpenAlex responses into the papers page's data. Used at build time
+// by plugins/papers.ts; kept here, free of Node.js imports, so they can be unit-tested on their own.
 
 import { sortPapers } from './display';
 import type { CitingPaper, Paper, PapersData, SeedPaper } from './types';
@@ -14,8 +14,20 @@ export interface S2Paper {
   authors?: { name?: string | null }[] | null;
   externalIds?: Record<string, string | number | null> | null;
   url?: string | null;
-  citationCount?: number | null;
   publicationDate?: string | null;
+}
+
+/** A work as returned by the OpenAlex API, limited to the fields we request. */
+export interface OpenAlexWork {
+  /** As a URL, e.g. `https://doi.org/10.1145/123`. */
+  doi?: string | null;
+  title?: string | null;
+  authorships?:
+    | {
+        author?: { display_name?: string | null } | null;
+        institutions?: { display_name?: string | null }[] | null;
+      }[]
+    | null;
 }
 
 /** A seed paper as configured in static/data/papers.yaml. */
@@ -41,6 +53,13 @@ export interface IncludeConfig {
   overrides?: PaperOverrides;
 }
 
+/** An entry of the `affiliations` list of papers.yaml: a paper's institutions, used instead of OpenAlex's. */
+export interface AffiliationConfig {
+  /** Identifier (see `paperMatchesId`). */
+  id: string;
+  institutions: string[];
+}
+
 /** The parsed contents of static/data/papers.yaml. */
 export interface PapersConfig {
   seeds: SeedConfig[];
@@ -48,6 +67,8 @@ export interface PapersConfig {
   include: IncludeConfig[];
   /** Identifiers of papers never to list, e.g. ones that cite MEDS without using it. */
   exclude: string[];
+  /** Institutions of papers that OpenAlex has no (or wrong) affiliations for. */
+  affiliations: AffiliationConfig[];
 }
 
 /** What a (possibly failed or partial) Semantic Scholar fetch returned. */
@@ -112,14 +133,13 @@ export function normalizePaper(raw: S2Paper | null | undefined): Paper | null {
       : arxivId
         ? `https://arxiv.org/abs/${arxivId}`
         : (cleanText(raw.url) ?? semanticScholarUrl(id)),
-    citationCount: typeof raw.citationCount === 'number' ? raw.citationCount : null,
   };
 }
 
 /** The `Paper` fields of a paper, without any extra fields (like a citing paper's `cites`). */
 function paperDetails(paper: Paper): Paper {
-  const { id, title, authors, venue, year, publicationDate, doi, arxivId, url, citationCount } = paper;
-  return { id, title, authors, venue, year, publicationDate, doi, arxivId, url, citationCount };
+  const { id, title, authors, venue, year, publicationDate, doi, arxivId, url } = paper;
+  return { id, title, authors, venue, year, publicationDate, doi, arxivId, url };
 }
 
 /**
@@ -163,7 +183,6 @@ export function paperFromDetails(identifier: string, details: PaperOverrides & {
       : arxivId
         ? `https://arxiv.org/abs/${arxivId}`
         : semanticScholarUrl(identifier),
-    citationCount: null,
     ...details,
   };
 }
@@ -219,10 +238,12 @@ export function buildPapersData(
       if (manual) existing.manual = true;
     } else {
       // Copy only the details, so a snapshot paper's own `cites`/`manual` are replaced rather than carried over.
+      // Institutions are added afterwards, by `attachInstitutions`.
       papers.set(paper.id, {
         ...paperDetails(paper),
         cites: [...cites],
         ...(manual ? { manual: true } : {}),
+        institutions: [],
       });
     }
   };
@@ -274,7 +295,81 @@ export function buildPapersData(
     .filter(paper => !config.exclude.some(identifier => paperMatchesId(paper, identifier)))
     .map(paper => ({ ...paper, cites: [...paper.cites].sort((a, b) => seedOrder(a) - seedOrder(b)) }));
 
-  return { seeds, papers: sortPapers(listed, 'newest'), fromSnapshot, missing };
+  return { seeds, papers: sortPapers(listed), fromSnapshot, missing };
+}
+
+/** The DOI OpenAlex knows a paper by: its own DOI, else the DOI arXiv assigns it; in lower case. */
+export function openAlexDoi(paper: Paper): string | null {
+  if (paper.doi) return paper.doi.toLowerCase();
+  return paper.arxivId ? `10.48550/arxiv.${paper.arxivId.toLowerCase()}` : null;
+}
+
+/** A DOI as OpenAlex gives it (`https://doi.org/10.1/X`) without its URL prefix, in lower case. */
+export function doiFromUrl(doi: string | null | undefined): string | null {
+  const text = cleanText(doi);
+  return text ? text.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').toLowerCase() : null;
+}
+
+/** The institutions of a work's authors, without duplicates, in author order. */
+export function institutionsOfWork(work: OpenAlexWork | null | undefined): string[] {
+  const names = (work?.authorships ?? []).flatMap(authorship =>
+    (authorship?.institutions ?? []).map(institution => cleanText(institution?.display_name))
+  );
+  return [...new Set(names.filter((name): name is string => !!name))];
+}
+
+/**
+ * Text reduced to lower-case words, without accents, markup or punctuation: for comparing titles and names
+ * loosely, and for OpenAlex's title search (whose filter syntax gives commas and colons a meaning).
+ */
+export function normalizeText(text: string): string {
+  return text
+    .replace(/<[^>]*>/g, ' ')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+const surname = (name: string): string => normalizeText(name).split(' ').pop() ?? '';
+
+/**
+ * True if an OpenAlex work (found by searching for the paper's title) is the paper: it has the same title and, if
+ * both list authors, shares an author's surname.
+ */
+export function isSameWork(paper: Paper, work: OpenAlexWork): boolean {
+  const title = normalizeText(paper.title);
+  if (!title || normalizeText(work.title ?? '') !== title) return false;
+  const theirs = new Set(
+    (work.authorships ?? [])
+      .map(authorship => surname(authorship?.author?.display_name ?? ''))
+      .filter(Boolean)
+  );
+  if (paper.authors.length === 0 || theirs.size === 0) return true;
+  return paper.authors.some(name => theirs.has(surname(name)));
+}
+
+/**
+ * Sets each paper's institutions: from the `affiliations` list of papers.yaml if it is there, else as fetched
+ * from OpenAlex (`fetched`, by paper id), else from the snapshot. Also returns how many papers were neither in
+ * papers.yaml nor fetched.
+ */
+export function attachInstitutions(
+  papers: readonly CitingPaper[],
+  affiliations: readonly AffiliationConfig[],
+  fetched: ReadonlyMap<string, string[]>,
+  snapshot: PapersData | null
+): { papers: CitingPaper[]; notFetched: number } {
+  let notFetched = 0;
+  const withInstitutions = papers.map(paper => {
+    const configured = affiliations.find(({ id }) => paperMatchesId(paper, id));
+    const live = configured ? configured.institutions : fetched.get(paper.id);
+    if (!live) notFetched++;
+    const institutions = live ?? snapshot?.papers.find(saved => saved.id === paper.id)?.institutions ?? [];
+    return { ...paper, institutions: [...institutions] };
+  });
+  return { papers: withInstitutions, notFetched };
 }
 
 /** Checks the shape of a parsed snapshot file, so a corrupt one is ignored rather than breaking the page. */
@@ -292,6 +387,11 @@ export function isPapersData(value: unknown): value is PapersData {
     Array.isArray(data.seeds) &&
     data.seeds.every(isPaper) &&
     Array.isArray(data.papers) &&
-    data.papers.every(paper => isPaper(paper) && Array.isArray((paper as CitingPaper).cites))
+    data.papers.every(
+      paper =>
+        isPaper(paper) &&
+        Array.isArray((paper as CitingPaper).cites) &&
+        Array.isArray((paper as CitingPaper).institutions)
+    )
   );
 }

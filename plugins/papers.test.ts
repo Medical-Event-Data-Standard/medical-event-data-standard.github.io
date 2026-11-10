@@ -4,24 +4,32 @@ import os from 'os';
 import path from 'path';
 import type { LoadContext, PluginContentLoadedActions } from '@docusaurus/types';
 import papersPlugin, {
-  createS2Client,
+  createApiClient,
   fetchFromSemanticScholar,
+  fetchInstitutionsFromOpenAlex,
   loadPapers,
   papersSource,
   parsePapersConfig,
   readSnapshot,
   retryAfterMs,
   updatePapersSnapshot,
-  type S2ClientOptions,
-  type S2Request,
+  type ApiClientOptions,
+  type ApiRequest,
 } from './papers';
 import { parse } from 'yaml';
-import { paperMatchesId, type PapersConfig, type S2Paper } from '../src/lib/papers/normalize';
-import type { PapersData } from '../src/lib/papers/types';
+import {
+  normalizePaper,
+  paperMatchesId,
+  type OpenAlexWork,
+  type PapersConfig,
+  type S2Paper,
+} from '../src/lib/papers/normalize';
+import type { Paper, PapersData } from '../src/lib/papers/types';
 
 const SEED = 'a'.repeat(40);
 const OTHER_SEED = 'b'.repeat(40);
 const API = 'https://api.semanticscholar.org/graph/v1';
+const OPENALEX = 'https://api.openalex.org';
 
 type FetchFn = (url: string, init?: RequestInit) => Promise<Response>;
 
@@ -34,12 +42,23 @@ const s2 = (paperId: string, overrides: Partial<S2Paper> = {}): S2Paper => ({
   year: 2025,
   authors: [{ name: 'Ada Lovelace' }],
   externalIds: {},
-  citationCount: 1,
   ...overrides,
 });
 
+/** An OpenAlex work by Ada Lovelace, with an author at each of `institutions`. */
+const work = (title: string, institutions: string[], doi: string | null = null): OpenAlexWork => ({
+  doi: doi && `https://doi.org/${doi}`,
+  title,
+  authorships: [
+    {
+      author: { display_name: 'Ada Lovelace' },
+      institutions: institutions.map(name => ({ display_name: name })),
+    },
+  ],
+});
+
 /** A fake clock: `sleep` advances it instantly and records each delay. */
-function fakeClock(start = 0): Required<Pick<S2ClientOptions, 'sleep' | 'now'>> & { sleeps: number[] } {
+function fakeClock(start = 0): Required<Pick<ApiClientOptions, 'sleep' | 'now'>> & { sleeps: number[] } {
   let time = start;
   const sleeps: number[] = [];
   return {
@@ -67,14 +86,14 @@ describe('retryAfterMs', () => {
   });
 });
 
-describe('createS2Client', () => {
+describe('createApiClient', () => {
   it('sends GETs and POSTs, with the API key only when one is given', async () => {
     const fetchFn = jest.fn<FetchFn>(async () => json(200, { ok: true }));
     const clock = fakeClock();
-    const withKey = createS2Client({ fetchFn, apiKey: 'secret', ...clock });
+    const withKey = createApiClient({ fetchFn, apiKey: 'secret', ...clock });
     await expect(withKey('/paper/x')).resolves.toEqual({ ok: true });
     await withKey('/paper/batch', { ids: ['x'] });
-    await createS2Client({ fetchFn, ...clock })('/paper/y');
+    await createApiClient({ fetchFn, ...clock })('/paper/y');
 
     const [[getUrl, get], [, post], [, anonymous]] = fetchFn.mock.calls;
     expect(getUrl).toBe(`${API}/paper/x`);
@@ -85,9 +104,15 @@ describe('createS2Client', () => {
     expect(anonymous?.headers).not.toHaveProperty('x-api-key');
   });
 
+  it('sends requests to another API at `baseUrl`', async () => {
+    const fetchFn = jest.fn<FetchFn>(async () => json(200, {}));
+    await createApiClient({ fetchFn, baseUrl: OPENALEX, ...fakeClock() })('/works?filter=doi:x');
+    expect(fetchFn.mock.calls[0][0]).toBe(`${OPENALEX}/works?filter=doi:x`);
+  });
+
   it('spaces requests out by the minimum interval', async () => {
     const clock = fakeClock();
-    const request = createS2Client({ fetchFn: async () => json(200), minIntervalMs: 1000, ...clock });
+    const request = createApiClient({ fetchFn: async () => json(200), minIntervalMs: 1000, ...clock });
     await request('/a');
     await clock.sleep(300); // Time spent between the two requests counts towards the interval.
     await request('/b');
@@ -103,7 +128,7 @@ describe('createS2Client', () => {
     ];
     const fetchFn = jest.fn<FetchFn>(async () => responses.shift() as Response);
     const clock = fakeClock();
-    const request = createS2Client({ fetchFn, minIntervalMs: 0, baseDelayMs: 100, ...clock });
+    const request = createApiClient({ fetchFn, minIntervalMs: 0, baseDelayMs: 100, ...clock });
 
     await expect(request('/x')).resolves.toEqual({ data: 'finally' });
     expect(fetchFn).toHaveBeenCalledTimes(4);
@@ -112,7 +137,7 @@ describe('createS2Client', () => {
 
   it('gives up after maxRetries, and does not retry other errors', async () => {
     const clock = fakeClock();
-    const limited = createS2Client({
+    const limited = createApiClient({
       fetchFn: async () => json(429),
       maxRetries: 2,
       minIntervalMs: 0,
@@ -122,14 +147,14 @@ describe('createS2Client', () => {
     expect(clock.sleeps).toHaveLength(2);
 
     const fetchFn = jest.fn<FetchFn>(async () => json(404));
-    await expect(createS2Client({ fetchFn, ...clock })('/x')).rejects.toThrow('HTTP 404');
+    await expect(createApiClient({ fetchFn, ...clock })('/x')).rejects.toThrow('HTTP 404');
     expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 
   it('stops retrying, and sending requests, once the time budget is used up', async () => {
     const clock = fakeClock();
     const fetchFn = jest.fn<FetchFn>(async () => json(429, {}, { 'Retry-After': '60' }));
-    const request = createS2Client({ fetchFn, budgetMs: 30_000, minIntervalMs: 1000, ...clock });
+    const request = createApiClient({ fetchFn, budgetMs: 30_000, minIntervalMs: 1000, ...clock });
     await expect(request('/x')).rejects.toThrow('retrying would exceed the time budget of 30s');
 
     await clock.sleep(30_000);
@@ -142,7 +167,7 @@ describe('createS2Client', () => {
     const fetchFn = jest.fn<FetchFn>(async () => json(200, []));
     globalThis.fetch = fetchFn as unknown as typeof fetch;
     try {
-      const request = createS2Client({ minIntervalMs: 5 });
+      const request = createApiClient({ minIntervalMs: 5 });
       await request('/a');
       await request('/b');
       expect(fetchFn).toHaveBeenCalledTimes(2);
@@ -164,6 +189,7 @@ describe('fetchFromSemanticScholar', () => {
       { id: 'DOI:10.1/own', overrides: { title: 'Own' } },
     ],
     exclude: [],
+    affiliations: [],
   };
 
   it('fetches the seeds and included papers in one batch, then every page of citations', async () => {
@@ -178,7 +204,7 @@ describe('fetchFromSemanticScholar', () => {
       }
       if (pathAndQuery.includes(`${SEED}/citations`)) return { data: [{ citingPaper: s2('c2') }] };
       return { next: 0, data: undefined }; // A `next` that doesn't advance must not loop forever.
-    }) as unknown as S2Request;
+    }) as unknown as ApiRequest;
 
     const { live, failures } = await fetchFromSemanticScholar(config, request);
 
@@ -198,7 +224,7 @@ describe('fetchFromSemanticScholar', () => {
       'ARXIV:0000.00000: not found on Semantic Scholar',
     ]);
     expect(jest.mocked(request).mock.calls[1][0]).toBe(
-      `/paper/${SEED}/citations?fields=title,year,venue,publicationVenue,authors,externalIds,url,citationCount,publicationDate&limit=1000&offset=0`
+      `/paper/${SEED}/citations?fields=title,year,venue,publicationVenue,authors,externalIds,url,publicationDate&limit=1000&offset=0`
     );
   });
 
@@ -209,7 +235,7 @@ describe('fetchFromSemanticScholar', () => {
         return { next: 1000, data: [{ citingPaper: s2('c1') }] };
       }
       throw 'offline';
-    }) as unknown as S2Request;
+    }) as unknown as ApiRequest;
 
     const { live, failures } = await fetchFromSemanticScholar(config, request);
 
@@ -221,6 +247,84 @@ describe('fetchFromSemanticScholar', () => {
       'papers citing Seed: offline',
       'papers citing Other: offline',
     ]);
+  });
+});
+
+describe('fetchInstitutionsFromOpenAlex', () => {
+  const paper = (id: string, title: string, externalIds: Record<string, string> = {}): Paper =>
+    normalizePaper(s2(id, { title, externalIds })) as Paper;
+  const papers = [
+    paper('by-doi', 'Found By DOI', { DOI: '10.1/A' }),
+    paper('preprint', 'A Preprint: Later Published', { ArXiv: '2401.00002' }),
+    paper('nowhere', 'Not On OpenAlex'),
+    paper('odd-doi', 'Odd DOI', { DOI: '10.1/a,b' }),
+  ];
+
+  it('looks papers up by DOI in one request, then by title those it could not find institutions for', async () => {
+    const request = jest.fn(async (pathAndQuery: string) => {
+      if (pathAndQuery.includes('filter=doi:')) {
+        return {
+          results: [
+            work('Found By DOI', ['University A', 'University B'], '10.1/a'),
+            work('A Preprint: Later Published', [], '10.48550/arxiv.2401.00002'),
+          ],
+        };
+      }
+      if (pathAndQuery.includes('title.search:a%20preprint%20later%20published&')) {
+        return {
+          results: [
+            work('A Preprint: Later Published', []), // The record found by DOI.
+            work('A Preprint: Later Published, Extended', ['Other Title University']),
+            {
+              title: 'A preprint: later published',
+              authorships: [
+                {
+                  author: { display_name: 'Alan Turing' },
+                  institutions: [{ display_name: 'Other Authors' }],
+                },
+              ],
+            },
+            work('A preprint: later <i>published</i>', ['Published University']),
+          ],
+        };
+      }
+      return { results: pathAndQuery.includes('odd%20doi') ? [work('Odd DOI', ['Odd University'])] : [] };
+    }) as unknown as ApiRequest;
+
+    const { institutions, failures } = await fetchInstitutionsFromOpenAlex(papers, request, 'key');
+
+    expect(failures).toEqual([]);
+    expect([...institutions]).toEqual([
+      ['by-doi', ['University A', 'University B']],
+      ['preprint', ['Published University']],
+      ['nowhere', []],
+      ['odd-doi', ['Odd University']],
+    ]);
+    const paths = jest.mocked(request).mock.calls.map(([pathAndQuery]) => pathAndQuery);
+    expect(paths).toEqual([
+      '/works?filter=doi:10.1%2Fa|10.48550%2Farxiv.2401.00002&per_page=100&select=doi,title,authorships&api_key=key',
+      '/works?filter=title.search:a%20preprint%20later%20published&per_page=5&select=doi,title,authorships&api_key=key',
+      '/works?filter=title.search:not%20on%20openalex&per_page=5&select=doi,title,authorships&api_key=key',
+      '/works?filter=title.search:odd%20doi&per_page=5&select=doi,title,authorships&api_key=key',
+    ]);
+  });
+
+  it('reports failures, leaving out the papers whose lookup failed', async () => {
+    const request = jest.fn(async (pathAndQuery: string) => {
+      if (pathAndQuery.includes('filter=doi:')) throw new Error('HTTP 429');
+      throw 'offline';
+    }) as unknown as ApiRequest;
+
+    const { institutions, failures } = await fetchInstitutionsFromOpenAlex(papers, request);
+
+    expect(institutions.size).toBe(0);
+    expect(failures).toEqual([
+      'institutions of 2 papers, by DOI: HTTP 429',
+      'institutions of 2 papers, by title: offline',
+    ]);
+    // Papers whose DOI lookup failed are not looked up by title too.
+    expect(jest.mocked(request)).toHaveBeenCalledTimes(3);
+    expect(jest.mocked(request).mock.calls[0][0]).not.toContain('api_key');
   });
 });
 
@@ -236,6 +340,7 @@ describe('parsePapersConfig', () => {
       seeds: [{ id: SEED, label: 'Seed' }],
       include: [{ id: 'DOI:10.1/X' }, { id: 'ARXIV:2401.00001' }, { id: OTHER_SEED }],
       exclude: [],
+      affiliations: [],
     });
   });
 
@@ -257,7 +362,40 @@ describe('parsePapersConfig', () => {
       seeds: [{ id: SEED, label: 'Seed' }],
       include: [{ id: 'DOI:10.1/thesis', overrides: { ...details, title: 'A Thesis' } }],
       exclude: ['DOI:10.1/other'],
+      affiliations: [],
     });
+  });
+
+  it("parses papers' affiliations, without duplicate institutions", () => {
+    expect(
+      parsePapersConfig({
+        seeds: [{ id: SEED, label: 'Seed' }],
+        affiliations: [
+          {
+            id: 'arxiv:2401.00001v2',
+            note: 'From the PDF.',
+            institutions: [' University A ', 'University A'],
+          },
+        ],
+      }).affiliations
+    ).toEqual([{ id: 'ARXIV:2401.00001', institutions: ['University A'] }]);
+  });
+
+  it.each([
+    [{ institutions: [] }, '`affiliations[0].institutions` must be a non-empty list of names'],
+    [{ institutions: 'University A' }, '`affiliations[0].institutions` must be a non-empty list of names'],
+    [
+      { institutions: ['University A', ' '] },
+      '`affiliations[0].institutions` must be a non-empty list of names',
+    ],
+    [{ institutions: ['University A'], title: 'T' }, '`affiliations[0]` has an unknown field `title`'],
+  ])('rejects invalid affiliations %j', (fields, error) => {
+    expect(() =>
+      parsePapersConfig({
+        seeds: [{ id: SEED, label: 'S' }],
+        affiliations: [{ id: 'DOI:10.1/x', ...fields }],
+      })
+    ).toThrow(`Invalid static/data/papers.yaml: ${error}`);
   });
 
   it.each([
@@ -361,7 +499,6 @@ describe('with a site directory', () => {
         doi: null,
         arxivId: null,
         url: 'https://example.org/seed',
-        citationCount: 3,
       },
     ],
     papers: [
@@ -375,14 +512,18 @@ describe('with a site directory', () => {
         doi: null,
         arxivId: null,
         url: 'https://example.org/saved',
-        citationCount: 0,
         cites: [SEED],
+        institutions: ['Saved University'],
       },
     ],
   };
   const writeSnapshot = (data: unknown = snapshot) => fs.writeFile(snapshotPath, JSON.stringify(data));
 
-  /** Routes Semantic Scholar requests: one seed with one citing paper. `overrides` replace responses by URL prefix. */
+  /**
+   * Routes Semantic Scholar requests (one seed with one citing paper) and OpenAlex ones (any search finds the citing
+   * paper, with an author at Live University). `overrides` replace responses by URL prefix (without Semantic
+   * Scholar's base URL).
+   */
   const mockFetch = (overrides: Record<string, () => Response> = {}) =>
     jest.fn<FetchFn>(async url => {
       const route = url.replace(API, '');
@@ -391,10 +532,12 @@ describe('with a site directory', () => {
       if (route.startsWith('/paper/batch')) return json(200, [s2(SEED, { title: 'Live seed' })]);
       if (route.startsWith(`/paper/${SEED}/citations`))
         return json(200, { data: [{ citingPaper: s2('live') }] });
+      if (route.startsWith(`${OPENALEX}/works`))
+        return json(200, { results: [work('Paper live', ['Live University'])] });
       return json(404);
     });
 
-  const fastClient = (fetchFn: FetchFn): S2ClientOptions => ({ fetchFn, ...fakeClock() });
+  const fastClient = (fetchFn: FetchFn): ApiClientOptions => ({ fetchFn, ...fakeClock() });
   const now = () => new Date('2026-11-06T12:00:00.000Z');
 
   beforeEach(async () => {
@@ -445,11 +588,62 @@ describe('with a site directory', () => {
       });
 
       expect(result.warning).toBe(false);
-      expect(result.message).toBe('Fetched 1 papers citing 1 MEDS papers from Semantic Scholar.');
+      expect(result.message).toBe(
+        'Fetched 1 papers citing 1 MEDS papers from Semantic Scholar, and their institutions from OpenAlex.'
+      );
       expect(result.data.updatedAt).toBe('2026-11-06T12:00:00.000Z');
       expect(result.data.seeds.map(seed => seed.title)).toEqual(['Live seed']);
-      expect(result.data.papers.map(paper => paper.id)).toEqual(['live']);
+      expect(result.data.papers.map(paper => [paper.id, paper.institutions])).toEqual([
+        ['live', ['Live University']],
+      ]);
       expect((fetchFn.mock.calls[0][1]?.headers as Record<string, string>)['x-api-key']).toBe('key');
+      // The Semantic Scholar key is not sent to OpenAlex.
+      const [openAlexUrl, openAlexInit] = fetchFn.mock.calls[2];
+      expect(openAlexUrl).toMatch(/^https:\/\/api\.openalex\.org\/works\?filter=title\.search:paper%20live&/);
+      expect(openAlexInit?.headers).not.toHaveProperty('x-api-key');
+    });
+
+    it('sends OPENALEX_API_KEY to OpenAlex, and does not look up papers with affiliations in papers.yaml', async () => {
+      const fetchFn = mockFetch();
+      const result = await loadPapers(siteDir, {
+        env: { OPENALEX_API_KEY: ' oa-key ' },
+        source: 'live',
+        client: fastClient(fetchFn),
+        now,
+      });
+      expect(fetchFn.mock.calls[2][0]).toContain('&api_key=oa-key');
+      expect(result.data.papers[0].institutions).toEqual(['Live University']);
+
+      await writeYaml([SEED], "affiliations:\n  - id: 'DOI:10.1/LIVE'\n    institutions: ['From YAML']\n");
+      const configured = mockFetch({
+        [`/paper/${SEED}/citations`]: () =>
+          json(200, { data: [{ citingPaper: s2('live', { externalIds: { DOI: '10.1/live' } }) }] }),
+      });
+      const fromYaml = await loadPapers(siteDir, { source: 'live', client: fastClient(configured), now });
+      expect(fromYaml.warning).toBe(false);
+      expect(fromYaml.data.papers[0].institutions).toEqual(['From YAML']);
+      expect(configured.mock.calls.some(([url]) => url.startsWith(OPENALEX))).toBe(false);
+    });
+
+    it("takes institutions from the snapshot when OpenAlex can't be reached", async () => {
+      await writeSnapshot({ ...snapshot, papers: [{ ...snapshot.papers[0], id: 'live' }] });
+      const fetchFn = mockFetch({ [OPENALEX]: () => json(503) });
+      const result = await loadPapers(siteDir, {
+        env: {},
+        source: 'live',
+        client: { ...fastClient(fetchFn), maxRetries: 0 },
+        now,
+      });
+
+      expect(result.warning).toBe(true);
+      expect(result.data.updatedAt).toBe('2026-11-06T12:00:00.000Z');
+      expect(result.data.papers.map(paper => [paper.title, paper.institutions])).toEqual([
+        ['Paper live', ['Saved University']],
+      ]);
+      expect(result.message).toMatch(/^Could not fetch everything from OpenAlex; /);
+      expect(result.message).toContain('institutions of 1 papers, by title: HTTP 503');
+      expect(result.message).toContain('Taken from the snapshot instead: institutions of 1 papers.');
+      expect(result.message).not.toContain('SEMANTIC_SCHOLAR_API_KEY');
     });
 
     it('retries rate-limited requests', async () => {
@@ -459,12 +653,12 @@ describe('with a site directory', () => {
       });
       const result = await loadPapers(siteDir, { source: 'live', client: fastClient(fetchFn), now });
       expect(result.warning).toBe(false);
-      expect(fetchFn).toHaveBeenCalledTimes(4);
+      expect(fetchFn).toHaveBeenCalledTimes(5); // 3 batch requests, the citations, and OpenAlex.
     });
 
     it('falls back to the snapshot, keeping its date, when the fetch fails', async () => {
       await writeSnapshot();
-      const fetchFn = mockFetch({ '/paper': () => json(429) });
+      const fetchFn = mockFetch({ '/paper': () => json(429), [OPENALEX]: () => json(429) });
       const result = await loadPapers(siteDir, {
         env: {},
         source: 'live',
@@ -474,11 +668,11 @@ describe('with a site directory', () => {
 
       expect(result.warning).toBe(true);
       expect(result.data).toEqual(snapshot);
-      expect(result.message).toContain('Could not fetch everything from Semantic Scholar');
+      expect(result.message).toContain('Could not fetch everything from Semantic Scholar or OpenAlex');
       expect(result.message).toContain('as of 2026-01-01T00:00:00.000Z');
       expect(result.message).toContain('details of the seed and included papers: HTTP 429');
       expect(result.message).toContain(
-        'Taken from the snapshot instead: details of Seed a; papers citing Seed a.'
+        'Taken from the snapshot instead: details of Seed a; papers citing Seed a; institutions of 1 papers.'
       );
       expect(result.message).toContain('SEMANTIC_SCHOLAR_API_KEY is not set');
     });
@@ -510,7 +704,7 @@ describe('with a site directory', () => {
       expect(result.data.updatedAt).toBe(snapshot.updatedAt);
       expect(result.message).toBe(
         'Using the snapshot from 2026-01-01T00:00:00.000Z (1 papers citing 1 MEDS papers). ' +
-          'Set PAPERS_SOURCE=live to fetch from Semantic Scholar instead.'
+          'Set PAPERS_SOURCE=live to fetch from Semantic Scholar and OpenAlex instead.'
       );
 
       // A seed that the snapshot doesn't have yet is worth a warning.
@@ -529,9 +723,11 @@ describe('with a site directory', () => {
       const result = await loadPapers(siteDir, { source: 'live', client: fastClient(fetchFn), now });
 
       expect(result.warning).toBe(false);
-      expect(result.data.papers.map(paper => [paper.id, paper.title, paper.manual])).toEqual([
-        ['DOI:10.1/thesis', 'A Thesis', true],
-        ['live', 'Paper live', undefined],
+      expect(
+        result.data.papers.map(paper => [paper.id, paper.title, paper.manual, paper.institutions])
+      ).toEqual([
+        ['DOI:10.1/thesis', 'A Thesis', true, []],
+        ['live', 'Paper live', undefined, ['Live University']],
       ]);
     });
 
@@ -561,7 +757,7 @@ describe('with a site directory', () => {
       globalThis.fetch = fetchFn as unknown as typeof fetch;
       const { data } = await updatePapersSnapshot(siteDir);
 
-      expect(fetchFn).toHaveBeenCalledTimes(2);
+      expect(fetchFn).toHaveBeenCalledTimes(3);
       expect(JSON.parse(await fs.readFile(snapshotPath, 'utf8'))).toEqual(data);
     });
   });
@@ -590,7 +786,7 @@ describe('with a site directory', () => {
       const content = (await plugin.loadContent?.()) as PapersData;
       expect(content.papers.map(paper => paper.id)).toEqual(['live']);
       expect(console.info).toHaveBeenCalledWith(
-        '[papers] Fetched 1 papers citing 1 MEDS papers from Semantic Scholar.'
+        '[papers] Fetched 1 papers citing 1 MEDS papers from Semantic Scholar, and their institutions from OpenAlex.'
       );
       expect(console.warn).not.toHaveBeenCalled();
       expect(await contentLoaded(plugin, content)).toHaveBeenCalledWith(content);
@@ -609,7 +805,7 @@ describe('with a site directory', () => {
       globalThis.fetch = fetchFn as unknown as typeof fetch;
 
       const content = (await papersPlugin({ siteDir } as LoadContext).loadContent?.()) as PapersData;
-      expect(fetchFn).toHaveBeenCalledTimes(3);
+      expect(fetchFn).toHaveBeenCalledTimes(4);
       expect(content.papers.map(paper => paper.id)).toEqual(['live']);
       expect(console.warn).not.toHaveBeenCalled();
     });
@@ -682,5 +878,17 @@ describe("this repository's papers.yaml and snapshot", () => {
     expect(snapshot?.seeds.map(({ id }) => id)).toEqual(seeds.map(({ id }) => id));
     expect(include.map(({ id }) => id).filter(id => !listed(id))).toEqual([]);
     expect(exclude.filter(listed)).toEqual([]);
+  });
+
+  it('has affiliations only for listed papers, and a snapshot with those institutions', async () => {
+    const { affiliations } = await readConfig();
+    const { snapshot } = await readSnapshot(path.join(dataDir, 'papers.snapshot.json'));
+    const papers = snapshot?.papers ?? [];
+
+    expect(affiliations.length).toBeGreaterThan(0);
+    for (const { id, institutions } of affiliations) {
+      const matching = papers.filter(paper => paperMatchesId(paper, id));
+      expect([id, matching.map(paper => paper.institutions)]).toEqual([id, [institutions]]);
+    }
   });
 });

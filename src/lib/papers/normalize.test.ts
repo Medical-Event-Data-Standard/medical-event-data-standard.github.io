@@ -1,13 +1,20 @@
 import { describe, expect, it } from '@jest/globals';
 import {
+  attachInstitutions,
   buildPapersData,
+  doiFromUrl,
   emptyLiveFetch,
+  institutionsOfWork,
   isPapersData,
+  isSameWork,
   normalizePaper,
+  normalizeText,
+  openAlexDoi,
   paperFromDetails,
   paperMatchesId,
   semanticScholarUrl,
   type LiveFetch,
+  type OpenAlexWork,
   type PapersConfig,
   type S2Paper,
 } from './normalize';
@@ -23,13 +30,13 @@ const s2 = (paperId: string, overrides: Partial<S2Paper> = {}): S2Paper => ({
   publicationDate: null,
   authors: [{ name: 'Author' }],
   externalIds: {},
-  citationCount: 0,
   ...overrides,
 });
 
 const paper = (id: string, overrides: Partial<CitingPaper> = {}): CitingPaper => ({
   ...(normalizePaper(s2(id)) as Paper),
   cites: [],
+  institutions: [],
   ...overrides,
 });
 
@@ -52,7 +59,6 @@ describe('normalizePaper', () => {
         ],
         externalIds: { DOI: '10.1145/123', ArXiv: '2401.00001', CorpusId: 42 },
         url: 'https://www.semanticscholar.org/paper/p1',
-        citationCount: 7,
       })
     ).toEqual({
       id: 'p1',
@@ -64,7 +70,6 @@ describe('normalizePaper', () => {
       doi: '10.1145/123',
       arxivId: '2401.00001',
       url: 'https://doi.org/10.1145/123',
-      citationCount: 7,
     });
   });
 
@@ -76,16 +81,13 @@ describe('normalizePaper', () => {
     expect(normalizePaper(s2('p', { externalIds: null }))?.url).toBe(semanticScholarUrl('p'));
   });
 
-  it('cleans up venues, years and counts', () => {
+  it('cleans up venues, years and authors', () => {
     expect(normalizePaper(s2('p', { venue: 'arXiv.org' }))?.venue).toBe('arXiv');
     expect(normalizePaper(s2('p', { venue: ' ', publicationVenue: { name: null } }))?.venue).toBeNull();
     expect(normalizePaper(s2('p', { year: null, publicationDate: '2024-05-01' }))?.year).toBe(2024);
     expect(normalizePaper(s2('p', { year: null, publicationDate: 'unknown' }))?.year).toBeNull();
     expect(normalizePaper(s2('p', { year: undefined }))?.year).toBeNull();
-    expect(normalizePaper(s2('p', { citationCount: null, authors: null }))).toMatchObject({
-      citationCount: null,
-      authors: [],
-    });
+    expect(normalizePaper(s2('p', { authors: null }))?.authors).toEqual([]);
   });
 
   it('returns null for records that cannot be listed', () => {
@@ -132,7 +134,6 @@ describe('paperFromDetails', () => {
       doi: '10.1/a:b',
       arxivId: null,
       url: 'https://doi.org/10.1/a:b',
-      citationCount: null,
     });
     expect(paperFromDetails('ARXIV:2401.00001', { title: 'T' })).toMatchObject({
       authors: [],
@@ -158,6 +159,7 @@ describe('buildPapersData', () => {
     ],
     include: [],
     exclude: [],
+    affiliations: [],
   };
 
   const liveWith = (overrides: Partial<LiveFetch>): LiveFetch => ({ ...emptyLiveFetch(), ...overrides });
@@ -223,7 +225,11 @@ describe('buildPapersData', () => {
     seeds: [{ ...paper(SEED_A), title: 'Saved seed A', label: 'Old label' }],
     papers: [
       paper('saved-a', { cites: [SEED_A, 'removed-seed'], manual: true }),
-      paper('saved-both', { cites: [SEED_A, SEED_B], citationCount: 1 }),
+      paper('saved-both', {
+        cites: [SEED_A, SEED_B],
+        venue: 'Old venue',
+        institutions: ['Saved University'],
+      }),
       paper('saved-manual', { cites: [], manual: true, doi: '10.1/manual' }),
       paper('saved-removed', { cites: ['removed-seed'] }),
     ],
@@ -235,7 +241,7 @@ describe('buildPapersData', () => {
       seeds: new Map([[SEED_B, s2(SEED_B)]]),
       citations: new Map([
         [SEED_A, [s2('live-a')]],
-        [SEED_B, [s2('saved-both', { citationCount: 9 })]],
+        [SEED_B, [s2('saved-both', { venue: 'New venue' })]],
       ]),
       incompleteSeeds: new Set([SEED_A]),
     });
@@ -246,8 +252,13 @@ describe('buildPapersData', () => {
     expect(result.seeds[0]).not.toHaveProperty('cites');
     const byId = Object.fromEntries(result.papers.map(p => [p.id, p]));
     expect(Object.keys(byId).sort()).toEqual(['live-a', 'saved-a', 'saved-both', 'saved-manual']);
-    // Live data wins over the snapshot's copy; a snapshot paper's stale `cites`/`manual` are not carried over.
-    expect(byId['saved-both']).toMatchObject({ citationCount: 9, cites: [SEED_A, SEED_B] });
+    // Live data wins over the snapshot's copy; a snapshot paper's stale `cites`/`manual` are not carried over, and
+    // its institutions are added later, by `attachInstitutions`.
+    expect(byId['saved-both']).toMatchObject({
+      venue: 'New venue',
+      cites: [SEED_A, SEED_B],
+      institutions: [],
+    });
     expect(byId['saved-a'].cites).toEqual([SEED_A]);
     expect(byId['saved-a']).not.toHaveProperty('manual');
     expect(byId['saved-manual']).toMatchObject({ cites: [], manual: true });
@@ -323,7 +334,6 @@ describe('buildPapersData', () => {
       doi: null,
       arxivId: null,
       url: semanticScholarUrl(SEED_B),
-      citationCount: null,
     });
     expect(result.papers).toEqual([]);
     expect(result.fromSnapshot).toEqual([]);
@@ -380,6 +390,7 @@ describe('buildPapersData', () => {
         ...paperFromDetails('DOI:10.1/not-on-s2', own),
         cites: [],
         manual: true,
+        institutions: [],
       });
       expect(byId['on-s2']).toMatchObject({ venue: 'Corrected venue', manual: true });
       expect(byId.cites).toMatchObject({ year: 2024, cites: [SEED_A], manual: true });
@@ -403,12 +414,17 @@ describe('buildPapersData', () => {
           [SEED_B, [s2('b')]],
         ]),
       });
-      const saved = paper('saved', { doi: '10.1/saved', citationCount: 5, cites: [], manual: true });
+      const saved = paper('saved', {
+        doi: '10.1/saved',
+        publicationDate: '2026-02-03',
+        cites: [],
+        manual: true,
+      });
 
       const result = buildPapersData(withIncludes, live, { ...snapshot, papers: [saved] });
 
       const byId = Object.fromEntries(result.papers.map(p => [p.id, p]));
-      expect(byId.saved).toMatchObject({ ...own, citationCount: 5, cites: [], manual: true });
+      expect(byId.saved).toMatchObject({ ...own, publicationDate: '2026-02-03', cites: [], manual: true });
       expect(byId['DOI:10.1/unsaved']).toMatchObject({
         title: 'Unsaved',
         url: 'https://doi.org/10.1/unsaved',
@@ -441,5 +457,117 @@ describe('isPapersData', () => {
     expect(isPapersData({ ...valid, papers: undefined })).toBe(false);
     expect(isPapersData({ ...valid, papers: [{ ...paper('p'), cites: undefined }] })).toBe(false);
     expect(isPapersData({ ...valid, papers: [{ ...paper('p'), cites: [], id: 1 }] })).toBe(false);
+    expect(isPapersData({ ...valid, papers: [{ ...paper('p'), institutions: undefined }] })).toBe(false);
+  });
+});
+
+const work = (title: string, authors: [string, string[]][], doi: string | null = null): OpenAlexWork => ({
+  doi,
+  title,
+  authorships: authors.map(([name, institutions]) => ({
+    author: { display_name: name },
+    institutions: institutions.map(display_name => ({ display_name })),
+  })),
+});
+
+describe('OpenAlex helpers', () => {
+  it("finds a paper's DOI, else arXiv's DOI for it, in lower case", () => {
+    expect(openAlexDoi(paper('p', { doi: '10.1145/ABC', arxivId: '2401.00001' }))).toBe('10.1145/abc');
+    expect(openAlexDoi(paper('p', { arxivId: '2401.00001' }))).toBe('10.48550/arxiv.2401.00001');
+    expect(openAlexDoi(paper('p'))).toBeNull();
+  });
+
+  it("strips the URL prefix from OpenAlex's DOIs", () => {
+    expect(doiFromUrl('https://doi.org/10.1145/ABC')).toBe('10.1145/abc');
+    expect(doiFromUrl('http://dx.doi.org/10.1/x')).toBe('10.1/x');
+    expect(doiFromUrl(' ')).toBeNull();
+    expect(doiFromUrl(null)).toBeNull();
+  });
+
+  it("lists a work's institutions without duplicates, in author order", () => {
+    expect(
+      institutionsOfWork(
+        work('T', [
+          ['Ada', ['University B', ' University A ']],
+          ['Alan', []],
+          ['Grace', ['University A', '']],
+        ])
+      )
+    ).toEqual(['University B', 'University A']);
+    expect(
+      institutionsOfWork({
+        authorships: [null as never, { institutions: null }, { institutions: [null as never] }],
+      })
+    ).toEqual([]);
+    expect(institutionsOfWork({})).toEqual([]);
+    expect(institutionsOfWork(undefined)).toEqual([]);
+  });
+
+  it('reduces text to lower-case words without accents, markup or punctuation', () => {
+    expect(normalizeText(' MEDS-DEV:  a <i>Benchmark</i>, for Kamilė ')).toBe(
+      'meds dev a benchmark for kamile'
+    );
+  });
+
+  it('recognises a work as a paper by its title and a shared surname', () => {
+    const p = paper('p', { title: 'MEDS: A Standard', authors: ['E. Steinberg', 'Robin P. van de Water'] });
+    expect(isSameWork(p, work('MEDS - a standard', [['Robin van de Water', []]]))).toBe(true);
+    expect(isSameWork(p, work('MEDS: A Standard', [['Ethan Steinberg', []]]))).toBe(true);
+    expect(isSameWork(p, work('MEDS: A Standard', []))).toBe(true);
+    expect(isSameWork({ ...p, authors: [] }, work('MEDS: A Standard', [['Ada Lovelace', []]]))).toBe(true);
+    expect(isSameWork(p, work('MEDS: A Standard', [['Ada Lovelace', []]]))).toBe(false);
+    expect(isSameWork(p, work('MEDS: A Standard, Extended', [['Ethan Steinberg', []]]))).toBe(false);
+    expect(isSameWork(p, { authorships: null })).toBe(false);
+    expect(isSameWork({ ...p, title: '???' }, work('!!!', []))).toBe(false);
+  });
+});
+
+describe('attachInstitutions', () => {
+  const papers = [
+    paper('configured', { doi: '10.1/configured' }),
+    paper('fetched'),
+    paper('fetched-none'),
+    paper('saved'),
+    paper('unknown'),
+  ];
+  const snapshot: PapersData = {
+    updatedAt: null,
+    seeds: [],
+    papers: [
+      paper('configured', { institutions: ['Old'] }),
+      paper('fetched', { institutions: ['Old'] }),
+      paper('fetched-none', { institutions: ['Old'] }),
+      paper('saved', { institutions: ['Saved University'] }),
+    ],
+  };
+
+  it('takes institutions from papers.yaml, else OpenAlex, else the snapshot', () => {
+    const { papers: result, notFetched } = attachInstitutions(
+      papers,
+      [{ id: 'DOI:10.1/CONFIGURED', institutions: ['From YAML'] }],
+      new Map([
+        ['configured', ['From OpenAlex']],
+        ['fetched', ['From OpenAlex']],
+        ['fetched-none', []],
+      ]),
+      snapshot
+    );
+
+    expect(result.map(p => [p.id, p.institutions])).toEqual([
+      ['configured', ['From YAML']],
+      ['fetched', ['From OpenAlex']],
+      ['fetched-none', []],
+      ['saved', ['Saved University']],
+      ['unknown', []],
+    ]);
+    expect(notFetched).toBe(2);
+    expect(papers[0].institutions).toEqual([]); // The input is not changed.
+  });
+
+  it('works without a snapshot', () => {
+    expect(attachInstitutions([paper('p')], [], new Map(), null)).toEqual({
+      papers: [paper('p')],
+      notFetched: 1,
+    });
   });
 });

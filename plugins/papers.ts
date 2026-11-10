@@ -2,20 +2,28 @@ import fs from 'fs/promises';
 import path from 'path';
 import { parse } from 'yaml';
 import type { LoadContext, Plugin } from '@docusaurus/types';
-import { PAPERS_PLUGIN, type PapersData } from '../src/lib/papers/types';
+import { PAPERS_PLUGIN, type Paper, type PapersData } from '../src/lib/papers/types';
 import {
+  attachInstitutions,
   buildPapersData,
+  doiFromUrl,
   emptyLiveFetch,
+  institutionsOfWork,
   isPapersData,
+  isSameWork,
+  normalizeText,
+  openAlexDoi,
+  paperMatchesId,
   type LiveFetch,
+  type OpenAlexWork,
   type PaperOverrides,
   type PapersConfig,
   type S2Paper,
 } from '../src/lib/papers/normalize';
 
 // This runs in Node.js at build time. It lists the papers that cite the core MEDS papers ("seeds") configured in
-// static/data/papers.yaml, using Semantic Scholar's citation graph, and exposes them to the papers page as plugin
-// global data, so visitors make no API calls.
+// static/data/papers.yaml, using Semantic Scholar's citation graph, looks up their authors' institutions on
+// OpenAlex, and exposes them to the papers page as plugin global data, so visitors make no API calls.
 //
 // Semantic Scholar rate-limits unauthenticated requests heavily, so requests are made one at a time, 429s and
 // 5xx responses are retried with backoff, and anything that can't be fetched is filled in from the committed
@@ -26,8 +34,12 @@ export const PAPERS_SNAPSHOT = path.join('static', 'data', 'papers.snapshot.json
 
 const S2_API = 'https://api.semanticscholar.org/graph/v1';
 /** Only the fields the page renders. */
-export const S2_FIELDS =
-  'title,year,venue,publicationVenue,authors,externalIds,url,citationCount,publicationDate';
+export const S2_FIELDS = 'title,year,venue,publicationVenue,authors,externalIds,url,publicationDate';
+const OPENALEX_API = 'https://api.openalex.org';
+/** The fields used to find a paper's institutions. */
+export const OPENALEX_FIELDS = 'doi,title,authorships';
+/** DOIs looked up per OpenAlex request (OpenAlex allows up to 100 values in one filter). */
+const OPENALEX_BATCH_SIZE = 50;
 /** The largest page the citations endpoint allows. */
 const CITATIONS_PAGE_SIZE = 1000;
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -36,8 +48,10 @@ const IDENTIFIER = /^(?:([0-9a-f]{40})|(doi|arxiv):(\S+))$/i;
 
 type FetchFn = (url: string, init?: RequestInit) => Promise<Response>;
 
-export interface S2ClientOptions {
-  /** Sent as `x-api-key`; raises the rate limit from a shared pool to a dedicated 1 request/second. */
+export interface ApiClientOptions {
+  /** Defaults to the Semantic Scholar Graph API. */
+  baseUrl?: string;
+  /** Sent as `x-api-key`; for Semantic Scholar, raises the rate limit from a shared pool to 1 request/second. */
   apiKey?: string;
   fetchFn?: FetchFn;
   /** Minimum time between the starts of consecutive requests. */
@@ -59,6 +73,15 @@ export const DEFAULT_CLIENT_OPTIONS = {
   budgetMs: 120_000,
 } as const;
 
+/** OpenAlex allows 10 requests a second, and the lookups are few, so less waiting is needed. */
+export const OPENALEX_CLIENT_OPTIONS = {
+  baseUrl: OPENALEX_API,
+  minIntervalMs: 150,
+  maxRetries: 3,
+  baseDelayMs: 1000,
+  budgetMs: 60_000,
+} as const;
+
 const errorMessage = (err: unknown): string => (err instanceof Error ? err.message : String(err));
 
 /** Parses a Retry-After header (seconds or an HTTP date) into a delay in milliseconds. */
@@ -70,16 +93,17 @@ export function retryAfterMs(header: string | null, now: number): number | null 
   return Number.isNaN(date) ? null : Math.max(0, date - now);
 }
 
-export type S2Request = <T>(pathAndQuery: string, body?: unknown) => Promise<T>;
+export type ApiRequest = <T>(pathAndQuery: string, body?: unknown) => Promise<T>;
 
 /**
- * Returns a function that sends a request to the Semantic Scholar Graph API (a POST if `body` is given) and
- * returns the parsed JSON. Callers should await each request before sending the next: requests are spaced at
+ * Returns a function that sends a request to the Semantic Scholar Graph API, or the API at `baseUrl`, (a POST if
+ * `body` is given) and returns the parsed JSON. Callers should await each request before sending the next: requests are spaced at
  * least `minIntervalMs` apart, and retried on HTTP 429 and 5xx with exponential backoff, honouring Retry-After.
  * Throws once a request fails for good or the time budget is used up.
  */
-export function createS2Client(options: S2ClientOptions): S2Request {
+export function createApiClient(options: ApiClientOptions): ApiRequest {
   const {
+    baseUrl = S2_API,
     apiKey,
     fetchFn = fetch,
     minIntervalMs,
@@ -99,7 +123,7 @@ export function createS2Client(options: S2ClientOptions): S2Request {
       if (wait > 0) await sleep(wait);
       lastStart = now();
 
-      const res = await fetchFn(`${S2_API}${pathAndQuery}`, {
+      const res = await fetchFn(`${baseUrl}${pathAndQuery}`, {
         method: body === undefined ? 'GET' : 'POST',
         headers: {
           'User-Agent': 'medical-event-data-standard.github.io',
@@ -135,7 +159,7 @@ interface CitationsPage {
  */
 export async function fetchFromSemanticScholar(
   config: PapersConfig,
-  request: S2Request
+  request: ApiRequest
 ): Promise<{ live: LiveFetch; failures: string[] }> {
   const live = emptyLiveFetch();
   const failures: string[] = [];
@@ -173,6 +197,76 @@ export async function fetchFromSemanticScholar(
   }
 
   return { live, failures };
+}
+
+interface OpenAlexList {
+  results?: OpenAlexWork[] | null;
+}
+
+/**
+ * Looks up the institutions of the papers' authors on OpenAlex: by DOI (or arXiv's DOI), many papers per request,
+ * then, for papers not found that way or without institutions there, by title, one request each. A title search
+ * can find another record of the same paper, e.g. the published version of a preprint; it only counts if the
+ * title is the same and an author's surname is shared. Never throws: returns the institutions of every paper whose
+ * lookup finished (empty if OpenAlex has none), by paper id, and what failed.
+ */
+export async function fetchInstitutionsFromOpenAlex(
+  papers: readonly Paper[],
+  request: ApiRequest,
+  apiKey?: string
+): Promise<{ institutions: Map<string, string[]>; failures: string[] }> {
+  const institutions = new Map<string, string[]>();
+  const failures: string[] = [];
+  const key = apiKey ? `&api_key=${encodeURIComponent(apiKey)}` : '';
+  const search = async (filter: string, perPage: number): Promise<OpenAlexWork[]> =>
+    (
+      await request<OpenAlexList>(
+        `/works?filter=${filter}&per_page=${perPage}&select=${OPENALEX_FIELDS}${key}`
+      )
+    ).results ?? [];
+
+  // `|` separates values and `,` separates filters, so DOIs containing them are only looked up by title.
+  const dois = [
+    ...new Set(papers.map(openAlexDoi).filter((doi): doi is string => !!doi && !/[|,]/.test(doi))),
+  ];
+  const byDoi = new Map<string, OpenAlexWork>();
+  const failedDois = new Set<string>();
+  for (let start = 0; start < dois.length; start += OPENALEX_BATCH_SIZE) {
+    const batch = dois.slice(start, start + OPENALEX_BATCH_SIZE);
+    try {
+      for (const work of await search(`doi:${batch.map(encodeURIComponent).join('|')}`, 100)) {
+        const doi = doiFromUrl(work.doi);
+        if (doi) byDoi.set(doi, work);
+      }
+    } catch (err) {
+      failures.push(`institutions of ${batch.length} papers, by DOI: ${errorMessage(err)}`);
+      batch.forEach(doi => failedDois.add(doi));
+    }
+  }
+
+  const failedTitles: string[] = [];
+  let titleError = '';
+  for (const paper of papers) {
+    const doi = openAlexDoi(paper);
+    if (doi && failedDois.has(doi)) continue;
+    const found = doi ? institutionsOfWork(byDoi.get(doi)) : [];
+    if (found.length > 0) {
+      institutions.set(paper.id, found);
+      continue;
+    }
+    try {
+      const works = await search(`title.search:${encodeURIComponent(normalizeText(paper.title))}`, 5);
+      const match = works.find(work => isSameWork(paper, work) && institutionsOfWork(work).length > 0);
+      institutions.set(paper.id, institutionsOfWork(match));
+    } catch (err) {
+      failedTitles.push(paper.id);
+      titleError ||= errorMessage(err);
+    }
+  }
+  if (failedTitles.length > 0) {
+    failures.push(`institutions of ${failedTitles.length} papers, by title: ${titleError}`);
+  }
+  return { institutions, failures };
 }
 
 /**
@@ -224,10 +318,26 @@ function parseOverrides(fields: Record<string, unknown>, where: string): PaperOv
   return Object.keys(overrides).length > 0 ? overrides : undefined;
 }
 
+/** Parses the `affiliations` list: each entry's `id`, its `institutions`, and an optional `note` for reviewers. */
+const affiliationList = (value: unknown): PapersConfig['affiliations'] =>
+  identifierList(value, 'affiliations').map(([id, fields], i) => {
+    const unknown = Object.keys(fields).find(key => key !== 'institutions' && key !== 'note');
+    if (unknown) throw new Error(`\`affiliations[${i}]\` has an unknown field \`${unknown}\``);
+    const { institutions } = fields;
+    if (
+      !Array.isArray(institutions) ||
+      institutions.length === 0 ||
+      !institutions.every(name => typeof name === 'string' && name.trim())
+    ) {
+      throw new Error(`\`affiliations[${i}].institutions\` must be a non-empty list of names`);
+    }
+    return { id, institutions: [...new Set(institutions.map(name => (name as string).trim()))] };
+  });
+
 /** Validates the parsed papers.yaml. A malformed file is a mistake in the repository, so this throws. */
 export function parsePapersConfig(raw: unknown): PapersConfig {
   try {
-    const { seeds, include, exclude } = (raw ?? {}) as Record<string, unknown>;
+    const { seeds, include, exclude, affiliations } = (raw ?? {}) as Record<string, unknown>;
     if (!Array.isArray(seeds) || seeds.length === 0) throw new Error('`seeds` must be a non-empty list');
     return {
       seeds: seeds.map((seed, i) => {
@@ -244,6 +354,7 @@ export function parsePapersConfig(raw: unknown): PapersConfig {
         return { id, ...(overrides ? { overrides } : {}) };
       }),
       exclude: identifierList(exclude, 'exclude').map(([id]) => id),
+      affiliations: affiliationList(affiliations),
     };
   } catch (err) {
     throw new Error(`Invalid ${PAPERS_YAML}: ${errorMessage(err)}`);
@@ -277,8 +388,8 @@ export function papersSource(env: NodeJS.ProcessEnv): 'live' | 'snapshot' {
 
 export interface LoadPapersOptions {
   env?: NodeJS.ProcessEnv;
-  /** Overrides for the Semantic Scholar client, e.g. a mocked `fetchFn` or a longer `budgetMs`. */
-  client?: S2ClientOptions;
+  /** Overrides for the Semantic Scholar and OpenAlex clients, e.g. a mocked `fetchFn` or a longer `budgetMs`. */
+  client?: ApiClientOptions;
   /** Forces a live fetch (or not), regardless of `papersSource`. */
   source?: 'live' | 'snapshot';
   now?: () => Date;
@@ -292,7 +403,10 @@ export interface LoadPapersResult {
   message: string;
 }
 
-/** Loads papers.yaml, fetches from Semantic Scholar (unless using the snapshot) and merges in the snapshot. */
+/**
+ * Loads papers.yaml, fetches the papers from Semantic Scholar and their institutions from OpenAlex (unless using
+ * the snapshot), and merges in the snapshot.
+ */
 export async function loadPapers(
   siteDir: string,
   options: LoadPapersOptions = {}
@@ -305,9 +419,34 @@ export async function loadPapers(
   const apiKey = env.SEMANTIC_SCHOLAR_API_KEY?.trim() || undefined;
   const { live, failures } =
     source === 'live'
-      ? await fetchFromSemanticScholar(config, createS2Client({ apiKey, ...client }))
+      ? await fetchFromSemanticScholar(config, createApiClient({ apiKey, ...client }))
       : { live: emptyLiveFetch(), failures: [] };
-  const { seeds, papers, fromSnapshot, missing } = buildPapersData(config, live, snapshot);
+  const built = buildPapersData(config, live, snapshot);
+  const { seeds, missing } = built;
+  const s2Complete = failures.length === 0 && built.fromSnapshot.length === 0 && missing.length === 0;
+
+  // Papers with institutions in papers.yaml aren't looked up.
+  const toLookUp = built.papers.filter(
+    paper => !config.affiliations.some(({ id }) => paperMatchesId(paper, id))
+  );
+  const openAlex =
+    source === 'live'
+      ? await fetchInstitutionsFromOpenAlex(
+          toLookUp,
+          createApiClient({ ...OPENALEX_CLIENT_OPTIONS, ...client }),
+          env.OPENALEX_API_KEY?.trim() || undefined
+        )
+      : { institutions: new Map<string, string[]>(), failures: [] };
+  const { papers, notFetched } = attachInstitutions(
+    built.papers,
+    config.affiliations,
+    openAlex.institutions,
+    snapshot
+  );
+  const fromSnapshot = [
+    ...built.fromSnapshot,
+    ...(source === 'live' && notFetched > 0 ? [`institutions of ${notFetched} papers`] : []),
+  ];
 
   // The list is as fresh as its oldest part: if any seed's citations came from the snapshot, so does the date.
   const fresh = config.seeds.every(({ id }) => live.citations.has(id) && !live.incompleteSeeds.has(id));
@@ -318,26 +457,31 @@ export async function loadPapers(
   };
 
   const summary = `${papers.length} papers citing ${seeds.length} MEDS papers`;
+  const allFailures = [...failures, ...openAlex.failures];
   let message: string;
   let warning = false;
-  if (source === 'live' && failures.length === 0 && fromSnapshot.length === 0 && missing.length === 0) {
-    message = `Fetched ${summary} from Semantic Scholar.`;
+  if (source === 'live' && allFailures.length === 0 && fromSnapshot.length === 0 && missing.length === 0) {
+    message = `Fetched ${summary} from Semantic Scholar, and their institutions from OpenAlex.`;
   } else if (source === 'snapshot' && missing.length === 0) {
     message =
       `Using the snapshot from ${data.updatedAt} (${summary}). ` +
-      'Set PAPERS_SOURCE=live to fetch from Semantic Scholar instead.';
+      'Set PAPERS_SOURCE=live to fetch from Semantic Scholar and OpenAlex instead.';
   } else {
     warning = true;
+    const failedSources = [
+      ...(s2Complete ? [] : ['Semantic Scholar']),
+      ...(openAlex.failures.length > 0 ? ['OpenAlex'] : []),
+    ];
     const lines = [
-      ...failures,
+      ...allFailures,
       ...(fromSnapshot.length ? [`Taken from the snapshot instead: ${fromSnapshot.join('; ')}.`] : []),
       ...(missing.length ? [`Missing (not in the snapshot either): ${missing.join('; ')}.`] : []),
       ...(problem ? [`Snapshot ${PAPERS_SNAPSHOT} unavailable: ${problem}.`] : []),
     ];
     message =
-      `${source === 'live' ? 'Could not fetch everything from Semantic Scholar' : 'Using the snapshot'}; ` +
+      `${source === 'live' ? `Could not fetch everything from ${failedSources.join(' or ')}` : 'Using the snapshot'}; ` +
       `the papers page lists ${summary}, as of ${data.updatedAt ?? 'never'}:\n  ${lines.join('\n  ')}` +
-      (source === 'live' && !apiKey
+      (source === 'live' && !s2Complete && !apiKey
         ? '\nSEMANTIC_SCHOLAR_API_KEY is not set, so requests were unauthenticated and are often rate-limited.'
         : '');
   }

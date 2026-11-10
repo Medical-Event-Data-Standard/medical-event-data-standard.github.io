@@ -20,7 +20,6 @@ export interface Paper {
    * papers.yaml.
    */
   url: string;
-  citationCount: number | null;
 }
 
 /** One of the core MEDS papers whose citations are listed. */
@@ -35,6 +34,11 @@ export interface CitingPaper extends Paper {
   cites: string[];
   /** Listed because it is in the `include` list of papers.yaml (it may also cite a seed). */
   manual?: boolean;
+  /**
+   * Institutions of the paper's authors, without duplicates, in author order: from OpenAlex, or from the
+   * `affiliations` list of papers.yaml. Empty if neither has any.
+   */
+  institutions: string[];
 }
 
 /** The plugin's global data, and the format of static/data/papers.snapshot.json. */
