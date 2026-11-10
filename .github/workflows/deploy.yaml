@@ -68,6 +68,8 @@ jobs:
           # Optional: avoids Semantic Scholar rate limits when listing the papers citing MEDS. Without it the
           # build still succeeds, falling back to static/data/papers.snapshot.json for whatever it can't fetch.
           SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
+          # Optional, likewise: an OpenAlex API key for looking up the papers' institutions.
+          OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

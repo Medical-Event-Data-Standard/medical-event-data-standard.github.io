@@ -20,7 +20,6 @@ export interface Paper {
    * papers.yaml.
    */
   url: string;
-  citationCount: number | null;
 }
 
 /** One of the core MEDS papers whose citations are listed. */
@@ -35,12 +34,48 @@ export interface CitingPaper extends Paper {
   cites: string[];
   /** Listed because it is in the `include` list of papers.yaml (it may also cite a seed). */
   manual?: boolean;
+  /**
+   * Institutions of the paper's authors, without duplicates, in author order: from OpenAlex, or from the
+   * `affiliations` list of papers.yaml. Empty if neither has any.
+   */
+  institutions: string[];
 }
 
-/** The plugin's global data, and the format of static/data/papers.snapshot.json. */
+/** Where an institution is, as OpenAlex records it. */
+export interface InstitutionLocation {
+  latitude: number;
+  longitude: number;
+  city: string | null;
+  /** ISO 3166-1 alpha-2 code, e.g. `US`. */
+  country: string | null;
+}
+
+/** What the page uses of an institution's OpenAlex record. */
+export interface InstitutionRecord {
+  /** OpenAlex id, e.g. `I97018004`. */
+  id: string;
+  /** OpenAlex ids of the institutions it is part of: its `lineage`, without itself. */
+  partOf: string[];
+  location: InstitutionLocation | null;
+}
+
+/** The format of static/data/papers.snapshot.json. */
 export interface PapersData {
   /** ISO timestamp of the Semantic Scholar fetch the data comes from, or null if it was never fetched. */
   updatedAt: string | null;
   seeds: SeedPaper[];
   papers: CitingPaper[];
+  /**
+   * OpenAlex records of the papers' institutions, by the name OpenAlex (or papers.yaml) gives them, before they are
+   * renamed or rolled up into the institutions they are part of. Institutions OpenAlex doesn't have are left out.
+   */
+  institutions?: Record<string, InstitutionRecord>;
+}
+
+/** The plugin's global data: the snapshot's papers, plus the institutions' icons and locations. */
+export interface PapersPageData extends Omit<PapersData, 'institutions'> {
+  /** URL path of each institution's icon (in static/img/institutions), by name; institutions without one are left out. */
+  institutionIcons: Record<string, string>;
+  /** Location of each institution, by name; institutions without one are left out. */
+  institutionLocations: Record<string, InstitutionLocation>;
 }
