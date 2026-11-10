@@ -104,7 +104,7 @@ export interface EcosystemPluginData {
   /** The repositories' GitHub metadata, fetched at build time. */
   repos: EcosystemMetadata;
   /**
-   * The committed logos of the repositories' owners, as paths relative to the site's base URL, keyed by
+   * The logos of the repositories' owners, downloaded at build time, as paths relative to the site's base URL, keyed by
    * `ownerKey(githubRepo)`, i.e. the lower-cased owner. Owners without a logo are left out.
    */
   logos: Record<string, string>;

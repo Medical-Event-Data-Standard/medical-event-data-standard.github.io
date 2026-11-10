@@ -5,12 +5,11 @@ import path from 'path';
 import type { LoadContext, PluginContentLoadedActions } from '@docusaurus/types';
 import ecosystemMetadataPlugin, {
   collectGithubRepos,
+  downloadEcosystemLogos,
   fetchEcosystemMetadata,
-  findEcosystemLogos,
   isIdenticon,
   logoExtension,
-  updateEcosystemLogos,
-  updateEcosystemLogosFromYaml,
+  type GitHubOwner,
 } from './ecosystemMetadata';
 
 function jsonResponse(status: number, body: unknown = {}): Response {
@@ -41,7 +40,13 @@ const responses: Record<string, Response> = {
   'https://api.github.com/repos/org/ok': jsonResponse(200, {
     stargazers_count: 12,
     updated_at: '2026-01-02T00:00:00Z',
+    owner: {
+      login: 'Org',
+      type: 'Organization',
+      avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4',
+    },
   }),
+  'https://avatars.githubusercontent.com/u/1?v=4&s=64': imageResponse(png(64)),
   'https://api.github.com/repos/org/ok/releases/latest': jsonResponse(200, { tag_name: 'v1.2.3' }),
   'https://api.github.com/repos/Org/NoRelease': jsonResponse(200, { stargazers_count: 0 }),
   'https://api.github.com/repos/Org/NoRelease/releases/latest': jsonResponse(404),
@@ -79,7 +84,7 @@ describe('fetchEcosystemMetadata', () => {
   it('returns stars and releases, treats a missing release as normal, and reports failures', async () => {
     const fetchFn = makeFetch();
     const repos = ['org/ok', 'Org/NoRelease', 'org/limited', 'org/throws', 'org/bad-release'];
-    const { metadata, failures } = await fetchEcosystemMetadata(repos, { fetchFn });
+    const { metadata, owners, failures } = await fetchEcosystemMetadata(repos, { fetchFn });
 
     expect(metadata).toEqual({
       'org/ok': { stars: 12, lastUpdated: '2026-01-02T00:00:00Z', release: 'v1.2.3' },
@@ -91,6 +96,13 @@ describe('fetchEcosystemMetadata', () => {
       'org/bad-release (latest release): HTTP 500',
       'org/limited: HTTP 403',
       'org/throws: network down',
+    ]);
+    // Each owner once, from its first repository's details; the login is the repository's spelling if they lack it.
+    expect([...owners]).toEqual([
+      [
+        'org',
+        { login: 'Org', type: 'Organization', avatarUrl: 'https://avatars.githubusercontent.com/u/1?v=4' },
+      ],
     ]);
     // No release lookups for repos whose info could not be fetched.
     expect(fetchFn).not.toHaveBeenCalledWith(
@@ -117,8 +129,12 @@ describe('fetchEcosystemMetadata', () => {
     responses['https://api.github.com/repos/org/sparse'] = jsonResponse(200, {});
     responses['https://api.github.com/repos/org/sparse/releases/latest'] = jsonResponse(200, {});
     try {
-      const { metadata, failures } = await fetchEcosystemMetadata(['org/sparse', 'org/throws-string']);
+      const { metadata, owners, failures } = await fetchEcosystemMetadata([
+        'org/sparse',
+        'org/throws-string',
+      ]);
       expect(metadata).toEqual({ 'org/sparse': { stars: null, lastUpdated: null, release: null } });
+      expect([...owners]).toEqual([['org', { login: 'org', type: null, avatarUrl: null }]]);
       expect(failures).toEqual(['org/throws-string: not an Error']);
       expect(fetchFn).toHaveBeenCalled();
     } finally {
@@ -158,29 +174,34 @@ describe('isIdenticon', () => {
 });
 
 const AVATARS = 'https://avatars.githubusercontent.com/u';
-const org = (id: number) => jsonResponse(200, { type: 'Organization', avatar_url: `${AVATARS}/${id}?v=4` });
-const logoResponses: Record<string, Response> = {
-  'https://api.github.com/users/Org': org(1),
+const organization = (login: string, id: number): GitHubOwner => ({
+  login,
+  type: 'Organization',
+  avatarUrl: `${AVATARS}/${id}?v=4`,
+});
+const OWNERS = new Map<string, GitHubOwner>([
+  ['org', organization('Org', 1)],
+  ['jpeg-org', organization('jpeg-org', 2)],
+  ['person', { login: 'person', type: 'User', avatarUrl: `${AVATARS}/3?v=4` }],
+  ['identicon-org', organization('identicon-org', 4)],
+  ['html-org', organization('html-org', 5)],
+  ['broken-avatar', organization('broken-avatar', 6)],
+  ['no-avatar-url', { login: 'no-avatar-url', type: 'Organization', avatarUrl: null }],
+]);
+const avatarResponses: Record<string, Response> = {
   [`${AVATARS}/1?v=4&s=64`]: imageResponse(png(64)),
-  'https://api.github.com/users/jpeg-org': org(2),
   [`${AVATARS}/2?v=4&s=64`]: imageResponse(JPEG),
-  'https://api.github.com/users/person': jsonResponse(200, { type: 'User', avatar_url: `${AVATARS}/3?v=4` }),
   [`${AVATARS}/3?v=4&s=64`]: imageResponse(JPEG),
-  'https://api.github.com/users/identicon-org': org(4),
   [`${AVATARS}/4?v=4&s=64`]: imageResponse(png(420)),
-  'https://api.github.com/users/html-org': org(5),
   [`${AVATARS}/5?v=4&s=64`]: imageResponse(new TextEncoder().encode('<html></html>')),
-  'https://api.github.com/users/broken-avatar': org(6),
   [`${AVATARS}/6?v=4&s=64`]: imageResponse(new Uint8Array(), 404),
-  'https://api.github.com/users/no-avatar-url': jsonResponse(200, { type: 'Organization' }),
-  'https://api.github.com/users/limited': jsonResponse(403),
 };
-const makeLogoFetch = () =>
+const makeAvatarFetch = () =>
   jest.fn<(url: string, init?: RequestInit) => Promise<Response>>(
-    async url => logoResponses[url] ?? jsonResponse(500)
+    async url => avatarResponses[url] ?? jsonResponse(500)
   );
 
-describe('ecosystem logos', () => {
+describe('downloadEcosystemLogos', () => {
   let siteDir: string;
   let logosDir: string;
 
@@ -198,17 +219,17 @@ describe('ecosystem logos', () => {
     await Promise.all(files.map(file => fs.writeFile(path.join(logosDir, file), 'old')));
   };
 
-  it("saves organizations' avatars by lower-cased owner, and deletes the logos no longer wanted", async () => {
+  it("downloads organizations' avatars by lower-cased owner, and deletes the logos no longer wanted", async () => {
     await writeLogos([
       'gone.png', // Its owner is no longer listed.
       'person.jpg', // A personal account.
       'org.jpg', // Replaced by org.png.
       'identicon-org.png', // Its owner no longer has an uploaded avatar.
-      'limited.png', // Kept, as its owner's details can't be fetched.
+      'limited.png', // Kept, as its repositories' details couldn't be fetched.
       'html-org.gif', // Kept, as its owner's avatar is not an image.
       'notes.txt', // Not a logo.
     ]);
-    const fetchFn = makeLogoFetch();
+    const fetchFn = makeAvatarFetch();
     const repos = [
       'Org/a',
       'org/b',
@@ -219,18 +240,22 @@ describe('ecosystem logos', () => {
       'broken-avatar/g',
       'no-avatar-url/h',
       'limited/i',
+      'unknown/j', // Its details weren't fetched, and it has no earlier logo.
     ];
-    const result = await updateEcosystemLogos(siteDir, repos, { fetchFn, token: 'secret' });
+    const result = await downloadEcosystemLogos(siteDir, repos, OWNERS, { fetchFn });
 
     expect(result).toEqual({
-      saved: ['jpeg-org', 'Org'],
+      logos: {
+        'html-org': 'img/ecosystem-logos/html-org.gif',
+        'jpeg-org': 'img/ecosystem-logos/jpeg-org.jpg',
+        limited: 'img/ecosystem-logos/limited.png',
+        org: 'img/ecosystem-logos/org.png',
+      },
       without: ['identicon-org (no uploaded avatar)', 'person (personal account)'],
-      removed: 4,
       failures: [
         'broken-avatar: avatar: HTTP 404',
         'html-org: the avatar is not a PNG, JPEG or GIF image',
-        'limited: HTTP 403',
-        'no-avatar-url: no avatar_url',
+        'no-avatar-url: no avatar URL',
       ],
     });
     expect((await fs.readdir(logosDir)).sort()).toEqual([
@@ -244,85 +269,32 @@ describe('ecosystem logos', () => {
     expect(new Uint8Array(await fs.readFile(path.join(logosDir, 'jpeg-org.jpg')))).toEqual(JPEG);
 
     const urls = fetchFn.mock.calls.map(([url]) => url);
-    // One request per owner, spelled as in its first repository.
-    expect(urls.filter(url => url.toLowerCase() === 'https://api.github.com/users/org')).toEqual([
-      'https://api.github.com/users/Org',
-    ]);
+    // One download per owner, whichever of its repositories are listed; no GitHub API requests at all.
+    expect(urls.filter(url => url === `${AVATARS}/1?v=4&s=64`)).toHaveLength(1);
+    expect(urls.some(url => url.startsWith('https://api.github.com/'))).toBe(false);
     // A personal account's avatar is not downloaded.
     expect(urls).not.toContain(`${AVATARS}/3?v=4&s=64`);
-    // The token goes to the GitHub API only.
-    for (const [url, init] of fetchFn.mock.calls) {
-      const auth = (init?.headers as Record<string, string>).Authorization;
-      expect(auth).toBe(url.startsWith('https://api.github.com/') ? 'Bearer secret' : undefined);
-    }
   });
 
-  it("saves personal accounts' avatars too with `personalAccounts`", async () => {
-    const result = await updateEcosystemLogos(siteDir, ['person/d'], {
-      fetchFn: makeLogoFetch(),
+  it("downloads personal accounts' avatars too with `personalAccounts`, creating the folder if needed", async () => {
+    const result = await downloadEcosystemLogos(siteDir, ['person/d'], OWNERS, {
+      fetchFn: makeAvatarFetch(),
       personalAccounts: true,
     });
-    expect(result.saved).toEqual(['person']);
+    expect(result.logos).toEqual({ person: 'img/ecosystem-logos/person.jpg' });
     expect(await fs.readdir(logosDir)).toEqual(['person.jpg']);
   });
 
-  it('finds the committed logos by owner, as paths relative to the base URL', async () => {
-    expect(await findEcosystemLogos(siteDir)).toEqual({});
-    await writeLogos(['som-shahlab.png', 'nyuad-cai.jpg', 'readme.md']);
-    expect(await findEcosystemLogos(siteDir)).toEqual({
-      'nyuad-cai': 'img/ecosystem-logos/nyuad-cai.jpg',
-      'som-shahlab': 'img/ecosystem-logos/som-shahlab.png',
-    });
-  });
-
-  it('updates the logos of the owners in ecosystem.yaml, and summarises the result', async () => {
+  it('uses the global fetch by default', async () => {
     const originalFetch = globalThis.fetch;
-    const originalToken = process.env.GITHUB_TOKEN;
-    const yamlPath = path.join(siteDir, 'static', 'data', 'ecosystem.yaml');
-    const packageYaml = (name: string, repo: string) =>
-      `    - name: '${name}'\n      github_repo: '${repo}'\n`;
+    const fetchFn = makeAvatarFetch();
+    globalThis.fetch = fetchFn as unknown as typeof fetch;
     try {
-      await fs.mkdir(path.dirname(yamlPath), { recursive: true });
-      await fs.writeFile(
-        yamlPath,
-        'tools:\n  packages:\n' + packageYaml('A', 'Org/a') + packageYaml('B', 'person/b')
-      );
-      // By default, with the global fetch and GITHUB_TOKEN.
-      const fetchFn = makeLogoFetch();
-      globalThis.fetch = fetchFn as unknown as typeof fetch;
-      process.env.GITHUB_TOKEN = 'from-env';
-      expect(await updateEcosystemLogosFromYaml(siteDir)).toEqual({
-        warning: false,
-        message: [
-          'Saved the logos of 1 GitHub owners in static/img/ecosystem-logos, and deleted 0 other logos.',
-          'Owners without a logo, whose packages show the MEDS logo:',
-          '  person (personal account)',
-        ].join('\n'),
-      });
-      expect(fetchFn).toHaveBeenCalledWith(
-        'https://api.github.com/users/Org',
-        expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer from-env' }) })
-      );
-
-      delete process.env.GITHUB_TOKEN;
-      await fs.appendFile(yamlPath, packageYaml('C', 'limited/c'));
-      const { warning, message } = await updateEcosystemLogosFromYaml(siteDir, { fetchFn });
-      expect(warning).toBe(true);
-      expect(message).toContain('Failed, so any logo the owner had was kept:\n  limited: HTTP 403');
-      expect(message).toContain('GITHUB_TOKEN is not set');
-      const withToken = await updateEcosystemLogosFromYaml(siteDir, { fetchFn, token: 'secret' });
-      expect(withToken.message).not.toContain('GITHUB_TOKEN is not set');
-
-      await fs.writeFile(yamlPath, 'tools:\n  packages:\n' + packageYaml('A', 'Org/a'));
-      expect(await updateEcosystemLogosFromYaml(siteDir, { fetchFn })).toEqual({
-        warning: false,
-        message:
-          'Saved the logos of 1 GitHub owners in static/img/ecosystem-logos, and deleted 0 other logos.',
-      });
+      const { logos } = await downloadEcosystemLogos(siteDir, ['org/a'], OWNERS);
+      expect(logos).toEqual({ org: 'img/ecosystem-logos/org.png' });
+      expect(fetchFn).toHaveBeenCalled();
     } finally {
       globalThis.fetch = originalFetch;
-      if (originalToken === undefined) delete process.env.GITHUB_TOKEN;
-      else process.env.GITHUB_TOKEN = originalToken;
     }
   });
 });
@@ -363,9 +335,6 @@ describe('ecosystemMetadataPlugin', () => {
   it('publishes the metadata of the repos in ecosystem.yaml as global data, with the logos', async () => {
     process.env.GITHUB_TOKEN = 'secret';
     await writeEcosystemYaml(['org/ok']);
-    const logosDir = path.join(siteDir, 'static', 'img', 'ecosystem-logos');
-    await fs.mkdir(logosDir, { recursive: true });
-    await fs.writeFile(path.join(logosDir, 'org.png'), png(64));
     const plugin = ecosystemMetadataPlugin({ siteDir } as LoadContext);
 
     expect(plugin.name).toBe('ecosystem-metadata');
@@ -376,8 +345,12 @@ describe('ecosystemMetadataPlugin', () => {
       repos: { 'org/ok': { stars: 12, lastUpdated: '2026-01-02T00:00:00Z', release: 'v1.2.3' } },
       logos: { org: 'img/ecosystem-logos/org.png' },
     });
-    expect(console.info).toHaveBeenCalledWith(expect.stringContaining('1/1 repos'));
+    expect(console.info).toHaveBeenCalledWith(
+      expect.stringContaining('1/1 repos, and the logos of 1 owners')
+    );
     expect(console.warn).not.toHaveBeenCalled();
+    const logo = path.join(siteDir, 'static', 'img', 'ecosystem-logos', 'org.png');
+    expect(new Uint8Array(await fs.readFile(logo))).toEqual(png(64));
 
     const setGlobalData = jest.fn();
     await plugin.contentLoaded?.({
@@ -392,7 +365,10 @@ describe('ecosystemMetadataPlugin', () => {
 
     delete process.env.GITHUB_TOKEN;
     const content = await ecosystemMetadataPlugin({ siteDir } as LoadContext).loadContent?.();
-    expect(content).toEqual({ repos: { 'org/ok': expect.anything() }, logos: {} });
+    expect(content).toEqual({
+      repos: { 'org/ok': expect.anything() },
+      logos: { org: 'img/ecosystem-logos/org.png' },
+    });
     const warning = jest.mocked(console.warn).mock.calls[0][0];
     expect(warning).toContain('1/2 repos');
     expect(warning).toContain('org/limited: HTTP 403');
@@ -401,5 +377,24 @@ describe('ecosystemMetadataPlugin', () => {
     process.env.GITHUB_TOKEN = 'secret';
     await ecosystemMetadataPlugin({ siteDir } as LoadContext).loadContent?.();
     expect(jest.mocked(console.warn).mock.calls[1][0]).not.toContain('GITHUB_TOKEN is not set');
+  });
+
+  it("warns about logos that couldn't be fetched", async () => {
+    await writeEcosystemYaml(['org/ok']);
+    const fetchFn = makeFetch();
+    globalThis.fetch = jest.fn<typeof fetch>(async (url, init) =>
+      String(url).startsWith('https://avatars.githubusercontent.com/')
+        ? imageResponse(new Uint8Array(), 503)
+        : fetchFn(String(url), init)
+    ) as unknown as typeof fetch;
+
+    const content = await ecosystemMetadataPlugin({ siteDir } as LoadContext).loadContent?.();
+    expect(content).toEqual({ repos: { 'org/ok': expect.anything() }, logos: {} });
+    expect(jest.mocked(console.warn).mock.calls[0][0]).toContain(
+      'Could not fetch the logos of 1 owners, whose cards show their earlier logo or the MEDS logo:\n  Org: avatar: HTTP 503'
+    );
+    expect(console.info).toHaveBeenCalledWith(
+      expect.stringContaining('1/1 repos, and the logos of 0 owners')
+    );
   });
 });

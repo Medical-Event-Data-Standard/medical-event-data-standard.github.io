@@ -11,18 +11,19 @@ import {
 } from '../src/lib/ecosystem/githubMetadata';
 
 // This runs in Node.js at build time (and on `npm start`). It fetches GitHub metadata for every package in
-// the ecosystem YAML once, and exposes it to the site as plugin global data, with the committed logos of the
-// packages' GitHub owners.
+// the ecosystem YAML once, and exposes it to the site as plugin global data, with the logos of the packages'
+// GitHub owners.
 //
 // Fetching here rather than in each visitor's browser matters: unauthenticated GitHub API calls are limited to
 // 60/hour per IP, and the ecosystem page needs ~2 calls per repository, so browsers ran out partway through
 // and many cards showed no stars. At build time we can authenticate with GITHUB_TOKEN instead.
 //
-// The logos are not fetched at build time: `npm run ecosystem:logos` (`updateEcosystemLogosFromYaml`) downloads
-// them into static/img/ecosystem-logos, to be committed, and the site serves them itself.
+// The logos are the owners' GitHub avatars. Each owner's account type and avatar URL come with its repositories'
+// details, so they cost no extra API requests; the avatars themselves are downloaded into static/img/ecosystem-logos
+// (which git ignores) and served by the site like any other static file, so visitors make no requests to GitHub.
 
 export const ECOSYSTEM_YAML = path.join('static', 'data', 'ecosystem.yaml');
-/** The committed logos of the packages' GitHub owners, named by `ownerKey`, e.g. `som-shahlab.png`. */
+/** The downloaded logos of the packages' GitHub owners, named by `ownerKey`, e.g. `som-shahlab.png`. */
 export const LOGOS_DIR = path.join('static', ...ECOSYSTEM_LOGOS_PATH.split('/'));
 const GITHUB_API = 'https://api.github.com';
 const USER_AGENT = 'medical-event-data-standard.github.io';
@@ -32,7 +33,7 @@ const TIMEOUT_MS = 15_000;
 /**
  * Whether a package whose repository belongs to a personal GitHub account, rather than an organization, gets that
  * account's avatar as its logo. Such avatars are often photos of people, so while this is false those packages
- * show the MEDS logo. After changing it, run `npm run ecosystem:logos`.
+ * show the MEDS logo. A change takes effect at the next build, or when the dev server starts.
  */
 export const PERSONAL_ACCOUNT_LOGOS = false;
 
@@ -44,20 +45,30 @@ type FetchFn = (url: string, init?: RequestInit) => Promise<Response>;
 interface GitHubRepoResponse {
   stargazers_count?: number;
   updated_at?: string;
+  owner?: {
+    login?: string;
+    /** `User` or `Organization`. */
+    type?: string;
+    avatar_url?: string;
+  } | null;
 }
 
 interface GitHubReleaseResponse {
   tag_name?: string;
 }
 
-interface GitHubUserResponse {
+/** A repository's owner, as its details on GitHub give it. */
+export interface GitHubOwner {
+  login: string;
   /** `User` or `Organization`. */
-  type?: string;
-  avatar_url?: string;
+  type: string | null;
+  avatarUrl: string | null;
 }
 
 export interface FetchMetadataResult {
   metadata: EcosystemMetadata;
+  /** The owners of the repositories whose details were fetched, by `ownerKey`. */
+  owners: Map<string, GitHubOwner>;
   /** Human-readable descriptions of requests that failed (other than "no release", which is expected). */
   failures: string[];
 }
@@ -127,6 +138,7 @@ export async function fetchEcosystemMetadata(
   { token, fetchFn = fetch }: { token?: string; fetchFn?: FetchFn } = {}
 ): Promise<FetchMetadataResult> {
   const metadata: EcosystemMetadata = {};
+  const owners = new Map<string, GitHubOwner>();
   const failures: string[] = [];
   const get = (url: string): Promise<Response> => githubApiGet(url, token, fetchFn);
 
@@ -140,6 +152,13 @@ export async function fetchEcosystemMetadata(
         lastUpdated: data.updated_at ?? null,
         release: null,
       };
+      if (!owners.has(ownerKey(repo))) {
+        owners.set(ownerKey(repo), {
+          login: data.owner?.login ?? repo.trim().split('/')[0],
+          type: data.owner?.type ?? null,
+          avatarUrl: data.owner?.avatar_url ?? null,
+        });
+      }
     } catch (err) {
       failures.push(`${repo}: ${errorMessage(err)}`);
     }
@@ -158,7 +177,7 @@ export async function fetchEcosystemMetadata(
     }
   });
 
-  return { metadata, failures };
+  return { metadata, owners, failures };
 }
 
 const IMAGE_SIGNATURES: [string, number[]][] = [
@@ -188,74 +207,66 @@ export function isIdenticon(bytes: Uint8Array, size: number): boolean {
   return width !== size;
 }
 
-/** The logo files in `dir`, in alphabetical order. */
+/** The logo files in `dir`, which must exist, in alphabetical order. */
 async function logoFiles(dir: string): Promise<string[]> {
-  const files = await fs.readdir(dir).catch(() => [] as string[]);
+  const files = await fs.readdir(dir);
   return files.filter(file => LOGO_EXTENSIONS.includes(path.extname(file).slice(1))).sort();
 }
 
 const fileStem = (file: string): string => file.slice(0, -path.extname(file).length);
 
-/** The committed logos, as paths relative to the site's base URL, keyed by `ownerKey`. */
-export async function findEcosystemLogos(siteDir: string): Promise<Record<string, string>> {
-  const files = await logoFiles(path.join(siteDir, LOGOS_DIR));
-  return Object.fromEntries(files.map(file => [fileStem(file), `${ECOSYSTEM_LOGOS_PATH}/${file}`]));
-}
-
 export interface EcosystemLogosResult {
-  /** The owners whose logo was downloaded. */
-  saved: string[];
+  /** The logos, as paths relative to the site's base URL, keyed by `ownerKey`. Owners without one are left out. */
+  logos: Record<string, string>;
   /** The owners without a logo, each followed by the reason in parentheses. */
   without: string[];
-  /** The number of logo files deleted, because their owner no longer has a logo or is no longer listed. */
-  removed: number;
   /** Human-readable descriptions of the owners whose logo could not be fetched; any logo they had is kept. */
   failures: string[];
 }
 
 /**
  * Downloads the logo of the owner of each of the given `owner/repo` repositories into static/img/ecosystem-logos,
- * and deletes the other logos there. An owner's logo is its GitHub avatar, at `LOGO_SIZE` pixels.
+ * and deletes the other logos there. An owner's logo is its GitHub avatar, at `LOGO_SIZE` pixels, found through
+ * `owners` (see `fetchEcosystemMetadata`).
  *
  * Owners that are personal accounts (unless `personalAccounts`) and owners without an uploaded avatar (see
- * `isIdenticon`) get no logo. Only PNG, JPEG and GIF images are saved. If an owner's details or avatar cannot be
- * fetched, its existing logo, if any, is kept and the failure reported. Does not throw when a request fails.
+ * `isIdenticon`) get no logo. Only PNG, JPEG and GIF images are saved. If an owner's avatar cannot be fetched, or
+ * its repositories' details weren't, the logo downloaded for it earlier, if any, is kept. Never throws because a
+ * request failed.
  */
-export async function updateEcosystemLogos(
+export async function downloadEcosystemLogos(
   siteDir: string,
-  repos: string[],
+  repos: readonly string[],
+  owners: ReadonlyMap<string, GitHubOwner>,
   {
-    token,
     fetchFn = fetch,
     personalAccounts = PERSONAL_ACCOUNT_LOGOS,
-  }: { token?: string; fetchFn?: FetchFn; personalAccounts?: boolean }
+  }: { fetchFn?: FetchFn; personalAccounts?: boolean } = {}
 ): Promise<EcosystemLogosResult> {
   const dir = path.join(siteDir, LOGOS_DIR);
   await fs.mkdir(dir, { recursive: true });
   const existing = await logoFiles(dir);
-  // One request per owner, however many of its repositories are listed, spelled as in its first repository.
-  const owners = new Map<string, string>();
-  for (const repo of repos) {
-    if (!owners.has(ownerKey(repo))) owners.set(ownerKey(repo), repo.trim().split('/')[0]);
-  }
+  const keys = [...new Set(repos.map(ownerKey))];
 
-  const keep = new Set<string>();
-  const saved: string[] = [];
+  const kept = new Map<string, string>();
   const without: string[] = [];
   const failures: string[] = [];
+  const keepExisting = (key: string): void => {
+    const file = existing.find(name => fileStem(name) === key);
+    if (file) kept.set(key, file);
+  };
 
-  await mapWithConcurrency([...owners], CONCURRENCY, async ([key, owner]) => {
+  await mapWithConcurrency(keys, CONCURRENCY, async key => {
+    const owner = owners.get(key);
+    if (!owner) return keepExisting(key);
     try {
-      const res = await githubApiGet(`${GITHUB_API}/users/${owner}`, token, fetchFn);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const { type, avatar_url } = (await res.json()) as GitHubUserResponse;
-      if (type !== 'Organization' && !personalAccounts) {
-        without.push(`${owner} (personal account)`);
+      if (owner.type !== 'Organization' && !personalAccounts) {
+        without.push(`${owner.login} (personal account)`);
         return;
       }
-      if (!avatar_url) throw new Error('no avatar_url');
+      if (!owner.avatarUrl) throw new Error('no avatar URL');
 
-      const url = new URL(avatar_url);
+      const url = new URL(owner.avatarUrl);
       url.searchParams.set('s', String(LOGO_SIZE));
       const image = await fetchFn(url.href, {
         headers: { 'User-Agent': USER_AGENT },
@@ -266,59 +277,32 @@ export async function updateEcosystemLogos(
       const extension = logoExtension(bytes);
       if (!extension) throw new Error('the avatar is not a PNG, JPEG or GIF image');
       if (isIdenticon(bytes, LOGO_SIZE)) {
-        without.push(`${owner} (no uploaded avatar)`);
+        without.push(`${owner.login} (no uploaded avatar)`);
         return;
       }
 
       const file = `${key}.${extension}`;
       await fs.writeFile(path.join(dir, file), bytes);
-      keep.add(file);
-      saved.push(owner);
+      kept.set(key, file);
     } catch (err) {
-      failures.push(`${owner}: ${errorMessage(err)}`);
-      existing.filter(file => fileStem(file) === key).forEach(file => keep.add(file));
+      failures.push(`${owner.login}: ${errorMessage(err)}`);
+      keepExisting(key);
     }
   });
 
-  let removed = 0;
+  const keptFiles = new Set(kept.values());
   for (const file of existing) {
-    if (!keep.has(file)) {
-      await fs.rm(path.join(dir, file));
-      removed++;
-    }
+    if (!keptFiles.has(file)) await fs.rm(path.join(dir, file));
   }
 
   const sort = (list: string[]) => list.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
-  return { saved: sort(saved), without: sort(without), removed, failures: sort(failures) };
-}
-
-/**
- * Refreshes the logos of the GitHub owners of the packages in static/data/ecosystem.yaml (see
- * `updateEcosystemLogos`): `npm run ecosystem:logos`. Returns a summary to print, and whether anything failed.
- */
-export async function updateEcosystemLogosFromYaml(
-  siteDir: string,
-  { token = process.env.GITHUB_TOKEN || undefined, fetchFn }: { token?: string; fetchFn?: FetchFn } = {}
-): Promise<{ warning: boolean; message: string }> {
-  const repos = collectGithubRepos(parse(await fs.readFile(path.join(siteDir, ECOSYSTEM_YAML), 'utf8')));
-  const { saved, without, removed, failures } = await updateEcosystemLogos(siteDir, repos, {
-    token,
-    fetchFn,
-  });
-  const lines = [
-    `Saved the logos of ${saved.length} GitHub owners in ${LOGOS_DIR}, and deleted ${removed} other logos.`,
-    ...(without.length > 0
-      ? ['Owners without a logo, whose packages show the MEDS logo:', ...without.map(owner => `  ${owner}`)]
-      : []),
-    ...(failures.length > 0
-      ? [
-          'Failed, so any logo the owner had was kept:',
-          ...failures.map(failure => `  ${failure}`),
-          ...(token ? [] : ['GITHUB_TOKEN is not set, so the GitHub API requests were unauthenticated.']),
-        ]
-      : []),
-  ];
-  return { warning: failures.length > 0, message: lines.join('\n') };
+  return {
+    logos: Object.fromEntries(
+      [...kept].sort().map(([key, file]) => [key, `${ECOSYSTEM_LOGOS_PATH}/${file}`])
+    ),
+    without: sort(without),
+    failures: sort(failures),
+  };
 }
 
 // Typed as `Plugin` (i.e. `Plugin<unknown>`) because that is what Docusaurus accepts for plugins listed in the config.
@@ -335,12 +319,20 @@ export default function ecosystemMetadataPlugin(context: LoadContext): Plugin {
     async loadContent(): Promise<EcosystemPluginData> {
       const repos = collectGithubRepos(parse(await fs.readFile(yamlPath, 'utf8')));
       const token = process.env.GITHUB_TOKEN || undefined;
-      const { metadata, failures } = await fetchEcosystemMetadata(repos, { token });
+      const { metadata, owners, failures } = await fetchEcosystemMetadata(repos, { token });
+      const logos = await downloadEcosystemLogos(context.siteDir, repos, owners);
 
       const fetched = Object.keys(metadata).length;
+      const logoSummary = `and the logos of ${Object.keys(logos.logos).length} owners`;
+      if (logos.failures.length > 0) {
+        console.warn(
+          `[${ECOSYSTEM_METADATA_PLUGIN}] Could not fetch the logos of ${logos.failures.length} owners, whose ` +
+            `cards show their earlier logo or the MEDS logo:\n  ${logos.failures.join('\n  ')}`
+        );
+      }
       if (failures.length === 0) {
         console.info(
-          `[${ECOSYSTEM_METADATA_PLUGIN}] Fetched GitHub metadata for ${fetched}/${repos.length} repos.`
+          `[${ECOSYSTEM_METADATA_PLUGIN}] Fetched GitHub metadata for ${fetched}/${repos.length} repos, ${logoSummary}.`
         );
       } else {
         console.warn(
@@ -353,7 +345,7 @@ export default function ecosystemMetadataPlugin(context: LoadContext): Plugin {
                 'Try e.g. `GITHUB_TOKEN=$(gh auth token) npm start`.')
         );
       }
-      return { repos: metadata, logos: await findEcosystemLogos(context.siteDir) };
+      return { repos: metadata, logos: logos.logos };
     },
 
     async contentLoaded({ content, actions }) {

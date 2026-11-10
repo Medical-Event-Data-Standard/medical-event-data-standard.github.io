@@ -5,8 +5,8 @@
 export const ECOSYSTEM_METADATA_PLUGIN = 'ecosystem-metadata';
 
 /**
- * Where the committed logos of the packages' GitHub owners are served, relative to the site's base URL. They are
- * files in static/img/ecosystem-logos, named by `ownerKey`, which `npm run ecosystem:logos` downloads.
+ * Where the logos of the packages' GitHub owners are served, relative to the site's base URL. They are files in
+ * static/img/ecosystem-logos, named by `ownerKey`, which the `ecosystem-metadata` plugin downloads at build time.
  */
 export const ECOSYSTEM_LOGOS_PATH = 'img/ecosystem-logos';
 
