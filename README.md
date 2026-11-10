@@ -173,7 +173,7 @@ each institution's OpenAlex location, larger for more papers. As in marker clust
 pixels from one with at least as many papers are grouped into a circle showing their number; selecting it zooms
 in on them, or lists them if zooming can't separate them. The selected institution's marker is highlighted and
 labelled, and the map moves to show it. The map is an SVG land outline with pins on top
-(`src/components/papers/InstitutionMap.tsx`, built on the world map that the dataset statistics page also uses,
+(`src/components/papers/InstitutionMap.tsx`, built on the world map that the Datasets page also uses,
 `src/components/common/WorldMap.tsx`, with its logic in `src/lib/worldMap/map.ts`), loaded only when shown, and
 makes no requests: the outline, `src/lib/worldMap/worldOutline.ts`, is generated from
 [Natural Earth](https://www.naturalearthdata.com/)'s public-domain 1:110m land polygons by

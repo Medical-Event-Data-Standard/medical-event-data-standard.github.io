@@ -1,4 +1,4 @@
-# Which `meds_summary_stats` files the "Dataset statistics" page (docs/intro_pages/3_dataset_statistics.mdx) shows.
+# Which `meds_summary_stats` files the "Datasets" page (src/pages/datasets.mdx) shows.
 # See plugins/etlSummaryStats.ts for how they are collected.
 #
 # Every package under `dataset_etls` in static/data/ecosystem.yaml that has a `github_repo` is searched

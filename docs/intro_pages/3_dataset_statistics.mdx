@@ -1,55 +1,12 @@
 ---
-sidebar_label: Dataset statistics
-description: Size, coverage and structure of the datasets that public MEDS ETLs produce, from the summary statistics their maintainers publish.
+unlisted: true
+description: The dataset statistics moved to the Datasets tab.
 ---
 
-# Dataset statistics
+{/* The page moved to /datasets; this keeps old links working. */}
 
-import DatasetStatistics, {
-  DATASET_STATISTICS_TOC,
-} from '@site/src/components/etlSummaryStats/DatasetStatistics';
+import { Redirect } from '@docusaurus/router';
 
-export const toc = [
-  ...DATASET_STATISTICS_TOC,
-  { value: 'Add your dataset', id: 'add-your-dataset', level: 2 },
-];
+<Redirect to="/datasets" />
 
-How large are the datasets that the public [MEDS ETLs](./3_ecosystem.mdx) produce, and how do they differ? Several
-ETL maintainers publish a summary of their converted dataset, computed with
-[`meds_summary_stats`](https://github.com/Medical-Event-Data-Standard/meds_summary_stats). This page collects those
-files each time the site is built, together with the summaries committed to this site's repository for datasets
-whose ETL repository doesn't publish one, and charts them side by side.
-
-The files are safe to publish by design: `meds_summary_stats` never writes out a code, reports no minimum or
-maximum value (only percentiles, and from version 0.0.4 on none that would depend on the smallest or largest
-value), and suppresses every split, calendar year or vocabulary that fewer than 20 subjects contribute to, keeping
-only a pooled `<suppressed>` total. This page shows such cells as suppressed and never estimates them. It does not
-chart calendar years, because most datasets shift their dates to de-identify them.
-
-<DatasetStatistics />
-
-## Add your dataset {#add-your-dataset}
-
-If you maintain a MEDS ETL, run `meds_summary_stats` on its output and commit the result to your repository with a
-file name containing `summary_stats` and ending in `.json`, e.g. `tests/regression/full_summary_stats.json`:
-
-```bash
-uvx --from meds_summary_stats extract_MEDS_summary_stats /path/to/your/MEDS/dataset -o full_summary_stats.json
-```
-
-If your ETL is listed in the [ecosystem](./3_ecosystem.mdx), it appears here the next time this site is built;
-name the file `*demo*summary_stats*.json` for a demo dataset. Otherwise, add your repository to
-[`static/data/etl_summary_stats.yaml`](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/blob/main/static/data/etl_summary_stats.yaml).
-The same file is also a regression baseline: `compare_MEDS_summary_stats` and the
-[`meds_summary_stats` GitHub Action](https://github.com/Medical-Event-Data-Standard/meds_summary_stats#in-ci) check
-new ETL versions against it.
-
-If there is no ETL repository to commit the file to, open a pull request that adds it to this site's repository
-under `static/data/etl_summary_stats/` and lists it under `local_files` in the same YAML file. If the dataset's
-`metadata/dataset.json` doesn't give its name or version as the dataset is published, set them there with
-`dataset_name` and `dataset_version`, and say where they come from in a `note`; the page marks them as set in
-the configuration.
-
-To put the dataset on the map, add the institution that its documentation names as the source of its records to
-[`static/data/dataset_locations.yaml`](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/blob/main/static/data/dataset_locations.yaml),
-with the coordinates of the institution's OpenAlex record and a link to that documentation.
+The dataset statistics moved to the [Datasets](/datasets) page.

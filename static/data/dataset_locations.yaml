@@ -1,4 +1,4 @@
-# Where the datasets on the "Dataset statistics" page (docs/intro_pages/3_dataset_statistics.mdx) come from, for its
+# Where the datasets on the "Datasets" page (src/pages/datasets.mdx) come from, for its
 # map. Read at build time by plugins/etlSummaryStats.ts; nothing is fetched.
 #
 #   locations:  one entry per source institution, as the dataset's own documentation names it (its PhysioNet or
