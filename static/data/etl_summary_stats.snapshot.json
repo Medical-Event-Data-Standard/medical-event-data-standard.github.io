@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-10T20:30:38.331Z",
+  "updatedAt": "2026-11-10T21:38:45.576Z",
   "datasets": [
     {
       "id": "medical-event-data-standard/mimic_iv_meds/tests/regression/demo_summary_stats.json",
@@ -1593,9 +1593,9 @@
       "path": "static/data/etl_summary_stats/ehrshot_full_summary_stats.json",
       "label": "EHRSHOT",
       "variant": "full",
-      "extractedAt": "2026-11-10T18:56:57.765215",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T21:37:21.151780",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "ehrshot",
         "version": "0.9:0.3.1.dev9+gbdb5dfa30.d20261030:OMOP_5.4",
@@ -1652,7 +1652,16 @@
             "p75": 27042.2,
             "p95": 31280.8
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 6731,
+            "mean": 1.11541,
+            "p5": 0.026242,
+            "p25": 0.162793,
+            "p50": 0.44634,
+            "p75": 1.08621,
+            "p95": 3.9442
+          }
         },
         "codeMetadata": {
           "present": true,
@@ -1761,9 +1770,9 @@
       "path": "static/data/etl_summary_stats/inspect_full_summary_stats.json",
       "label": "INSPECT",
       "variant": "full",
-      "extractedAt": "2026-11-10T18:57:03.796583",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T21:37:27.403830",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "Epic Clarity SHC|Epic Clarity LPCH|Stanford vocabulary version",
         "version": "2024-08-27|2024-08-27|2024-08-27",
@@ -1820,7 +1829,16 @@
             "p75": 27958,
             "p95": 32318.2
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 19282,
+            "mean": 0.564815,
+            "p5": 0.0102113,
+            "p25": 0.072635,
+            "p50": 0.252885,
+            "p75": 0.670596,
+            "p95": 2.03951
+          }
         },
         "codeMetadata": {
           "present": true,
