@@ -50,7 +50,7 @@ describe('parseCategoryMap', () => {
     expect(packages['A model'].medsDev).toEqual({ entityType: MedsEntityType.MODEL, name: 'a_model' });
   });
 
-  it('lists each category, then its subcategories, with its own packages and its (inherited) stage', () => {
+  it('lists each category, then its subcategories, with its depth, own packages and (inherited) stage', () => {
     const { categories } = parseCategoryMap({
       etls: {
         name: 'ETLs',
@@ -59,14 +59,21 @@ describe('parseCategoryMap', () => {
         public: { name: 'Public', packages: [{ name: 'MIMIC' }] } as unknown as RawCategory,
         tools: { name: 'Tools', stage: 'general', packages: [{ name: 'helper' }] } as unknown as RawCategory,
       },
-      misc: { name: 'Misc', packages: [{ name: 'thing' }] },
+      misc: { name: 'Misc', description: 'Other things.', packages: [{ name: 'thing' }] },
     });
 
     expect(categories).toEqual([
-      { topic: 'ETLs', name: 'ETLs', stage: 'convert', packages: ['template'] },
-      { topic: 'ETLs/Public', name: 'Public', stage: 'convert', packages: ['MIMIC'] },
-      { topic: 'ETLs/Tools', name: 'Tools', stage: 'general', packages: ['helper'] },
-      { topic: 'Misc', name: 'Misc', stage: undefined, packages: ['thing'] },
+      { topic: 'ETLs', name: 'ETLs', depth: 0, stage: 'convert', packages: ['template'] },
+      { topic: 'ETLs/Public', name: 'Public', depth: 1, stage: 'convert', packages: ['MIMIC'] },
+      { topic: 'ETLs/Tools', name: 'Tools', depth: 1, stage: 'general', packages: ['helper'] },
+      {
+        topic: 'Misc',
+        name: 'Misc',
+        description: 'Other things.',
+        depth: 0,
+        stage: undefined,
+        packages: ['thing'],
+      },
     ]);
   });
 

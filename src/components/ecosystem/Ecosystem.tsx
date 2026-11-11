@@ -4,6 +4,8 @@ import { RawCategory } from '@site/src/lib/ecosystem/types';
 import PackageGrid from './PackageGrid';
 
 export default function Ecosystem({ data }: { data: Record<string, RawCategory> }): React.JSX.Element {
-  const { packages, topics, topicPackages } = parseCategoryMap(data);
-  return <PackageGrid packages={packages} topics={topics} topicPackages={topicPackages} />;
+  const { packages, topics, topicPackages, categories } = parseCategoryMap(data);
+  return (
+    <PackageGrid packages={packages} topics={topics} topicPackages={topicPackages} categories={categories} />
+  );
 }

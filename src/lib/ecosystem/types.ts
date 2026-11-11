@@ -124,6 +124,9 @@ export interface Category {
   topic: string;
   /** The category's own name, e.g. "Public Datasets". */
   name: string;
+  description?: string;
+  /** How deeply the category is nested: 0 for a top-level category, 1 for its subcategories, and so on. */
+  depth: number;
   /** The category's `stage`, or else that of its closest ancestor that has one. */
   stage?: StageId;
   /** Names of the packages listed directly in the category (not in its subcategories), in YAML order. */

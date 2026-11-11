@@ -142,7 +142,8 @@ export function parseCategoryMap(
   categories: Record<string, RawCategory>,
   topicPrefix: string | null = null,
   path: string | null = null,
-  parentStage?: StageId
+  parentStage?: StageId,
+  depth = 0
 ): ParsedEcosystem {
   let ecosystem: ParsedEcosystem = { packages: {}, topics: {}, topicPackages: {}, categories: [] };
 
@@ -150,7 +151,7 @@ export function parseCategoryMap(
     const categoryPath = path ? `${path}.${key}` : key;
     ecosystem = mergeParsedEcosystems(
       ecosystem,
-      parseCategory(rawCategory, topicPrefix, categoryPath, parentStage)
+      parseCategory(rawCategory, topicPrefix, categoryPath, parentStage, depth)
     );
   }
 
@@ -161,7 +162,8 @@ function parseCategory(
   rawCategory: unknown,
   topicPrefix: string | null,
   path: string,
-  parentStage: StageId | undefined
+  parentStage: StageId | undefined,
+  depth: number
 ): ParsedEcosystem {
   if (!isMapping(rawCategory) || !isString(rawCategory.name)) {
     fail(
@@ -211,7 +213,7 @@ function parseCategory(
   const topicPackages: Record<string, string[]> = {};
   topicPackages[topicName] = [];
 
-  const category: Category = { topic: topicName, name, stage, packages: [] };
+  const category: Category = { topic: topicName, name, description, depth, stage, packages: [] };
 
   rawPackages.forEach((value, index) => {
     const rawPkg = parseRawPackage(value, `${path}.packages[${index}]`);
@@ -251,7 +253,7 @@ function parseCategory(
     }
   });
 
-  const nestedEcosystem = parseCategoryMap(rawSubcategories, topicName, path, stage);
+  const nestedEcosystem = parseCategoryMap(rawSubcategories, topicName, path, stage, depth + 1);
 
   for (const [pkgName, pkg] of Object.entries(nestedEcosystem.packages)) {
     if (!pkg.topics) {
