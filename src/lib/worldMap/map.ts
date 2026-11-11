@@ -1,8 +1,12 @@
-// The institutions map on the papers page: its projection, zooming and panning, and where its pins go. Kept free of
-// React so it can be unit-tested, and used by scripts/build-world-outline.ts for the map's extent.
+// The zoomable world map (src/components/common/WorldMap.tsx) that the papers page and the dataset statistics page
+// share: its projection, zooming and panning, and where its pins go. Kept free of React so it can be unit-tested,
+// and used by scripts/build-world-outline.ts for the map's extent.
 
-import type { InstitutionCount } from './display';
-import type { CitingPaper, InstitutionLocation } from './types';
+/** A place on the earth, in degrees. */
+export interface GeoLocation {
+  latitude: number;
+  longitude: number;
+}
 
 /** The latitudes and longitudes the map shows, in degrees: the whole world except Antarctica. */
 export const MAP_BOUNDS = { north: 84, south: -58, west: -180, east: 180 } as const;
@@ -13,7 +17,7 @@ export interface MapPoint {
   y: number;
 }
 
-export const project = ({ latitude, longitude }: InstitutionLocation): MapPoint => ({
+export const project = ({ latitude, longitude }: GeoLocation): MapPoint => ({
   x: longitude,
   y: -latitude,
 });
@@ -94,54 +98,52 @@ export function isInView(view: MapView, point: MapPoint, margin = 0): boolean {
   );
 }
 
-export interface MapMarker {
-  /** Where the pin is: the location of its first institution. */
-  location: InstitutionLocation;
-  /** The institutions it stands for, most papers first (in the order given). */
-  institutions: InstitutionCount[];
-  /** The number of papers with an author at any of its institutions. */
-  papers: number;
+/** Something shown on the map, such as an institution: a pin of its own unless it is grouped with others. */
+export interface MapPlace {
+  /** Unique among the places; names it in labels, tooltips and menus. */
+  name: string;
+  location: GeoLocation;
+  /** How much it stands for, e.g. a number of papers: places with more are drawn over others, and grouped first. */
+  weight: number;
+}
+
+export interface MapMarker<P extends MapPlace = MapPlace> {
+  /** Where the marker is: the location of its first place. */
+  location: GeoLocation;
+  /** The places it stands for, in the order given (largest weight first). */
+  places: P[];
+  /** What it stands for, which sets a pin's size: by default the sum of its places' weights. */
+  weight: number;
 }
 
 /**
- * The map's pins. Institutions are taken most papers first (`institutions` must be ordered so, as
- * `countInstitutions` orders them): each shares the pin of the first institution before it that is less than `near`
- * away on the map (in the units of `project`), and otherwise gets a pin of its own, at its location. Institutions
- * without a location are left out.
+ * The map's markers. Places are taken in the order given, which must be largest weight first: each shares the marker
+ * of the first place before it that is less than `near` away on the map (in the units of `project`), and otherwise
+ * gets a marker of its own, at its location. `weigh` gives a marker's weight from its places, e.g. the number of
+ * distinct papers of a group of institutions, which the sum of their papers would overcount.
  */
-export function mapMarkers(
-  institutions: readonly InstitutionCount[],
-  locations: Readonly<Record<string, InstitutionLocation>>,
-  papers: readonly Pick<CitingPaper, 'institutions'>[],
-  near: number
-): MapMarker[] {
-  const locationOf = new Map(Object.entries(locations));
-  const pins: { location: InstitutionLocation; point: MapPoint; institutions: InstitutionCount[] }[] = [];
-  for (const institution of institutions) {
-    const location = locationOf.get(institution.name);
-    if (!location) continue;
-    const point = project(location);
+export function mapMarkers<P extends MapPlace>(
+  places: readonly P[],
+  near: number,
+  weigh: (places: P[]) => number = members => members.reduce((sum, place) => sum + place.weight, 0)
+): MapMarker<P>[] {
+  const pins: { location: GeoLocation; point: MapPoint; places: P[] }[] = [];
+  for (const place of places) {
+    const point = project(place.location);
     const pin = pins.find(other => Math.hypot(other.point.x - point.x, other.point.y - point.y) < near);
-    if (pin) pin.institutions.push(institution);
-    else pins.push({ location, point, institutions: [institution] });
+    if (pin) pin.places.push(place);
+    else pins.push({ location: place.location, point, places: [place] });
   }
-  return pins.map(({ location, institutions: members }) => {
-    const names = new Set(members.map(({ name }) => name));
-    return {
-      location,
-      institutions: members,
-      papers: papers.filter(paper => paper.institutions.some(name => names.has(name))).length,
-    };
-  });
+  return pins.map(({ location, places: members }) => ({ location, places: members, weight: weigh(members) }));
 }
 
 /**
- * An institution is grouped with an institution with at least as many papers that is closer than this, in pixels:
- * groups of several institutions are shown as a cluster.
+ * A place is grouped with a place of at least its weight that is closer than this, in pixels: groups of several
+ * places are shown as a cluster.
  */
 export const CLUSTER_SPACING_PX = 40;
 
-/** The diameter of a cluster's circle in pixels: larger from 10 institutions on, as its number gets wider. */
+/** The diameter of a cluster's circle in pixels: larger from 10 places on, as its number gets wider. */
 export const clusterSize = (institutions: number): number => (institutions < 10 ? 30 : 36);
 
 /**
@@ -166,10 +168,10 @@ export function fitView(points: readonly MapPoint[]): MapView | null {
 export const PIN_SIZE_PX = { min: 20, max: 32 } as const;
 
 /**
- * A pin's height in pixels: from `PIN_SIZE_PX.min` for one paper to `PIN_SIZE_PX.max` for `most` papers or more,
- * growing with the square root of its number of papers.
+ * A pin's height in pixels: from `PIN_SIZE_PX.min` for a weight of 1 (e.g. one paper) to `PIN_SIZE_PX.max` for
+ * `most` or more, growing with the square root of its weight.
  */
-export function pinSize(papers: number, most: number): number {
-  const share = most > 1 ? Math.sqrt(Math.min(1, Math.max(0, papers - 1) / (most - 1))) : 0;
+export function pinSize(weight: number, most: number): number {
+  const share = most > 1 ? Math.sqrt(Math.min(1, Math.max(0, weight - 1) / (most - 1))) : 0;
   return Math.round(PIN_SIZE_PX.min + (PIN_SIZE_PX.max - PIN_SIZE_PX.min) * share);
 }

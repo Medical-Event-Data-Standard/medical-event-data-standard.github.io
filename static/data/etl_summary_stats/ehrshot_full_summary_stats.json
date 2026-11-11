@@ -341,7 +341,7 @@
     "n_files": 6,
     "subject_splits": "sha256:40770bc1f64d3bfb572039f5ad237348975b92fe68cbc5de28b22d4b593c6a34"
   },
-  "extracted_at": "2026-11-10T18:56:57.765215",
+  "extracted_at": "2026-11-10T21:37:21.151780",
   "layout": {
     "code_metadata_columns": {
       "base_code": "String",
@@ -398,8 +398,22 @@
     "shard_names": ["held_out/0", "train/0", "tuning/0"],
     "shard_names_digest": "sha256:c174c5889f749f77ea6b42c3a4de7374f846ef20a492a34c6cf75e4aa266709f"
   },
-  "meds_summary_stats_version": "0.0.3",
+  "meds_summary_stats_version": "0.0.4",
   "per_subject": {
+    "measurements_per_day": {
+      "mean": 1.11541,
+      "n": 6731,
+      "quantiles": {
+        "p1": 0.00844507,
+        "p25": 0.162793,
+        "p5": 0.026242,
+        "p50": 0.44634,
+        "p75": 1.08621,
+        "p95": 3.9442,
+        "p99": 9.61301
+      },
+      "std": 3.26037
+    },
     "n_events": {
       "mean": 1157.71,
       "n": 6731,
@@ -477,7 +491,7 @@
     "n_subjects_in_splits_without_data": 0,
     "present": true
   },
-  "stats_schema_version": 1,
+  "stats_schema_version": 2,
   "time": {
     "by_year": {
       "1922": {

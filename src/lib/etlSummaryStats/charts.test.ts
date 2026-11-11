@@ -53,9 +53,9 @@ const attrs = (trace: unknown) => trace as Record<string, unknown>;
 const big = statsEntry('Big', { stats: etlStats(5000) });
 const small = statsEntry('Small', { stats: etlStats(100) });
 const unreadable = statsEntry('Future', {
-  schemaVersion: 2,
+  schemaVersion: 3,
   stats: null,
-  problem: 'Its stats schema version is 2, which this page cannot read yet (it reads version 1).',
+  problem: 'Its stats schema version is 3, which this page cannot read yet (it reads versions 1 and 2).',
 });
 
 describe('formatting', () => {
@@ -394,6 +394,58 @@ describe('perSubjectChart', () => {
     expect(model.table.rows[0]).toEqual(['Big', '100', '30', '60', '90', '120', '150']);
   });
 
+  it('leaves out a whisker whose percentile the file leaves out, and says so', () => {
+    const base = etlStats(20).perSubject.events as Exclude<Distribution, { suppressed: true }>;
+    // meds_summary_stats 0.0.4 leaves out the 5th and 95th percentiles of fewer than 21 values.
+    const twenty = statsEntry('Twenty', {
+      stats: etlStats(20, { perSubject: perSubject({ events: { ...base, n: 20, p5: null, p95: null } }) }),
+    });
+    const oneSided = statsEntry('One-sided', {
+      stats: etlStats(10, { perSubject: perSubject({ events: { ...base, p95: null } }) }),
+    });
+    const model = perSubjectChart([big, twenty, oneSided], 'events');
+    const [box, hover] = (model.figure?.data ?? []).map(attrs);
+    // A missing whisker ends at its box.
+    expect(box).toMatchObject({
+      y: ['Big', 'Twenty', 'One-sided'],
+      lowerfence: [10, 20, 10],
+      q1: [20, 20, 20],
+      q3: [40, 40, 40],
+      upperfence: [50, 40, 40],
+    });
+    expect(attrs(hover).customdata).toEqual([
+      ['10', '20', '30', '40', '50', '100'],
+      ['withheld', '20', '30', '40', 'withheld', '20'],
+      ['10', '20', '30', '40', 'withheld', '100'],
+    ]);
+    expect(model.table.rows[1]).toEqual(['Twenty', '20', 'withheld', '20', '30', '40', 'withheld']);
+    expect(model.notes).toEqual([
+      'Without a whisker where the stats file leaves out the 5th or 95th percentile, as meds_summary_stats does ' +
+        'from version 0.0.4 on where they would depend on the smallest or largest value: Twenty, One-sided.',
+    ]);
+    expect(model.skipped).toEqual([]);
+    expect(perSubjectChart([big], 'events').notes).toEqual([]);
+  });
+
+  it('skips a distribution whose file leaves out its quartiles or median', () => {
+    const withheld = statsEntry('Withheld', {
+      stats: etlStats(4, {
+        perSubject: perSubject({ uniqueCodes: { suppressed: true, n: 4, extremes: true } }),
+      }),
+    });
+    const model = perSubjectChart([big, withheld], 'uniqueCodes');
+    expect(attrs(model.figure?.data[0]).y).toEqual(['Big']);
+    expect(model.skipped).toEqual([
+      {
+        label: 'Withheld',
+        reason:
+          'Withheld: its stats file leaves out the quartiles or median of the distinct codes per subject, as ' +
+          'meds_summary_stats does from version 0.0.4 on where they would depend on the smallest or largest value.',
+      },
+    ]);
+    expect(perSubjectChart([withheld], 'spanDays').skipped).toEqual([]);
+  });
+
   it('has no figure when every distribution is suppressed', () => {
     const tiny = statsEntry('Tiny', {
       stats: etlStats(5, { perSubject: { ...etlStats(5).perSubject, events: { suppressed: true, n: 5 } } }),
@@ -717,6 +769,7 @@ describe('depthBreadthChart', () => {
         entryWith('No codes', 40, { counts: counts(40, { uniqueCodes: null }) }),
         entryWith('No distribution', 30, { perSubject: perSubject({ events: null }) }),
         entryWith('Suppressed', 20, { perSubject: perSubject({ events: SUPPRESSED }) }),
+        entryWith('Withheld', 15, { perSubject: perSubject({ events: { ...SUPPRESSED, extremes: true } }) }),
         entryWith('Zero subjects', 0, {}),
         entryWith('Zero median', 10, { perSubject: perSubject({ events: dist(1, 0) }) }),
       ],
@@ -731,6 +784,12 @@ describe('depthBreadthChart', () => {
         {
           label: 'Suppressed',
           reason: 'Suppressed: the median is withheld because it rests on fewer than 20 subjects.',
+        },
+        {
+          label: 'Withheld',
+          reason:
+            'Withheld: its stats file leaves out the quartiles or median of the events per subject, as ' +
+            'meds_summary_stats does from version 0.0.4 on where they would depend on the smallest or largest value.',
         },
         {
           label: 'Zero median',
@@ -763,7 +822,9 @@ describe('paceChart', () => {
     p75: 4,
     p95: 12.25,
   });
-  const NO_RATE = 'Its stats file has no per-subject events per day (per_subject.measurements_per_day).';
+  const NO_RATE =
+    'Its stats file has no per-subject events per day (per_subject.measurements_per_day), which ' +
+    'meds_summary_stats writes from version 0.0.4 on.';
 
   it("draws each subject's events per day as boxes from the quantiles, ranked by median, on a log axis", () => {
     const fast = entryWith('Fast', 200, { perSubject: perSubject({ eventsPerDay: rate(1.5) }) });
@@ -821,11 +882,26 @@ describe('paceChart', () => {
     expect(model.skipped).toEqual([
       {
         label: 'Slow, Null',
-        reason: 'Their stats files have no per-subject events per day (per_subject.measurements_per_day).',
+        reason:
+          'Their stats files have no per-subject events per day (per_subject.measurements_per_day), which ' +
+          'meds_summary_stats writes from version 0.0.4 on.',
       },
       {
         label: 'Suppressed',
         reason: 'Suppressed: too few subjects have a rate, so its quantiles are withheld.',
+      },
+    ]);
+    // A rate without its quartiles or median is withheld, not missing.
+    expect(
+      paceChart([
+        entryWith('Few', 4, { perSubject: perSubject({ eventsPerDay: { ...SUPPRESSED, extremes: true } }) }),
+      ]).skipped
+    ).toEqual([
+      {
+        label: 'Few',
+        reason:
+          'Withheld: its stats file leaves out the quartiles or median of the events per day, as ' +
+          'meds_summary_stats does from version 0.0.4 on where they would depend on the smallest or largest value.',
       },
     ]);
   });
@@ -1615,6 +1691,11 @@ describe('healthCheck', () => {
       'unusedCodes',
       'versions',
     ]);
-    expect(HEALTH_CHECKS.find(check => check.key === 'descriptions')?.help).toMatch(/passes at 90% or more/);
+    const descriptions = HEALTH_CHECKS.find(check => check.key === 'descriptions')?.help;
+    expect(descriptions).toMatch(/passes at 90% or more/);
+    // meds_summary_stats 0.0.4 stopped counting blank descriptions.
+    expect(descriptions).toMatch(
+      /schema version 2 count only descriptions with text in them; those of version 1 also count empty or whitespace-only ones\./
+    );
   });
 });

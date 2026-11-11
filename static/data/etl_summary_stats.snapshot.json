@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-10T20:30:38.331Z",
+  "updatedAt": "2026-11-10T23:52:56.251Z",
   "datasets": [
     {
       "id": "medical-event-data-standard/mimic_iv_meds/tests/regression/demo_summary_stats.json",
@@ -8,12 +8,12 @@
       "path": "tests/regression/demo_summary_stats.json",
       "label": "MIMIC-IV demo",
       "variant": "demo",
-      "extractedAt": "2026-10-30T18:49:05.652245",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.2",
+      "extractedAt": "2026-11-10T22:22:21.498174",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "MIMIC-IV",
-        "version": "2.2:0.2.0",
+        "version": "2.2:0.2.1",
         "etlName": "MEDS_transforms",
         "etlVersion": "0.7.0",
         "medsVersion": "0.4.1"
@@ -67,7 +67,16 @@
             "p75": 27194,
             "p95": 32233.7
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 100,
+            "mean": 184.669,
+            "p5": 1.72823,
+            "p25": 7.4424,
+            "p50": 38.3545,
+            "p75": 133.891,
+            "p95": 733.044
+          }
         },
         "codeMetadata": {
           "present": true,
@@ -154,12 +163,12 @@
       "path": "tests/regression/full_summary_stats.json",
       "label": "MIMIC-IV",
       "variant": "full",
-      "extractedAt": "2026-11-05T15:41:33.873355",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T22:48:15.118481",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "MIMIC-IV",
-        "version": "3.1:0.2.1.dev6+g08cde7301",
+        "version": "3.1:0.2.1",
         "etlName": "MEDS_transforms",
         "etlVersion": "0.7.0",
         "medsVersion": "0.4.1"
@@ -213,7 +222,16 @@
             "p75": 24973,
             "p95": 31934.4
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 333640,
+            "mean": 131.809,
+            "p5": 0.116978,
+            "p25": 0.60486,
+            "p50": 4.70208,
+            "p75": 87.2555,
+            "p95": 791.688
+          }
         },
         "codeMetadata": {
           "present": true,
@@ -300,12 +318,12 @@
       "path": "tests/regression/full_summary_stats.json",
       "label": "AUMCdb",
       "variant": "full",
-      "extractedAt": "2026-11-04T22:17:20.441999",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T22:51:48.558734",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "AUMCdb",
-        "version": "1.0.2:0.1.1.dev6+g28e8cdaa1.d20261104",
+        "version": "1.0.2:0.1.1",
         "etlName": "MEDS_transforms",
         "etlVersion": "0.7.1",
         "medsVersion": "0.4.1"
@@ -359,7 +377,16 @@
             "p75": 27232,
             "p95": 29110.9
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 20109,
+            "mean": 396.622,
+            "p5": 3.64365,
+            "p25": 25.8754,
+            "p50": 131.781,
+            "p75": 274.678,
+            "p95": 843.097
+          }
         },
         "codeMetadata": {
           "present": true,
@@ -411,9 +438,9 @@
       "path": "tests/regression/full_summary_stats.json",
       "label": "NWICU",
       "variant": "full",
-      "extractedAt": "2026-11-04T22:17:15.529622",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T22:55:14.131595",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "NWICU",
         "version": "0.1.0:1.0.0",
@@ -470,12 +497,21 @@
             "p75": 27797.6,
             "p95": 32220
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 25923,
+            "mean": 48.1721,
+            "p5": 2.75968,
+            "p25": 11.7216,
+            "p50": 37.1327,
+            "p75": 64.6251,
+            "p95": 138.228
+          }
         },
         "codeMetadata": {
           "present": true,
           "codes": 27463,
-          "withDescription": 27463,
+          "withDescription": 9077,
           "dataCodesMissing": 0,
           "metadataCodesUnused": 0
         },
@@ -488,8 +524,8 @@
           "codesFor99": 6316
         },
         "ontology": {
-          "eventsMapped": 0.0681619,
-          "codesWithParents": 0.487019,
+          "eventsMapped": 0.0371492,
+          "codesWithParents": 0.399883,
           "vocabularies": [
             {
               "name": "ICD10CM",
@@ -498,12 +534,12 @@
             },
             {
               "name": "NDC",
-              "events": 3164458,
+              "events": 1582229,
               "recognized": true
             }
           ],
           "suppressed": null,
-          "mappedEvents": 3477528,
+          "mappedEvents": 1895299,
           "noVocabularyEvents": 0,
           "codesInMultipleVocabularies": 0
         }
@@ -517,9 +553,9 @@
       "path": "tests/regression/full_summary_stats.json",
       "label": "SICdb",
       "variant": "full",
-      "extractedAt": "2026-11-04T22:17:13.383635",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T22:15:37.266106",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "SICdb",
         "version": "1.0.8:0.1.0",
@@ -576,7 +612,16 @@
             "p75": 28392.3,
             "p95": 33061.1
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 21566,
+            "mean": 146.241,
+            "p5": 4.11996,
+            "p25": 43.3562,
+            "p50": 86.8333,
+            "p75": 178.257,
+            "p95": 494.917
+          }
         },
         "codeMetadata": {
           "present": true,
@@ -623,12 +668,12 @@
       "path": "tests/regression/full_summary_stats.json",
       "label": "INSPIRE",
       "variant": "full",
-      "extractedAt": "2026-11-04T22:17:10.851861",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T22:53:59.105292",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "INSPIRE",
-        "version": "1.4.2",
+        "version": "1.4.2:1.0.0",
         "etlName": "MEDS_transforms",
         "etlVersion": "0.7.0",
         "medsVersion": "0.4.1"
@@ -682,12 +727,21 @@
             "p75": 25586.3,
             "p95": 29551.6
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 99900,
+            "mean": 9.10868,
+            "p5": 0.775235,
+            "p25": 2.22078,
+            "p50": 4.28506,
+            "p75": 8.60955,
+            "p95": 26.9953
+          }
         },
         "codeMetadata": {
           "present": true,
           "codes": 4515,
-          "withDescription": 3379,
+          "withDescription": 127,
           "dataCodesMissing": 0,
           "metadataCodesUnused": 0
         },
@@ -710,9 +764,9 @@
       "path": "tests/regression/demo_summary_stats.json",
       "label": "eICU demo",
       "variant": "demo",
-      "extractedAt": "2026-11-04T22:17:48.712066",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T22:23:37.584921",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "eICU",
         "version": "2.0.1:0.2.0",
@@ -769,7 +823,16 @@
             "p75": 28309.7,
             "p95": 32693.3
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 2174,
+            "mean": 801.406,
+            "p5": 102.31,
+            "p25": 390.386,
+            "p50": 679.894,
+            "p75": 1077.82,
+            "p95": 1889.37
+          }
         },
         "codeMetadata": {
           "present": true,
@@ -816,9 +879,9 @@
       "path": "tests/regression/full_summary_stats.json",
       "label": "eICU",
       "variant": "full",
-      "extractedAt": "2026-11-04T22:17:44.687011",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T22:16:03.691584",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "eICU",
         "version": "2.0:0.2.0",
@@ -875,7 +938,16 @@
             "p75": 27950.2,
             "p95": 32333.7
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 166354,
+            "mean": 852.957,
+            "p5": 153.417,
+            "p25": 414.62,
+            "p50": 717.985,
+            "p75": 1144.94,
+            "p95": 1999.72
+          }
         },
         "codeMetadata": {
           "present": true,
@@ -922,14 +994,14 @@
       "path": "tests/regression/full_summary_stats.json",
       "label": "HiRID",
       "variant": "full",
-      "extractedAt": "2026-11-04T22:17:06.262298",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T22:13:45.374813",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "hirid",
         "version": "1.1.1:0.1.0",
         "etlName": "MEDS_transforms",
-        "etlVersion": "0.7.0",
+        "etlVersion": "0.7.1",
         "medsVersion": "0.4.1"
       },
       "minCellSize": 20,
@@ -981,12 +1053,21 @@
             "p75": 27394.7,
             "p95": 31047.1
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 33897,
+            "mean": 8717.94,
+            "p5": 3513.34,
+            "p25": 5493.36,
+            "p50": 8632.07,
+            "p75": 11269.8,
+            "p95": 15472.8
+          }
         },
         "codeMetadata": {
           "present": true,
           "codes": 654,
-          "withDescription": 650,
+          "withDescription": null,
           "dataCodesMissing": 0,
           "metadataCodesUnused": 0
         },
@@ -1009,14 +1090,14 @@
       "path": "tests/regression/full_summary_stats.json",
       "label": "CDSL",
       "variant": "full",
-      "extractedAt": "2026-11-04T22:16:51.654119",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T22:15:27.397208",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "CDSL",
         "version": "1.0.0:0.0.1",
         "etlName": "MEDS_transforms",
-        "etlVersion": "0.7.0",
+        "etlVersion": "0.7.1",
         "medsVersion": "0.4.1"
       },
       "minCellSize": 20,
@@ -1068,12 +1149,21 @@
             "p75": 73732.4,
             "p95": 80494.7
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 4478,
+            "mean": 0.118225,
+            "p5": 0.0018673,
+            "p25": 0.00425858,
+            "p50": 0.00703855,
+            "p75": 0.0140588,
+            "p95": 0.0543403
+          }
         },
         "codeMetadata": {
           "present": true,
           "codes": 5621,
-          "withDescription": 4995,
+          "withDescription": 590,
           "dataCodesMissing": 0,
           "metadataCodesUnused": 0
         },
@@ -1096,14 +1186,14 @@
       "path": "tests/regression/full_summary_stats.json",
       "label": "ALOTT",
       "variant": "full",
-      "extractedAt": "2026-11-04T22:16:51.111265",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T22:15:30.900718",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "ALOTT",
         "version": "1.0.0:0.0.1",
         "etlName": "MEDS_transforms",
-        "etlVersion": "0.7.0",
+        "etlVersion": "0.7.1",
         "medsVersion": "0.4.1"
       },
       "minCellSize": 20,
@@ -1155,12 +1245,21 @@
             "p75": 246.206,
             "p95": 491
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 18471,
+            "mean": 43.9523,
+            "p5": 1.87146,
+            "p25": 6.7354,
+            "p50": 18.1316,
+            "p75": 51.5902,
+            "p95": 175.268
+          }
         },
         "codeMetadata": {
           "present": true,
           "codes": 47130,
-          "withDescription": 43783,
+          "withDescription": 9356,
           "dataCodesMissing": 0,
           "metadataCodesUnused": 0
         },
@@ -1183,14 +1282,14 @@
       "path": "tests/regression/full_summary_stats.json",
       "label": "PIC",
       "variant": "full",
-      "extractedAt": "2026-11-04T22:17:11.706316",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T22:15:33.631608",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "PICdb",
         "version": "1.1.0:0.0.3",
         "etlName": "MEDS_transforms",
-        "etlVersion": "0.7.0",
+        "etlVersion": "0.7.1",
         "medsVersion": "0.4.1"
       },
       "minCellSize": 20,
@@ -1242,7 +1341,16 @@
             "p75": 1291.05,
             "p95": 4167.49
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 12881,
+            "mean": 75.8848,
+            "p5": 13.0799,
+            "p25": 38.0489,
+            "p50": 65.9216,
+            "p75": 98.2964,
+            "p95": 171.607
+          }
         },
         "codeMetadata": {
           "present": true,
@@ -1289,14 +1397,14 @@
       "path": "tests/regression/full_summary_stats.json",
       "label": "Zigong",
       "variant": "full",
-      "extractedAt": "2026-11-04T22:17:13.849431",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T22:15:25.291561",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "Zigong",
         "version": "1.1:0.3.0",
         "etlName": "MEDS_transforms",
-        "etlVersion": "0.7.0",
+        "etlVersion": "0.7.1",
         "medsVersion": "0.4.1"
       },
       "minCellSize": 20,
@@ -1348,12 +1456,21 @@
             "p75": 673.083,
             "p95": 902.47
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 2790,
+            "mean": 36.9064,
+            "p5": 0.451234,
+            "p25": 1.30445,
+            "p50": 2.962,
+            "p75": 14.9669,
+            "p95": 208.945
+          }
         },
         "codeMetadata": {
           "present": true,
           "codes": 4979,
-          "withDescription": 4979,
+          "withDescription": null,
           "dataCodesMissing": 0,
           "metadataCodesUnused": 0
         },
@@ -1376,9 +1493,9 @@
       "path": "tests/regression/full_summary_stats.json",
       "label": "MC-MED",
       "variant": "full",
-      "extractedAt": "2026-11-08T00:37:27.197501",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T22:56:23.216176",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "MC-MED",
         "version": "1.0.1:0.1.0",
@@ -1435,12 +1552,21 @@
             "p75": 3270,
             "p95": 5354.64
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 70545,
+            "mean": 215.826,
+            "p5": 0.0298543,
+            "p25": 0.191351,
+            "p50": 1.05373,
+            "p75": 92.9032,
+            "p95": 1230.38
+          }
         },
         "codeMetadata": {
           "present": true,
           "codes": 56444,
-          "withDescription": 53934,
+          "withDescription": 43834,
           "dataCodesMissing": 0,
           "metadataCodesUnused": 0
         },
@@ -1452,36 +1578,7 @@
           "codesFor90": 95,
           "codesFor99": 3579
         },
-        "ontology": {
-          "eventsMapped": 0.0165904,
-          "codesWithParents": 0.426334,
-          "vocabularies": [
-            {
-              "name": "ED_DIAGNOSIS",
-              "events": 1086,
-              "recognized": false
-            },
-            {
-              "name": "ICD10CM",
-              "events": 877190,
-              "recognized": true
-            },
-            {
-              "name": "ICD9CM",
-              "events": 127744,
-              "recognized": true
-            },
-            {
-              "name": "PMH",
-              "events": 11134,
-              "recognized": false
-            }
-          ],
-          "suppressed": null,
-          "mappedEvents": 1004934,
-          "noVocabularyEvents": 0,
-          "codesInMultipleVocabularies": 91
-        }
+        "ontology": null
       },
       "problem": null
     },
@@ -1593,9 +1690,9 @@
       "path": "static/data/etl_summary_stats/ehrshot_full_summary_stats.json",
       "label": "EHRSHOT",
       "variant": "full",
-      "extractedAt": "2026-11-10T18:56:57.765215",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T21:37:21.151780",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "ehrshot",
         "version": "0.9:0.3.1.dev9+gbdb5dfa30.d20261030:OMOP_5.4",
@@ -1652,7 +1749,16 @@
             "p75": 27042.2,
             "p95": 31280.8
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 6731,
+            "mean": 1.11541,
+            "p5": 0.026242,
+            "p25": 0.162793,
+            "p50": 0.44634,
+            "p75": 1.08621,
+            "p95": 3.9442
+          }
         },
         "codeMetadata": {
           "present": true,
@@ -1761,9 +1867,9 @@
       "path": "static/data/etl_summary_stats/inspect_full_summary_stats.json",
       "label": "INSPECT",
       "variant": "full",
-      "extractedAt": "2026-11-10T18:57:03.796583",
-      "schemaVersion": 1,
-      "toolVersion": "0.0.3",
+      "extractedAt": "2026-11-10T21:37:27.403830",
+      "schemaVersion": 2,
+      "toolVersion": "0.0.4",
       "dataset": {
         "name": "Epic Clarity SHC|Epic Clarity LPCH|Stanford vocabulary version",
         "version": "2024-08-27|2024-08-27|2024-08-27",
@@ -1820,7 +1926,16 @@
             "p75": 27958,
             "p95": 32318.2
           },
-          "eventsPerDay": null
+          "eventsPerDay": {
+            "suppressed": false,
+            "n": 19282,
+            "mean": 0.564815,
+            "p5": 0.0102113,
+            "p25": 0.072635,
+            "p50": 0.252885,
+            "p75": 0.670596,
+            "p95": 2.03951
+          }
         },
         "codeMetadata": {
           "present": true,

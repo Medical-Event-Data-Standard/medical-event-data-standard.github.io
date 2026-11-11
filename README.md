@@ -181,9 +181,10 @@ The Institutions section has a "Show map" button that shows a zoomable world map
 each institution's OpenAlex location, larger for more papers. As in marker clustering, institutions less than 40
 pixels from one with at least as many papers are grouped into a circle showing their number; selecting it zooms
 in on them, or lists them if zooming can't separate them. The selected institution's marker is highlighted and
-labelled, and the map moves to show it. The map is an SVG land
-outline with pins on top (`src/components/papers/InstitutionMap.tsx`, logic in `src/lib/papers/map.ts`), loaded
-only when shown, and makes no requests: the outline, `src/lib/papers/worldOutline.ts`, is generated from
+labelled, and the map moves to show it. The map is an SVG land outline with pins on top
+(`src/components/papers/InstitutionMap.tsx`, built on the world map that the Datasets page also uses,
+`src/components/common/WorldMap.tsx`, with its logic in `src/lib/worldMap/map.ts`), loaded only when shown, and
+makes no requests: the outline, `src/lib/worldMap/worldOutline.ts`, is generated from
 [Natural Earth](https://www.naturalearthdata.com/)'s public-domain 1:110m land polygons by
 `scripts/build-world-outline.ts`. Institutions are shown with their icons wherever they are listed: in the chips,
 on the paper cards, in the active filter and on the map.

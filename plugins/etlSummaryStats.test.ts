@@ -3,7 +3,9 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import type { LoadContext, PluginContentLoadedActions } from '@docusaurus/types';
+import { parse } from 'yaml';
 import etlSummaryStatsPlugin, {
+  DATASET_LOCATIONS_YAML,
   ETL_STATS_SNAPSHOT,
   ETL_STATS_YAML,
   type EtlRepo,
@@ -12,8 +14,10 @@ import etlSummaryStatsPlugin, {
   etlStatsSource,
   loadEtlStats,
   mergeEtlRepos,
+  parseDatasetLocations,
   parseEtlStatsConfig,
   planStatsFiles,
+  readDatasetLocations,
   readLocalStats,
   readSnapshot,
   updateEtlStatsSnapshot,
@@ -470,15 +474,165 @@ describe('collectEtlStats', () => {
       [treeUrl('org/Next')]: response(200, tree(['full_summary_stats.json'])),
       [rawUrl('org/Next', 'full_summary_stats.json')]: response(
         200,
-        statsDocument({ stats_schema_version: 2 })
+        statsDocument({ stats_schema_version: 3 })
       ),
     });
     const result = await collectEtlStats([repo('org/Next')], null, { fetchFn });
     expect(result.failures).toEqual([]);
-    expect(result.datasets[0]).toMatchObject({ schemaVersion: 2, stats: null });
+    expect(result.datasets[0]).toMatchObject({ schemaVersion: 3, stats: null });
     expect(result.problems).toEqual([
-      expect.stringMatching(/^Next \(full_summary_stats\.json\): .*schema version is 2/),
+      expect.stringMatching(/^Next \(full_summary_stats\.json\): .*schema version is 3/),
     ]);
+  });
+});
+
+// ─── Dataset locations ──────────────────────────────────────────
+
+const SOURCE = 'https://physionet.org/content/x/1.0/';
+
+describe('parseDatasetLocations', () => {
+  const location = (overrides: Record<string, unknown> = {}) => ({
+    institution: ' General Hospital ',
+    openalex: 'I123',
+    city: 'Boston',
+    country: 'US',
+    latitude: 42.3,
+    longitude: -71.1,
+    datasets: [{ label: 'Alpha', source: SOURCE, note: 'for reviewers' }],
+    note: 'for reviewers',
+    ...overrides,
+  });
+
+  it('reads the locations and the unplaced datasets', () => {
+    expect(
+      parseDatasetLocations({
+        locations: [
+          location({
+            caveat: 'Several hospitals.',
+            datasets: [
+              { label: 'Alpha', source: SOURCE },
+              { label: 'Alpha demo', source: SOURCE, caveat: 'A sample.' },
+            ],
+          }),
+        ],
+        unplaced: [{ datasets: [' Beta '], reason: 'Many hospitals.', source: SOURCE, note: 'x' }],
+      })
+    ).toEqual({
+      locations: [
+        {
+          institution: 'General Hospital',
+          openalexId: 'I123',
+          coordinatesSource: null,
+          city: 'Boston',
+          country: 'US',
+          latitude: 42.3,
+          longitude: -71.1,
+          caveat: 'Several hospitals.',
+          datasets: [
+            { label: 'Alpha', source: SOURCE, caveat: null },
+            { label: 'Alpha demo', source: SOURCE, caveat: 'A sample.' },
+          ],
+        },
+      ],
+      unplaced: [{ datasets: ['Beta'], reason: 'Many hospitals.', source: SOURCE }],
+    });
+  });
+
+  it('reads coordinates from another cited source where OpenAlex has no record', () => {
+    const entry: Record<string, unknown> = {
+      ...location(),
+      coordinates_source: 'https://en.wikipedia.org/wiki/Boston',
+    };
+    delete entry.openalex;
+    expect(parseDatasetLocations({ locations: [entry] }).locations[0]).toMatchObject({
+      openalexId: null,
+      coordinatesSource: 'https://en.wikipedia.org/wiki/Boston',
+    });
+  });
+
+  it('reads an empty file, or empty lists, as no locations', () => {
+    expect(parseDatasetLocations(null)).toEqual({ locations: [], unplaced: [] });
+    expect(parseDatasetLocations({ locations: null })).toEqual({ locations: [], unplaced: [] });
+  });
+
+  it.each([
+    [[], 'the file` must be a mapping'],
+    [{ places: [] }, 'the file` has an unknown field `places`'],
+    [{ locations: {} }, '`locations` must be a list'],
+    [{ unplaced: 'x' }, '`unplaced` must be a list'],
+    [{ locations: [location({ city: '' })] }, '`locations[0].city` must be a string'],
+    [{ locations: [location({ openalex: 'W1' })] }, '`locations[0].openalex` must be an OpenAlex id'],
+    [
+      { locations: [location({ coordinates_source: 'https://en.wikipedia.org/wiki/Boston' })] },
+      '`locations[0]` must have either `openalex` or `coordinates_source`, not both',
+    ],
+    [
+      { locations: [location({ openalex: undefined })] },
+      '`locations[0]` must have either `openalex` or `coordinates_source`, not both',
+    ],
+    [
+      { locations: [location({ openalex: undefined, coordinates_source: 'www.example.org' })] },
+      '`locations[0].coordinates_source` must be an https URL',
+    ],
+    [
+      { locations: [location({ country: 'USA' })] },
+      '`locations[0].country` must be an ISO 3166-1 alpha-2 code',
+    ],
+    [{ locations: [location({ latitude: 91 })] }, '`locations[0].latitude` must be a number from -90 to 90'],
+    [
+      { locations: [location({ longitude: '1' })] },
+      '`locations[0].longitude` must be a number from -180 to 180',
+    ],
+    [{ locations: [location({ caveat: 3 })] }, '`locations[0].caveat` must be a string'],
+    [{ locations: [location({ datasets: [] })] }, '`locations[0].datasets` must be a non-empty list'],
+    [{ locations: [location({ lat: 1 })] }, '`locations[0]` has an unknown field `lat`'],
+    [
+      { locations: [location({ datasets: [{ label: 'A', source: 'http://x.org/' }] })] },
+      '`locations[0].datasets[0].source` must be an https URL',
+    ],
+    [{ locations: [location(), location()] }, '`locations` lists General Hospital more than once'],
+    [
+      { locations: [location()], unplaced: [{ datasets: ['Alpha'], reason: 'R', source: SOURCE }] },
+      'the dataset Alpha is listed more than once',
+    ],
+    [
+      { unplaced: [{ datasets: [3], reason: 'R', source: SOURCE }] },
+      "`unplaced[0].datasets[0]` must be a dataset's label",
+    ],
+    [{ unplaced: [{ datasets: ['A'], source: SOURCE }] }, '`unplaced[0].reason` must be a string'],
+  ])('rejects a malformed file: %j', (raw, message) => {
+    expect(() => parseDatasetLocations(raw)).toThrow(`Invalid ${DATASET_LOCATIONS_YAML}: `);
+    expect(() => parseDatasetLocations(raw)).toThrow(message);
+  });
+
+  it('has a valid committed file, naming only datasets that the page shows and each of them', async () => {
+    const committed = await readDatasetLocations(process.cwd());
+    const snapshot = JSON.parse(await fs.readFile(ETL_STATS_SNAPSHOT, 'utf8')) as EtlStatsData;
+    const shown = snapshot.datasets.map(entry => entry.label).sort();
+    const named = [
+      ...committed.locations.flatMap(location => location.datasets.map(dataset => dataset.label)),
+      ...committed.unplaced.flatMap(entry => entry.datasets),
+    ].sort();
+    expect(named).toEqual(shown);
+    // The file parses the same way as YAML read directly, so no entry is lost.
+    const raw = parse(await fs.readFile(DATASET_LOCATIONS_YAML, 'utf8')) as { locations: unknown[] };
+    expect(committed.locations).toHaveLength(raw.locations.length);
+  });
+});
+
+describe('readDatasetLocations', () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await fs.mkdtemp(path.join(os.tmpdir(), 'dataset-locations-'));
+  });
+  afterEach(async () => {
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+
+  it('reads no locations from a missing file, and fails on an unreadable one', async () => {
+    expect(await readDatasetLocations(dir)).toEqual({ locations: [], unplaced: [] });
+    await fs.mkdir(path.join(dir, DATASET_LOCATIONS_YAML), { recursive: true });
+    await expect(readDatasetLocations(dir)).rejects.toThrow('EISDIR');
   });
 });
 
@@ -647,11 +801,11 @@ describe('loading', () => {
 
     it('keeps one with a schema version the page cannot read, as a problem', async () => {
       await write(ETL_STATS_YAML, config());
-      await write(HERE, JSON.stringify(statsDocument({ stats_schema_version: 2 })));
+      await write(HERE, JSON.stringify(statsDocument({ stats_schema_version: 3 })));
       const result = await loadEtlStats(siteDir, { source: 'live', env: {}, fetchFn: github(), now });
       expect(result.warning).toBe(true);
-      expect(result.data.datasets[1]).toMatchObject({ label: 'Here', schemaVersion: 2, stats: null });
-      expect(result.message).toContain(`Here (${HERE}): Its stats schema version is 2`);
+      expect(result.data.datasets[1]).toMatchObject({ label: 'Here', schemaVersion: 3, stats: null });
+      expect(result.message).toContain(`Here (${HERE}): Its stats schema version is 3`);
     });
 
     it.each([
@@ -753,10 +907,19 @@ describe('loading', () => {
       expect(plugin.getPathsToWatch?.()).toEqual([
         path.join(siteDir, ETL_STATS_YAML),
         path.join(siteDir, ETL_STATS_SNAPSHOT),
+        path.join(siteDir, DATASET_LOCATIONS_YAML),
       ]);
 
+      // With the dataset locations, which aren't part of the snapshot.
+      await write(
+        DATASET_LOCATIONS_YAML,
+        `unplaced:\n  - datasets: [Alpha]\n    reason: R\n    source: ${SOURCE}\n`
+      );
       const content = await plugin.loadContent?.();
-      expect(content).toEqual(snapshotWith());
+      expect(content).toEqual({
+        ...snapshotWith(),
+        locations: { locations: [], unplaced: [{ datasets: ['Alpha'], reason: 'R', source: SOURCE }] },
+      });
       expect(console.info).toHaveBeenCalledWith(
         expect.stringContaining('[etl-summary-stats] Using the snapshot')
       );

@@ -1,0 +1,210 @@
+# Where the datasets on the "Datasets" page (src/pages/datasets.mdx) come from, for its
+# map. Read at build time by plugins/etlSummaryStats.ts; nothing is fetched.
+#
+#   locations:  one entry per source institution, as the dataset's own documentation names it (its PhysioNet or
+#               Redivis page, its paper, or its ETL's README):
+#                 institution  the name shown on the page, as the documentation gives it
+#                 openalex     the institution's OpenAlex id, whose record (`geo`) gives the coordinates; or, where
+#                              OpenAlex has no record, `coordinates_source`: the URL the coordinates come from
+#                 city, country (ISO 3166-1 alpha-2), latitude, longitude: from that OpenAlex record or source
+#                 caveat       optional: shown with the location, e.g. for a multi-centre dataset
+#                 datasets     the datasets from there (a demo shares its full dataset's place), each with its
+#                              `label` on the page, the `source` URL of the documentation that names the
+#                              institution, and optionally a `caveat` shown with it, e.g. for a synthetic dataset
+#   unplaced:   datasets (by label) left off the map, with the `reason` shown on the page and the `source` it rests
+#               on.
+#
+# A `note` for reviewers (e.g. the sentence that names the institution) is allowed in any entry and ignored. Datasets
+# listed here that the page doesn't show are ignored; datasets the page shows that are in neither list are named on
+# the page as having no recorded location. Coordinates were checked against single OpenAlex records on 2026-11-10.
+
+locations:
+  - institution: Beth Israel Deaconess Medical Center
+    openalex: I1316535847
+    city: Boston
+    country: US
+    latitude: 42.339786529541016
+    longitude: -71.10518646240234
+    datasets:
+      - label: MIMIC-IV
+        source: https://physionet.org/content/mimiciv/3.1/
+      - label: MIMIC-IV demo
+        source: https://physionet.org/content/mimic-iv-demo/2.2/
+    note: >-
+      "...patients admitted to the emergency department or an intensive care unit at the Beth Israel Deaconess
+      Medical Center in Boston, MA." The demo is a subset of MIMIC-IV (https://physionet.org/content/mimic-iv-demo/2.2/).
+
+  - institution: Amsterdam University Medical Center
+    openalex: I4210151833
+    city: Amsterdam
+    country: NL
+    latitude: 52.37403
+    longitude: 4.88969
+    datasets:
+      - label: AUMCdb
+        source: https://github.com/AmsterdamUMC/AmsterdamUMCdb
+    note: >-
+      "The current database contains data from the clinical patient data management system of the department of
+      Intensive Care, a mixed medical-surgical ICU, from Amsterdam University Medical Center." OpenAlex: Amsterdam
+      University Medical Centers.
+
+  - institution: Northwestern Memorial HealthCare
+    openalex: I4210147348
+    city: Chicago
+    country: US
+    latitude: 41.85003
+    longitude: -87.65005
+    caveat: Its twelve hospitals in Chicago and the surrounding area, which the documentation doesn't name.
+    datasets:
+      - label: NWICU
+        source: https://physionet.org/content/nwicu-northwestern-icu/0.1.0/
+    note: >-
+      "...de-identified health-related data from Northwestern Memorial HealthCare (NMHC) from 2020 to 2022." and "a
+      network of twelve hospitals located in Chicago and the surrounding area". OpenAlex: Northwestern Medicine.
+
+  - institution: University Hospital Salzburg
+    openalex: I4210128620
+    city: Salzburg
+    country: AT
+    latitude: 47.80591583251953
+    longitude: 13.028809547424316
+    datasets:
+      - label: SICdb
+        source: https://physionet.org/content/sicdb/1.0.8/
+    note: >-
+      "The data were collected at the University Hospital Salzburg in Austria". OpenAlex: Universitätskliniken
+      Salzburg.
+
+  - institution: Seoul National University Hospital
+    openalex: I2802835388
+    city: Seoul
+    country: KR
+    latitude: 37.566
+    longitude: 126.9784
+    datasets:
+      - label: INSPIRE
+        source: https://physionet.org/content/inspire/1.4.2/
+      - label: K-MIMIC (synthetic)
+        source: https://khdp.net/database/data-search-detail/SYN-ICU
+        caveat: Synthetic, generated from the hospital's ICU records.
+    note: >-
+      INSPIRE: "...extracted from the clinical data warehouse of the SNUH". K-MIMIC: "The Synthetic K-MIMIC Dataset is
+      a synthetic dataset generated from the real-world ICU patient records of Seoul National University Hospital
+      (SNUH)".
+
+  - institution: Bern University Hospital
+    openalex: I2801112126
+    city: Bern
+    country: CH
+    latitude: 46.94809
+    longitude: 7.44744
+    datasets:
+      - label: HiRID
+        source: https://physionet.org/content/hirid/1.1.1/
+    note: >-
+      "This dataset was collected during routine care at the Department of Intensive Care Medicine of the Bern
+      University Hospital, Switzerland". OpenAlex: University Hospital of Bern.
+
+  - institution: HM Hospitales
+    openalex: I4210122338
+    city: Madrid
+    country: ES
+    latitude: 40.430335998535156
+    longitude: -3.707273006439209
+    caveat: A network of hospitals in Spain, which the documentation doesn't name; the pin is at the network's location.
+    datasets:
+      - label: CDSL
+        source: https://physionet.org/content/covid-data-shared-learning/1.0.0/
+    note: >-
+      "...collected from the Spanish private hospital network 'HM Hospitales'." The city is from OpenAlex, not from
+      the documentation.
+
+  - institution: The James Cancer Hospital and Ross Heart Hospital, Ohio State University Wexner Medical Center
+    openalex: I2802841970
+    city: Columbus
+    country: US
+    latitude: 39.96118
+    longitude: -82.99879
+    datasets:
+      - label: ALOTT
+        source: https://physionet.org/content/alott/1.0.0/
+    note: >-
+      "...from September 2018 through November 2020 at The James Cancer Hospital and Ross Heart Hospital." Approved by
+      the IRB of OSUWMC. OpenAlex: The Ohio State University Wexner Medical Center.
+
+  - institution: Children's Hospital, Zhejiang University School of Medicine
+    openalex: I4210113495
+    city: Hangzhou
+    country: CN
+    latitude: 30.26316261291504
+    longitude: 120.16571044921875
+    datasets:
+      - label: PIC
+        source: https://physionet.org/content/picdb/1.1.0/
+    note: >-
+      "This project was approved by the Institutional Review Board of the Children's Hospital, Zhejiang University
+      School of Medicine (Hangzhou, China)." OpenAlex: Children's Hospital of Zhejiang University.
+
+  - institution: Stanford Health Care
+    openalex: I4210105015
+    city: Stanford
+    country: US
+    latitude: 37.42411
+    longitude: -122.16608
+    datasets:
+      - label: MC-MED
+        source: https://physionet.org/content/mc-med/1.0.1/
+      - label: INSPECT
+        source: https://arxiv.org/abs/2311.10798
+    note: >-
+      MC-MED: "118,385 adult ED visits to monitored beds of the Stanford Health Care Emergency Department". INSPECT:
+      "INSPECT only contains data from a single site (Stanford Health Care)".
+
+  - institution: Stanford Medicine
+    openalex: I4210137306
+    city: Stanford
+    country: US
+    latitude: 37.42411
+    longitude: -122.16608
+    datasets:
+      - label: EHRSHOT
+        source: https://arxiv.org/abs/2307.02028
+    note: >-
+      "...deidentified structured data from the electronic health records (EHRs) of 6,739 patients from Stanford
+      Medicine."
+
+  - institution: 208 hospitals throughout the US
+    coordinates_source: https://en.wikipedia.org/wiki/Geographic_center_of_the_United_States#Contiguous_United_States
+    city: Centre of the contiguous US
+    country: US
+    latitude: 39.8333
+    longitude: -98.5833
+    caveat: >-
+      The documentation doesn't name the hospitals, so the pin is at the geographic centre of the contiguous United
+      States, near Lebanon, Kansas.
+    datasets:
+      - label: eICU
+        source: https://physionet.org/content/eicu-crd/2.0/
+      - label: eICU demo
+        source: https://physionet.org/content/eicu-crd-demo/2.0.1/
+    note: >-
+      "Patients were admitted to one of 335 units at 208 hospitals located throughout the US." and "Hospital and unit
+      identifiers have also been removed to protect the privacy of contributing organizations." Coordinates: 39°50′N
+      98°35′W, from Wikipedia's "Geographic center of the United States" (looked up once, 2026-11-10). The demo is a
+      subset of eICU.
+
+  - institution: Zigong Fourth People's Hospital
+    coordinates_source: https://en.wikipedia.org/wiki/Zigong
+    city: Zigong, Sichuan
+    country: CN
+    latitude: 29.339
+    longitude: 104.779
+    caveat: Neither OpenAlex nor ROR has a record of the hospital, so the pin is at the city of Zigong.
+    datasets:
+      - label: Zigong
+        source: https://physionet.org/content/icu-infection-zigong-fourth/1.1/
+    note: >-
+      "The study was conducted in Zigong Fourth People's Hospital, Sichuan, China". Coordinates of Zigong from Wikipedia
+      (looked up once, 2026-11-10).
+
+unplaced: []

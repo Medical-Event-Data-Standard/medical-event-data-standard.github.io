@@ -43,15 +43,26 @@ function dig(value: unknown, ...keys: string[]): unknown {
   return current;
 }
 
-/** Reads a `{n, mean, std, quantiles}` summary, or `{n, suppressed: true}` when its quantiles were withheld. */
+/** The quantiles the page reads. */
+const QUANTILES = ['p5', 'p25', 'p50', 'p75', 'p95'] as const;
+
+/**
+ * Reads a `{n, mean, std, quantiles}` summary, or `{n, suppressed: true}` when its quantiles were withheld. From
+ * `meds_summary_stats` 0.0.4 on, a quantile that would depend on the smallest or largest value is left out of
+ * `quantiles`: a missing 5th or 95th percentile is then null, and a summary without its quartiles or median, which a
+ * box needs, is read as withheld (`extremes`). One of these quantiles that is there but not a number makes the
+ * summary unreadable.
+ */
 export function normalizeDistribution(value: unknown): Distribution | null {
   if (!isObject(value)) return null;
   const n = num(value.n);
   if (n === null) return null;
   if (value.suppressed === true) return { suppressed: true, n };
   const q = value.quantiles;
-  const [p5, p25, p50, p75, p95] = ['p5', 'p25', 'p50', 'p75', 'p95'].map(key => num(dig(q, key)));
-  if (p5 === null || p25 === null || p50 === null || p75 === null || p95 === null) return null;
+  if (!isObject(q)) return null;
+  if (QUANTILES.some(key => key in q && num(q[key]) === null)) return null;
+  const [p5, p25, p50, p75, p95] = QUANTILES.map(key => num(q[key]));
+  if (p25 === null || p50 === null || p75 === null) return { suppressed: true, n, extremes: true };
   return { suppressed: false, n, mean: num(value.mean), p5, p25, p50, p75, p95 };
 }
 
@@ -94,7 +105,7 @@ const parseVocabulary = (key: string, cell: unknown): VocabularyCell | null => {
 const presentBlock = (value: unknown): JsonObject | null =>
   isObject(value) && value.present !== false ? value : null;
 
-/** Reduces a supported (schema version 1) document to the numbers the page charts. */
+/** Reduces a supported (schema version 1 or 2) document to the numbers the page charts. */
 export function normalizeStats(doc: JsonObject): EtlStats {
   const counts = doc.counts;
   const perSubject = doc.per_subject;
@@ -185,6 +196,12 @@ function normalizeDataset(value: unknown): DatasetInfo | null {
   };
 }
 
+/** "version 1", "versions 1 and 2", "versions 1, 2 and 3". */
+export function versionList(versions: readonly number[]): string {
+  if (versions.length === 1) return `version ${versions[0]}`;
+  return `versions ${versions.slice(0, -1).join(', ')} and ${versions[versions.length - 1]}`;
+}
+
 export type NormalizedDocument = Pick<
   EtlStatsEntry,
   'extractedAt' | 'schemaVersion' | 'toolVersion' | 'dataset' | 'minCellSize' | 'stats' | 'problem'
@@ -214,7 +231,7 @@ export function normalizeStatsDocument(doc: unknown): NormalizedDocument {
       stats: null,
       problem:
         `Its stats schema version is ${schemaVersion}, which this page cannot read yet ` +
-        `(it reads version ${SUPPORTED_SCHEMA_VERSIONS.join(', ')}).`,
+        `(it reads ${versionList(SUPPORTED_SCHEMA_VERSIONS)}).`,
     };
   }
   return { ...base, stats: normalizeStats(doc), problem: null };

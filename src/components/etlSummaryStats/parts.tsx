@@ -408,15 +408,17 @@ export function ScaleToggle({
 }
 
 /**
- * A titled chart section: a heading with a permalink, the description, optional controls, the chart, what it
- * leaves out, and (unless the chart already prints every number, like a labelled heatmap) its numbers as a table.
- * Without a chart (no dataset can be drawn) there is no empty frame, only the note on why.
+ * A titled chart section: a heading with a permalink, the description, optional controls, the chart, notes on how
+ * some datasets are drawn, what it leaves out, and (unless the chart already prints every number, like a labelled
+ * heatmap) its numbers as a table. Without a chart (no dataset can be drawn) there is no empty frame, only the note
+ * on why.
  */
 export function ChartSection({
   id,
   title,
   description,
   controls,
+  notes = [],
   skipped,
   table,
   children,
@@ -425,6 +427,7 @@ export function ChartSection({
   title: string;
   description: React.ReactNode;
   controls?: React.ReactNode;
+  notes?: string[];
   skipped: Skipped[];
   table?: TableView;
 }>): React.JSX.Element {
@@ -448,6 +451,11 @@ export function ChartSection({
           {children}
         </Paper>
       )}
+      {notes.map(note => (
+        <Typography key={note} variant="body2" color="text.secondary" component="p" sx={{ mt: 1, mb: 0 }}>
+          {note}
+        </Typography>
+      ))}
       <SkippedNote skipped={skipped} hasChart={hasChart} />
       {table && <TableDetails table={table} caption={`${title}: the numbers`} />}
     </Box>
