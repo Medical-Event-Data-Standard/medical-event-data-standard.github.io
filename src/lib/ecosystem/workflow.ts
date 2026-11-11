@@ -1,7 +1,8 @@
 import type { Category, Package, ParsedEcosystem, StageId } from './types';
 
 // The stages of the MEDS workflow, as shown by the flowchart on the "Which tool do I use for what?" page
-// (src/components/ecosystem/EcosystemWorkflow.tsx). Which packages each stage lists is not decided here: every
+// (src/components/ecosystem/EcosystemWorkflow.tsx) and, in compact form, by the overview at the top of "Welcome to
+// MEDS" (src/components/ecosystem/WorkflowOverview.tsx). Which packages each stage lists is not decided here: every
 // category in static/data/ecosystem.yaml names its stage with a `stage` key (or inherits its parent's), so a
 // package added to a category shows up in that category's stage automatically.
 
@@ -178,4 +179,40 @@ export function tileSections(sections: WorkflowSection[]): WorkflowSection[] {
         .filter(({ packages }) => packages.length > 0),
     }))
     .filter(({ categories }) => categories.length > 0);
+}
+
+/**
+ * The id of a stage's box in the flowchart, which links from other pages go to as
+ * `/docs/intro_pages/ecosystem_workflow#<id>`: "stage-" and the stage's id, e.g. `stage-convert`. Tool ids start
+ * with "tool-" (see `toolAnchorIds`), so the two never clash.
+ */
+export function stageAnchorId(stageId: Stage['id']): string {
+  return `stage-${stageId}`;
+}
+
+/** Packages in the order given, without the repeats of a package listed more than once. */
+function uniquePackages(packages: Package[]): Package[] {
+  const byName = new Map<string, Package>();
+  for (const pkg of packages) {
+    if (!byName.has(pkg.name)) byName.set(pkg.name, pkg);
+  }
+  return [...byName.values()];
+}
+
+/** The packages of a stage, each once, in the order of its categories. */
+export function stagePackages({ categories }: Pick<StageGroup, 'categories'>): Package[] {
+  return uniquePackages(categories.flatMap(({ packages }) => packages));
+}
+
+/**
+ * Up to `count` packages of a stage to name as examples of its tools. They are taken from its categories in turn
+ * (the first package of each category, then the second of each, and so on), so that a stage with several
+ * categories, such as the ETL templates and the dataset ETLs, is shown by a package of each.
+ */
+export function examplePackages({ categories }: Pick<StageGroup, 'categories'>, count: number): Package[] {
+  const longest = Math.max(0, ...categories.map(({ packages }) => packages.length));
+  const inTurn = Array.from({ length: longest }, (_, index) =>
+    categories.flatMap(({ packages }) => packages.slice(index, index + 1))
+  ).flat();
+  return uniquePackages(inTurn).slice(0, count);
 }

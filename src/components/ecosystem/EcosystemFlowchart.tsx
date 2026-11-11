@@ -1,20 +1,25 @@
 import React from 'react';
+import useBrokenLinks from '@docusaurus/useBrokenLinks';
 import { Box, Chip, Paper, Typography } from '@mui/material';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { Package } from '@site/src/lib/ecosystem/types';
-import { WorkflowSection } from '@site/src/lib/ecosystem/workflow';
+import { WorkflowSection, stageAnchorId } from '@site/src/lib/ecosystem/workflow';
 
 // The flowchart of the "Which tool do I use for what?" page (see EcosystemWorkflow.tsx): the steps of the MEDS
 // workflow, top to bottom, each listing the packages of the static/data/ecosystem.yaml categories whose `stage` is
 // that step (see src/lib/ecosystem/workflow.ts) as chips that link to the packages' tiles. Stacking the steps
 // keeps it readable at any width; where the flowchart is wide enough, each step's description sits beside its
-// tools.
+// tools. Each step's box has an id (see `stageAnchorId`), so that other pages, such as the overview of the workflow
+// at the top of "Welcome to MEDS" (WorkflowOverview.tsx), can link to it.
 
 /**
  * Removes the list styling that the surrounding Markdown page gives `ol`, `ul` and `li` elements. `&&` outranks
  * its `.markdown li + li { margin-top }` rule, which would otherwise push all but the first item down.
  */
 export const UNSTYLED_LIST = { listStyle: 'none', m: 0, p: 0, '&& > li': { m: 0 } } as const;
+
+/** Space to leave above an element scrolled to the top of the window, which the navbar sticks to. */
+export const NAVBAR_CLEARANCE = 'calc(var(--ifm-navbar-height) + 0.75rem)';
 
 /**
  * Applies its styles where the flowchart is wide enough to put each step's description beside its tools. The
@@ -95,12 +100,18 @@ function StageBox({
   ...selection
 }: ToolSelection & { section: WorkflowSection }): React.JSX.Element {
   const { stage, step, categories } = section;
+  const id = stageAnchorId(stage.id);
+  // Lets Docusaurus's check for broken links know that links to this box, from other pages, have a target.
+  useBrokenLinks().collectAnchor(id);
   // Name the categories only where a stage has more than one, e.g. "Public Datasets" among the dataset ETLs.
   const showCategoryNames = categories.length > 1;
   return (
     <Paper
+      id={id}
       variant="outlined"
       sx={{
+        // When a link to the box scrolls it to the top of the window, keeps it clear of the navbar.
+        scrollMarginTop: NAVBAR_CLEARANCE,
         p: 2,
         display: 'grid',
         gridTemplateColumns: 'minmax(0, 1fr)',
