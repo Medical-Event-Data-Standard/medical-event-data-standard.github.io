@@ -181,7 +181,7 @@ function section(
     stage,
     step: stage.step ? STAGES.indexOf(stage) + 1 : undefined,
     categories: Object.entries(categories).map(([name, names]) => ({
-      category: { topic: name, name, packages: names },
+      category: { topic: name, name, depth: 0, packages: names },
       packages: names.map(pkgName => ({ name: pkgName })),
     })),
   };
