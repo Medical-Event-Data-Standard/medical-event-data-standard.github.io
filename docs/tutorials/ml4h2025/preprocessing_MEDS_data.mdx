@@ -1,0 +1,32 @@
+---
+sidebar_position: 4
+description:
+  Clean and normalize the MIMIC-IV demo in MEDS format with MEDS-Transforms pipelines, and read it subject by
+  subject with MEDS-Reader.
+---
+
+import JupyterViewer from 'react-jupyter-notebook';
+import nb from '@site/tutorial_notebooks/ML4H_tutorial/Preprocessing_MEDS_Data.ipynb';
+
+# Pre-processing MEDS Data
+
+Before building models, we'll pre-process the MIMIC-IV demo with
+[MEDS-Transforms](https://meds-transforms.readthedocs.io/en/stable/). We'll write two short pipeline
+configurations and run them: the first cleans the data (it filters subjects, filters rare codes and removes
+outlying numeric values), and the second normalizes the cleaned data and maps its codes to integer indices for
+a neural network. Aggregate counts after each stage show what it changed. A short optional section shows
+[MEDS-Reader](https://github.com/som-shahlab/meds_reader). See the notebook below, or open it on [Google
+Colab](https://colab.research.google.com/github/Medical-Event-Data-Standard/medical-event-data-standard.github.io/blob/main/tutorial_notebooks/ML4H_tutorial/Preprocessing_MEDS_Data.ipynb)
+or on our [GitHub
+Repository](https://github.com/Medical-Event-Data-Standard/medical-event-data-standard.github.io/blob/main/tutorial_notebooks/ML4H_tutorial/Preprocessing_MEDS_Data.ipynb).
+
+:::note
+
+This step was added after the ML4H 2025 event, so it is not part of the
+[event's tutorial repository](https://github.com/Medical-Event-Data-Standard/MEDS_ML4H_2025_Tutorial). Its
+notebook is kept in this website's repository. Like steps 3, 5 and 6, it starts by downloading the MIMIC-IV
+demo in MEDS format, and the model steps that follow start from that download too, so you can skip this step.
+
+:::
+
+<JupyterViewer showLineNumbers={true} mediaAlign={'left'} rawIpynb={nb} />
