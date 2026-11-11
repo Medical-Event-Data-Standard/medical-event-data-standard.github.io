@@ -1,5 +1,5 @@
 ---
-sidebar_position: 6
+sidebar_position: 7
 sidebar_label: Compare with MEDS-DEV
 description:
   Relate the tutorial's models to MEDS-DEV baselines, run MEDS-DEV yourself, and contribute your task, model
@@ -46,7 +46,7 @@ next to the one you wrote in step 3.
 On the [benchmark page](../../MEDS-DEV/5_benchmark.mdx), `mortality/in_icu/first_24h` has MIMIC-IV results for
 three models from the [models page](../../MEDS-DEV/4_models.mdx): `cehrbert` (CEHR-BERT), `genhpf` (GenHPF),
 and `meds_tab/tiny`, a small XGBoost configuration of the MEDS-Tab tool mentioned in
-[step 4](./build_a_model_tabular.mdx). Use the **Per-Task Detail** view to see them. These numbers are a
+[step 5](./build_a_model_tabular.mdx). Use the **Per-Task Detail** view to see them. These numbers are a
 reference point for in-ICU mortality on MIMIC-IV, which needs credentialed PhysioNet access. They are not
 baselines for the length-of-stay task, and scores on the roughly 100-patient demo are not comparable to them.
 
@@ -69,7 +69,7 @@ pre-training stage, so its training command needs no `model_initialization_dir`.
 
 This is the direct comparison. If your data or labels are already in MEDS format, the README says to skip the
 build and extract steps and pass their directories as `dataset_dir` and `labels_dir`. That holds for the files
-downloaded at the start of [step 4](./build_a_model_tabular.mdx):
+downloaded at the start of [step 5](./build_a_model_tabular.mdx):
 
 ```bash
 DATASET_DIR=$PWD/MEDS_data
@@ -97,8 +97,8 @@ Pass the predictions file with `predictions_path`, not the directory with `predi
 environment lives in `$PREDICTIONS_DIR/.venv` by default, and `predictions_dir` reads every parquet file below
 the directory, including any inside `.venv`.
 
-The evaluation uses MEDS-Evaluation, as at the end of step 4, so you can put the two results side by side.
-Step 4 scores the logistic regression on the `tuning` split, while these commands predict for `held_out`, so
+The evaluation uses MEDS-Evaluation, as at the end of step 5, so you can put the two results side by side.
+Step 5 scores the logistic regression on the `tuning` split, while these commands predict for `held_out`, so
 score your own model on `held_out` before comparing. The demo's held-out split has only a handful of ICU stays:
 treat any difference as a check that the pipeline works, not as evidence that one model is better.
 
@@ -128,12 +128,12 @@ The labels have the same format as the tutorial's `short_LOS` labels. Then:
 - **Baselines:** run the `meds-dev-model` and `meds-dev-evaluation` commands from option 1 again. Keep the new
   output directories: MEDS-DEV skips a command whose `output_dir` already holds a finished run, even if other
   arguments changed (pass `do_overwrite=True` to start over).
-- **Your model:** point your step 4 or step 5 code at `$DATASET_DIR` and `$LABELS_DIR`, save its held-out
-  predictions in the MEDS-Evaluation format from step 4, and score them with
+- **Your model:** point your step 5 or step 6 code at `$DATASET_DIR` and `$LABELS_DIR`, save its held-out
+  predictions in the MEDS-Evaluation format from step 5, and score them with
   `meds-dev-evaluation predictions_path=my_predictions.parquet output_dir=$PWD/meds_dev/in_icu_mortality/my_eval`.
   MEDS-DEV builds MIMIC-IV with its own ETL, so some codes differ from the PhysioNet MEDS demo that the tutorial
-  downloads. For example, the `LAB//51301//K/uL` that step 4 selects by hand is `LAB//RESULT//51301//K/uL` in
-  MEDS-DEV's build, so update hand-picked codes before you reuse step 4's features.
+  downloads. For example, the `LAB//51301//K/uL` that step 5 selects by hand is `LAB//RESULT//51301//K/uL` in
+  MEDS-DEV's build, so update hand-picked codes before you reuse step 5's features.
 
 The demo build checks your pipeline end to end. To compare with the published results, build full MIMIC-IV
 instead: drop `demo=True` and pass your credentialed download as `raw_input_dir=/path/to/downloaded/data`.

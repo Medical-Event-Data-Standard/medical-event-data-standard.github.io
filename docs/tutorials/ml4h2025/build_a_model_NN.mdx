@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 import JupyterViewer from 'react-jupyter-notebook';
@@ -14,5 +14,15 @@ online on [Google
 Colab](<https://colab.research.google.com/github/Medical-Event-Data-Standard/MEDS_ML4H_2025_Tutorial/blob/main/jupyter_notebooks/Build_a_Model_(NN).ipynb>)
 or on our [GitHub
 Repository](<https://github.com/Medical-Event-Data-Standard/MEDS_ML4H_2025_Tutorial/blob/main/jupyter_notebooks/Build_a_Model_(NN).ipynb>)
+
+:::tip
+
+The notebook pre-processes the data with `MTD_preprocess`, a MEDS-Transforms pipeline that normalizes numeric
+values, maps codes to integer indices, and tensorizes the result. It does not filter rare codes or remove
+outlying values. [Pre-processing MEDS Data](./preprocessing_MEDS_data.mdx) walks through these stages, and
+through cleaning stages you can run first, one at a time. You can then pass the cleaned dataset to
+`MTD_preprocess` in place of the download.
+
+:::
 
 <JupyterViewer showLineNumbers={true} mediaAlign={'left'} rawIpynb={nb} />
