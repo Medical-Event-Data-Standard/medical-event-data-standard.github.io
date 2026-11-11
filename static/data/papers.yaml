@@ -11,7 +11,8 @@
 #                 Scholar's details of a seed are wrong, set any of `title`, `authors`, `venue`, `year` and
 #                 `url` to show those instead.
 #   include:      papers that use MEDS but cite none of the seeds, so would otherwise be missing.
-#   exclude:      papers that cite a seed but are not about using MEDS, e.g. ones mentioning it only in passing.
+#   exclude:      papers that cite a seed but should not be listed, e.g. ones mentioning MEDS only in passing, or
+#                 whose details (such as their affiliations) can't be trusted.
 #   merge:        records that Semantic Scholar has of a paper it also has another record of, e.g. a preprint
 #                 under an earlier title. The record `id` is not listed; the record `into` is, citing every seed
 #                 that either cites. Keep the more complete or published record. If the record `into` isn't
@@ -246,6 +247,37 @@ exclude:
       Event Extraction in Large Language Model: a survey of event extraction from text, citing ACES only in a list
       of document-level argument extraction methods. Not about health AI or MEDS.
 
+  # The papers by "Shi Li" (most with Yuanyu Zhang) give Columbia University as an affiliation, but the authors
+  # don't appear to be at Columbia, so their details can't be trusted. Excluded in November 2026.
+  - id: 'ARXIV:2605.17765'
+    note: >-
+      AURORA: Contextual Orthogonalization for Geometric Representation Learning in Healthcare Foundation
+      Models.
+  - id: 'ARXIV:2605.09765'
+    note: >-
+      WISTERIA: Learning Clinical Representations from Noisy Supervision via Multi-View Consistency in
+      Electronic Health Records.
+  - id: 'ARXIV:2605.08685'
+    note: 'Event Fields: Learning Latent Event Structure for Waveform Foundation Models.'
+  - id: 'ARXIV:2604.04175'
+    note: 'Uncertainty-Aware Foundation Models for Clinical Data.'
+  - id: 'ARXIV:2603.20921'
+    note: 'Discriminative Representation Learning for Clinical Prediction.'
+  - id: 'ARXIV:2603.07348'
+    note: 'Learning Clinical Representations Under Systematic Distribution Shift.'
+  - id: 'ARXIV:2602.07706'
+    note: 'Dense Feature Learning via Linear Structure Preservation in Medical Data.'
+  - id: 'ARXIV:2601.12227'
+    note: 'Learning Longitudinal Health Representations from EHR and Wearable Data.'
+  - id: 'ARXIV:2510.13843'
+    note: 'Serialized EHR make for good text representations.'
+  - id: 'ARXIV:2504.18128'
+    note: 'Temporal Entailment Pretraining for Clinical Language Models over EHR Data.'
+  - id: 'ARXIV:2504.07373'
+    note: 'ChronoFormer: Time-Aware Transformer Architectures for Structured Clinical Event Modeling.'
+  - id: 'ARXIV:2503.05768'
+    note: 'A Collection of Innovations in Medical AI for patient records in 2024.'
+
 # Checked in November 2026 against arXiv, medRxiv and Semantic Scholar. Comparing the abstracts of all listed
 # papers found no other pair of records of one paper.
 merge:
@@ -266,9 +298,8 @@ merge:
       for word. The arXiv record is kept: its latest version (15 January 2026) is newer. Both cite MEDS-Torch.
 
 # Checked against each paper's author list in November 2026: OpenAlex has no affiliations for these papers.
-# Two more listed papers have none either, and are not here because they print none ("Temporal Entailment
-# Pretraining for Clinical Language Models over EHR Data", ARXIV:2504.18128) or have no full text available
-# ("Resilient Systems for Capturing Tacit Knowledge", 8b270d7d03c422be39b1bf9c549bf76c5a0c0ff0).
+# One more listed paper has none either, and is not here because it has no full text available ("Resilient
+# Systems for Capturing Tacit Knowledge", 8b270d7d03c422be39b1bf9c549bf76c5a0c0ff0).
 affiliations:
   - id: 'DOI:10.7759/cureus.117234'
     note: >-
@@ -303,14 +334,6 @@ affiliations:
   - id: 'ARXIV:2504.14657'
     note: 'Synthetic medical record generation case study: "University of California, Los Angeles" (arXiv PDF).'
     institutions: ['University of California, Los Angeles']
-  - id: 'ARXIV:2504.07373'
-    note: 'ChronoFormer: "University of the Chinese Academy of Sciences" and "Columbia University" (arXiv PDF).'
-    institutions: ['University of Chinese Academy of Sciences', 'Columbia University']
-  - id: 'ARXIV:2503.05768'
-    note: >-
-      A Collection of Innovations in Medical AI: "University of the Chinese Academy of Sciences" and "Columbia
-      University" (arXiv PDF).
-    institutions: ['University of Chinese Academy of Sciences', 'Columbia University']
 
 institutions:
   - name: 'Institut national de recherche en sciences et technologies du numérique'

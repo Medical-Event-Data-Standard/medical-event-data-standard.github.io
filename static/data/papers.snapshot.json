@@ -669,19 +669,6 @@
       "institutions": ["University of Illinois Urbana-Champaign"]
     },
     {
-      "id": "eaedc9274c43a430a17ee45308f585838efa3cb2",
-      "title": "AURORA: Contextual Orthogonalization for Geometric Representation Learning in Healthcare Foundation Models",
-      "authors": ["Yuanyu Zhang", "Shi Li"],
-      "venue": "arXiv",
-      "year": 2026,
-      "publicationDate": "2026-05-18",
-      "doi": "10.48550/arXiv.2605.17765",
-      "arxivId": "2605.17765",
-      "url": "https://doi.org/10.48550/arXiv.2605.17765",
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
-      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
-    },
-    {
       "id": "635851eabdf1b80e7253c2da2c5ec2de5e63eeca",
       "title": "Croissant Baker: Metadata Generation for Discoverable, Governable, and Reusable ML Datasets",
       "authors": [
@@ -757,32 +744,6 @@
       "institutions": ["University of Oxford"]
     },
     {
-      "id": "b37b5eb416f7843210251f0c7fde9fe976f14a82",
-      "title": "WISTERIA: Learning Clinical Representations from Noisy Supervision via Multi-View Consistency in Electronic Health Records",
-      "authors": ["R. Dong", "Yuanyu Zhang", "Shi Li"],
-      "venue": "arXiv",
-      "year": 2026,
-      "publicationDate": "2026-05-10",
-      "doi": "10.48550/arXiv.2605.09765",
-      "arxivId": "2605.09765",
-      "url": "https://doi.org/10.48550/arXiv.2605.09765",
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5"],
-      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
-    },
-    {
-      "id": "9461eb9b7f395e97fb203280fd1d0d1d8645847c",
-      "title": "Event Fields: Learning Latent Event Structure for Waveform Foundation Models",
-      "authors": ["Li Na", "Yuanyu Zhang", "Shi Li"],
-      "venue": "arXiv",
-      "year": 2026,
-      "publicationDate": "2026-05-09",
-      "doi": "10.48550/arXiv.2605.08685",
-      "arxivId": "2605.08685",
-      "url": "https://doi.org/10.48550/arXiv.2605.08685",
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
-      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
-    },
-    {
       "id": "e9b6fd982136a9b219a33db655d82ea0d84c03b6",
       "title": "Representation Before Training: A Practical Benchmark for Generative Medical Event Model Tokenization",
       "authors": [
@@ -804,32 +765,6 @@
       "cites": [],
       "manual": true,
       "institutions": ["University of Chicago"]
-    },
-    {
-      "id": "d74fe8b476deeec0e813b7546c10034207be71a7",
-      "title": "Uncertainty-Aware Foundation Models for Clinical Data",
-      "authors": ["Qian Zhou", "Yuanyu Zhang", "Shi Li"],
-      "venue": "arXiv",
-      "year": 2026,
-      "publicationDate": "2026-04-05",
-      "doi": "10.48550/arXiv.2604.04175",
-      "arxivId": "2604.04175",
-      "url": "https://doi.org/10.48550/arXiv.2604.04175",
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
-      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
-    },
-    {
-      "id": "e03b10b76c8c07ef0d46001519b976d9b2d30711",
-      "title": "Discriminative Representation Learning for Clinical Prediction",
-      "authors": ["Yang Zhang", "Lianyi Fan", "Sam Lawrence", "Shi Li"],
-      "venue": "arXiv",
-      "year": 2026,
-      "publicationDate": "2026-03-21",
-      "doi": "10.48550/arXiv.2603.20921",
-      "arxivId": "2603.20921",
-      "url": "https://doi.org/10.48550/arXiv.2603.20921",
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
-      "institutions": ["University of Hong Kong", "Columbia University"]
     },
     {
       "id": "daac83a997466a11064ea218d579b68faaf53346",
@@ -855,19 +790,6 @@
       ]
     },
     {
-      "id": "414884b429ba39effcd1112d4ffab619d9295a18",
-      "title": "Learning Clinical Representations Under Systematic Distribution Shift",
-      "authors": ["Yuanyu Zhang", "Shi Li"],
-      "venue": "arXiv",
-      "year": 2026,
-      "publicationDate": "2026-03-07",
-      "doi": "10.48550/arXiv.2603.07348",
-      "arxivId": "2603.07348",
-      "url": "https://doi.org/10.48550/arXiv.2603.07348",
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
-      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
-    },
-    {
       "id": "e00a70991805a18bd2d0ddeb1db9a43313bece8b",
       "title": "Tokenization Tradeoffs in Structured EHR Foundation Models",
       "authors": [
@@ -888,27 +810,6 @@
       "cites": [],
       "manual": true,
       "institutions": ["Hospital for Sick Children", "University Health Network"]
-    },
-    {
-      "id": "2c24a767ca8fec2d0809ef4441a12e00805a8d97",
-      "title": "Dense Feature Learning via Linear Structure Preservation in Medical Data",
-      "authors": [
-        "Yuanyu Zhang",
-        "Mingxuan Zhang",
-        "Si-Yuan Li",
-        "Zihan Wang",
-        "Hao-Ran Chen",
-        "Wenbo Zhou",
-        "Shi Li"
-      ],
-      "venue": "arXiv",
-      "year": 2026,
-      "publicationDate": "2026-02-07",
-      "doi": "10.48550/arXiv.2602.07706",
-      "arxivId": "2602.07706",
-      "url": "https://doi.org/10.48550/arXiv.2602.07706",
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5", "7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
-      "institutions": ["Chinese University of Hong Kong", "Columbia University"]
     },
     {
       "id": "a19c40320dee38dcd49a45b67e9b9c2f9a8438fd",
@@ -1077,19 +978,6 @@
       ]
     },
     {
-      "id": "9bd2f0db473c225527c4e9383190752de1d5b89e",
-      "title": "Learning Longitudinal Health Representations from EHR and Wearable Data",
-      "authors": ["Yuanyu Zhang", "Han Zhou", "Li Feng", "Yilin Hong", "Shi Li"],
-      "venue": "arXiv",
-      "year": 2026,
-      "publicationDate": "2026-01-18",
-      "doi": "10.48550/arXiv.2601.12227",
-      "arxivId": "2601.12227",
-      "url": "https://doi.org/10.48550/arXiv.2601.12227",
-      "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
-      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
-    },
-    {
       "id": "fe750689b02b906ce28ba569ac20e86c941c197a",
       "title": "Clinical Data Goes MEDS? Let's OWL make sense of it",
       "authors": ["A. Marfoglia", "J. Jhee", "Adrien Coulet"],
@@ -1252,19 +1140,6 @@
       "institutions": ["Columbia University"]
     },
     {
-      "id": "e3360038a7b53c83547ea7e61780999a49f965cd",
-      "title": "Serialized EHR make for good text representations",
-      "authors": ["Zhirong Chou", "Quan Qin", "Shi Li"],
-      "venue": "arXiv",
-      "year": 2025,
-      "publicationDate": "2025-10-11",
-      "doi": "10.48550/arXiv.2510.13843",
-      "arxivId": "2510.13843",
-      "url": "https://doi.org/10.48550/arXiv.2510.13843",
-      "cites": ["2619008e94a623872a48eeb05da7e0a4a97e2ed5"],
-      "institutions": ["Southern University of Science and Technology", "Columbia University"]
-    },
-    {
       "id": "4fe37bf1eb0ed653b7a35f819d2f4668f788c1bf",
       "title": "EMR-AGENT: Automating Cohort and Feature Extraction from EMR Databases",
       "authors": [
@@ -1388,19 +1263,6 @@
       "institutions": ["Columbia University"]
     },
     {
-      "id": "904d9447f7fe998a3752d1f53486f0a0daa79734",
-      "title": "Temporal Entailment Pretraining for Clinical Language Models over EHR Data",
-      "authors": ["Tatsunori Tanaka", "Fi Zheng", "Kai Sato", "Zhifeng Li", "Yuanyu Zhang", "Shi Li"],
-      "venue": "arXiv",
-      "year": 2025,
-      "publicationDate": "2025-04-25",
-      "doi": "10.48550/arXiv.2504.18128",
-      "arxivId": "2504.18128",
-      "url": "https://doi.org/10.48550/arXiv.2504.18128",
-      "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
-      "institutions": []
-    },
-    {
       "id": "780e184d0e0cec844353f9fd94af58100bd2bc26",
       "title": "A Case Study Exploring the Current Landscape of Synthetic Medical Record Generation with Commercial LLMs",
       "authors": ["Yihan Lin", "Zhi-Rong Yu", "Simon A. Lee"],
@@ -1414,19 +1276,6 @@
       "institutions": ["University of California, Los Angeles"]
     },
     {
-      "id": "deeea713cb042c41852ff9c89ae26ab7934687e6",
-      "title": "ChronoFormer: Time-Aware Transformer Architectures for Structured Clinical Event Modeling",
-      "authors": ["Yuanyu Zhang", "Shi Li"],
-      "venue": "arXiv",
-      "year": 2025,
-      "publicationDate": "2025-04-10",
-      "doi": "10.48550/arXiv.2504.07373",
-      "arxivId": "2504.07373",
-      "url": "https://doi.org/10.48550/arXiv.2504.07373",
-      "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
-      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
-    },
-    {
       "id": "a1de898ce28bdfc5c1cb65c3d010941885907dc2",
       "title": "Clinical ModernBERT: An efficient and long context encoder for biomedical text",
       "authors": ["Simon A. Lee", "A. Wu", "Jeffrey N. Chiang"],
@@ -1438,19 +1287,6 @@
       "url": "https://doi.org/10.48550/arXiv.2504.03964",
       "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf"],
       "institutions": ["University of California, Los Angeles"]
-    },
-    {
-      "id": "07752708fc7ec3c234f2dd7d22ddcc687ad7f843",
-      "title": "A Collection of Innovations in Medical AI for patient records in 2024",
-      "authors": ["Yuanyu Zhang", "Shi Li"],
-      "venue": "arXiv",
-      "year": 2025,
-      "publicationDate": "2025-02-25",
-      "doi": "10.48550/arXiv.2503.05768",
-      "arxivId": "2503.05768",
-      "url": "https://doi.org/10.48550/arXiv.2503.05768",
-      "cites": ["7d56d69d5864c28e45d6cc3f8e8b802f666c7ecf", "27689dd149c473d24cdf22124c2a29d187c960b8"],
-      "institutions": ["Chinese Academy of Sciences", "Columbia University"]
     },
     {
       "id": "2be3376c90365292548d8c8039b97145f2832f1a",
@@ -1717,26 +1553,6 @@
         "longitude": -84.38798,
         "city": "Atlanta",
         "country": "US"
-      }
-    },
-    "Chinese Academy of Sciences": {
-      "id": "I19820366",
-      "partOf": [],
-      "location": {
-        "latitude": 39.9075,
-        "longitude": 116.39723,
-        "city": "Beijing",
-        "country": "CN"
-      }
-    },
-    "Chinese University of Hong Kong": {
-      "id": "I177725633",
-      "partOf": [],
-      "location": {
-        "latitude": 22.27832,
-        "longitude": 114.17469,
-        "city": "Hong Kong",
-        "country": "HK"
       }
     },
     "Clalit Health Services": {
@@ -2269,16 +2085,6 @@
         "country": "US"
       }
     },
-    "Southern University of Science and Technology": {
-      "id": "I3045169105",
-      "partOf": [],
-      "location": {
-        "latitude": 22.54554,
-        "longitude": 114.0683,
-        "city": "Shenzhen",
-        "country": "CN"
-      }
-    },
     "Stanford Medicine": {
       "id": "I4210137306",
       "partOf": ["I97018004"],
@@ -2407,16 +2213,6 @@
         "longitude": -87.65005,
         "city": "Chicago",
         "country": "US"
-      }
-    },
-    "University of Chinese Academy of Sciences": {
-      "id": "I4210165038",
-      "partOf": ["I19820366"],
-      "location": {
-        "latitude": 39.9075,
-        "longitude": 116.39723,
-        "city": "Beijing",
-        "country": "CN"
       }
     },
     "University of Colorado Anschutz": {
@@ -2587,16 +2383,6 @@
         "longitude": 13.06566,
         "city": "Potsdam",
         "country": "DE"
-      }
-    },
-    "University of Science and Technology of China": {
-      "id": "I126520041",
-      "partOf": ["I19820366"],
-      "location": {
-        "latitude": 31.86389,
-        "longitude": 117.28083,
-        "city": "Hefei",
-        "country": "CN"
       }
     },
     "University of Southern Denmark": {
