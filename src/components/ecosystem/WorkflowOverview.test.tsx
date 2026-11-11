@@ -6,13 +6,18 @@ import { parse } from 'yaml';
 import '@testing-library/jest-dom';
 import { render, screen, within } from '@testing-library/react';
 
-import WorkflowOverview, { WORKFLOW_PAGE_PATH, toolSummary } from './WorkflowOverview';
+import WorkflowOverview, {
+  MEDS_DATA_TUTORIAL,
+  STAGE_TUTORIALS,
+  WORKFLOW_PAGE_PATH,
+  toolSummary,
+} from './WorkflowOverview';
 import { RawCategory } from '@site/src/lib/ecosystem/types';
 import { parseCategoryMap } from '@site/src/lib/ecosystem/utils';
 import { groupByStage, stagePackages, workflowSections } from '@site/src/lib/ecosystem/workflow';
 
 // `@docusaurus/*` modules are webpack aliases that only exist inside a Docusaurus build. The stand-in for `Link`
-// renders a plain link; `useBrokenLinks` is used by the flowchart, whose `StepNumber` the overview shares.
+// renders a plain link; `useBrokenLinks` is used by the flowchart, whose list styles the guide shares.
 jest.mock('@docusaurus/useBrokenLinks', () => ({ __esModule: true, default: jest.fn() }), { virtual: true });
 jest.mock(
   '@docusaurus/Link',
@@ -29,25 +34,32 @@ jest.mock(
 
 const yamlPath = path.join(__dirname, '..', '..', '..', 'static', 'data', 'ecosystem.yaml');
 const ecosystemYaml = parse(fs.readFileSync(yamlPath, 'utf8')) as Record<string, RawCategory>;
+const docsDir = path.join(__dirname, '..', '..', '..', 'docs');
 
 const workflow = () =>
   screen.getByRole('list', { name: 'The MEDS workflow, from raw EHR data to a benchmark result' });
 
-/** The sections of the flowchart for the given data, as the overview shows them. */
+/** The entries of the timeline, in order. */
+const entries = () =>
+  within(workflow())
+    .getAllByRole('listitem')
+    .filter(item => item.parentElement === workflow());
+
+/** The sections of the flowchart for the given data, as the guide shows them. */
 function sectionsOf(data: Record<string, RawCategory>) {
   return workflowSections(groupByStage(parseCategoryMap(data)));
 }
 
 describe('WorkflowOverview', () => {
-  it('shows the steps of the MEDS workflow in order, each linking to its step in the flowchart', () => {
+  it('shows the workflow top to bottom: the raw data, the first step, the data in MEDS, then the other steps', () => {
     render(<WorkflowOverview data={ecosystemYaml} />);
 
-    const steps = within(workflow())
-      .getAllByRole('listitem')
-      .filter(item => item.parentElement === workflow());
-    expect(steps).toHaveLength(7);
-    expect(steps.map(step => within(step).getAllByRole('link')[0].textContent)).toEqual([
+    const items = entries();
+    expect(items).toHaveLength(9);
+    expect(items.map(item => item.querySelectorAll('p')[1].textContent)).toEqual([
+      'Your raw EHR data',
       'Convert your data to MEDS',
+      'Your data in MEDS',
       'Explore and inspect',
       'Pre-process and load',
       'Define a prediction task',
@@ -55,26 +67,58 @@ describe('WorkflowOverview', () => {
       'Evaluate',
       'Benchmark and share',
     ]);
-    expect(steps.map(step => within(step).getAllByRole('link')[0].getAttribute('href'))).toEqual([
-      `${WORKFLOW_PAGE_PATH}#stage-convert`,
-      `${WORKFLOW_PAGE_PATH}#stage-explore`,
-      `${WORKFLOW_PAGE_PATH}#stage-preprocess`,
-      `${WORKFLOW_PAGE_PATH}#stage-task`,
-      `${WORKFLOW_PAGE_PATH}#stage-model`,
-      `${WORKFLOW_PAGE_PATH}#stage-evaluate`,
-      `${WORKFLOW_PAGE_PATH}#stage-benchmark`,
+    expect(items.map(item => item.querySelector('p')!.textContent)).toEqual([
+      'Start',
+      'Step 1',
+      'Milestone',
+      'Step 2',
+      'Step 3',
+      'Step 4',
+      'Step 5',
+      'Step 6',
+      'Step 7',
     ]);
-    expect(WORKFLOW_PAGE_PATH).toBe('/docs/intro_pages/ecosystem_workflow');
 
-    // The first step starts from the raw data and leaves it in MEDS, with its four columns.
-    expect(steps[0]).toHaveTextContent('Start: your raw EHR data');
-    expect(steps[0]).toHaveTextContent('Your data in MEDS');
-    const columns = within(steps[0]).getByRole('list', { name: 'The columns of MEDS data' });
+    // The data in MEDS, with its four columns.
+    const columns = within(items[2]).getByRole('list', { name: 'The columns of MEDS data' });
     expect(
       within(columns)
         .getAllByRole('listitem')
         .map(item => item.textContent)
     ).toEqual(['subject_id', 'time', 'code', 'numeric_value']);
+  });
+
+  it("links each step to its tutorial pages, if there are any, and not to the ecosystem's pages", () => {
+    render(<WorkflowOverview data={ecosystemYaml} />);
+    const tutorialLinks = (item: HTMLElement) =>
+      within(item)
+        .queryAllByRole('link')
+        .map(link => [link.textContent, link.getAttribute('href')]);
+
+    const items = entries();
+    expect(items.map(tutorialLinks)).toEqual([
+      [],
+      [['Converting to MEDS', '/docs/tutorials/ml4h2025/converting_to_MEDS']],
+      [['Getting Familiar with MEDS', '/docs/tutorials/ml4h2025/MEDS_intro']],
+      [],
+      [['Pre-processing MEDS Data', '/docs/tutorials/ml4h2025/preprocessing_MEDS_data']],
+      [['Extracting a Prediction Task', '/docs/tutorials/ml4h2025/extracting_prediction_tasks']],
+      [
+        ['Build a Tabular Baseline', '/docs/tutorials/ml4h2025/build_a_model_tabular'],
+        ['Build a Neural Network', '/docs/tutorials/ml4h2025/build_a_model_NN'],
+      ],
+      [['Build a Tabular Baseline', '/docs/tutorials/ml4h2025/build_a_model_tabular']],
+      [['Compare with MEDS-DEV', '/docs/tutorials/ml4h2025/compare_with_meds_dev']],
+    ]);
+    expect(items[7]).toHaveTextContent('Tutorial: Build a Tabular Baseline (Evaluating the Model)');
+  });
+
+  it('links only to tutorial pages that exist', () => {
+    const tutorials = [...Object.values(STAGE_TUTORIALS).flat(), MEDS_DATA_TUTORIAL];
+    for (const { to } of tutorials) {
+      const page = path.join(docsDir, `${to.replace(/^\/docs\//, '')}.mdx`);
+      expect(fs.existsSync(page)).toBe(true);
+    }
   });
 
   it("names the number of each step's tools in static/data/ecosystem.yaml, and the total", () => {
@@ -90,7 +134,7 @@ describe('WorkflowOverview', () => {
     expect(within(workflow()).getByText(/^\d+ tools, such as .*MIMIC-IV/)).toBeInTheDocument();
     expect(within(workflow()).getByText(/^\d+ tools?(:|, such as) ACES/)).toBeInTheDocument();
 
-    // Every tool is counted once, including those used at any step.
+    // Every tool is counted once, including those used at any step. Only this line links to the tools.
     const total = Object.keys(parseCategoryMap(ecosystemYaml).packages).length;
     const summary = screen.getByText(`${total} tools`).closest('p')!;
     expect(summary).toHaveTextContent(
@@ -100,6 +144,7 @@ describe('WorkflowOverview', () => {
       'href',
       WORKFLOW_PAGE_PATH
     );
+    expect(WORKFLOW_PAGE_PATH).toBe('/docs/intro_pages/ecosystem_workflow');
   });
 
   it('says how many tools a step has and names a few, from each of its categories', () => {
