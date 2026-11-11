@@ -11,6 +11,14 @@ import { RawCategory } from '@site/src/lib/ecosystem/types';
 import { parseCategoryMap } from '@site/src/lib/ecosystem/utils';
 import { groupByStage, toolAnchorIds, workflowSections } from '@site/src/lib/ecosystem/workflow';
 
+// `@docusaurus/*` modules are webpack aliases that only exist inside a Docusaurus build.
+const collectAnchor = jest.fn();
+jest.mock('@docusaurus/useBrokenLinks', () => ({ __esModule: true, default: () => ({ collectAnchor }) }), {
+  virtual: true,
+});
+
+beforeEach(() => collectAnchor.mockClear());
+
 const yamlPath = path.join(__dirname, '..', '..', '..', 'static', 'data', 'ecosystem.yaml');
 const ecosystemYaml = parse(fs.readFileSync(yamlPath, 'utf8')) as Record<string, RawCategory>;
 
@@ -62,6 +70,44 @@ describe('EcosystemFlowchart', () => {
     expect(screen.getByRole('heading', { name: 'Across the workflow' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Other tools' })).not.toBeInTheDocument();
     expect(screen.queryByText('No tools listed yet.')).not.toBeInTheDocument();
+  });
+
+  it('gives each step an id that links from other pages can go to, and reports it to Docusaurus', () => {
+    renderFlowchart(ecosystemYaml);
+
+    const steps = screen.getByRole('list', { name: 'Steps of the MEDS workflow' }).children;
+    expect(
+      [...steps].map(
+        step =>
+          within(step as HTMLElement)
+            .getByRole('heading')
+            .closest('[id]')?.id
+      )
+    ).toEqual([
+      'stage-convert',
+      'stage-explore',
+      'stage-preprocess',
+      'stage-task',
+      'stage-model',
+      'stage-evaluate',
+      'stage-benchmark',
+    ]);
+    expect(screen.getByRole('heading', { name: 'Across the workflow' }).closest('[id]')).toHaveAttribute(
+      'id',
+      'stage-general'
+    );
+    expect(new Set(collectAnchor.mock.calls.map(([id]) => id))).toEqual(
+      new Set([
+        'stage-convert',
+        'stage-explore',
+        'stage-preprocess',
+        'stage-task',
+        'stage-model',
+        'stage-evaluate',
+        'stage-benchmark',
+        'stage-general',
+      ])
+    );
   });
 
   it('lists tools of categories without a stage under "Other tools", and marks empty steps', () => {

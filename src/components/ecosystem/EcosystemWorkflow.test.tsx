@@ -10,9 +10,14 @@ import EcosystemWorkflow from './EcosystemWorkflow';
 import { RawCategory } from '@site/src/lib/ecosystem/types';
 import { parseCategoryMap } from '@site/src/lib/ecosystem/utils';
 
-// `@docusaurus/*` modules are webpack aliases that only exist inside a Docusaurus build. The tiles' PackageCard
-// uses them; without metadata, it shows no stars or releases, and the MEDS logo.
+// `@docusaurus/*` modules are webpack aliases that only exist inside a Docusaurus build. The flowchart and the
+// tiles' PackageCard use them; without metadata, PackageCard shows no stars or releases, and the MEDS logo.
 jest.mock('@docusaurus/useGlobalData', () => ({ usePluginData: jest.fn() }), { virtual: true });
+jest.mock(
+  '@docusaurus/useBrokenLinks',
+  () => ({ __esModule: true, default: () => ({ collectAnchor: jest.fn() }) }),
+  { virtual: true }
+);
 jest.mock('@docusaurus/useBaseUrl', () => ({ __esModule: true, default: (url: string) => `/${url}` }), {
   virtual: true,
 });

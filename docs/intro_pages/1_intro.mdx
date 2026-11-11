@@ -3,14 +3,14 @@ sidebar_position: 1
 ---
 
 import EcosystemFigure from '@site/static/img/ecosystem_figure.svg';
+import WorkflowOverview from '@site/src/components/ecosystem/WorkflowOverview';
+import EcosystemData from '@site/static/data/ecosystem.yaml';
 import MedsPapersTimeline from '@site/src/components/MedsPapersTimeline';
 import MedsPapers from '@site/static/data/meds_papers.yaml';
 
 # Welcome to MEDS
 
-<div style={{ textAlign: 'center' }}>
-  <EcosystemFigure alt="The MEDS Ecosystem, Visually" style={{ width: '80%', height: 'auto' }} />
-</div>
+<WorkflowOverview data={EcosystemData} />
 
 MEDS (the Medical Event Data Standard) is a shockingly simple, highly flexible, and efficient data standard
 for structured, longitudinal medical record data, built for reproducible, efficient Machine Learning
@@ -48,6 +48,10 @@ pre-processing (with [MEDS-Transforms](https://meds-transforms.readthedocs.io/en
 [neural network](https://meds-torch.readthedocs.io/en/stable/)
 models, or [evaluating predictions](https://github.com/kamilest/meds-evaluation/tree/main), the MEDS
 ecosystem has tools that can help make your research easier, more efficient, and more reproducible.
+
+<div style={{ textAlign: 'center' }}>
+  <EcosystemFigure alt="The MEDS Ecosystem, Visually" style={{ width: '80%', height: 'auto' }} />
+</div>
 
 ## Doing Effective Science in Health AI
 

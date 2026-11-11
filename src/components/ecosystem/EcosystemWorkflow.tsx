@@ -11,7 +11,7 @@ import {
   toolAnchorIds,
   workflowSections,
 } from '@site/src/lib/ecosystem/workflow';
-import EcosystemFlowchart, { StepNumber, UNSTYLED_LIST } from './EcosystemFlowchart';
+import EcosystemFlowchart, { NAVBAR_CLEARANCE, StepNumber, UNSTYLED_LIST } from './EcosystemFlowchart';
 import PackageCard from './PackageCard';
 
 // The "Which tool do I use for what?" page: the flowchart of the MEDS workflow and, beside it on wide screens or
@@ -25,9 +25,6 @@ import PackageCard from './PackageCard';
 const WIDE_LAYOUT = '(min-width: 997px)';
 const WIDE_MEDIA = `@media ${WIDE_LAYOUT}`;
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
-
-/** Space to leave above an element scrolled to the top of the window, which the navbar sticks to. */
-const NAVBAR_CLEARANCE = 'calc(var(--ifm-navbar-height) + 0.75rem)';
 
 /** The id of the flowchart, which "Back to the flowchart" links to. */
 const FLOWCHART_ID = 'ecosystem-flowchart';

@@ -9,8 +9,11 @@ import {
   STAGE_IDS,
   StageGroup,
   WorkflowSection,
+  examplePackages,
   groupByStage,
   isStageId,
+  stageAnchorId,
+  stagePackages,
   tileSections,
   toolAnchorIds,
   workflowSections,
@@ -231,5 +234,51 @@ describe('tool tiles', () => {
     ]);
     // The flowchart's sections are left as they were.
     expect(sections[1].categories[0].packages).toHaveLength(2);
+  });
+});
+
+describe('stageAnchorId', () => {
+  it('gives each stage an id that no tool id can clash with', () => {
+    expect(STAGE_IDS.map(stageAnchorId)).toEqual([
+      'stage-convert',
+      'stage-explore',
+      'stage-preprocess',
+      'stage-task',
+      'stage-model',
+      'stage-evaluate',
+      'stage-benchmark',
+      'stage-general',
+    ]);
+    expect(stageAnchorId(OTHER_STAGE.id)).toBe('stage-other');
+  });
+});
+
+describe("a stage's tools", () => {
+  // "MEDS-ETL" is listed in two categories of the stage.
+  const convert = section('convert', {
+    Templates: ['Template', 'MEDS-ETL'],
+    Datasets: ['MIMIC', 'eICU', 'HiRID'],
+    Standards: ['MEDS-ETL', 'FHIR'],
+  });
+
+  it('lists each tool once, in the order of its categories', () => {
+    expect(stagePackages(convert).map(pkg => pkg.name)).toEqual([
+      'Template',
+      'MEDS-ETL',
+      'MIMIC',
+      'eICU',
+      'HiRID',
+      'FHIR',
+    ]);
+    expect(stagePackages(section('task', {}))).toEqual([]);
+  });
+
+  it('names examples from each category in turn', () => {
+    const names = (count: number) => examplePackages(convert, count).map(pkg => pkg.name);
+    expect(names(3)).toEqual(['Template', 'MIMIC', 'MEDS-ETL']);
+    // A tool listed in several categories is named once.
+    expect(names(5)).toEqual(['Template', 'MIMIC', 'MEDS-ETL', 'eICU', 'FHIR']);
+    expect(names(10)).toEqual(['Template', 'MIMIC', 'MEDS-ETL', 'eICU', 'FHIR', 'HiRID']);
+    expect(examplePackages(section('task', {}), 3)).toEqual([]);
   });
 });
