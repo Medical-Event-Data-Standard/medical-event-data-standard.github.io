@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-10T19:52:24.524Z",
+  "updatedAt": "2026-11-11T01:01:49.205Z",
   "seeds": [
     {
       "id": "50846012e25acae4aebf1d2b2953655a19fe2e93",
@@ -571,7 +571,7 @@
       "arxivId": "2607.01391",
       "url": "https://doi.org/10.48550/arXiv.2607.01391",
       "cites": ["50846012e25acae4aebf1d2b2953655a19fe2e93"],
-      "institutions": ["University of Copenhagen", "Copenhagen University Hospital", "Rigshospitalet"]
+      "institutions": ["University of Copenhagen", "Copenhagen University Hospital"]
     },
     {
       "id": "268b9319be1138cef364f875a9ce828c3dac6d48",
@@ -1639,6 +1639,16 @@
         "country": "DE"
       }
     },
+    "Berlin Institute of Health at Charité - Universitätsmedizin Berlin": {
+      "id": "I4210139777",
+      "partOf": ["I7877124"],
+      "location": {
+        "latitude": 52.52437,
+        "longitude": 13.41053,
+        "city": "Berlin",
+        "country": "DE"
+      }
+    },
     "Brigham and Women's Hospital": {
       "id": "I1283280774",
       "partOf": ["I121934306", "I48633490"],
@@ -1667,6 +1677,16 @@
         "longitude": -79.99589,
         "city": "Pittsburgh",
         "country": "US"
+      }
+    },
+    "CentraleSupélec": {
+      "id": "I4210107720",
+      "partOf": ["I277688954"],
+      "location": {
+        "latitude": 48.68333,
+        "longitude": 2.13333,
+        "city": "Gif-sur-Yvette",
+        "country": "FR"
       }
     },
     "Centre Hospitalier Universitaire de Liège": {
@@ -1759,6 +1779,26 @@
         "country": "US"
       }
     },
+    "Copenhagen University Hospital": {
+      "id": "I2802567020",
+      "partOf": [],
+      "location": {
+        "latitude": 55.67594,
+        "longitude": 12.56553,
+        "city": "Copenhagen",
+        "country": "DK"
+      }
+    },
+    "Deutsches Herzzentrum der Charité": {
+      "id": "I4210105663",
+      "partOf": ["I7877124"],
+      "location": {
+        "latitude": 52.52437,
+        "longitude": 13.41053,
+        "city": "Berlin",
+        "country": "DE"
+      }
+    },
     "Duke Medical Center": {
       "id": "I4210126298",
       "partOf": ["I4210144876"],
@@ -1827,6 +1867,16 @@
         "longitude": 121.45806,
         "city": "Shanghai",
         "country": "CN"
+      }
+    },
+    "Genentech": {
+      "id": "I183934855",
+      "partOf": ["I118019719", "I129302853"],
+      "location": {
+        "latitude": 37.77492904663086,
+        "longitude": -122.41941833496094,
+        "city": "San Francisco",
+        "country": "US"
       }
     },
     "Georgia Institute of Technology": {
@@ -1919,6 +1969,16 @@
         "country": "DE"
       }
     },
+    "HiLIFE – Elämäntieteiden Instituutti": {
+      "id": "I4391768107",
+      "partOf": ["I133731052"],
+      "location": {
+        "latitude": 60.16952133178711,
+        "longitude": 24.935449600219727,
+        "city": "Helsinki",
+        "country": "FI"
+      }
+    },
     "Hospital Universitario Virgen Macarena": {
       "id": "I4210090436",
       "partOf": [],
@@ -1989,6 +2049,26 @@
         "country": "FR"
       }
     },
+    "Institute for Molecular Medicine Finland": {
+      "id": "I4210133586",
+      "partOf": ["I133731052"],
+      "location": {
+        "latitude": 60.19139099121094,
+        "longitude": 24.903942108154297,
+        "city": "Helsinki",
+        "country": "FI"
+      }
+    },
+    "Instituto Superior Técnico": {
+      "id": "I4387152517",
+      "partOf": ["I141596103"],
+      "location": {
+        "latitude": 38.71667,
+        "longitude": -9.13333,
+        "city": "Lisbon",
+        "country": "PT"
+      }
+    },
     "Instituto de Biomedicina de Sevilla": {
       "id": "I4210133602",
       "partOf": ["I134820265", "I158283456", "I79238269", "I918821925"],
@@ -2039,6 +2119,16 @@
         "country": "KR"
       }
     },
+    "MIT Computer Science and Artificial Intelligence Laboratory": {
+      "id": "I4405258931",
+      "partOf": ["I63966007"],
+      "location": {
+        "latitude": 42.3751,
+        "longitude": -71.10561,
+        "city": "Cambridge",
+        "country": "US"
+      }
+    },
     "Massachusetts General Hospital": {
       "id": "I4210087915",
       "partOf": ["I48633490"],
@@ -2069,6 +2159,16 @@
         "country": "PL"
       }
     },
+    "NIHR Great Ormond Street Hospital Biomedical Research Centre": {
+      "id": "I4387152181",
+      "partOf": ["I2800129641", "I2800349819", "I34931013"],
+      "location": {
+        "latitude": 51.50853,
+        "longitude": -0.12574,
+        "city": "London",
+        "country": "GB"
+      }
+    },
     "Nanjing University": {
       "id": "I881766915",
       "partOf": [],
@@ -2097,6 +2197,16 @@
         "longitude": -74.00597,
         "city": "New York",
         "country": "US"
+      }
+    },
+    "New York University Abu Dhabi": {
+      "id": "I120250893",
+      "partOf": ["I57206974"],
+      "location": {
+        "latitude": 24.45118,
+        "longitude": 54.39696,
+        "city": "Abu Dhabi",
+        "country": "AE"
       }
     },
     "Newton Wellesley Hospital": {
@@ -2139,6 +2249,16 @@
         "country": "CN"
       }
     },
+    "Rigshospitalet": {
+      "id": "I2802709434",
+      "partOf": ["I2802567020", "I4210145385"],
+      "location": {
+        "latitude": 55.675941467285156,
+        "longitude": 12.565529823303223,
+        "city": "Copenhagen",
+        "country": "DK"
+      }
+    },
     "Sage Bionetworks": {
       "id": "I1323236076",
       "partOf": [],
@@ -2157,6 +2277,16 @@
         "longitude": 114.0683,
         "city": "Shenzhen",
         "country": "CN"
+      }
+    },
+    "Stanford Medicine": {
+      "id": "I4210137306",
+      "partOf": ["I97018004"],
+      "location": {
+        "latitude": 37.42411,
+        "longitude": -122.16608,
+        "city": "Stanford",
+        "country": "US"
       }
     },
     "Stanford University": {
@@ -2207,6 +2337,26 @@
         "longitude": -0.12574,
         "city": "London",
         "country": "GB"
+      }
+    },
+    "UPMC Hillman Cancer Center": {
+      "id": "I4210128526",
+      "partOf": ["I170201317"],
+      "location": {
+        "latitude": 40.44062042236328,
+        "longitude": -79.99588775634766,
+        "city": "Pittsburgh",
+        "country": "US"
+      }
+    },
+    "United States National Library of Medicine": {
+      "id": "I2800548410",
+      "partOf": ["I1299022934", "I1299303238"],
+      "location": {
+        "latitude": 39.15106201171875,
+        "longitude": -77.26525115966797,
+        "city": "Bethesda",
+        "country": "US"
       }
     },
     "University College London": {
@@ -2437,6 +2587,16 @@
         "longitude": 13.06566,
         "city": "Potsdam",
         "country": "DE"
+      }
+    },
+    "University of Science and Technology of China": {
+      "id": "I126520041",
+      "partOf": ["I19820366"],
+      "location": {
+        "latitude": 31.86389,
+        "longitude": 117.28083,
+        "city": "Hefei",
+        "country": "CN"
       }
     },
     "University of Southern Denmark": {
