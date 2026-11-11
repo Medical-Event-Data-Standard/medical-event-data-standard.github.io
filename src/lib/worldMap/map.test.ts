@@ -79,55 +79,39 @@ describe('zooming and panning', () => {
 });
 
 describe('mapMarkers', () => {
-  const institutions = [
-    { name: 'Columbia University', papers: 5 },
-    { name: 'Harvard University', papers: 4 },
-    { name: 'New York University', papers: 3 },
-    { name: 'Massachusetts Institute of Technology', papers: 2 },
-    { name: 'Nowhere University', papers: 2 },
-    { name: 'Yale University', papers: 1 },
-    { name: 'Tufts University', papers: 1 },
-  ];
-  const locations = {
-    'Columbia University': at(40.71427, -74.00597),
-    'New York University': at(40.71427, -74.00597),
-    'Harvard University': at(42.3751, -71.10561),
-    'Massachusetts Institute of Technology': at(42.3751, -71.10561),
+  const place = (name: string, weight: number, location: ReturnType<typeof at>) => ({
+    name,
+    location,
+    weight,
+  });
+  const newYork = at(40.71427, -74.00597);
+  const cambridge = at(42.3751, -71.10561);
+  const places = [
+    place('Columbia University', 5, newYork),
+    place('Harvard University', 4, cambridge),
+    place('New York University', 3, newYork),
+    place('Massachusetts Institute of Technology', 2, cambridge),
     // 1.4 units from New York on the map.
-    'Yale University': at(41.30815, -72.92816),
+    place('Yale University', 1, at(41.30815, -72.92816)),
     // 0.04 units from Cambridge.
-    'Tufts University': at(42.41843, -71.10616),
-  };
-  const papers = [
-    { institutions: ['Columbia University', 'New York University'] },
-    { institutions: ['Columbia University'] },
-    { institutions: ['Harvard University', 'Tufts University'] },
-    { institutions: ['Yale University'] },
+    place('Tufts University', 1, at(42.41843, -71.10616)),
   ];
   const names = (markers: ReturnType<typeof mapMarkers>) =>
-    markers.map(marker => marker.institutions.map(({ name }) => name));
+    markers.map(marker => marker.places.map(({ name }) => name));
 
-  it('gives an institution the pin of the first institution with more papers closer than `near`', () => {
-    expect(mapMarkers(institutions, locations, papers, 1)).toEqual([
-      {
-        location: locations['Columbia University'],
-        institutions: [institutions[0], institutions[2]],
-        papers: 2,
-      },
-      {
-        location: locations['Harvard University'],
-        institutions: [institutions[1], institutions[3], institutions[6]],
-        papers: 1,
-      },
-      { location: locations['Yale University'], institutions: [institutions[5]], papers: 1 },
+  it('gives a place the marker of the first place with more weight closer than `near`', () => {
+    expect(mapMarkers(places, 1)).toEqual([
+      { location: newYork, places: [places[0], places[2]], weight: 8 },
+      { location: cambridge, places: [places[1], places[3], places[5]], weight: 7 },
+      { location: places[4].location, places: [places[4]], weight: 1 },
     ]);
     // Zoomed out further, New Haven joins New York.
-    expect(names(mapMarkers(institutions, locations, papers, 2))).toEqual([
+    expect(names(mapMarkers(places, 2))).toEqual([
       ['Columbia University', 'New York University', 'Yale University'],
       ['Harvard University', 'Massachusetts Institute of Technology', 'Tufts University'],
     ]);
-    // Zoomed in, only institutions at the same place share a pin.
-    expect(names(mapMarkers(institutions, locations, papers, 0.01))).toEqual([
+    // Zoomed in, only places at the same location share a marker.
+    expect(names(mapMarkers(places, 0.01))).toEqual([
       ['Columbia University', 'New York University'],
       ['Harvard University', 'Massachusetts Institute of Technology'],
       ['Yale University'],
@@ -135,14 +119,14 @@ describe('mapMarkers', () => {
     ]);
   });
 
-  it('measures from the pin, so that pins do not grow into chains', () => {
-    const chain = [
-      { name: 'West', papers: 3 },
-      { name: 'Middle', papers: 2 },
-      { name: 'East', papers: 1 },
-    ];
+  it("weighs a marker as asked, e.g. by its places' distinct papers", () => {
+    expect(mapMarkers(places, 1, members => members.length).map(marker => marker.weight)).toEqual([2, 3, 1]);
+  });
+
+  it('measures from the marker, so that markers do not grow into chains', () => {
     // Middle is 0.8 from West and East; East is 1.6 from West.
-    const markers = mapMarkers(chain, { West: at(0, 0), Middle: at(0, 0.8), East: at(0, 1.6) }, [], 1);
+    const chain = [place('West', 3, at(0, 0)), place('Middle', 2, at(0, 0.8)), place('East', 1, at(0, 1.6))];
+    const markers = mapMarkers(chain, 1);
     expect(names(markers)).toEqual([['West', 'Middle'], ['East']]);
     expect(markers[1].location).toEqual(at(0, 1.6));
   });
@@ -190,13 +174,13 @@ describe('fitView', () => {
 });
 
 describe('clusterSize', () => {
-  it('is wider for a two-digit number of institutions', () => {
+  it('is wider for a two-digit number of places', () => {
     expect([clusterSize(2), clusterSize(9), clusterSize(10)]).toEqual([30, 30, 36]);
   });
 });
 
 describe('pinSize', () => {
-  it('grows with the square root of the number of papers, between a smallest and a largest size', () => {
+  it('grows with the square root of the weight, between a smallest and a largest size', () => {
     expect(pinSize(1, 21)).toBe(PIN_SIZE_PX.min);
     expect(pinSize(21, 21)).toBe(PIN_SIZE_PX.max);
     expect(pinSize(40, 21)).toBe(PIN_SIZE_PX.max);

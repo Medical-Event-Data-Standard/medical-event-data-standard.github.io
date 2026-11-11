@@ -5,8 +5,9 @@ import {
   normalizeKeyed,
   normalizeStats,
   normalizeStatsDocument,
+  versionList,
 } from './normalize';
-import { statsDocument } from './testFixtures';
+import { statsDocument, statsDocumentV2 } from './testFixtures';
 
 describe('normalizeDistribution', () => {
   it('keeps the quantiles the page draws', () => {
@@ -35,6 +36,33 @@ describe('normalizeDistribution', () => {
     ).toMatchObject({ suppressed: false, mean: null, p50: 3 });
   });
 
+  it('leaves the 5th and 95th percentiles null where the file leaves them out', () => {
+    // meds_summary_stats 0.0.4 leaves out the 5th and 95th percentiles of fewer than 21 values.
+    expect(normalizeDistribution({ n: 20, mean: 3, std: 1, quantiles: { p25: 2, p50: 3, p75: 4 } })).toEqual({
+      suppressed: false,
+      n: 20,
+      mean: 3,
+      p5: null,
+      p25: 2,
+      p50: 3,
+      p75: 4,
+      p95: null,
+    });
+  });
+
+  it('reads a distribution without its quartiles or median as withheld', () => {
+    expect(normalizeDistribution({ n: 4, mean: 2, std: 1, quantiles: { p50: 2 } })).toEqual({
+      suppressed: true,
+      n: 4,
+      extremes: true,
+    });
+    expect(normalizeDistribution({ n: 2, mean: 1.5, std: 0.7, quantiles: {} })).toEqual({
+      suppressed: true,
+      n: 2,
+      extremes: true,
+    });
+  });
+
   it('keeps a suppressed distribution as suppressed, with only its count', () => {
     expect(normalizeDistribution({ n: 12, suppressed: true })).toEqual({ suppressed: true, n: 12 });
   });
@@ -48,6 +76,9 @@ describe('normalizeDistribution', () => {
       normalizeDistribution({ n: 5, quantiles: { p5: 1, p25: 2, p50: '3', p75: 4, p95: 5 } })
     ).toBeNull();
     expect(normalizeDistribution({ n: Infinity, suppressed: true })).toBeNull();
+    expect(normalizeDistribution({ n: 5, quantiles: [1, 2, 3] })).toBeNull();
+    // A quantile that is there but not a number isn't taken for a withheld one.
+    expect(normalizeDistribution({ n: 30, quantiles: { p5: null, p25: 2, p50: 3, p75: 4 } })).toBeNull();
   });
 });
 
@@ -278,12 +309,42 @@ describe('normalizeStatsDocument', () => {
     expect(doc.stats?.counts.subjects).toBe(500);
   });
 
+  it('normalises a schema-version-2 document, with its per-subject rate and withheld quantiles', () => {
+    const doc = normalizeStatsDocument(statsDocumentV2());
+    expect(doc).toMatchObject({ schemaVersion: 2, toolVersion: '0.0.4', minCellSize: 20, problem: null });
+    expect(doc.stats?.perSubject.eventsPerDay).toEqual({
+      suppressed: false,
+      n: 480,
+      mean: 2.5,
+      p5: 0.05,
+      p25: 0.4,
+      p50: 1.1,
+      p75: 3,
+      p95: 9,
+    });
+    expect(doc.stats?.perSubject.spanDays).toEqual({
+      suppressed: false,
+      n: 20,
+      mean: 300,
+      p5: null,
+      p25: 200,
+      p50: 300,
+      p75: 400,
+      p95: null,
+    });
+    // The other blocks read as in version 1.
+    const { perSubject: v2PerSubject, ...v2 } = doc.stats as NonNullable<typeof doc.stats>;
+    const { perSubject: v1PerSubject, ...v1 } = normalizeStats(statsDocument());
+    expect(v2).toEqual(v1);
+    expect(v2PerSubject.events).toEqual(v1PerSubject.events);
+  });
+
   it('keeps a document with an unknown schema version, without stats, and says why', () => {
-    const doc = normalizeStatsDocument(statsDocument({ stats_schema_version: 2 }));
+    const doc = normalizeStatsDocument(statsDocument({ stats_schema_version: 3 }));
     expect(doc.stats).toBeNull();
-    expect(doc.schemaVersion).toBe(2);
+    expect(doc.schemaVersion).toBe(3);
     expect(doc.problem).toMatch(
-      /schema version is 2, which this page cannot read yet \(it reads version 1\)/
+      /schema version is 3, which this page cannot read yet \(it reads versions 1 and 2\)/
     );
   });
 
@@ -298,6 +359,14 @@ describe('normalizeStatsDocument', () => {
     expect(() => normalizeStatsDocument({ counts: {} })).toThrow('no `stats_schema_version`');
     expect(() => normalizeStatsDocument({ stats_schema_version: '1' })).toThrow('no `stats_schema_version`');
     expect(() => normalizeStatsDocument({ stats_schema_version: 1.5 })).toThrow('no `stats_schema_version`');
+  });
+});
+
+describe('versionList', () => {
+  it('lists one or more versions', () => {
+    expect(versionList([1])).toBe('version 1');
+    expect(versionList([1, 2])).toBe('versions 1 and 2');
+    expect(versionList([1, 2, 3])).toBe('versions 1, 2 and 3');
   });
 });
 

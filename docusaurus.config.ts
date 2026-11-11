@@ -42,7 +42,7 @@ const config: Config = {
   },
 
   plugins: [
-    // Charts the meds_summary_stats files that dataset ETLs publish (docs/intro_pages/3_dataset_statistics.mdx),
+    // Charts the meds_summary_stats files that dataset ETLs publish (src/pages/datasets.mdx),
     // collected from GitHub at build time with a committed snapshot as fallback; see the plugin for details.
     etlSummaryStatsPlugin,
     () => ({
@@ -149,6 +149,7 @@ const config: Config = {
           position: 'left',
           label: 'MEDS-DEV',
         },
+        { to: '/datasets', label: 'Datasets', position: 'left' },
         { to: '/papers', label: 'Papers', position: 'left' },
         {
           type: 'doc',

@@ -1,4 +1,4 @@
-# Which `meds_summary_stats` files the "Dataset statistics" page (docs/intro_pages/3_dataset_statistics.mdx) shows.
+# Which `meds_summary_stats` files the "Datasets" page (src/pages/datasets.mdx) shows.
 # See plugins/etlSummaryStats.ts for how they are collected.
 #
 # Every package under `dataset_etls` in static/data/ecosystem.yaml that has a `github_repo` is searched
@@ -45,8 +45,9 @@ local_files:
     dataset_name: EHRSHOT
     dataset_version: '3.2'
     note: >-
-      Written by meds_summary_stats 0.0.3 (git tag 0.0.3) with the default suppression (min_cell_size 20,
-      min_numeric_cell_size 20), from a MEDS_transforms 0.6.7 build of EHRSHOT (MEDS 0.4.1). The version is
+      Written by meds_summary_stats 0.0.4 (git tag 0.0.4) with the default suppression (min_cell_size 20,
+      min_numeric_cell_size 20), from the same MEDS_transforms 0.6.7 build of EHRSHOT (MEDS 0.4.1) as the earlier
+      0.0.3 file, whose values it repeats, adding per_subject.measurements_per_day. The version is
       EHRSHOT's current version on Redivis, v3.2 (https://stanford.redivis.com/datasets/53gc-8rhx41kgt,
       DOI 10.57761/0gv9-nd83; versions and release notes from
       https://redivis.com/api/v1/datasets/ShahLab.ehrshot/versions, checked 2026-11-10). The file's subject count
@@ -61,8 +62,9 @@ local_files:
     dataset_name: INSPECT
     dataset_version: '1.2'
     note: >-
-      Written by meds_summary_stats 0.0.3 (git tag 0.0.3) with the default suppression (min_cell_size 20,
-      min_numeric_cell_size 20), from a meds_etl.omop build of INSPECT (MEDS 0.3.3). The version is the current
+      Written by meds_summary_stats 0.0.4 (git tag 0.0.4) with the default suppression (min_cell_size 20,
+      min_numeric_cell_size 20), from the same meds_etl.omop build of INSPECT (MEDS 0.3.3) as the earlier 0.0.3
+      file, whose values it repeats, adding per_subject.measurements_per_day. The version is the current
       version of INSPECT EHR on Redivis, v1.2 (https://stanford.redivis.com/datasets/dzc6-9jyt6gapt,
       DOI 10.57761/ak51-d519; versions and release notes from
       https://redivis.com/api/v1/datasets/ShahLab.inspect_ehr/versions, checked 2026-11-10). Its MEDS files are

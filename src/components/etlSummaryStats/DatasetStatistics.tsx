@@ -38,10 +38,12 @@ import {
   vocabularyChart,
 } from '@site/src/lib/etlSummaryStats/charts';
 import {
+  type DatasetLocations as DatasetLocationsConfig,
   ETL_SUMMARY_STATS_PLUGIN,
-  type EtlStatsData,
   type EtlStatsEntry,
+  type EtlStatsPageData,
 } from '@site/src/lib/etlSummaryStats/types';
+import DatasetLocations from './DatasetLocations';
 import {
   BubbleKey,
   COMPACT_TABLE,
@@ -68,6 +70,7 @@ const NARROW_SCREEN = '(max-width: 760px)';
 /** The page's sections, in order: their heading and its anchor. */
 export const SECTIONS = {
   files: { id: 'stats-files', title: 'Datasets and their stats files' },
+  locations: { id: 'dataset-locations', title: 'Where the datasets come from' },
   size: { id: 'dataset-size', title: 'Dataset size' },
   depth: { id: 'depth-breadth', title: 'Depth vs. breadth' },
   perSubject: { id: 'per-subject', title: 'How much data each subject has' },
@@ -244,11 +247,14 @@ function RowLabels({
   );
 }
 
+/** No recorded locations, for global data without them. */
+const NO_LOCATIONS: DatasetLocationsConfig = { locations: [], unplaced: [] };
+
 /** Marks a dataset name and version set in this site's configuration rather than taken from the stats file. */
 const OVERRIDE_MARK = '†';
 
 export default function DatasetStatistics(): React.JSX.Element {
-  const data = usePluginData(ETL_SUMMARY_STATS_PLUGIN) as EtlStatsData | undefined;
+  const data = usePluginData(ETL_SUMMARY_STATS_PLUGIN) as EtlStatsPageData | undefined;
   const [includeDemo, setIncludeDemo] = useState(true);
   const [perSubjectMetric, setPerSubjectMetric] = useState<PerSubjectMetric>('events');
   const [breadth, setBreadth] = useState<BreadthMeasure>('subjects');
@@ -277,6 +283,7 @@ export default function DatasetStatistics(): React.JSX.Element {
   const pace = useMemo(() => paceChart(entries, scales.pace?.x), [entries, scales.pace]);
   const coverage = useMemo(() => coverageChart(entries), [entries]);
   const datasetLabels = useMemo(() => allEntries.map(entry => entry.label), [allEntries]);
+  const shownLabels = useMemo(() => entries.map(entry => entry.label), [entries]);
   const codeTail = useMemo(
     () => codeTailChart(entries, highlight, datasetLabels, { narrow, scales: scales.tail }),
     [entries, highlight, datasetLabels, narrow, scales.tail]
@@ -387,6 +394,12 @@ export default function DatasetStatistics(): React.JSX.Element {
         )}
       </Box>
 
+      <DatasetLocations
+        {...SECTIONS.locations}
+        config={data.locations ?? NO_LOCATIONS}
+        labels={shownLabels}
+      />
+
       <ChartSection
         {...SECTIONS.size}
         description={`Events (rows) and distinct codes in each dataset, side by side, with the most events first. ${valueAxisSentence(isLog('size', size))} The table below also lists each dataset's subjects.`}
@@ -451,6 +464,7 @@ export default function DatasetStatistics(): React.JSX.Element {
           />,
           ...scaleToggles('perSubject', perSubject),
         ]}
+        notes={perSubject.notes}
         skipped={perSubject.skipped}
         table={perSubject.table}
       >
@@ -468,15 +482,18 @@ export default function DatasetStatistics(): React.JSX.Element {
           <>
             How densely each dataset records data: each subject&apos;s own rate, their timed events divided by
             the days from their earliest to their latest one, as <code>per_subject.measurements_per_day</code>{' '}
-            in a stats file gives it. Birth and death records are left out, so that birth dates and registry
-            deaths don&apos;t stretch the span, and subjects with fewer than two distinct timestamps have no
-            rate and aren&apos;t counted. Each box runs from the 25th to the 75th percentile of subjects, with
-            the median marked inside, and the whiskers reach the 5th and 95th percentiles. Very short records
-            give very large rates, so the chart shows these percentiles rather than the mean. The datasets are
-            ranked by their median.{pace.figure ? ` ${valueAxisSentence(isLog('pace', pace))}` : ''}
+            in a stats file gives it. <code>meds_summary_stats</code> writes this from version 0.0.4 (stats
+            schema version 2) on, so files written by earlier versions don&apos;t have it. Birth and death
+            records are left out, so that birth dates and registry deaths don&apos;t stretch the span, and
+            subjects with fewer than two distinct timestamps have no rate and aren&apos;t counted. Each box
+            runs from the 25th to the 75th percentile of subjects, with the median marked inside, and the
+            whiskers reach the 5th and 95th percentiles. Very short records give very large rates, so the
+            chart shows these percentiles rather than the mean. The datasets are ranked by their median.
+            {pace.figure ? ` ${valueAxisSentence(isLog('pace', pace))}` : ''}
           </>
         }
         controls={scaleToggles('pace', pace)}
+        notes={pace.notes}
         skipped={pace.skipped}
         table={pace.table}
       >

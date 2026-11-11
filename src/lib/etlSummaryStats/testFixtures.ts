@@ -105,6 +105,31 @@ export function statsDocument(overrides: Record<string, unknown> = {}): Record<s
   };
 }
 
+/**
+ * A schema-version-2 document, as `meds_summary_stats` 0.0.4 writes it: the version-1 document plus each subject's
+ * measurements per day, with the quantiles that would depend on the smallest or largest value left out (the 1st and
+ * 99th percentiles of fewer than 101 values, and the 5th and 95th of fewer than 21).
+ */
+export function statsDocumentV2(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  const v1 = statsDocument();
+  return {
+    ...v1,
+    stats_schema_version: 2,
+    meds_summary_stats_version: '0.0.4',
+    per_subject: {
+      ...(v1.per_subject as Record<string, unknown>),
+      measurements_per_day: {
+        n: 480,
+        mean: 2.5,
+        std: 4,
+        quantiles: { p1: 0.01, p5: 0.05, p25: 0.4, p50: 1.1, p75: 3, p95: 9, p99: 30 },
+      },
+      span_days: { n: 20, mean: 300, std: 100, quantiles: { p25: 200, p50: 300, p75: 400 } },
+    },
+    ...overrides,
+  };
+}
+
 const quantiles = (scale: number) => ({
   suppressed: false as const,
   n: 100,
