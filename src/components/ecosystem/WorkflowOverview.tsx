@@ -5,6 +5,7 @@ import type { SvgIconComponent } from '@mui/icons-material';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import BuildIcon from '@mui/icons-material/Build';
+import DatasetIcon from '@mui/icons-material/Dataset';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import ModelTrainingIcon from '@mui/icons-material/ModelTraining';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
@@ -28,9 +29,10 @@ import { UNSTYLED_LIST } from './EcosystemFlowchart';
 // The quick start visual guide at the top of "Welcome to MEDS" (docs/intro_pages/1_intro.mdx): the MEDS workflow
 // as a timeline, top to bottom, from raw EHR data to a benchmark result. After the first step, converting the data,
 // a milestone shows the data in MEDS, with its four columns. Each step gives its tutorial pages, if the tutorial
-// has any, and how many tools static/data/ecosystem.yaml lists for it, naming a few. Each tool named links to its
-// tile on the "Which tool do I use for what?" page, which selects it, and a line under the timeline links to that
-// page, which lists every tool by step.
+// has any; how many tools static/data/ecosystem.yaml lists for it, naming a few (those in `STAGE_FEATURED_TOOLS`,
+// or else the first of its categories); and any other pages of the site for it, such as the Datasets tab for
+// converting data. Each tool named links to its tile on the "Which tool do I use for what?" page, which selects it,
+// and a line under the timeline links to that page, which lists every tool by step.
 //
 // The icons are Material Icons, from @mui/icons-material. This site uses MUI's default theme, which does not follow
 // Docusaurus's dark mode, so the colors here come from Infima's variables, which do.
@@ -70,6 +72,36 @@ export const STAGE_TUTORIALS: Partial<Record<StageId, TutorialLink[]>> = {
 export const MEDS_DATA_TUTORIAL: TutorialLink = {
   title: 'Getting Familiar with MEDS',
   to: `${TUTORIAL_PATH}/MEDS_intro`,
+};
+
+/** A tool to name at a step, by its name in static/data/ecosystem.yaml, and the name to show, if different. */
+export interface FeaturedTool {
+  name: string;
+  label?: string;
+}
+
+/**
+ * The tools to name at a step, instead of the first few of its categories (see `examplePackages`). Tools that the
+ * step doesn't list are skipped.
+ */
+export const STAGE_FEATURED_TOOLS: Partial<Record<StageId, FeaturedTool[]>> = {
+  convert: [
+    { name: 'ETL Template', label: 'ETL_MEDS_Template' },
+    { name: 'OMOP (via dedicated OMOP_MEDS)', label: 'OMOP_MEDS' },
+    { name: 'FHIR', label: 'FHIR_MEDS' },
+  ],
+};
+
+/** Another page of the site for a step, linked to as "<text> <title>". */
+export interface PageLink {
+  text: string;
+  title: string;
+  to: string;
+}
+
+/** Other pages of the site for each step, besides its tutorials and tools. */
+export const STAGE_PAGES: Partial<Record<StageId, PageLink[]>> = {
+  convert: [{ text: 'Public datasets already in MEDS: see the', title: 'Datasets tab', to: '/datasets' }],
 };
 
 /** The icon of each step of the workflow. */
@@ -113,21 +145,37 @@ function listParts<T>(items: T[]): (T | string)[] {
   );
 }
 
+/** The tools to name at a step, with the names to show: its featured tools, if any, else the first few. */
+function namedTools(section: WorkflowSection): { pkg: Package; label: string }[] {
+  const packages = stagePackages(section);
+  const featured = (STAGE_FEATURED_TOOLS[section.stage.id as StageId] ?? []).flatMap(({ name, label }) => {
+    const pkg = packages.find(candidate => candidate.name === name);
+    return pkg ? [{ pkg, label: label ?? pkg.name }] : [];
+  });
+  return featured.length > 0
+    ? featured
+    : examplePackages(section, EXAMPLE_COUNT).map(pkg => ({ pkg, label: pkg.name }));
+}
+
 /**
  * What a step's tools are: their number and the names of a few, such as "25 tools, such as A, B and C", with the
  * names rendered by `name`.
  */
-function summarize<T>(section: WorkflowSection, name: (pkg: Package) => T): (T | string)[] {
+function summarize<T>(section: WorkflowSection, name: (pkg: Package, label: string) => T): (T | string)[] {
   const total = stagePackages(section).length;
   if (total === 0) return ['No tools listed yet'];
-  const names = listParts(examplePackages(section, EXAMPLE_COUNT).map(name));
+  const named = namedTools(section);
   const count = `${total} ${total === 1 ? 'tool' : 'tools'}`;
-  return [count, total > EXAMPLE_COUNT ? ', such as ' : ': ', ...names];
+  return [
+    count,
+    total > named.length ? ', such as ' : ': ',
+    ...listParts(named.map(({ pkg, label }) => name(pkg, label))),
+  ];
 }
 
 /** What a step's tools are, as text, such as "25 tools, such as A, B and C". */
 export function toolSummary(section: WorkflowSection): string {
-  return summarize(section, pkg => pkg.name).join('');
+  return summarize(section, (_, label) => label).join('');
 }
 
 /**
@@ -143,14 +191,14 @@ function ToolSummary({
 }): React.JSX.Element {
   return (
     <>
-      {summarize(section, pkg => (
+      {summarize(section, (pkg, label) => (
         <Box
           key={pkg.name}
           component={Link}
           to={`${WORKFLOW_PAGE_PATH}#${toolIds.get(pkg.name)}`}
           sx={DARK_MODE_LINK}
         >
-          {pkg.name}
+          {label}
         </Box>
       ))}
     </>
@@ -179,6 +227,17 @@ function TutorialLine({ tutorial }: { tutorial: TutorialLink }): React.JSX.Eleme
   );
 }
 
+function PageLine({ page }: { page: PageLink }): React.JSX.Element {
+  return (
+    <IconLine icon={DatasetIcon}>
+      {page.text}{' '}
+      <Box component={Link} to={page.to} sx={{ fontWeight: 600, ...DARK_MODE_LINK }}>
+        {page.title}
+      </Box>
+    </IconLine>
+  );
+}
+
 interface EntryProps {
   icon: SvgIconComponent;
   /** What the entry is, shown above its title, such as "Step 1". */
@@ -192,11 +251,13 @@ interface EntryProps {
   tutorials?: TutorialLink[];
   /** The step's tools (see `ToolSummary`). */
   tools?: React.ReactNode;
+  /** Other pages of the site for the step, listed after its tools. */
+  pages?: PageLink[];
 }
 
 /**
- * An entry of the timeline: an icon on the line, then the entry's label, title and description, and its tutorials
- * and tools, which sit beside the description where the guide is wide enough.
+ * An entry of the timeline: an icon on the line, then the entry's label, title and description, and its tutorials,
+ * tools and other pages, which sit beside the description where the guide is wide enough.
  */
 function Entry({
   icon: Icon,
@@ -207,8 +268,9 @@ function Entry({
   extra,
   tutorials = [],
   tools,
+  pages = [],
 }: EntryProps): React.JSX.Element {
-  const hasLinks = tutorials.length > 0 || tools !== undefined;
+  const hasLinks = tutorials.length > 0 || tools !== undefined || pages.length > 0;
   return (
     <Box
       component="li"
@@ -296,6 +358,9 @@ function Entry({
               <TutorialLine key={`${tutorial.to}#${tutorial.section ?? ''}`} tutorial={tutorial} />
             ))}
             {tools !== undefined && <IconLine icon={BuildIcon}>{tools}</IconLine>}
+            {pages.map(page => (
+              <PageLine key={page.to} page={page} />
+            ))}
           </Box>
         )}
       </Box>
@@ -343,6 +408,7 @@ export default function WorkflowOverview({ data }: { data: Record<string, RawCat
         title={section.stage.title}
         description={section.stage.description}
         tutorials={STAGE_TUTORIALS[id]}
+        pages={STAGE_PAGES[id]}
         tools={<ToolSummary section={section} toolIds={toolIds} />}
       />
     );

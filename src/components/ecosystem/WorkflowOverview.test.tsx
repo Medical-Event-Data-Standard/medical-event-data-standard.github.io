@@ -8,6 +8,7 @@ import { render, screen, within } from '@testing-library/react';
 
 import WorkflowOverview, {
   MEDS_DATA_TUTORIAL,
+  STAGE_FEATURED_TOOLS,
   STAGE_TUTORIALS,
   WORKFLOW_PAGE_PATH,
   toolSummary,
@@ -50,11 +51,16 @@ const entries = () =>
     .getAllByRole('listitem')
     .filter(item => item.parentElement === workflow());
 
-/** The steps' lines of tools, in order: the last item of each step's list of links. */
+/** The steps' lines of tools, in order. */
 const toolLines = () =>
   entries()
     .filter(item => /^Step /.test(item.querySelector('p')!.textContent!))
-    .map(item => within(item).getAllByRole('listitem').at(-1)!);
+    .map(
+      item =>
+        within(item)
+          .getAllByRole('listitem')
+          .find(line => /^(\d+ tools?\b|No tools)/.test(line.textContent!))!
+    );
 
 /** The sections of the flowchart for the given data, as the guide shows them. */
 function sectionsOf(data: Record<string, RawCategory>) {
@@ -104,7 +110,7 @@ describe('WorkflowOverview', () => {
     const tutorialLinks = (item: HTMLElement) =>
       within(item)
         .queryAllByRole('link')
-        .filter(link => !link.getAttribute('href')!.startsWith(WORKFLOW_PAGE_PATH))
+        .filter(link => link.getAttribute('href')!.startsWith('/docs/tutorials/'))
         .map(link => [link.textContent, link.getAttribute('href')]);
 
     const items = entries();
@@ -131,9 +137,14 @@ describe('WorkflowOverview', () => {
 
     const links = toolLines().flatMap(line => within(line).getAllByRole('link'));
     expect(links.length).toBeGreaterThanOrEqual(7);
+    const tileLinks = new Set([...toolIds.values()].map(id => `${WORKFLOW_PAGE_PATH}#${id}`));
     for (const link of links) {
-      expect(link).toHaveAttribute('href', `${WORKFLOW_PAGE_PATH}#${toolIds.get(link.textContent!)}`);
+      expect(tileLinks).toContain(link.getAttribute('href'));
     }
+    expect(screen.getByRole('link', { name: 'OMOP_MEDS' })).toHaveAttribute(
+      'href',
+      `${WORKFLOW_PAGE_PATH}#${toolIds.get('OMOP (via dedicated OMOP_MEDS)')}`
+    );
     expect(screen.getByRole('link', { name: 'ACES' })).toHaveAttribute(
       'href',
       `${WORKFLOW_PAGE_PATH}#tool-aces`
@@ -143,6 +154,26 @@ describe('WorkflowOverview', () => {
       .getAllByRole('link')
       .filter(link => link.getAttribute('href')!.startsWith(WORKFLOW_PAGE_PATH) && !links.includes(link));
     expect(others.map(link => link.textContent)).toEqual(['See which tool to use for what']);
+  });
+
+  it('names the chosen tools for converting data, and links to the Datasets tab', () => {
+    render(<WorkflowOverview data={ecosystemYaml} />);
+    const convert = entries()[1];
+
+    expect(toolLines()[0].textContent).toMatch(
+      /^\d+ tools, such as ETL_MEDS_Template, OMOP_MEDS and FHIR_MEDS$/
+    );
+    expect(within(convert).getByRole('link', { name: 'Datasets tab' })).toHaveAttribute('href', '/datasets');
+    expect(convert).toHaveTextContent('Public datasets already in MEDS: see the Datasets tab');
+  });
+
+  it('features only tools that its step lists', () => {
+    const sections = sectionsOf(ecosystemYaml);
+    for (const [stageId, tools] of Object.entries(STAGE_FEATURED_TOOLS)) {
+      const section = sections.find(({ stage }) => stage.id === stageId)!;
+      const names = stagePackages(section).map(pkg => pkg.name);
+      for (const { name } of tools!) expect(names).toContain(name);
+    }
   });
 
   it('links only to tutorial pages that exist', () => {
@@ -162,8 +193,6 @@ describe('WorkflowOverview', () => {
       expect(stagePackages(section).length).toBeGreaterThan(0);
     }
     expect(toolLines().map(line => line.textContent)).toEqual(steps.map(toolSummary));
-    // The examples include the dataset ETLs, not only the ETL templates listed before them.
-    expect(toolLines()[0].textContent).toMatch(/^\d+ tools, such as .*MIMIC-IV/);
     expect(toolLines()[3].textContent).toMatch(/^\d+ tools?(:|, such as) ACES/);
 
     // Every tool is counted once, including those used at any step. Only this line links to the tools.
