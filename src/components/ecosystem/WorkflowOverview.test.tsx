@@ -116,17 +116,17 @@ describe('WorkflowOverview', () => {
     const items = entries();
     expect(items.map(tutorialLinks)).toEqual([
       [],
-      [['Converting to MEDS', '/docs/tutorials/ml4h2025/converting_to_MEDS']],
-      [['Getting Familiar with MEDS', '/docs/tutorials/ml4h2025/MEDS_intro']],
+      [['Converting to MEDS', '/docs/tutorials/converting_to_MEDS']],
+      [['Getting Familiar with MEDS', '/docs/tutorials/MEDS_intro']],
       [['Visualizing and Exploring MEDS Data', '/docs/tutorials/visualizing_MEDS_data']],
-      [['Pre-processing MEDS Data', '/docs/tutorials/ml4h2025/preprocessing_MEDS_data']],
-      [['Extracting a Prediction Task', '/docs/tutorials/ml4h2025/extracting_prediction_tasks']],
+      [['Pre-processing MEDS Data', '/docs/tutorials/preprocessing_MEDS_data']],
+      [['Extracting a Prediction Task', '/docs/tutorials/extracting_prediction_tasks']],
       [
-        ['Build a Tabular Baseline', '/docs/tutorials/ml4h2025/build_a_model_tabular'],
-        ['Build a Neural Network', '/docs/tutorials/ml4h2025/build_a_model_NN'],
+        ['Build a Tabular Baseline', '/docs/tutorials/build_a_model_tabular'],
+        ['Build a Neural Network', '/docs/tutorials/build_a_model_NN'],
       ],
-      [['Build a Tabular Baseline', '/docs/tutorials/ml4h2025/build_a_model_tabular']],
-      [['Compare with MEDS-DEV', '/docs/tutorials/ml4h2025/compare_with_meds_dev']],
+      [['Build a Tabular Baseline', '/docs/tutorials/build_a_model_tabular']],
+      [['Compare with MEDS-DEV', '/docs/tutorials/compare_with_meds_dev']],
     ]);
     expect(items[7]).toHaveTextContent('Tutorial: Build a Tabular Baseline (Evaluating the Model)');
   });

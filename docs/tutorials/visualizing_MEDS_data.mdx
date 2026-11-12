@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 8
 sidebar_label: Visualizing and Exploring MEDS Data
 description:
   The current tools for looking inside a MEDS dataset (MEDS-Inspect, MEDS_visualizations, meds_summary_stats,
@@ -13,7 +13,7 @@ before you pre-process it or define tasks on it. This page goes through the tool
 has for that, one section per tool: what it is for, how to install and run it, what you get, and how mature it
 is. We ran each tool on the openly available
 [MIMIC-IV demo in MEDS](https://physionet.org/content/mimic-iv-demo-meds/0.0.1/), the same data the
-[ML4H 2025 tutorial](./ml4h2025/index.mdx) uses, and every output and figure on this page comes from those runs.
+[other tutorials](./index.mdx) use, and every output and figure on this page comes from those runs.
 
 :::note[Tested versions]
 
@@ -34,7 +34,7 @@ environment.
 - **Compare datasets.** How does your dataset compare with other MEDS datasets, or with the previous version of
   itself?
 - **Plan pre-processing and tasks.** Rare codes, outlying values and the length of subjects' histories decide
-  which [pre-processing](./ml4h2025/preprocessing_MEDS_data.mdx) steps you need and how long an input window
+  which [pre-processing](./preprocessing_MEDS_data.mdx) steps you need and how long an input window
   should be.
 
 ## Which tool for which question?
@@ -73,7 +73,7 @@ way to answer "what is in here?": it shows the dataset's metadata and size, and 
 - **Per subject Codes**: a histogram of the number of measurements per subject;
 - **Top Codes**: the most frequent codes;
 - **Subject Timeline**: one subject's codes over time. If the dataset folder has a `tasks/` folder of task labels
-  (such as [ACES](./ml4h2025/extracting_prediction_tasks.mdx) output), the subject's prediction times and labels
+  (such as [ACES](./extracting_prediction_tasks.mdx) output), the subject's prediction times and labels
   are drawn on top (we did not try this);
 - **Code Distribution**: a histogram of the numeric values of one code;
 - **Code Search**: a search of `metadata/codes.parquet` by code, description or parent code;
@@ -328,7 +328,7 @@ $ compare_MEDS_summary_stats demo_summary_stats.json demo_summary_stats.json
 PASS - 299 paths checked, 5 ignored, no findings.
 ```
 
-Compared with the output of the cleaning pipeline of the [pre-processing tutorial](./ml4h2025/preprocessing_MEDS_data.mdx)
+Compared with the output of the cleaning pipeline of the [pre-processing tutorial](./preprocessing_MEDS_data.mdx)
 (which filters subjects and rare codes and removes outlying numeric values), it reports what that pipeline
 changed. A few of the findings:
 
@@ -427,7 +427,7 @@ The [MEDS ML4H 2025 tutorial repository](https://github.com/Medical-Event-Data-S
 has a notebook,
 [`ACES_visualizer.ipynb`](https://github.com/Medical-Event-Data-Standard/MEDS_ML4H_2025_Tutorial/blob/main/ACES_visualizer.ipynb)
 ([open in Colab](https://colab.research.google.com/github/Medical-Event-Data-Standard/MEDS_ML4H_2025_Tutorial/blob/main/ACES_visualizer.ipynb)),
-added on 2025-12-01, that draws the windows of an [ACES](./ml4h2025/extracting_prediction_tasks.mdx) task
+added on 2025-12-01, that draws the windows of an [ACES](./extracting_prediction_tasks.mdx) task
 configuration as a timeline relative to the trigger event. It reads a configuration, not data. The notebook draws
 the `short_LOS` task of the tutorial:
 
@@ -452,5 +452,5 @@ and an end at an event (`start -> <predicate>`) is drawn 72 hours after the wind
 | suMEDS                                   | 0.6.3   | 3.12   | Works (without enrichment)                                                 |
 | ACES_visualizer.ipynb (commit `9331911`) | n/a     | 3.12   | Works with plotly 6.5.2; fails with plotly 7.1.0                           |
 
-For the next step after exploring, see [Pre-processing MEDS Data](./ml4h2025/preprocessing_MEDS_data.mdx). For
+For the next step after exploring, see [Pre-processing MEDS Data](./preprocessing_MEDS_data.mdx). For
 every tool of every step, see [Which tool do I use for what?](../intro_pages/3_ecosystem_workflow.mdx).
