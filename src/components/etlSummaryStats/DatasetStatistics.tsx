@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Box, FormControlLabel, Paper, Switch, Typography, useMediaQuery } from '@mui/material';
 import { usePluginData } from '@docusaurus/useGlobalData';
 import Heading from '@theme/Heading';
@@ -43,6 +43,7 @@ import {
   type EtlStatsEntry,
   type EtlStatsPageData,
 } from '@site/src/lib/etlSummaryStats/types';
+import { type LiveStats, isLiveTracked, loadLiveStats } from '@site/src/lib/etlSummaryStats/live';
 import DatasetLocations from './DatasetLocations';
 import {
   BubbleKey,
@@ -57,9 +58,10 @@ import {
 } from './parts';
 
 // The "Dataset statistics" page: charts of the `meds_summary_stats` files that dataset ETLs publish, and of those
-// committed to this site's repository, collected at build time by plugins/etlSummaryStats.ts. One filter (include
-// demo datasets) above everything it scopes, then a summary table with each file's provenance, then one section per
-// chart.
+// committed to this site's repository, collected at build time by plugins/etlSummaryStats.ts. Once the page is open,
+// the ETLs' files are reloaded from their repositories' default branches, so the page shows their current versions
+// (see src/lib/etlSummaryStats/live.ts). One filter (include demo datasets) above everything it scopes, then a
+// summary table with each file's provenance, then one section per chart.
 
 /**
  * Screens up to this width get the phone layouts: smaller bubbles and labels laid out for a narrow plot in the
@@ -253,8 +255,73 @@ const NO_LOCATIONS: DatasetLocationsConfig = { locations: [], unplaced: [] };
 /** Marks a dataset name and version set in this site's configuration rather than taken from the stats file. */
 const OVERRIDE_MARK = '†';
 
+/** Whether the current versions of the ETLs' files are being loaded, were loaded, or can't be. */
+export type LiveState =
+  | { status: 'checking' }
+  | { status: 'done'; live: LiveStats }
+  | { status: 'unavailable' };
+
+/**
+ * Loads the current versions of the ETLs' stats files from GitHub once the page is open (see
+ * src/lib/etlSummaryStats/live.ts). Until then, and wherever that fails, the page shows the versions the build
+ * collected. Where the browser has no `fetch` (and when rendering at build time), it does nothing.
+ */
+function useLiveStats(data: EtlStatsPageData | undefined): LiveState {
+  const [state, setState] = useState<LiveState>({ status: 'checking' });
+  useEffect(() => {
+    if (!data) return undefined;
+    if (typeof fetch !== 'function') {
+      setState({ status: 'unavailable' });
+      return undefined;
+    }
+    let cancelled = false;
+    setState({ status: 'checking' });
+    loadLiveStats(data.datasets, (url, init) => fetch(url, init)).then(live => {
+      if (!cancelled) setState({ status: 'done', live });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [data]);
+  return state;
+}
+
+/** "A", "A and B", "A, B and C". */
+const listNames = (names: string[]): string =>
+  names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+
+/** What the page says about loading the current versions of the ETLs' files, of which it tracks `tracked`. */
+export function liveNote(state: LiveState, tracked: number): string {
+  if (tracked === 0) return '';
+  if (state.status === 'checking')
+    return ' Checking the ETLs’ repositories for newer versions of their files…';
+  if (state.status === 'unavailable' || state.live.loaded === 0) {
+    return (
+      ' Their current versions could not be loaded from GitHub, so the page shows the versions this site ' +
+      'collected.'
+    );
+  }
+  const { loaded, changed, failed } = state.live;
+  const files =
+    failed.length === 0
+      ? loaded === 1
+        ? 'the ETL’s file'
+        : `the ${loaded} ETL files`
+      : `${loaded} of the ${tracked} ETL files`;
+  const since =
+    changed === 0
+      ? `${loaded === 1 ? 'it is the same as the version' : 'they are the same as the versions'} this site collected`
+      : `${changed} ${changed === 1 ? 'has' : 'have'} changed since this site collected ${changed === 1 ? 'it' : 'them'}`;
+  const missed =
+    failed.length === 0
+      ? ''
+      : ` ${listNames(failed)} could not be loaded, so ${failed.length === 1 ? 'it shows the version' : 'they show the versions'} this site collected.`;
+  return ` The page loaded the current version${loaded === 1 ? '' : 's'} of ${files} from GitHub when you opened it; ${since}.${missed}`;
+}
+
 export default function DatasetStatistics(): React.JSX.Element {
   const data = usePluginData(ETL_SUMMARY_STATS_PLUGIN) as EtlStatsPageData | undefined;
+  const liveState = useLiveStats(data);
   const [includeDemo, setIncludeDemo] = useState(true);
   const [perSubjectMetric, setPerSubjectMetric] = useState<PerSubjectMetric>('events');
   const [breadth, setBreadth] = useState<BreadthMeasure>('subjects');
@@ -265,7 +332,9 @@ export default function DatasetStatistics(): React.JSX.Element {
   const [scales, setScales] = useState<Partial<Record<ScaledChart, AxisScales>>>({});
   const narrow = useMediaQuery(NARROW_SCREEN);
 
-  const allEntries = useMemo(() => orderDatasets(data?.datasets ?? []), [data]);
+  // The current versions of the ETLs' files once they are loaded, else those the build collected.
+  const datasets = liveState.status === 'done' ? liveState.live.datasets : data?.datasets;
+  const allEntries = useMemo(() => orderDatasets(datasets ?? []), [datasets]);
   const entries = useMemo(
     () => allEntries.filter(entry => includeDemo || entry.variant !== 'demo'),
     [allEntries, includeDemo]
@@ -345,8 +414,9 @@ export default function DatasetStatistics(): React.JSX.Element {
             date it was extracted.
           </>
         )}
-        {data.updatedAt ? ` This site collected the files on ${formatDate(data.updatedAt)}.` : ''} Cells
-        backed by
+        {data.updatedAt ? ` This site collected the files on ${formatDate(data.updatedAt)}.` : ''}
+        <span aria-live="polite">{liveNote(liveState, data.datasets.filter(isLiveTracked).length)}</span>{' '}
+        Cells backed by
         {minCellSizes.length === 1 ? ` fewer than ${minCellSizes[0]} subjects` : ' too few subjects'} are
         suppressed by <code>meds_summary_stats</code>, and are shown as suppressed, never filled in. Every row
         of a dataset counts as one event, including rows that share a subject and time.

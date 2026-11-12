@@ -1,11 +1,12 @@
 /** @jest-environment jsdom */
 import React from 'react';
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { usePluginData } from '@docusaurus/useGlobalData';
 
-import DatasetStatistics, { DATASET_STATISTICS_TOC } from './DatasetStatistics';
-import { etlStats, statsEntry } from '@site/src/lib/etlSummaryStats/testFixtures';
+import DatasetStatistics, { DATASET_STATISTICS_TOC, liveNote } from './DatasetStatistics';
+import { etlStats, statsDocument, statsEntry } from '@site/src/lib/etlSummaryStats/testFixtures';
+import { liveStatsUrl } from '@site/src/lib/etlSummaryStats/live';
 import {
   type DatasetLocation,
   type EtlStats,
@@ -116,6 +117,69 @@ const data: EtlStatsData = {
     { githubRepo: 'org/eICU_MEDS', name: 'eICU' },
   ],
 };
+
+describe('DatasetStatistics: current versions from GitHub', () => {
+  afterEach(() => {
+    delete (globalThis as { fetch?: unknown }).fetch;
+  });
+
+  /** A response with the given body, as `fetch` would return it. */
+  const respond = (body: unknown, status = 200): Response =>
+    ({ ok: status >= 200 && status < 300, status, text: async () => JSON.stringify(body) }) as Response;
+
+  it("shows the current version of each ETL's file once it is loaded, and says which couldn't be", async () => {
+    // Big's file on GitHub is newer than the one the build collected; Demo's is gone, and Future's can't be reached.
+    const current = statsDocument({
+      meds_summary_stats_version: '0.0.9',
+      extracted_at: '2026-11-12T08:00:00',
+    });
+    const fetchMock = jest.fn(async (url: string) => {
+      if (url === liveStatsUrl(big)) return respond(current);
+      if (url === liveStatsUrl(demo)) return respond({}, 404);
+      throw new TypeError('Failed to fetch');
+    });
+    (globalThis as { fetch?: unknown }).fetch = fetchMock;
+    mockUsePluginData.mockReturnValue(data);
+    render(<DatasetStatistics />);
+
+    // First the versions the build collected, while the current ones load.
+    const table = () => within(sectionOf('Datasets and their stats files')).getAllByRole('table')[0];
+    expect(within(table()).queryByText('1 (tool 0.0.9)')).not.toBeInTheDocument();
+    expect(screen.getByText(/Checking the ETLs’ repositories for newer versions/)).toBeInTheDocument();
+
+    await waitFor(() => expect(within(table()).getByText('1 (tool 0.0.9)')).toBeInTheDocument());
+    expect(within(table()).getByText('2 (tool 0.0.4)')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(
+      screen.getByText(
+        /The page loaded the current version of 1 of the 3 ETL files from GitHub when you opened it; 1 has changed since this site collected it\. Demo and Future could not be loaded, so they show the versions this site collected\./
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('says what it loaded, in each case', () => {
+    const done = (loaded: number, changed: number, failed: string[] = []) =>
+      liveNote(
+        {
+          status: 'done',
+          live: { datasets: [], loaded, changed, failed, checkedAt: '2026-11-12T09:00:00Z' },
+        },
+        loaded + failed.length
+      );
+    expect(done(15, 0)).toBe(
+      ' The page loaded the current versions of the 15 ETL files from GitHub when you opened it; they are the same as the versions this site collected.'
+    );
+    expect(done(1, 1)).toBe(
+      ' The page loaded the current version of the ETL’s file from GitHub when you opened it; 1 has changed since this site collected it.'
+    );
+    expect(done(14, 2, ['eICU'])).toBe(
+      ' The page loaded the current versions of 14 of the 15 ETL files from GitHub when you opened it; 2 have changed since this site collected them. eICU could not be loaded, so it shows the version this site collected.'
+    );
+    expect(done(0, 0, ['A', 'B'])).toMatch(/could not be loaded from GitHub, so the page shows the versions/);
+    expect(liveNote({ status: 'unavailable' }, 3)).toMatch(/could not be loaded from GitHub/);
+    expect(liveNote({ status: 'checking' }, 0)).toBe('');
+  });
+});
 
 describe('DatasetStatistics', () => {
   beforeEach(() => mockUsePluginData.mockReset());
