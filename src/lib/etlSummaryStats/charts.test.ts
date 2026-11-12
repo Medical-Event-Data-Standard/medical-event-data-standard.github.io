@@ -22,6 +22,7 @@ import {
   formatRatio,
   githubRepoUrl,
   HEALTH_CHECKS,
+  etlPackageVersion,
   healthCheck,
   ICD_GROUP,
   isIcdVocabulary,
@@ -1545,6 +1546,39 @@ describe('healthCheck', () => {
       unusedCodes: { status: 'info', text: 'None' },
       versions: { status: 'info', text: 'MEDS 0.4.0\netl 0.1' },
     });
+  });
+
+  it('shows the version of an ETL built with MEDS-Extract, which dataset.json puts in the dataset version', () => {
+    const dataset = (version: string | null, etlName = 'MEDS_transforms') => ({
+      name: 'MIMIC-IV',
+      version,
+      etlName,
+      etlVersion: '0.7.0',
+      medsVersion: '0.4.1',
+    });
+    const extracted = entryWith(
+      'MIMIC-IV',
+      5,
+      {},
+      { githubRepo: 'org/MIMIC_IV_MEDS', dataset: dataset('3.1:0.3.0') }
+    );
+    expect(cells([extracted])['MIMIC-IV'].versions).toEqual({
+      status: 'info',
+      text: 'MEDS 0.4.1\nMIMIC_IV_MEDS 0.3.0 (MEDS_transforms 0.7.0)',
+    });
+
+    expect(etlPackageVersion(dataset('3.1:0.3.0'))).toBe('0.3.0');
+    expect(etlPackageVersion(dataset('0.1.0:1.1.0'))).toBe('1.1.0');
+    // Other dataset.json files: no version after a colon, more than one colon, or another ETL.
+    expect(etlPackageVersion(dataset('3.2'))).toBeNull();
+    expect(etlPackageVersion(dataset('0.9:0.3.1.dev9+gbdb5dfa30:OMOP_5.4'))).toBeNull();
+    expect(etlPackageVersion(dataset('1.0:0.2.0', 'kmimic-meds'))).toBeNull();
+    expect(etlPackageVersion(dataset(null))).toBeNull();
+    expect(etlPackageVersion(null)).toBeNull();
+
+    // Without that convention, the ETL that dataset.json names is shown as it is.
+    const other = entryWith('Other', 5, {}, { dataset: dataset('1.0', 'kmimic-meds') });
+    expect(cells([other]).Other.versions.text).toBe('MEDS 0.4.1\nkmimic-meds 0.7.0');
   });
 
   it('flags each broken invariant with what is wrong', () => {

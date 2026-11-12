@@ -1790,7 +1790,7 @@ export const HEALTH_CHECKS: { key: HealthCheckKey; label: string; help: string }
   {
     key: 'versions',
     label: 'MEDS and ETL versions',
-    help: 'The MEDS version, and the ETL that wrote the dataset with its version, as metadata/dataset.json states them.',
+    help: 'The MEDS version, and the ETL that wrote the dataset with its version, from metadata/dataset.json. An ETL built with MEDS-Extract records MEDS_transforms, the framework that ran it, as its ETL, and puts its own version after the colon in the dataset version (in 3.1:0.3.0, 0.3.0); for these, the column shows the ETL repository with that version, and the framework in brackets.',
   },
 ];
 
@@ -1836,6 +1836,30 @@ function codeMetadataCheck(
 const NO_CODES_FILE = 'No codes.parquet';
 
 /**
+ * The version of the ETL that wrote a dataset, where its dataset.json follows MEDS-Extract's convention:
+ * `meds-extract-run` records the framework that ran the pipeline (`MEDS_transforms`) as `etl_name` and
+ * `etl_version`, and stamps `dataset_version` as `<raw data version>:<ETL version>`, such as `3.1:0.3.0`. Null for
+ * any other dataset.json.
+ */
+export function etlPackageVersion(dataset: EtlStatsEntry['dataset']): string | null {
+  if (!dataset?.version || dataset.etlName !== 'MEDS_transforms') return null;
+  const parts = dataset.version.split(':');
+  return parts.length === 2 && /^\d+(\.\d+)*\S*$/.test(parts[1]) ? parts[1] : null;
+}
+
+/**
+ * The ETL that wrote a dataset, with its version: for an ETL built with MEDS-Extract (see `etlPackageVersion`),
+ * its repository and version, with the framework in brackets, such as "MIMIC_IV_MEDS 0.3.0 (MEDS_transforms
+ * 0.7.0)"; otherwise what dataset.json names as its ETL. Empty if it names none.
+ */
+export function etlDescription(entry: EtlStatsEntry): string {
+  const framework = [entry.dataset?.etlName, entry.dataset?.etlVersion].filter(Boolean).join(' ');
+  const version = entry.host === 'etl' ? etlPackageVersion(entry.dataset) : null;
+  if (version === null) return framework;
+  return `${entry.githubRepo.split('/')[1]} ${version} (${framework})`;
+}
+
+/**
  * A scorecard of invariants every MEDS dataset should meet, one row per dataset: each cell passes, warns, or says
  * the file doesn't report it. The versions and the codes listed but unused are information, without a verdict. The
  * data codes missing from codes.parquet are a share of the distinct codes in the data (`counts.n_unique_codes`, the
@@ -1847,7 +1871,7 @@ export function healthCheck(
 ): HealthCheckModel {
   const { drawn, skipped } = partition(orderDatasets(entries), (stats, entry) => {
     const { checks, codeMetadata: cm } = stats;
-    const etl = [entry.dataset?.etlName, entry.dataset?.etlVersion].filter(Boolean).join(' ');
+    const etl = etlDescription(entry);
     const meds = entry.dataset?.medsVersion;
     const cells: Record<HealthCheckKey, CheckCell> = {
       ids: zeroCheck([
