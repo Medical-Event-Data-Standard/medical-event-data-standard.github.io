@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import useBrokenLinks from '@docusaurus/useBrokenLinks';
 import { Box, Link, Typography } from '@mui/material';
 import { alpha, keyframes } from '@mui/material/styles';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -45,6 +46,9 @@ interface ToolTileProps {
 }
 
 function ToolTile({ pkg, id, selected, highlight, onBack }: ToolTileProps): React.JSX.Element {
+  // Registers the tile's id as an anchor of this page, so that the build checks links to it from other pages, such
+  // as the tool names in the quick start visual guide (WorkflowOverview.tsx).
+  useBrokenLinks().collectAnchor(id);
   return (
     <Box
       id={id}

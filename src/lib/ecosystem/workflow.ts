@@ -1,10 +1,10 @@
 import type { Category, Package, ParsedEcosystem, StageId } from './types';
 
 // The stages of the MEDS workflow, as shown by the flowchart on the "Which tool do I use for what?" page
-// (src/components/ecosystem/EcosystemWorkflow.tsx) and, in compact form, by the overview at the top of "Welcome to
-// MEDS" (src/components/ecosystem/WorkflowOverview.tsx). Which packages each stage lists is not decided here: every
-// category in static/data/ecosystem.yaml names its stage with a `stage` key (or inherits its parent's), so a
-// package added to a category shows up in that category's stage automatically.
+// (src/components/ecosystem/EcosystemWorkflow.tsx) and, as a timeline, by the quick start visual guide at the top of
+// "Welcome to MEDS" (src/components/ecosystem/WorkflowOverview.tsx). Which packages each stage lists is not decided
+// here: every category in static/data/ecosystem.yaml names its stage with a `stage` key (or inherits its parent's),
+// so a package added to a category shows up in that category's stage automatically.
 
 export interface Stage {
   id: StageId | 'other';

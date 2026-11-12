@@ -9,8 +9,7 @@ import { WorkflowSection, stageAnchorId } from '@site/src/lib/ecosystem/workflow
 // workflow, top to bottom, each listing the packages of the static/data/ecosystem.yaml categories whose `stage` is
 // that step (see src/lib/ecosystem/workflow.ts) as chips that link to the packages' tiles. Stacking the steps
 // keeps it readable at any width; where the flowchart is wide enough, each step's description sits beside its
-// tools. Each step's box has an id (see `stageAnchorId`), so that other pages, such as the overview of the workflow
-// at the top of "Welcome to MEDS" (WorkflowOverview.tsx), can link to it.
+// tools. Each step's box has an id (see `stageAnchorId`), so that other pages can link to it.
 
 /**
  * Removes the list styling that the surrounding Markdown page gives `ol`, `ul` and `li` elements. `&&` outranks
