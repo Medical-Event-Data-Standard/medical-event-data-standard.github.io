@@ -67,6 +67,13 @@ describe('FeaturedPaper', () => {
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     expect(link).toHaveClass('button', 'button--primary');
+
+    // The free full text on PubMed Central, as a second, outlined button.
+    const pubmed = box.getByRole('link', { name: 'Read on PubMed' });
+    expect(pubmed).toHaveAttribute('href', 'https://pmc.ncbi.nlm.nih.gov/articles/PMC13506012/');
+    expect(pubmed).toHaveAttribute('target', '_blank');
+    expect(pubmed).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(pubmed).toHaveClass('button', 'button--outline', 'button--primary');
   });
 
   it('features the paper with the given label, leaving out the author line when the file has no authors', () => {
@@ -87,6 +94,8 @@ describe('FeaturedPaper', () => {
       'href',
       'https://example.org/review'
     );
+    // Without a `pmc_url`, there is no PubMed button.
+    expect(within(section).queryByRole('link', { name: 'Read on PubMed' })).not.toBeInTheDocument();
   });
 
   it('fails, naming the labels there are, when the featured paper is missing from the file', () => {

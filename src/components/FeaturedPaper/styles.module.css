@@ -57,6 +57,14 @@
   text-wrap: balance;
 }
 
+/* The links to the paper, side by side, wrapping onto separate lines on narrow screens. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
 .cta {
   display: inline-flex;
   align-items: center;

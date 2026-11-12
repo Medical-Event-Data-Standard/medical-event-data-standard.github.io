@@ -16,6 +16,8 @@ export interface MedsPaper {
   month?: number;
   /** Link to the paper: its DOI, the publisher's page or its OpenReview page. */
   url: string;
+  /** Link to the paper's free full text on PubMed Central, if it is there. */
+  pmcUrl?: string;
   /** One line on what the paper is. */
   summary: string;
   /** Semantic Scholar paperId, as in static/data/papers.yaml. */
@@ -27,7 +29,7 @@ export interface MedsPaper {
 /** The file the papers are read from, for error messages. */
 export const MEDS_PAPERS_SOURCE = 'static/data/meds_papers.yaml';
 
-const STRING_FIELDS = ['label', 'title', 'venue', 'url', 'summary', 'id'] as const;
+const STRING_FIELDS = ['label', 'title', 'venue', 'url', 'pmc_url', 'summary', 'id'] as const;
 const REQUIRED_FIELDS = ['label', 'title', 'venue', 'year', 'url', 'summary'] as const;
 const KNOWN_FIELDS: ReadonlySet<string> = new Set([...STRING_FIELDS, 'year', 'month', 'authors']);
 
@@ -86,8 +88,10 @@ function parsePaper(raw: unknown, path: string): MedsPaper {
   if (month !== undefined && (!Number.isInteger(month) || (month as number) < 1 || (month as number) > 12)) {
     fail(path, `"month" must be a number from 1 to 12, got ${JSON.stringify(month)}.`);
   }
-  if (!isHttpUrl(strings.url as string)) {
-    fail(path, `"url" must be an http(s) URL, got ${JSON.stringify(strings.url)}.`);
+  for (const key of ['url', 'pmc_url'] as const) {
+    if (strings[key] !== undefined && !isHttpUrl(strings[key])) {
+      fail(path, `"${key}" must be an http(s) URL, got ${JSON.stringify(strings[key])}.`);
+    }
   }
   const authors = raw.authors === undefined ? undefined : parseAuthors(raw.authors, path);
 
@@ -100,6 +104,7 @@ function parsePaper(raw: unknown, path: string): MedsPaper {
     summary: strings.summary as string,
   };
   if (month !== undefined) paper.month = month as number;
+  if (strings.pmc_url !== undefined) paper.pmcUrl = strings.pmc_url;
   if (strings.id !== undefined) paper.id = strings.id;
   if (authors !== undefined) paper.authors = authors;
   return paper;

@@ -35,10 +35,14 @@ const rawPaper = (overrides: Record<string, unknown> = {}): Record<string, unkno
 });
 
 describe('parseMedsPapers', () => {
-  it('parses papers, collapsing whitespace and keeping the optional month and id only when given', () => {
+  it('parses papers, collapsing whitespace and keeping the optional month, id and PMC link only when given', () => {
     const papers = parseMedsPapers({
       papers: [
-        rawPaper({ title: '  A   Paper\nwith a folded title ', id: 'abc123' }),
+        rawPaper({
+          title: '  A   Paper\nwith a folded title ',
+          id: 'abc123',
+          pmc_url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC1/',
+        }),
         rawPaper({ label: 'Undated', month: undefined }),
       ],
     });
@@ -51,6 +55,7 @@ describe('parseMedsPapers', () => {
         year: 2024,
         month: 5,
         url: 'https://example.org/paper',
+        pmcUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC1/',
         summary: 'What the paper is.',
         id: 'abc123',
       },
@@ -66,6 +71,7 @@ describe('parseMedsPapers', () => {
     expect(papers[1]).not.toHaveProperty('month');
     expect(papers[1]).not.toHaveProperty('id');
     expect(papers[1]).not.toHaveProperty('authors');
+    expect(papers[1]).not.toHaveProperty('pmcUrl');
   });
 
   it('keeps the authors in order, collapsing the whitespace of their names', () => {
@@ -104,6 +110,7 @@ describe('parseMedsPapers', () => {
       rawPaper({ url: 'ftp://example.org/paper' }),
       '"url" must be an http(s) URL',
     ],
+    ['a pmc_url that is not a URL', rawPaper({ pmc_url: 'PMC13506012' }), '"pmc_url" must be an http(s) URL'],
     [
       'authors that are not a list',
       rawPaper({ authors: 'Ada Lovelace' }),
