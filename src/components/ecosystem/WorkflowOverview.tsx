@@ -43,7 +43,7 @@ import {
 /** The "Which tool do I use for what?" page (docs/intro_pages/3_ecosystem_workflow.mdx). */
 export const WORKFLOW_PAGE_PATH = '/docs/intro_pages/ecosystem_workflow';
 
-const TUTORIAL_PATH = '/docs/tutorials/ml4h2025';
+const TUTORIAL_PATH = '/docs/tutorials';
 
 /** A tutorial page (under docs/tutorials), and the part of it that a step links to, if not all of it. */
 export interface TutorialLink {
@@ -55,7 +55,7 @@ export interface TutorialLink {
 /** The tutorial pages for each step of the workflow; steps without any are left out. */
 export const STAGE_TUTORIALS: Partial<Record<StageId, TutorialLink[]>> = {
   convert: [{ title: 'Converting to MEDS', to: `${TUTORIAL_PATH}/converting_to_MEDS` }],
-  explore: [{ title: 'Visualizing and Exploring MEDS Data', to: '/docs/tutorials/visualizing_MEDS_data' }],
+  explore: [{ title: 'Visualizing and Exploring MEDS Data', to: `${TUTORIAL_PATH}/visualizing_MEDS_data` }],
   preprocess: [{ title: 'Pre-processing MEDS Data', to: `${TUTORIAL_PATH}/preprocessing_MEDS_data` }],
   task: [{ title: 'Extracting a Prediction Task', to: `${TUTORIAL_PATH}/extracting_prediction_tasks` }],
   model: [

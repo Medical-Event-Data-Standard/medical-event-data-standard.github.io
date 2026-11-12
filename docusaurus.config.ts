@@ -72,6 +72,21 @@ const config: Config = {
     // Lists the papers citing MEDS on /papers, from Semantic Scholar at build time (falling back to
     // static/data/papers.snapshot.json); set SEMANTIC_SCHOLAR_API_KEY to avoid rate limits.
     papersPlugin,
+    // The tutorial pages used to be under /docs/tutorials/ml4h2025/; links to their old addresses still work.
+    [
+      '@docusaurus/plugin-client-redirects',
+      {
+        redirects: [
+          'MEDS_intro',
+          'converting_to_MEDS',
+          'extracting_prediction_tasks',
+          'preprocessing_MEDS_data',
+          'build_a_model_tabular',
+          'build_a_model_NN',
+          'compare_with_meds_dev',
+        ].map(page => ({ from: `/docs/tutorials/ml4h2025/${page}`, to: `/docs/tutorials/${page}` })),
+      },
+    ],
   ],
 
   presets: [
@@ -173,7 +188,7 @@ const config: Config = {
           items: [
             {
               label: 'Tutorials',
-              to: '/docs/tutorials/ml4h2025',
+              to: '/docs/tutorials',
             },
             {
               label: 'Roadmap',

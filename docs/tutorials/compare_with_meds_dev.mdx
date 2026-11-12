@@ -10,10 +10,10 @@ description:
 
 By now you have converted the MIMIC-IV demo to MEDS, defined a task with ACES, and trained two models on it.
 The natural next question is how those models compare with established baselines. That is what
-[MEDS-DEV](../../MEDS-DEV/1_intro.mdx), the MEDS community benchmark, is for: it collects shared
-[datasets](../../MEDS-DEV/2_datasets.mdx), [tasks](../../MEDS-DEV/3_tasks.mdx) and
-[models](../../MEDS-DEV/4_models.mdx) with reproducible training recipes, and publishes
-[benchmark results](../../MEDS-DEV/5_benchmark.mdx) for them. This page relates the tutorial to MEDS-DEV,
+[MEDS-DEV](../MEDS-DEV/1_intro.mdx), the MEDS community benchmark, is for: it collects shared
+[datasets](../MEDS-DEV/2_datasets.mdx), [tasks](../MEDS-DEV/3_tasks.mdx) and
+[models](../MEDS-DEV/4_models.mdx) with reproducible training recipes, and publishes
+[benchmark results](../MEDS-DEV/5_benchmark.mdx) for them. This page relates the tutorial to MEDS-DEV,
 shows how to run MEDS-DEV baselines yourself, and points you to how to contribute.
 
 :::warning
@@ -39,12 +39,12 @@ tutorial task, but it predicts a different outcome:
 
 Both tasks recognize ICU admissions, ICU discharges and deaths in MIMIC-IV with the same codes
 (`ICU_ADMISSION//…`, `ICU_DISCHARGE//…` and `MEDS_DEATH…`). Select the task on the
-[tasks page](../../MEDS-DEV/3_tasks.mdx) for its description and results, and read its full
+[tasks page](../MEDS-DEV/3_tasks.mdx) for its description and results, and read its full
 [ACES configuration](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/blob/main/src/MEDS_DEV/tasks/mortality/in_icu/first_24h.yaml)
 next to the one you wrote in step 3.
 
-On the [benchmark page](../../MEDS-DEV/5_benchmark.mdx), `mortality/in_icu/first_24h` has MIMIC-IV results for
-three models from the [models page](../../MEDS-DEV/4_models.mdx): `cehrbert` (CEHR-BERT), `genhpf` (GenHPF),
+On the [benchmark page](../MEDS-DEV/5_benchmark.mdx), `mortality/in_icu/first_24h` has MIMIC-IV results for
+three models from the [models page](../MEDS-DEV/4_models.mdx): `cehrbert` (CEHR-BERT), `genhpf` (GenHPF),
 and `meds_tab/tiny`, a small XGBoost configuration of the MEDS-Tab tool mentioned in
 [step 5](./build_a_model_tabular.mdx). Use the **Per-Task Detail** view to see them. These numbers are a
 reference point for in-ICU mortality on MIMIC-IV, which needs credentialed PhysioNet access. They are not
@@ -163,7 +163,7 @@ issue template to request or track it:
 - **Submit a result.** Package a `meds-dev-evaluation` output with the `meds-dev-pack-result` command and attach
   it to a
   [Benchmark Result Submission](https://github.com/Medical-Event-Data-Standard/MEDS-DEV/issues/new?template=benchmark-result.yml)
-  issue; submitted results feed the [benchmark page](../../MEDS-DEV/5_benchmark.mdx). See
+  issue; submitted results feed the [benchmark page](../MEDS-DEV/5_benchmark.mdx). See
   [Adding your result to MEDS-DEV](https://github.com/Medical-Event-Data-Standard/MEDS-DEV#adding-your-result-to-meds-dev).
 
 To contribute a task, model or dataset, fork MEDS-DEV and install your fork with `pip install -e .[dev,tests]`.

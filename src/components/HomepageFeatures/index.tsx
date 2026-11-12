@@ -1,10 +1,7 @@
 import clsx from 'clsx';
-import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import styles from './styles.module.css';
-
-import SchoolIcon from '@mui/icons-material/School';
 
 type FeatureItem = {
   title: string;
@@ -66,16 +63,6 @@ export default function HomepageFeatures(): React.JSX.Element {
   return (
     <section className={styles.features}>
       <div className="container">
-        <center>
-          <div className={styles.buttons}>
-            <Link className="button button--primary button--lg" to="/docs/tutorials/ml4h2025">
-              <span style={{ display: 'flex', alignItems: 'center', fontSize: '2em' }}>
-                <SchoolIcon sx={{ fontSize: '1em' }} />
-                <span style={{ paddingLeft: '1em' }}> Check out the MEDS ML4H 2025 Tutorial!</span>
-              </span>
-            </Link>
-          </div>
-        </center>
         <div className="row">
           {FeatureList.map((props, idx) => (
             <Feature key={idx} {...props} />
