@@ -14,7 +14,12 @@ import WorkflowOverview, {
 } from './WorkflowOverview';
 import { RawCategory } from '@site/src/lib/ecosystem/types';
 import { parseCategoryMap } from '@site/src/lib/ecosystem/utils';
-import { groupByStage, stagePackages, workflowSections } from '@site/src/lib/ecosystem/workflow';
+import {
+  groupByStage,
+  stagePackages,
+  toolAnchorIds,
+  workflowSections,
+} from '@site/src/lib/ecosystem/workflow';
 
 // `@docusaurus/*` modules are webpack aliases that only exist inside a Docusaurus build. The stand-in for `Link`
 // renders a plain link; `useBrokenLinks` is used by the flowchart, whose list styles the guide shares.
@@ -44,6 +49,12 @@ const entries = () =>
   within(workflow())
     .getAllByRole('listitem')
     .filter(item => item.parentElement === workflow());
+
+/** The steps' lines of tools, in order: the last item of each step's list of links. */
+const toolLines = () =>
+  entries()
+    .filter(item => /^Step /.test(item.querySelector('p')!.textContent!))
+    .map(item => within(item).getAllByRole('listitem').at(-1)!);
 
 /** The sections of the flowchart for the given data, as the guide shows them. */
 function sectionsOf(data: Record<string, RawCategory>) {
@@ -88,11 +99,12 @@ describe('WorkflowOverview', () => {
     ).toEqual(['subject_id', 'time', 'code', 'numeric_value']);
   });
 
-  it("links each step to its tutorial pages, if there are any, and not to the ecosystem's pages", () => {
+  it('links each step to its tutorial pages, if there are any', () => {
     render(<WorkflowOverview data={ecosystemYaml} />);
     const tutorialLinks = (item: HTMLElement) =>
       within(item)
         .queryAllByRole('link')
+        .filter(link => !link.getAttribute('href')!.startsWith(WORKFLOW_PAGE_PATH))
         .map(link => [link.textContent, link.getAttribute('href')]);
 
     const items = entries();
@@ -113,6 +125,26 @@ describe('WorkflowOverview', () => {
     expect(items[7]).toHaveTextContent('Tutorial: Build a Tabular Baseline (Evaluating the Model)');
   });
 
+  it('links each tool it names to its tile on the "Which tool do I use for what?" page', () => {
+    render(<WorkflowOverview data={ecosystemYaml} />);
+    const toolIds = toolAnchorIds(sectionsOf(ecosystemYaml));
+
+    const links = toolLines().flatMap(line => within(line).getAllByRole('link'));
+    expect(links.length).toBeGreaterThanOrEqual(7);
+    for (const link of links) {
+      expect(link).toHaveAttribute('href', `${WORKFLOW_PAGE_PATH}#${toolIds.get(link.textContent!)}`);
+    }
+    expect(screen.getByRole('link', { name: 'ACES' })).toHaveAttribute(
+      'href',
+      `${WORKFLOW_PAGE_PATH}#tool-aces`
+    );
+    // Apart from the tools, only the line under the timeline links to that page.
+    const others = screen
+      .getAllByRole('link')
+      .filter(link => link.getAttribute('href')!.startsWith(WORKFLOW_PAGE_PATH) && !links.includes(link));
+    expect(others.map(link => link.textContent)).toEqual(['See which tool to use for what']);
+  });
+
   it('links only to tutorial pages that exist', () => {
     const tutorials = [...Object.values(STAGE_TUTORIALS).flat(), MEDS_DATA_TUTORIAL];
     for (const { to } of tutorials) {
@@ -125,14 +157,14 @@ describe('WorkflowOverview', () => {
     render(<WorkflowOverview data={ecosystemYaml} />);
     const sections = sectionsOf(ecosystemYaml);
 
-    for (const section of sections.filter(({ step }) => step)) {
-      const count = stagePackages(section).length;
-      expect(count).toBeGreaterThan(0);
-      expect(within(workflow()).getByText(toolSummary(section))).toBeInTheDocument();
+    const steps = sections.filter(({ step }) => step);
+    for (const section of steps) {
+      expect(stagePackages(section).length).toBeGreaterThan(0);
     }
+    expect(toolLines().map(line => line.textContent)).toEqual(steps.map(toolSummary));
     // The examples include the dataset ETLs, not only the ETL templates listed before them.
-    expect(within(workflow()).getByText(/^\d+ tools, such as .*MIMIC-IV/)).toBeInTheDocument();
-    expect(within(workflow()).getByText(/^\d+ tools?(:|, such as) ACES/)).toBeInTheDocument();
+    expect(toolLines()[0].textContent).toMatch(/^\d+ tools, such as .*MIMIC-IV/);
+    expect(toolLines()[3].textContent).toMatch(/^\d+ tools?(:|, such as) ACES/);
 
     // Every tool is counted once, including those used at any step. Only this line links to the tools.
     const total = Object.keys(parseCategoryMap(ecosystemYaml).packages).length;
@@ -174,9 +206,7 @@ describe('WorkflowOverview', () => {
       '3 tools: A, B and C',
       'No tools listed yet',
     ]);
-    for (const summary of new Set(summaries)) {
-      expect(within(workflow()).getAllByText(summary).length).toBeGreaterThan(0);
-    }
+    expect(toolLines().map(line => line.textContent)).toEqual(summaries);
     // The tools used at any step are counted in the total, but not shown at a step.
     expect(screen.getByText('11 tools')).toBeInTheDocument();
     expect(screen.queryByText(/Schema/)).not.toBeInTheDocument();

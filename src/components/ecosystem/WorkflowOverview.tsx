@@ -13,13 +13,14 @@ import StorageIcon from '@mui/icons-material/Storage';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import TableRowsIcon from '@mui/icons-material/TableRows';
 import TuneIcon from '@mui/icons-material/Tune';
-import { RawCategory, StageId } from '@site/src/lib/ecosystem/types';
+import { Package, RawCategory, StageId } from '@site/src/lib/ecosystem/types';
 import { parseCategoryMap } from '@site/src/lib/ecosystem/utils';
 import {
   WorkflowSection,
   examplePackages,
   groupByStage,
   stagePackages,
+  toolAnchorIds,
   workflowSections,
 } from '@site/src/lib/ecosystem/workflow';
 import { UNSTYLED_LIST } from './EcosystemFlowchart';
@@ -27,8 +28,9 @@ import { UNSTYLED_LIST } from './EcosystemFlowchart';
 // The quick start visual guide at the top of "Welcome to MEDS" (docs/intro_pages/1_intro.mdx): the MEDS workflow
 // as a timeline, top to bottom, from raw EHR data to a benchmark result. After the first step, converting the data,
 // a milestone shows the data in MEDS, with its four columns. Each step gives its tutorial pages, if the tutorial
-// has any, and how many tools static/data/ecosystem.yaml lists for it, naming a few. A line under the timeline
-// links to the "Which tool do I use for what?" page, which lists every tool by step.
+// has any, and how many tools static/data/ecosystem.yaml lists for it, naming a few. Each tool named links to its
+// tile on the "Which tool do I use for what?" page, which selects it, and a line under the timeline links to that
+// page, which lists every tool by step.
 //
 // The icons are Material Icons, from @mui/icons-material. This site uses MUI's default theme, which does not follow
 // Docusaurus's dark mode, so the colors here come from Infima's variables, which do.
@@ -99,22 +101,60 @@ const MARKER_SIZE = 36;
 const ENTRY_GAP = 12;
 
 const SECONDARY_TEXT = 'var(--ifm-color-emphasis-700)';
+
+/** The site's link color is a dark blue in both modes, so links here use its primary color in dark mode instead. */
+const DARK_MODE_LINK = { '[data-theme="dark"] &': { color: 'var(--ifm-color-primary)' } } as const;
 const SMALL_TEXT = { fontSize: '0.8rem', lineHeight: 1.4 } as const;
 
-/** "A", "A and B", "A, B and C". */
-function joinNames(names: string[]): string {
-  return names.length <= 1
-    ? names.join('')
-    : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+/** Items with the separators of an English list between them: [A], [A, " and ", B], [A, ", ", B, " and ", C]. */
+function listParts<T>(items: T[]): (T | string)[] {
+  return items.flatMap((item, index) =>
+    index === 0 ? [item] : [index === items.length - 1 ? ' and ' : ', ', item]
+  );
 }
 
-/** What a step's tools are: their number and the names of a few, such as "25 tools, such as A, B and C". */
-export function toolSummary(section: WorkflowSection): string {
+/**
+ * What a step's tools are: their number and the names of a few, such as "25 tools, such as A, B and C", with the
+ * names rendered by `name`.
+ */
+function summarize<T>(section: WorkflowSection, name: (pkg: Package) => T): (T | string)[] {
   const total = stagePackages(section).length;
-  if (total === 0) return 'No tools listed yet';
-  const names = joinNames(examplePackages(section, EXAMPLE_COUNT).map(pkg => pkg.name));
+  if (total === 0) return ['No tools listed yet'];
+  const names = listParts(examplePackages(section, EXAMPLE_COUNT).map(name));
   const count = `${total} ${total === 1 ? 'tool' : 'tools'}`;
-  return total > EXAMPLE_COUNT ? `${count}, such as ${names}` : `${count}: ${names}`;
+  return [count, total > EXAMPLE_COUNT ? ', such as ' : ': ', ...names];
+}
+
+/** What a step's tools are, as text, such as "25 tools, such as A, B and C". */
+export function toolSummary(section: WorkflowSection): string {
+  return summarize(section, pkg => pkg.name).join('');
+}
+
+/**
+ * What a step's tools are, with each tool named linking to its tile on the "Which tool do I use for what?" page,
+ * which selects it. `toolIds` gives the tiles' ids, by package name (see `toolAnchorIds`).
+ */
+function ToolSummary({
+  section,
+  toolIds,
+}: {
+  section: WorkflowSection;
+  toolIds: Map<string, string>;
+}): React.JSX.Element {
+  return (
+    <>
+      {summarize(section, pkg => (
+        <Box
+          key={pkg.name}
+          component={Link}
+          to={`${WORKFLOW_PAGE_PATH}#${toolIds.get(pkg.name)}`}
+          sx={DARK_MODE_LINK}
+        >
+          {pkg.name}
+        </Box>
+      ))}
+    </>
+  );
 }
 
 /** A line of small text after an icon, such as a tutorial link or a step's tools. */
@@ -126,9 +166,6 @@ function IconLine({ icon: Icon, children }: React.PropsWithChildren<{ icon: SvgI
     </Box>
   );
 }
-
-/** The site's link color is a dark blue in both modes, so links here use its primary color in dark mode instead. */
-const DARK_MODE_LINK = { '[data-theme="dark"] &': { color: 'var(--ifm-color-primary)' } } as const;
 
 function TutorialLine({ tutorial }: { tutorial: TutorialLink }): React.JSX.Element {
   return (
@@ -153,8 +190,8 @@ interface EntryProps {
   /** Shown under the description. */
   extra?: React.ReactNode;
   tutorials?: TutorialLink[];
-  /** The step's tools, as given by `toolSummary`. */
-  tools?: string;
+  /** The step's tools (see `ToolSummary`). */
+  tools?: React.ReactNode;
 }
 
 /**
@@ -285,10 +322,12 @@ function MedsColumns(): React.JSX.Element {
 
 /** The quick start visual guide, from the categories of static/data/ecosystem.yaml. */
 export default function WorkflowOverview({ data }: { data: Record<string, RawCategory> }): React.JSX.Element {
-  const { steps, toolCount } = useMemo(() => {
+  const { steps, toolIds, toolCount } = useMemo(() => {
     const sections = workflowSections(groupByStage(parseCategoryMap(data)));
     return {
       steps: sections.filter(section => section.step),
+      // The same ids as the tiles of the "Which tool do I use for what?" page, which are made from the same data.
+      toolIds: toolAnchorIds(sections),
       // Tools listed at several steps are counted once.
       toolCount: new Set(sections.flatMap(section => stagePackages(section).map(pkg => pkg.name))).size,
     };
@@ -304,7 +343,7 @@ export default function WorkflowOverview({ data }: { data: Record<string, RawCat
         title={section.stage.title}
         description={section.stage.description}
         tutorials={STAGE_TUTORIALS[id]}
-        tools={toolSummary(section)}
+        tools={<ToolSummary section={section} toolIds={toolIds} />}
       />
     );
   };
