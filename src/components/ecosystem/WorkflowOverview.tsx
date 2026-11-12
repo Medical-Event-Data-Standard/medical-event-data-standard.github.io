@@ -2,18 +2,9 @@ import React, { useMemo } from 'react';
 import Link from '@docusaurus/Link';
 import { Box } from '@mui/material';
 import type { SvgIconComponent } from '@mui/icons-material';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import AssignmentIcon from '@mui/icons-material/Assignment';
 import BuildIcon from '@mui/icons-material/Build';
 import DatasetIcon from '@mui/icons-material/Dataset';
-import LeaderboardIcon from '@mui/icons-material/Leaderboard';
-import ModelTrainingIcon from '@mui/icons-material/ModelTraining';
-import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import SchoolIcon from '@mui/icons-material/School';
-import StorageIcon from '@mui/icons-material/Storage';
-import SyncAltIcon from '@mui/icons-material/SyncAlt';
-import TableRowsIcon from '@mui/icons-material/TableRows';
-import TuneIcon from '@mui/icons-material/Tune';
 import { Package, RawCategory, StageId } from '@site/src/lib/ecosystem/types';
 import { parseCategoryMap } from '@site/src/lib/ecosystem/utils';
 import {
@@ -24,7 +15,19 @@ import {
   toolAnchorIds,
   workflowSections,
 } from '@site/src/lib/ecosystem/workflow';
-import { UNSTYLED_LIST } from './EcosystemFlowchart';
+import {
+  ENTRY_GAP,
+  MEDS_DATA,
+  MILESTONE_BOX_SX,
+  MedsColumns,
+  RAW_DATA,
+  SECONDARY_TEXT,
+  STAGE_ICONS,
+  TimelineLabel,
+  TimelineMarker,
+  UNSTYLED_LIST,
+  timelineEntrySx,
+} from './timeline';
 
 // The quick start visual guide at the top of "Welcome to MEDS" (docs/intro_pages/1_intro.mdx): the MEDS workflow
 // as a timeline, top to bottom, from raw EHR data to a benchmark result. After the first step, converting the data,
@@ -34,8 +37,8 @@ import { UNSTYLED_LIST } from './EcosystemFlowchart';
 // converting data. Each tool named links to its tile on the "Which tool do I use for what?" page, which selects it,
 // and a line under the timeline links to that page, which lists every tool by step.
 //
-// The icons are Material Icons, from @mui/icons-material. This site uses MUI's default theme, which does not follow
-// Docusaurus's dark mode, so the colors here come from Infima's variables, which do.
+// The timeline's look (icons, markers, labels and milestones) is shared with that page's flowchart; see
+// timeline.tsx.
 
 /** The "Which tool do I use for what?" page (docs/intro_pages/3_ecosystem_workflow.mdx). */
 export const WORKFLOW_PAGE_PATH = '/docs/intro_pages/ecosystem_workflow';
@@ -104,20 +107,6 @@ export const STAGE_PAGES: Partial<Record<StageId, PageLink[]>> = {
   convert: [{ text: 'Public datasets already in MEDS: see the', title: 'Datasets tab', to: '/datasets' }],
 };
 
-/** The icon of each step of the workflow. */
-const STAGE_ICONS: Partial<Record<StageId, SvgIconComponent>> = {
-  convert: SyncAltIcon,
-  explore: QueryStatsIcon,
-  preprocess: TuneIcon,
-  task: AssignmentIcon,
-  model: ModelTrainingIcon,
-  evaluate: AssessmentIcon,
-  benchmark: LeaderboardIcon,
-};
-
-/** The columns that every MEDS dataset has, as listed in the introduction's prose. */
-const MEDS_COLUMNS = ['subject_id', 'time', 'code', 'numeric_value'];
-
 /** How many of a step's tools to name. */
 const EXAMPLE_COUNT = 3;
 
@@ -127,12 +116,6 @@ const EXAMPLE_COUNT = 3;
  */
 const CONTAINER = 'workflow-overview';
 const WIDE = `@container ${CONTAINER} (min-width: 40rem)`;
-
-/** The size of the icons in the timeline, and the spacing between its entries, in pixels. */
-const MARKER_SIZE = 36;
-const ENTRY_GAP = 12;
-
-const SECONDARY_TEXT = 'var(--ifm-color-emphasis-700)';
 
 /** The site's link color is a dark blue in both modes, so links here use its primary color in dark mode instead. */
 const DARK_MODE_LINK = { '[data-theme="dark"] &': { color: 'var(--ifm-color-primary)' } } as const;
@@ -253,6 +236,8 @@ interface EntryProps {
   tools?: React.ReactNode;
   /** Other pages of the site for the step, listed after its tools. */
   pages?: PageLink[];
+  /** Whether a line connects the entry's icon to the next entry's; every entry's but the last. */
+  connects?: boolean;
 }
 
 /**
@@ -269,58 +254,17 @@ function Entry({
   tutorials = [],
   tools,
   pages = [],
+  connects = true,
 }: EntryProps): React.JSX.Element {
   const hasLinks = tutorials.length > 0 || tools !== undefined || pages.length > 0;
   return (
-    <Box
-      component="li"
-      sx={{
-        position: 'relative',
-        display: 'grid',
-        gridTemplateColumns: `${MARKER_SIZE}px minmax(0, 1fr)`,
-        columnGap: 1.5,
-        // The line from this entry's icon down to the next entry's.
-        '&:not(:last-of-type)::before': {
-          content: '""',
-          position: 'absolute',
-          left: MARKER_SIZE / 2 - 1,
-          top: MARKER_SIZE,
-          bottom: -ENTRY_GAP,
-          width: 2,
-          bgcolor: 'var(--ifm-color-emphasis-300)',
-        },
-      }}
-    >
-      <Box
-        aria-hidden
-        sx={{
-          width: MARKER_SIZE,
-          height: MARKER_SIZE,
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          ...(milestone
-            ? {
-                bgcolor: 'var(--ifm-color-emphasis-200)',
-                color: 'var(--ifm-color-emphasis-800)',
-                border: '1px dashed var(--ifm-color-emphasis-500)',
-              }
-            : { bgcolor: 'var(--ifm-color-primary)', color: 'var(--ifm-color-white)' }),
-        }}
-      >
-        <Icon sx={{ fontSize: 20 }} />
-      </Box>
+    <Box component="li" sx={timelineEntrySx(connects)}>
+      <TimelineMarker icon={Icon} variant={milestone ? 'milestone' : 'step'} />
       <Box
         sx={{
           minWidth: 0,
           pb: 0.5,
-          ...(milestone && {
-            p: 1.25,
-            border: '1px dashed var(--ifm-color-emphasis-400)',
-            borderRadius: 'var(--ifm-global-radius)',
-            bgcolor: 'var(--ifm-color-emphasis-100)',
-          }),
+          ...(milestone && MILESTONE_BOX_SX),
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1fr)',
           gap: 0.75,
@@ -328,19 +272,7 @@ function Entry({
         }}
       >
         <div>
-          <Box
-            component="p"
-            sx={{
-              m: 0,
-              fontSize: '0.7rem',
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              color: SECONDARY_TEXT,
-            }}
-          >
-            {label}
-          </Box>
+          <TimelineLabel>{label}</TimelineLabel>
           <Box component="p" sx={{ m: 0, fontWeight: 600, lineHeight: 1.3 }}>
             {title}
           </Box>
@@ -368,23 +300,6 @@ function Entry({
   );
 }
 
-/** The four columns of MEDS data. */
-function MedsColumns(): React.JSX.Element {
-  return (
-    <Box
-      component="ul"
-      aria-label="The columns of MEDS data"
-      sx={{ ...UNSTYLED_LIST, mt: 0.75, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}
-    >
-      {MEDS_COLUMNS.map(column => (
-        <li key={column}>
-          <code>{column}</code>
-        </li>
-      ))}
-    </Box>
-  );
-}
-
 /** The quick start visual guide, from the categories of static/data/ecosystem.yaml. */
 export default function WorkflowOverview({ data }: { data: Record<string, RawCategory> }): React.JSX.Element {
   const { steps, toolIds, toolCount } = useMemo(() => {
@@ -403,7 +318,9 @@ export default function WorkflowOverview({ data }: { data: Record<string, RawCat
     return (
       <Entry
         key={id}
-        icon={STAGE_ICONS[id] ?? BuildIcon}
+        icon={STAGE_ICONS[id]}
+        // The first step connects to the data in MEDS, which follows it; the last connects to nothing.
+        connects={section === steps[0] || section !== steps[steps.length - 1]}
         label={`Step ${section.step}`}
         title={section.stage.title}
         description={section.stage.description}
@@ -422,20 +339,12 @@ export default function WorkflowOverview({ data }: { data: Record<string, RawCat
         aria-label="The MEDS workflow, from raw EHR data to a benchmark result"
         sx={{ ...UNSTYLED_LIST, display: 'grid', gap: `${ENTRY_GAP}px` }}
       >
-        <Entry
-          icon={StorageIcon}
-          label="Start"
-          title="Your raw EHR data"
-          description="Your health records, in whatever tables, files or data standard they come in."
-          milestone
-        />
+        <Entry {...RAW_DATA} milestone />
         {first && stepEntry(first)}
         <Entry
-          icon={TableRowsIcon}
-          label="Milestone"
-          title="Your data in MEDS"
-          description="One row per event, in just four columns, ready for the tools of every step below:"
+          {...MEDS_DATA}
           milestone
+          connects={rest.length > 0}
           extra={<MedsColumns />}
           tutorials={[MEDS_DATA_TUTORIAL]}
         />

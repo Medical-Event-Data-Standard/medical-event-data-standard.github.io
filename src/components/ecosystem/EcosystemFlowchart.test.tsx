@@ -72,6 +72,38 @@ describe('EcosystemFlowchart', () => {
     expect(screen.queryByText('No tools listed yet.')).not.toBeInTheDocument();
   });
 
+  it('draws the workflow as a timeline: the raw data, step 1, the data in MEDS, then the other steps', () => {
+    renderFlowchart(ecosystemYaml);
+
+    // The raw data comes before the steps.
+    const list = screen.getByRole('list', { name: 'Steps of the MEDS workflow' });
+    const rawData = screen.getByText('Your raw EHR data');
+    expect(rawData.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    // Each step is labelled with its number, and the first is followed by the data in MEDS, with its columns.
+    const steps = [...list.children] as HTMLElement[];
+    expect(steps.map(step => step.querySelector('p')!.textContent)).toEqual([
+      'Step 1',
+      'Step 2',
+      'Step 3',
+      'Step 4',
+      'Step 5',
+      'Step 6',
+      'Step 7',
+    ]);
+    expect(steps[0]).toHaveTextContent('Your data in MEDS');
+    const columns = within(steps[0]).getByRole('list', { name: 'The columns of MEDS data' });
+    expect(
+      within(columns)
+        .getAllByRole('listitem')
+        .map(item => item.textContent)
+    ).toEqual(['subject_id', 'time', 'code', 'numeric_value']);
+
+    // The tools used at any step follow the timeline, labelled as such.
+    const general = screen.getByRole('heading', { name: 'Across the workflow' }).closest('[id]')!;
+    expect(general.querySelector('p')).toHaveTextContent('At any step');
+  });
+
   it('gives each step an id that links from other pages can go to, and reports it to Docusaurus', () => {
     renderFlowchart(ecosystemYaml);
 

@@ -12,7 +12,8 @@ import {
   toolAnchorIds,
   workflowSections,
 } from '@site/src/lib/ecosystem/workflow';
-import EcosystemFlowchart, { NAVBAR_CLEARANCE, StepNumber, UNSTYLED_LIST } from './EcosystemFlowchart';
+import EcosystemFlowchart, { NAVBAR_CLEARANCE } from './EcosystemFlowchart';
+import { STAGE_ICONS, TimelineLabel, TimelineMarker, UNSTYLED_LIST } from './timeline';
 import PackageCard from './PackageCard';
 
 // The "Which tool do I use for what?" page: the flowchart of the MEDS workflow and, beside it on wide screens or
@@ -133,11 +134,15 @@ function ToolTiles({ sections, toolIds, selectedId, ...tileProps }: ToolTilesPro
       </Typography>
       {sections.map(({ stage, step, categories }) => (
         <Box key={stage.id} sx={{ mb: 3 }}>
+          {/* Like the flowchart's steps: the step's icon, its label and its title. */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            {step && <StepNumber step={step} size={22} />}
-            <Typography variant="subtitle2" component="h3" sx={{ m: 0, fontWeight: 600 }}>
-              {stage.title}
-            </Typography>
+            <TimelineMarker icon={STAGE_ICONS[stage.id]} variant={step ? 'step' : 'muted'} size={28} />
+            <div>
+              {step && <TimelineLabel>Step {step}</TimelineLabel>}
+              <Typography variant="subtitle2" component="h3" sx={{ m: 0, fontWeight: 600, lineHeight: 1.3 }}>
+                {stage.title}
+              </Typography>
+            </div>
           </Box>
           {categories.map(({ category, packages }) => (
             <Box key={category.topic} sx={{ '& + &': { mt: 1.5 } }}>
