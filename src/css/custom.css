@@ -43,3 +43,9 @@ a:hover > .ecosystem-figure-hotspot,
 a:focus-visible > .ecosystem-figure-hotspot {
   fill: rgba(27, 48, 61, 0.08);
 }
+
+/* The navbar tab of the section you are in: shaded light grey (dark grey in dark mode), besides its link color. */
+.navbar__items .navbar__link--active {
+  background-color: var(--ifm-color-emphasis-200);
+  border-radius: var(--ifm-global-radius);
+}
