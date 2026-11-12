@@ -118,7 +118,7 @@ describe('WorkflowOverview', () => {
       [],
       [['Converting to MEDS', '/docs/tutorials/ml4h2025/converting_to_MEDS']],
       [['Getting Familiar with MEDS', '/docs/tutorials/ml4h2025/MEDS_intro']],
-      [],
+      [['Visualizing and Exploring MEDS Data', '/docs/tutorials/visualizing_MEDS_data']],
       [['Pre-processing MEDS Data', '/docs/tutorials/ml4h2025/preprocessing_MEDS_data']],
       [['Extracting a Prediction Task', '/docs/tutorials/ml4h2025/extracting_prediction_tasks']],
       [
