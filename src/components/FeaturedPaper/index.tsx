@@ -60,7 +60,7 @@ export default function FeaturedPaper({
             </a>
             {paper.pmcUrl && (
               <a
-                className={`button button--outline button--primary button--lg ${styles.cta}`}
+                className={`button button--primary button--lg ${styles.cta}`}
                 href={paper.pmcUrl}
                 target="_blank"
                 rel="noopener noreferrer"
