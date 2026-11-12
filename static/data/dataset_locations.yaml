@@ -154,24 +154,8 @@ locations:
     datasets:
       - label: MC-MED
         source: https://physionet.org/content/mc-med/1.0.1/
-      - label: INSPECT
-        source: https://arxiv.org/abs/2311.10798
     note: >-
-      MC-MED: "118,385 adult ED visits to monitored beds of the Stanford Health Care Emergency Department". INSPECT:
-      "INSPECT only contains data from a single site (Stanford Health Care)".
-
-  - institution: Stanford Medicine
-    openalex: I4210137306
-    city: Stanford
-    country: US
-    latitude: 37.42411
-    longitude: -122.16608
-    datasets:
-      - label: EHRSHOT
-        source: https://arxiv.org/abs/2307.02028
-    note: >-
-      "...deidentified structured data from the electronic health records (EHRs) of 6,739 patients from Stanford
-      Medicine."
+      MC-MED: "118,385 adult ED visits to monitored beds of the Stanford Health Care Emergency Department".
 
   - institution: 208 hospitals throughout the US
     coordinates_source: https://en.wikipedia.org/wiki/Geographic_center_of_the_United_States#Contiguous_United_States
