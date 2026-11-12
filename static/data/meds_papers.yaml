@@ -14,6 +14,7 @@
 #            date of the meeting
 #   month:   optional; the month (1-12) of that date
 #   url:     link to the paper: its DOI, the publisher's page or, for papers published there, its OpenReview page
+#   pmc_url: optional; link to its free full text on PubMed Central, which the featured paper links to as well
 #   summary: one line on what the paper is
 #   id:      optional; the paper's Semantic Scholar paperId
 #   authors: optional; the authors' full names, in order, as published (e.g. as Crossref lists them for a DOI);
@@ -99,5 +100,6 @@ papers:
     year: 2026
     month: 5
     url: 'https://doi.org/10.1056/AIra2501253'
+    pmc_url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC13506012/'
     summary: 'Describes MEDS in detail and reviews its adoption across institutions, datasets and models.'
     id: '50846012e25acae4aebf1d2b2953655a19fe2e93'
