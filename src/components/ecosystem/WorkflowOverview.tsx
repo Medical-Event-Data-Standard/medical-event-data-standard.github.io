@@ -31,8 +31,8 @@ import {
 
 // The quick start visual guide at the top of "Welcome to MEDS" (docs/intro_pages/1_intro.mdx): the MEDS workflow
 // as a timeline, top to bottom, from raw EHR data to a benchmark result. After the first step, converting the data,
-// a milestone shows the data in MEDS, with its four columns. Each step gives its tutorial pages, if the tutorial
-// has any; how many tools static/data/ecosystem.yaml lists for it, naming a few (those in `STAGE_FEATURED_TOOLS`,
+// a milestone shows the data in MEDS, with its four columns. Each step gives its tutorial pages, if there are
+// any; how many tools static/data/ecosystem.yaml lists for it, naming a few (those in `STAGE_FEATURED_TOOLS`,
 // or else the first of its categories); and any other pages of the site for it, such as the Datasets tab for
 // converting data. Each tool named links to its tile on the "Which tool do I use for what?" page, which selects it,
 // and a line under the timeline links to that page, which lists every tool by step.
@@ -45,7 +45,7 @@ export const WORKFLOW_PAGE_PATH = '/docs/intro_pages/ecosystem_workflow';
 
 const TUTORIAL_PATH = '/docs/tutorials/ml4h2025';
 
-/** A page of the tutorial (docs/tutorials/ml4h2025), and the part of it that a step links to, if not all of it. */
+/** A tutorial page (under docs/tutorials), and the part of it that a step links to, if not all of it. */
 export interface TutorialLink {
   title: string;
   to: string;
@@ -55,6 +55,7 @@ export interface TutorialLink {
 /** The tutorial pages for each step of the workflow; steps without any are left out. */
 export const STAGE_TUTORIALS: Partial<Record<StageId, TutorialLink[]>> = {
   convert: [{ title: 'Converting to MEDS', to: `${TUTORIAL_PATH}/converting_to_MEDS` }],
+  explore: [{ title: 'Visualizing and Exploring MEDS Data', to: '/docs/tutorials/visualizing_MEDS_data' }],
   preprocess: [{ title: 'Pre-processing MEDS Data', to: `${TUTORIAL_PATH}/preprocessing_MEDS_data` }],
   task: [{ title: 'Extracting a Prediction Task', to: `${TUTORIAL_PATH}/extracting_prediction_tasks` }],
   model: [
