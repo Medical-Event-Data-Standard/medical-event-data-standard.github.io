@@ -1,0 +1,763 @@
+{
+  "code_metadata": {
+    "description_length": {
+      "mean": 26.6841,
+      "n": 6270,
+      "quantiles": {
+        "p1": 7.0,
+        "p25": 12.0,
+        "p5": 9.0,
+        "p50": 22.0,
+        "p75": 36.0,
+        "p95": 61.0,
+        "p99": 82.0
+      },
+      "std": 17.9244
+    },
+    "n_codes": 6276,
+    "n_data_codes_missing_from_metadata": 0,
+    "n_metadata_codes_absent_from_data": 0,
+    "n_with_description": 6270,
+    "n_with_parent_codes": 0,
+    "ontology": {
+      "by_vocabulary": {},
+      "coverage": {
+        "frac_measurements_mapped": 0.0,
+        "frac_observed_codes_with_parents": 0.0,
+        "n_measurements_mapped": 0,
+        "n_measurements_unmapped": 2339914,
+        "n_observed_codes": 6276,
+        "n_observed_codes_with_parents": 0,
+        "n_observed_codes_without_parents": 6276
+      },
+      "n_codes_in_multiple_vocabularies": 0,
+      "n_codes_with_parents": 0,
+      "n_distinct_parents": 0,
+      "n_parent_links": 0,
+      "n_parents_without_vocabulary": 0,
+      "n_vocabularies": 0,
+      "n_vocabularies_recognized": 0,
+      "parents_per_code": {
+        "mean": 0.0,
+        "n": 6276,
+        "quantiles": {
+          "p1": 0.0,
+          "p25": 0.0,
+          "p5": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p95": 0.0,
+          "p99": 0.0
+        },
+        "std": 0.0
+      },
+      "present": true,
+      "vocabularies_per_code": {
+        "mean": 0.0,
+        "n": 6276,
+        "quantiles": {
+          "p1": 0.0,
+          "p25": 0.0,
+          "p5": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p95": 0.0,
+          "p99": 0.0
+        },
+        "std": 0.0
+      }
+    },
+    "present": true,
+    "vocabulary_digest": "sha256:0d62ed13eff0701ae22737e5802098a6b64612d438580cae68caa701c5b71e0a"
+  },
+  "codes": {
+    "concentration": {
+      "frac_measurements_in_top_10": 0.100226,
+      "frac_measurements_in_top_100": 0.502062,
+      "frac_measurements_in_top_1000": 0.924966,
+      "n_codes_covering_50pct": 100,
+      "n_codes_covering_90pct": 811,
+      "n_codes_covering_99pct": 2700
+    },
+    "digests": {
+      "alphabetical": "sha256:0d62ed13eff0701ae22737e5802098a6b64612d438580cae68caa701c5b71e0a",
+      "by_measurement_frequency": "sha256:fb64d4ed9a017c516f2ce4625e63b40271ff02d51bf493b0c28176772e94c0e0",
+      "by_subject_frequency": "sha256:1e4609cc05b4e9b2e07a04ee1478ac9f9a0e18141221e289877bc0aa7312bc0c",
+      "numeric_moments": {
+        "digest": "sha256:eb7b35594873e1a5dd39682c1c1fe63084c85877b1c8ece2bae858acbf61a67c",
+        "n_codes": 1009
+      },
+      "thresholded": {
+        "100": {
+          "alphabetical": "sha256:675378f163df2614360575671f6c73e0fab0fa8aa1ab6e8640ba754e35e1f094",
+          "by_measurement_frequency": "sha256:13215928accbc0b58ca4ca04c7be554a91b14c54ed3625b52f8b4aca88cc6a6b",
+          "by_subject_frequency": "sha256:824184b878762187d27207b979ec36542949639233d9e5f16c468a02d42581ca",
+          "n_codes": 1326
+        },
+        "1000": {
+          "alphabetical": "sha256:31692e6eea6199034f98c29c0af1d789a7d24252abcba2ed64a14dd943799783",
+          "by_measurement_frequency": "sha256:3103efa6843a7fe89233dab56732c258a949e9f3a890762e44d5a10a997788d6",
+          "by_subject_frequency": "sha256:695569403c8c350a8b5fe880698f74032d493c96593fcf67286300892df4d299",
+          "n_codes": 294
+        },
+        "20": {
+          "alphabetical": "sha256:968257bd97f7311a358445d5a1d4090ca840d8faea032435c15fde2282e2069d",
+          "by_measurement_frequency": "sha256:28e0f39071068dddff90e2eff3cec9e476a8b8e3d33804c513e51a37886fb5dc",
+          "by_subject_frequency": "sha256:457b0160df7cac5c50acaa5dc6cbd0131f3f30fa0cef979cbbd677d12eecb144",
+          "n_codes": 2570
+        }
+      }
+    },
+    "n_codes_below_min_cell_size": 3706,
+    "n_unique_codes": 6276,
+    "occurrence": {
+      "n_measurements": {
+        "mean": 372.835,
+        "n": 6276,
+        "quantiles": {
+          "p1": 1.0,
+          "p25": 3.0,
+          "p5": 1.0,
+          "p50": 15.0,
+          "p75": 99.0,
+          "p95": 1418.25,
+          "p99": 9339.25
+        },
+        "std": 1753.72
+      },
+      "n_subjects": {
+        "mean": 226.426,
+        "n": 6276,
+        "quantiles": {
+          "p1": 1.0,
+          "p25": 2.0,
+          "p5": 1.0,
+          "p50": 11.0,
+          "p75": 69.0,
+          "p95": 910.5,
+          "p99": 6325.0
+        },
+        "std": 916.191
+      }
+    }
+  },
+  "config": {
+    "code_metadata_only_digests": true,
+    "dataset_digest": "files",
+    "digest_subject_thresholds": [20, 100, 1000],
+    "emit_ontology_keys": false,
+    "min_cell_size": 20,
+    "min_numeric_cell_size": 20,
+    "moment_digest_sig_digits": 6,
+    "numeric_detail": "moments",
+    "quantiles": [0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99]
+  },
+  "counts": {
+    "n_events": 227093,
+    "n_measurements": 2339914,
+    "n_static_measurements": 30000,
+    "n_subjects": 10000,
+    "n_subjects_with_birth": 10000,
+    "n_subjects_with_death": 48,
+    "n_subjects_with_static": 10000,
+    "n_unique_codes": 6276,
+    "numeric": {
+      "mean": 154.047,
+      "n_finite": 1386585,
+      "n_infinite": 0,
+      "n_nan": 0,
+      "n_negative": 2337,
+      "n_present": 1386585,
+      "n_zero": 10573,
+      "std": 4595.55
+    },
+    "quality": {
+      "n_empty_code": 0,
+      "n_null_code": 0,
+      "n_null_subject_id": 0
+    }
+  },
+  "dataset": {
+    "created_at": "2026-11-13T04:21:56.260156+00:00",
+    "dataset_name": "Synthetic_SNUH",
+    "dataset_version": "unknown:0.5.1.dev1+gd0d6fb805",
+    "etl_name": "MEDS_transforms",
+    "etl_version": "0.7.1",
+    "meds_version": "0.4.1",
+    "other_extension_columns": ["table_name", "source_block", "unit"],
+    "present": true,
+    "raw_source_id_columns": ["visit_occurrence_id", "link_id"],
+    "sumeds_enrichment": {
+      "athena": false,
+      "coverage": {
+        "codes": 6276,
+        "described": [6270, 6270],
+        "with_parent_codes": [0, 0]
+      },
+      "enriched": true,
+      "enriched_at": "2026-11-13T04:22:00Z",
+      "ontology_source": "rvandewater/sumeds-ontologies@v0.2.0",
+      "options": {
+        "child_codes": false,
+        "child_depth": 3,
+        "exclude_self_parent_code": false,
+        "loinc_hierarchy": false,
+        "packs": true,
+        "parent_codes": true,
+        "sibling_codes": false
+      },
+      "rules": "OMOP",
+      "rules_sha256": "2f32383aea8224460202a8c2e26dcaa5ed8a812af38cb1cf777c917d65132d44",
+      "sumeds_version": "0.6.3"
+    }
+  },
+  "dataset_digest": {
+    "by_file": {
+      "data/held_out/0.parquet": "sha256:017184eabbb0b21f56879f7e6e39d13ebfa21ebbb7e206e9bf2d1fa2c21249ac",
+      "data/train/0.parquet": "sha256:831a707d3bc762e7f1168a86d5fb52c6d1a94b683d665fc87213f92951a2f5da",
+      "data/tuning/0.parquet": "sha256:34105bcd74c570f75065e8775e25917e813c2f522726d02c017737602215add7",
+      "metadata/codes.parquet": "sha256:232681deea69e95e43dd7682394e357b95f5d59b28ea68ef087a424f10d6d4a3",
+      "metadata/dataset.json": "sha256:0b7d7303477c0476a1a5c366d0d71c03a111a2594b3733879b261954b953635d",
+      "metadata/subject_splits.parquet": "sha256:30461c0fbd4eea8fdd924541a6d9475e652eda2fa76d6cf3c469856dd141afc6"
+    },
+    "code_metadata": "sha256:c0bfe1496a04002e7124d2f361d7e8ea917852f83dba1c3ffee1e9f16cbce04b",
+    "combined": "sha256:ab15110f30d0d1d580d24a968052437c6a3669755557792214de1428f5cae20c",
+    "data": {
+      "digest": "sha256:f7ec5e8458ba440b996bee22ed9a82d328981f803b3c3aeeb6e6cd5919bf9325",
+      "n_files": 3
+    },
+    "dataset_metadata": "sha256:6c4281b1863c13b2ff8226fc65a77f1d9a0f9055ced7d661101f687832db020f",
+    "method": "files",
+    "n_files": 6,
+    "subject_splits": "sha256:1a71fff7b8d088f051d4bbb3a0df7bafdc0f86e50c6f2a72c105575729c7d0dd"
+  },
+  "extracted_at": "2026-11-13T04:22:09.638250",
+  "layout": {
+    "code_metadata_columns": {
+      "base_code": "String",
+      "code": "String",
+      "concept_code": "String",
+      "concept_id": "Int64",
+      "description": "String",
+      "domain_id": "String",
+      "occurrence_count": "UInt32",
+      "parent_codes": "List(String)",
+      "parent_names": "Map(String, String)",
+      "standard_concept": "String",
+      "table_name": "String",
+      "vocabulary_id": "String"
+    },
+    "column_dtype_conflicts": {},
+    "column_presence": {
+      "code": 3,
+      "link_id": 3,
+      "numeric_value": 3,
+      "source_block": 3,
+      "subject_id": 3,
+      "table_name": 3,
+      "text_value": 3,
+      "time": 3,
+      "unit": 3,
+      "visit_occurrence_id": 3
+    },
+    "data_columns": {
+      "code": "String",
+      "link_id": "Int64",
+      "numeric_value": "Float32",
+      "source_block": "String",
+      "subject_id": "Int64",
+      "table_name": "String",
+      "text_value": "String",
+      "time": "Datetime(time_unit='us', time_zone=None)",
+      "unit": "Int64",
+      "visit_occurrence_id": "Int64"
+    },
+    "extra_data_columns": [
+      "link_id",
+      "source_block",
+      "table_name",
+      "text_value",
+      "unit",
+      "visit_occurrence_id"
+    ],
+    "has_code_metadata": true,
+    "has_dataset_metadata": true,
+    "has_subject_splits": true,
+    "missing_core_columns": [],
+    "n_data_shards": 3,
+    "shard_names": ["held_out/0", "train/0", "tuning/0"],
+    "shard_names_digest": "sha256:c174c5889f749f77ea6b42c3a4de7374f846ef20a492a34c6cf75e4aa266709f"
+  },
+  "meds_summary_stats_version": "0.0.4",
+  "per_subject": {
+    "measurements_per_day": {
+      "mean": 1.41615,
+      "n": 10000,
+      "quantiles": {
+        "p1": 0.0596797,
+        "p25": 0.192545,
+        "p5": 0.0947786,
+        "p50": 0.33926,
+        "p75": 0.695662,
+        "p95": 2.54167,
+        "p99": 32.3401
+      },
+      "std": 6.51812
+    },
+    "n_events": {
+      "mean": 22.7093,
+      "n": 10000,
+      "quantiles": {
+        "p1": 4.0,
+        "p25": 11.0,
+        "p5": 6.0,
+        "p50": 16.0,
+        "p75": 24.0,
+        "p95": 69.05,
+        "p99": 131.01
+      },
+      "std": 23.7242
+    },
+    "n_measurements": {
+      "mean": 233.991,
+      "n": 10000,
+      "quantiles": {
+        "p1": 26.0,
+        "p25": 106.0,
+        "p5": 44.0,
+        "p50": 178.0,
+        "p75": 286.0,
+        "p95": 628.0,
+        "p99": 1159.08
+      },
+      "std": 214.271
+    },
+    "n_unique_codes": {
+      "mean": 142.105,
+      "n": 10000,
+      "quantiles": {
+        "p1": 24.0,
+        "p25": 92.0,
+        "p5": 41.0,
+        "p50": 137.0,
+        "p75": 186.0,
+        "p95": 262.0,
+        "p99": 318.01
+      },
+      "std": 67.4068
+    },
+    "span_days": {
+      "mean": 17946.6,
+      "n": 10000,
+      "quantiles": {
+        "p1": 971.92,
+        "p25": 12002.7,
+        "p5": 2463.0,
+        "p50": 19415.5,
+        "p75": 24456.2,
+        "p95": 29697.1,
+        "p99": 32479.8
+      },
+      "std": 8324.75
+    }
+  },
+  "splits": {
+    "by_split": {
+      "held_out": {
+        "n_measurements": 235514,
+        "n_subjects": 1000
+      },
+      "train": {
+        "n_measurements": 1865804,
+        "n_subjects": 8000
+      },
+      "tuning": {
+        "n_measurements": 238596,
+        "n_subjects": 1000
+      }
+    },
+    "n_splits": 3,
+    "n_subjects_in_data_without_split": 0,
+    "n_subjects_in_splits_without_data": 0,
+    "present": true
+  },
+  "stats_schema_version": 2,
+  "time": {
+    "by_year": {
+      "1934": {
+        "n_measurements": 20,
+        "n_subjects": 20
+      },
+      "1936": {
+        "n_measurements": 21,
+        "n_subjects": 21
+      },
+      "1937": {
+        "n_measurements": 58,
+        "n_subjects": 58
+      },
+      "1938": {
+        "n_measurements": 51,
+        "n_subjects": 51
+      },
+      "1939": {
+        "n_measurements": 37,
+        "n_subjects": 37
+      },
+      "1940": {
+        "n_measurements": 55,
+        "n_subjects": 55
+      },
+      "1941": {
+        "n_measurements": 47,
+        "n_subjects": 47
+      },
+      "1942": {
+        "n_measurements": 66,
+        "n_subjects": 66
+      },
+      "1943": {
+        "n_measurements": 80,
+        "n_subjects": 80
+      },
+      "1944": {
+        "n_measurements": 98,
+        "n_subjects": 98
+      },
+      "1945": {
+        "n_measurements": 97,
+        "n_subjects": 97
+      },
+      "1946": {
+        "n_measurements": 90,
+        "n_subjects": 90
+      },
+      "1947": {
+        "n_measurements": 128,
+        "n_subjects": 128
+      },
+      "1948": {
+        "n_measurements": 120,
+        "n_subjects": 120
+      },
+      "1949": {
+        "n_measurements": 137,
+        "n_subjects": 137
+      },
+      "1950": {
+        "n_measurements": 141,
+        "n_subjects": 141
+      },
+      "1951": {
+        "n_measurements": 128,
+        "n_subjects": 128
+      },
+      "1952": {
+        "n_measurements": 182,
+        "n_subjects": 182
+      },
+      "1953": {
+        "n_measurements": 154,
+        "n_subjects": 154
+      },
+      "1954": {
+        "n_measurements": 155,
+        "n_subjects": 155
+      },
+      "1955": {
+        "n_measurements": 172,
+        "n_subjects": 172
+      },
+      "1956": {
+        "n_measurements": 191,
+        "n_subjects": 191
+      },
+      "1957": {
+        "n_measurements": 171,
+        "n_subjects": 171
+      },
+      "1958": {
+        "n_measurements": 197,
+        "n_subjects": 197
+      },
+      "1959": {
+        "n_measurements": 183,
+        "n_subjects": 183
+      },
+      "1960": {
+        "n_measurements": 190,
+        "n_subjects": 190
+      },
+      "1961": {
+        "n_measurements": 204,
+        "n_subjects": 204
+      },
+      "1962": {
+        "n_measurements": 185,
+        "n_subjects": 185
+      },
+      "1963": {
+        "n_measurements": 181,
+        "n_subjects": 181
+      },
+      "1964": {
+        "n_measurements": 184,
+        "n_subjects": 184
+      },
+      "1965": {
+        "n_measurements": 177,
+        "n_subjects": 177
+      },
+      "1966": {
+        "n_measurements": 179,
+        "n_subjects": 179
+      },
+      "1967": {
+        "n_measurements": 183,
+        "n_subjects": 183
+      },
+      "1968": {
+        "n_measurements": 181,
+        "n_subjects": 181
+      },
+      "1969": {
+        "n_measurements": 175,
+        "n_subjects": 175
+      },
+      "1970": {
+        "n_measurements": 194,
+        "n_subjects": 194
+      },
+      "1971": {
+        "n_measurements": 178,
+        "n_subjects": 178
+      },
+      "1972": {
+        "n_measurements": 145,
+        "n_subjects": 145
+      },
+      "1973": {
+        "n_measurements": 120,
+        "n_subjects": 120
+      },
+      "1974": {
+        "n_measurements": 133,
+        "n_subjects": 133
+      },
+      "1975": {
+        "n_measurements": 147,
+        "n_subjects": 147
+      },
+      "1976": {
+        "n_measurements": 159,
+        "n_subjects": 159
+      },
+      "1977": {
+        "n_measurements": 101,
+        "n_subjects": 101
+      },
+      "1978": {
+        "n_measurements": 132,
+        "n_subjects": 132
+      },
+      "1979": {
+        "n_measurements": 132,
+        "n_subjects": 132
+      },
+      "1980": {
+        "n_measurements": 126,
+        "n_subjects": 126
+      },
+      "1981": {
+        "n_measurements": 149,
+        "n_subjects": 149
+      },
+      "1982": {
+        "n_measurements": 143,
+        "n_subjects": 143
+      },
+      "1983": {
+        "n_measurements": 119,
+        "n_subjects": 119
+      },
+      "1984": {
+        "n_measurements": 120,
+        "n_subjects": 120
+      },
+      "1985": {
+        "n_measurements": 119,
+        "n_subjects": 119
+      },
+      "1986": {
+        "n_measurements": 125,
+        "n_subjects": 125
+      },
+      "1987": {
+        "n_measurements": 97,
+        "n_subjects": 97
+      },
+      "1988": {
+        "n_measurements": 94,
+        "n_subjects": 94
+      },
+      "1989": {
+        "n_measurements": 130,
+        "n_subjects": 130
+      },
+      "1990": {
+        "n_measurements": 97,
+        "n_subjects": 97
+      },
+      "1991": {
+        "n_measurements": 108,
+        "n_subjects": 108
+      },
+      "1992": {
+        "n_measurements": 98,
+        "n_subjects": 98
+      },
+      "1993": {
+        "n_measurements": 104,
+        "n_subjects": 104
+      },
+      "1994": {
+        "n_measurements": 88,
+        "n_subjects": 88
+      },
+      "1995": {
+        "n_measurements": 92,
+        "n_subjects": 92
+      },
+      "1996": {
+        "n_measurements": 96,
+        "n_subjects": 96
+      },
+      "1997": {
+        "n_measurements": 87,
+        "n_subjects": 87
+      },
+      "1998": {
+        "n_measurements": 70,
+        "n_subjects": 70
+      },
+      "1999": {
+        "n_measurements": 86,
+        "n_subjects": 86
+      },
+      "2000": {
+        "n_measurements": 66,
+        "n_subjects": 66
+      },
+      "2001": {
+        "n_measurements": 78,
+        "n_subjects": 78
+      },
+      "2002": {
+        "n_measurements": 51,
+        "n_subjects": 51
+      },
+      "2003": {
+        "n_measurements": 49,
+        "n_subjects": 49
+      },
+      "2004": {
+        "n_measurements": 63,
+        "n_subjects": 63
+      },
+      "2005": {
+        "n_measurements": 59,
+        "n_subjects": 59
+      },
+      "2006": {
+        "n_measurements": 63,
+        "n_subjects": 63
+      },
+      "2007": {
+        "n_measurements": 56,
+        "n_subjects": 56
+      },
+      "2008": {
+        "n_measurements": 73,
+        "n_subjects": 73
+      },
+      "2009": {
+        "n_measurements": 50,
+        "n_subjects": 50
+      },
+      "2010": {
+        "n_measurements": 73,
+        "n_subjects": 73
+      },
+      "2011": {
+        "n_measurements": 78,
+        "n_subjects": 78
+      },
+      "2012": {
+        "n_measurements": 82,
+        "n_subjects": 82
+      },
+      "2013": {
+        "n_measurements": 85,
+        "n_subjects": 85
+      },
+      "2014": {
+        "n_measurements": 80,
+        "n_subjects": 80
+      },
+      "2015": {
+        "n_measurements": 96,
+        "n_subjects": 96
+      },
+      "2016": {
+        "n_measurements": 80,
+        "n_subjects": 80
+      },
+      "2017": {
+        "n_measurements": 102,
+        "n_subjects": 102
+      },
+      "2018": {
+        "n_measurements": 117,
+        "n_subjects": 117
+      },
+      "2019": {
+        "n_measurements": 110,
+        "n_subjects": 110
+      },
+      "2020": {
+        "n_measurements": 128,
+        "n_subjects": 128
+      },
+      "2021": {
+        "n_measurements": 426619,
+        "n_subjects": 4033
+      },
+      "2022": {
+        "n_measurements": 453138,
+        "n_subjects": 4947
+      },
+      "2023": {
+        "n_measurements": 467501,
+        "n_subjects": 5130
+      },
+      "2024": {
+        "n_measurements": 468406,
+        "n_subjects": 5141
+      },
+      "2025": {
+        "n_measurements": 480530,
+        "n_subjects": 5135
+      },
+      "2026": {
+        "n_measurements": 3802,
+        "n_subjects": 1410
+      },
+      "<suppressed>": {
+        "n_measurements": 72,
+        "n_years": 13
+      }
+    },
+    "n_measurements_with_time": 2309914,
+    "n_years_observed": 105
+  }
+}

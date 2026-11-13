@@ -26,7 +26,8 @@ How large are the datasets that the public [MEDS ETLs](/docs/intro_pages/ecosyst
 ETL maintainers publish a summary of their converted dataset, computed with
 [`meds_summary_stats`](https://github.com/Medical-Event-Data-Standard/meds_summary_stats). This page collects those
 files when the site is built, loads their current versions from GitHub when you open it, and charts them side by
-side.
+side, together with the summaries committed to this site's repository for datasets whose ETL repository doesn't
+publish one.
 
 The files are safe to publish by design: `meds_summary_stats` never writes out a code, reports no minimum or
 maximum value (only percentiles, and from version 0.0.4 on none that would depend on the smallest or largest
