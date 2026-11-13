@@ -87,10 +87,15 @@ locations:
       - label: K-MIMIC (synthetic)
         source: https://khdp.net/database/data-search-detail/SYN-ICU
         caveat: Synthetic, generated from the hospital's ICU records.
+      - label: Synthetic-SNUH
+        source: https://doi.org/10.23421/2026.03183
+        caveat: Synthetic, 10,000 virtual patients.
     note: >-
       INSPIRE: "...extracted from the clinical data warehouse of the SNUH". K-MIMIC: "The Synthetic K-MIMIC Dataset is
       a synthetic dataset generated from the real-world ICU patient records of Seoul National University Hospital
-      (SNUH)".
+      (SNUH)". Synthetic-SNUH: the DOI's metadata title is "Synthetic-SNUH v4: synthetic OMOP CDM and KR Core FHIR
+      records for 10,000 virtual patients", published on KHDP, the Korean Health Data Platform of Seoul National
+      University Hospital (https://khdp.net, "SEOUL NATIONAL UNIVERSITY HOSPITAL. ALL RIGHTS RESERVED.").
 
   - institution: Bern University Hospital
     openalex: I2801112126

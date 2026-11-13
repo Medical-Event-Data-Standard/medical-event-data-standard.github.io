@@ -38,4 +38,20 @@ repos:
 exclude:
   - som-shahlab/ehrshot-benchmark
 
-local_files: []
+local_files:
+  - path: static/data/etl_summary_stats/synthetic_snuh_full_summary_stats.json
+    label: Synthetic-SNUH
+    variant: full
+    # The file's dataset_version is "unknown:<ETL version>": the conversion was given no version of the dataset.
+    dataset_name: Synthetic-SNUH
+    dataset_version: '4.0.0'
+    note: >-
+      Written by meds_summary_stats 0.0.4 (git tag 0.0.4) with the default suppression (min_cell_size 20,
+      min_numeric_cell_size 20), from a MEDS 0.4.1 conversion of Synthetic-SNUH v4's OMOP CDM 5.4 tables (Parquet,
+      10,000 subjects) by OMOP_MEDS at commit d0d6fb8 (rvandewater/OMOP_MEDS#43; MEDS-Extract 0.8.1,
+      MEDS_transforms 0.7.1), run on 2026-11-12. The version is the dataset's on KHDP, 4.0.0
+      (https://doi.org/10.23421/2026.03183, which resolves to
+      https://khdp.net/database/data-search-detail/synthetic-snuh/4.0.0; its DOI metadata title is "Synthetic-SNUH
+      v4: synthetic OMOP CDM and KR Core FHIR records for 10,000 virtual patients", issued 2026-10-23). The export
+      leaves every *_datetime column empty, so its events are timed at the end of their date, which needs that pull
+      request: OMOP_MEDS 0.5.0 drops them. It has no concept_relationship table, so its codes have no parent codes.
