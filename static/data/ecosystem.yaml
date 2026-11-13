@@ -307,8 +307,10 @@ dataset_etls:
       - name: 'K-MIMIC (synthetic)'
         description: 'Converts Synthetic K-MIMIC (SYN-ICU), synthetic ICU data generated from Seoul National University Hospital records, into MEDS.'
         demo_available: false
-        github_repo: 'ji-ch01/K-MIMIC-MEDS'
+        pypi_name: 'K-MIMIC-MEDS'
+        github_repo: 'rvandewater/K_MIMIC_MEDS'
         data_repository_url: 'https://khdp.net/database/data-search-detail/SYN-ICU'
+        warn: '_Builds on [K-MIMIC-MEDS](https://github.com/ji-ch01/K-MIMIC-MEDS) by Choi et al., the first MEDS conversion of this dataset._'
       - name: 'EHRSHOT'
         description: 'A benchmark for few-shot evaluation of EHR foundation models, with the full records of 6,739 Stanford Medicine patients and 15 tasks.'
         demo_available: false
