@@ -1,0 +1,80 @@
+---
+description: >-
+  Conventions the MEDS ETLs follow so that datasets converted by different ETLs line up: code grammar,
+  units, stay and site columns, time, pipeline stages, and how breaking changes are documented.
+---
+
+# ETL Conventions
+
+MEDS fixes the schema of a dataset, but not how an ETL spells its codes or which columns it adds. These
+conventions cover those choices, so that datasets converted by different ETLs can be compared and mapped onto
+each other. They apply to the MEDS ETLs that use [MEDS-Extract](https://github.com/mmcdermott/MEDS_extract) and
+[suMEDS](https://github.com/rvandewater/suMEDS), and are recommended for new ones.
+
+Each convention has a status:
+
+- **Adopted**: merged in the ETLs.
+- **Rolling out**: agreed, and being applied to the ETLs.
+- **Proposed**: under discussion; the linked issue has the details.
+
+Every change an ETL makes to its output under these conventions is listed in that ETL's
+[Breaking changes](#breaking-changes) section, with a migration rule.
+
+## Codes
+
+| Convention                                                                                                                                                                                                                                                                                                             | Example                                                            | Status                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Code components are separated by `//`.                                                                                                                                                                                                                                                                                 | `LAB//RESULT//50912//mg/dL`                                        | Adopted                                                                        |
+| A code carries no dataset prefix: which dataset an event comes from is a property of the dataset, not of the code.                                                                                                                                                                                                     | `MEDS_DEATH`, not `MIMIC//MEDS_DEATH`                              | Adopted                                                                        |
+| A prefix means one kind of source. Values charted at the ICU bedside are not coded as hospital labs.                                                                                                                                                                                                                   | `ICU_CHART//220045//bpm` next to `LAB//RESULT//50912//mg/dL`       | Rolling out                                                                    |
+| An ICU stay is coded as an ICU stay, not a hospital stay.                                                                                                                                                                                                                                                              | `ICU_ADMISSION`, `ICU_DISCHARGE`                                   | Rolling out                                                                    |
+| A versioned vocabulary is written `VOCABULARY//VERSION//CODE`.                                                                                                                                                                                                                                                         | `ICD//10GM//I10`, `ICD//10CM//E11.9`                               | Rolling out                                                                    |
+| A code of an item whose rows can carry different units ends in its unit, always, not only for the items that turn out to mix units. Every code then has one unit, and suMEDS links an item's unit variants to the code without the unit.                                                                               | `INFUSION//START//221906//mg/hour`                                 | Rolling out                                                                    |
+| A missing unit, where the unit is part of the code, is `UNK`. Other missing components keep the ETL's documented placeholder.                                                                                                                                                                                          | `LAB//<item>//UNK`                                                 | Adopted                                                                        |
+| Fixed codes are plain literals in the ETL config (MEDS-Extract 0.8.1 and later gives them code metadata), without a guard such as `$x == $x`.                                                                                                                                                                          | `code: ICU_ADMISSION`                                              | Adopted                                                                        |
+| An interval (an order, infusion, device or procedure) is two events, `START` and `END`. Qualifiers that identify the interval (route, form, site, line) appear on both codes; a unit is that event's own and may differ. A start is paired with its end by swapping `START` and `END`, after dropping a trailing unit. | `INFUSION//START//<item>//mL/hour` and `INFUSION//END//<item>//mL` | Rolling out ([alignEHR#53](https://github.com/rvandewater/alignEHR/issues/53)) |
+| The same concept family gets the same prefix across datasets where the source allows it.                                                                                                                                                                                                                               | `MEDICATION`, `LAB`, `VITAL`                                       | Proposed ([alignEHR#52](https://github.com/rvandewater/alignEHR/issues/52))    |
+
+## Code metadata (`metadata/codes.parquet`)
+
+| Convention                                                                                                                                                                                                                                                                                                                                                                                                    | Status      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| A code has at most one unit. `unit` is that unit as a [UCUM](https://ucum.org) code (`mcg` becomes `ug`, `mL/hour` becomes `mL/h`), written by suMEDS's `sumeds_normalize_units` stage. The unit as recorded is in `unit_source_value`. Code strings keep the recorded spelling.                                                                                                                              | Adopted     |
+| Codes that differ only in their unit component (`<stem>//mg`, `<stem>//mcg`, `<stem>//UNK`) all get the code without the unit, `<stem>`, as a parent. The stem has a row of its own without events. suMEDS's `sumeds_link_unit_siblings` stage does this; only variants with a real unit decide the stem's parents. See [suMEDS docs](https://github.com/rvandewater/suMEDS/blob/main/docs/unit_siblings.md). | Adopted     |
+| Parent codes use the same `//` separator as codes.                                                                                                                                                                                                                                                                                                                                                            | Rolling out |
+| External-ontology parents (LOINC, ATC, SNOMED, ...) are added by suMEDS's `sumeds_enrich` stage from versioned ontology packs.                                                                                                                                                                                                                                                                                | Adopted     |
+
+## Event columns
+
+| Convention                                                                                                                                                | Status                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| The events have no `unit` column: every code has one unit, which is in `codes.parquet`. Join the events to `codes.parquet` on `code` for an event's unit. | Adopted                                                                        |
+| A hospital stay id is `hadm_id`, an ICU stay id is `icustay_id`. An ETL whose source has the id keeps it.                                                 | Rolling out ([alignEHR#55](https://github.com/rvandewater/alignEHR/issues/55)) |
+| The site of care (hospital) is its own column, `hospital_id`, declared in `dataset.json` as a `site_id_columns` entry, never folded into a stay id.       | Rolling out                                                                    |
+
+## Time
+
+| Convention                                                                                                                                                                                                                                                                 | Status                                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| An event gets the time the information became available, never a placeholder date. Diagnoses and procedures that the source records only per stay are timed at discharge, so they cannot leak into predictions made during the stay.                                       | Rolling out                                                                 |
+| `MEDS_BIRTH` is imputed the same way everywhere: admission time minus the midpoint of the age interval the source gives (an exact age, a whole year, a 5-year bin, ...). Top-coded ages use the lower bound plus half a year. The precision is recorded in `dataset.json`. | Proposed ([alignEHR#54](https://github.com/rvandewater/alignEHR/issues/54)) |
+
+## Pipeline
+
+| Convention                                                                                                                                                                                                                                                                                                          | Status      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| ETLs are MEDS-Extract specs, run with `meds-extract-run spec=<NAME>`.                                                                                                                                                                                                                                               | Adopted     |
+| The post-stages run in this order: `sumeds_link_unit_siblings`, `sumeds_normalize_units`, the ETL's own stages, `sumeds_enrich`.                                                                                                                                                                                    | Adopted     |
+| Intermediate stage outputs are deleted after a successful run. Keep them with `"overrides=['cleanup_intermediates=false']"`.                                                                                                                                                                                        | Rolling out |
+| Every ETL runs on synthetic data from its own spec ([MESSY_synth](https://github.com/mmcdermott/MESSY_synth)) in CI. ETLs of datasets with a public demo also build the demo and compare its summary statistics with a committed baseline, regenerated in the same pull request when the output changes on purpose. | Adopted     |
+
+## Breaking changes
+
+Every ETL's README has a `## Breaking changes` section, newest release first. Any change that alters codes,
+columns or metadata that cohorts, predicates, tokenizers or mappings may depend on gets an entry there: what
+changed, from which release, and how to migrate (an old-to-new mapping or regular expression). For example:
+
+> **ICU chart events are `ICU_CHART//…`.** `icu/chartevents` was coded `LAB//{itemid}//{valueuom}` up to 0.3.0
+> and is now `ICU_CHART//{itemid}//{valueuom}`. Migrate by replacing `^LAB//(?=\d)` with `ICU_CHART//`.
+
+Downstream projects that reference codes, such as the MEDS-DEV predicates, are updated in the same release.

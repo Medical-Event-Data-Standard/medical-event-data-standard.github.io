@@ -20,6 +20,7 @@ const sidebars: SidebarsConfig = {
     'intro_pages/intro',
     'intro_pages/what_is_MEDS',
     'intro_pages/meds_schema',
+    'intro_pages/etl_conventions',
     'intro_pages/roadmap',
   ],
 
